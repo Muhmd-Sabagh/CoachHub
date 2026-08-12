@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="gms.client/gms.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="GMS.Server/GMS.Server.csproj" />
+</Solution>
