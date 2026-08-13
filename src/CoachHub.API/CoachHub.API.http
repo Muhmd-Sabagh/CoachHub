@@ -1,6 +1,23 @@
 @CoachHub_API_HostAddress = http://localhost:5197
+@AccessToken = replace-with-login-access-token
 
 GET {{CoachHub_API_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{CoachHub_API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "configured-admin@example.com",
+  "password": "configured-outside-source-control"
+}
+
+###
+
+GET {{CoachHub_API_HostAddress}}/api/auth/me
+Authorization: Bearer {{AccessToken}}
 Accept: application/json
 
 ###
