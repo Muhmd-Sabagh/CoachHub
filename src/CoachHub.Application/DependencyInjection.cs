@@ -4,6 +4,7 @@ using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Media;
+using CoachHub.Application.Pdf;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.SavedPlans;
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<DietPlanService>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<MediaService>();
+        services.AddScoped<PlanPdfService>();
         services.AddScoped<FoodService>();
         services.AddScoped<LegacyFoodImportService>();
         services.AddScoped<PackageService>();

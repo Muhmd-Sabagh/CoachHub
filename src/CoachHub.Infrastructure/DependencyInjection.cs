@@ -4,6 +4,7 @@ using CoachHub.Application.Auth;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Media;
+using CoachHub.Application.Pdf;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.SavedPlans;
@@ -16,6 +17,7 @@ using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Clients;
 using CoachHub.Infrastructure.DietPlanning;
 using CoachHub.Infrastructure.Media;
+using CoachHub.Infrastructure.Pdf;
 using CoachHub.Infrastructure.Persistence;
 using CoachHub.Infrastructure.Nutrition;
 using CoachHub.Infrastructure.ReferenceData;
@@ -119,5 +121,7 @@ public static class DependencyInjection
             configuration.GetSection(MediaStorageOptions.SectionName));
         services.AddScoped<IMediaStorage, FileSystemMediaStorage>();
         services.AddScoped<IMediaRepository, MediaRepository>();
+        services.AddScoped<IPlanPdfClientRepository, PlanPdfClientRepository>();
+        services.AddSingleton<IPlanPdfRenderer, QuestPlanPdfRenderer>();
     }
 }
