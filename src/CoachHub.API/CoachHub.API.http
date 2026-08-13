@@ -1,0 +1,6 @@
+@CoachHub_API_HostAddress = http://localhost:5197
+
+GET {{CoachHub_API_HostAddress}}/health
+Accept: application/json
+
+###
