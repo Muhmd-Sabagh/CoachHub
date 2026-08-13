@@ -6,6 +6,7 @@ using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Media;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Application.SavedPlans;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
 using CoachHub.Infrastructure.Assessments;
@@ -18,6 +19,7 @@ using CoachHub.Infrastructure.Media;
 using CoachHub.Infrastructure.Persistence;
 using CoachHub.Infrastructure.Nutrition;
 using CoachHub.Infrastructure.ReferenceData;
+using CoachHub.Infrastructure.SavedPlans;
 using CoachHub.Infrastructure.Training;
 using CoachHub.Infrastructure.WorkoutPlanning;
 using Microsoft.AspNetCore.Identity;
@@ -73,6 +75,7 @@ public static class DependencyInjection
 
         AddMedia(services, configuration, allowLocalMediaStorage);
         services.AddScoped(typeof(IReferenceRepository<>), typeof(ReferenceRepository<>));
+        services.AddScoped<ISavedPlanQueryRepository, SavedPlanQueryRepository>();
         services.AddScoped<IFoodRepository, FoodRepository>();
         services.AddScoped<IExerciseRepository, ExerciseRepository>();
         services.AddScoped<IWorkoutPlanRepository, WorkoutPlanRepository>();

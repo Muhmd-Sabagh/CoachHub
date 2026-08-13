@@ -6,6 +6,7 @@ using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Media;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Application.SavedPlans;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<PaymentAccountService>();
         services.AddScoped<FoodCategoryService>();
         services.AddScoped<ExerciseCategoryService>();
+        services.AddScoped<SavedPlanQueryService>();
         services.AddScoped<ExerciseService>();
         services.AddScoped<LegacyExerciseImportService>();
         services.AddScoped<WorkoutPlanService>();
