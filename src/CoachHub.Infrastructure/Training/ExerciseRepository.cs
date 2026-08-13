@@ -72,10 +72,11 @@ public sealed class ExerciseRepository(CoachHubDbContext dbContext) : IExerciseR
             .AsNoTracking()
             .SingleOrDefaultAsync(record => record.LegacyId == legacyId, cancellationToken);
 
-    public async Task<ExerciseCategory> GetOrCreateUncategorizedAsync(
+    public async Task<ExerciseCategory> GetOrCreateCategoryAsync(
+        string categoryName,
         CancellationToken cancellationToken)
     {
-        const string categoryName = "Uncategorized";
+        categoryName = string.IsNullOrWhiteSpace(categoryName) ? "Uncategorized" : categoryName.Trim();
         var category = await dbContext.Set<ExerciseCategory>()
             .SingleOrDefaultAsync(item => item.NameEn == categoryName, cancellationToken);
         if (category is not null) return category;

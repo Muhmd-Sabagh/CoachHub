@@ -14,6 +14,7 @@ public sealed class MediaService(
         "image/jpeg",
         "image/png",
         "image/webp",
+        "image/gif",
         "application/pdf"
     ];
 

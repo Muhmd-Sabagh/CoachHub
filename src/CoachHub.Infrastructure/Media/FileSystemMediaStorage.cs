@@ -102,6 +102,7 @@ public sealed class FileSystemMediaStorage(IOptions<MediaStorageOptions> options
         "image/jpeg" => ".jpg",
         "image/png" => ".png",
         "image/webp" => ".webp",
+        "image/gif" => ".gif",
         "application/pdf" => ".pdf",
         _ => throw new InvalidOperationException("Unsupported media content type.")
     };

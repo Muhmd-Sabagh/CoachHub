@@ -12,7 +12,7 @@ public interface IExerciseRepository
     Task SaveChangesAsync(CancellationToken cancellationToken);
     Task DeleteAsync(Exercise exercise, CancellationToken cancellationToken);
     Task<LegacyExerciseImportRecord?> FindLegacyImportAsync(int legacyId, CancellationToken cancellationToken);
-    Task<ExerciseCategory> GetOrCreateUncategorizedAsync(CancellationToken cancellationToken);
+    Task<ExerciseCategory> GetOrCreateCategoryAsync(string name, CancellationToken cancellationToken);
     Task AddImportedAsync(
         Exercise exercise,
         LegacyExerciseImportRecord importRecord,

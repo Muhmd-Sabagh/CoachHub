@@ -56,13 +56,14 @@ public sealed class NutritionEndpointTests : IClassFixture<CoachHubApiFactory>
     }
 
     [Fact]
-    public async Task Legacy_import_is_idempotent_reports_invalid_rows_and_uses_uncategorized()
+    public async Task Legacy_import_is_idempotent_and_preserves_bilingual_category_mapping()
     {
         await AuthenticateAsync();
         var legacyId = Random.Shared.Next(100000, int.MaxValue);
+        var categoryName = "Legacy Grains " + Guid.NewGuid().ToString("N");
         var rows = new[]
         {
-            new LegacyFoodImportRow(legacyId, "Legacy Oats", "gram", 389, 16.9m, 66.3m, 6.9m, "/images/oats.jpg", null),
+            new LegacyFoodImportRow(legacyId, "Legacy Oats", "gram", 389, 16.9m, 66.3m, 6.9m, "/images/oats.jpg", null, "شوفان", categoryName),
             new LegacyFoodImportRow(legacyId + 1, "Invalid", "gram", -1, 0, 0, 0, null, null)
         };
 
@@ -80,9 +81,12 @@ public sealed class NutritionEndpointTests : IClassFixture<CoachHubApiFactory>
         Assert.Equal(1, repeatResult!.AlreadyImportedCount);
 
         var categories = await _client.GetFromJsonAsync<PagedResult<BilingualReferenceResponse>>(
-            "/api/reference-data/food-categories?searchTerm=Uncategorized&pageSize=100");
+            "/api/reference-data/food-categories?searchTerm=" + Uri.EscapeDataString(categoryName) + "&pageSize=100");
         Assert.NotNull(categories);
-        Assert.Single(categories.Items, item => item.NameEn == "Uncategorized");
+        Assert.Single(categories.Items, item => item.NameEn == categoryName);
+        var imported = await _client.GetFromJsonAsync<FoodResponse>(
+            $"/api/nutrition/foods/{result.Rows[0].FoodItemId}");
+        Assert.Equal("شوفان", imported!.NameAr);
     }
 
     [Fact]

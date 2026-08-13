@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  1,
+    "validatedAtUtc":  "2026-08-13T13:17:54.5304313+00:00",
+    "source":  {
+                   "foods":  91,
+                   "exercises":  156,
+                   "foodMedia":  89,
+                   "exerciseMedia":  156,
+                   "validationErrors":  0,
+                   "controlledCorrections":  2
+               },
+    "target":  {
+                   "foods":  91,
+                   "exercises":  156,
+                   "media":  245,
+                   "legacyFoodMappings":  91,
+                   "legacyExerciseMappings":  156,
+                   "foodCategories":  7,
+                   "exerciseCategories":  10,
+                   "foodsMissingArabicName":  0,
+                   "invalidYouTubeUrls":  0
+               },
+    "idempotency":  {
+                        "foodsAlreadyImported":  91,
+                        "exercisesAlreadyImported":  156
+                    },
+    "operationalRowsImported":  {
+                                    "clients":  0,
+                                    "subscriptions":  0,
+                                    "formSubmissions":  0,
+                                    "dietPlans":  0,
+                                    "workoutPlans":  0
+                                },
+    "representativeCorrections":  [
+                                      {
+                                          "catalog":  "food",
+                                          "legacyId":  38,
+                                          "field":  "proteinPer100Units",
+                                          "verifiedValue":  6.28
+                                      },
+                                      {
+                                          "catalog":  "exercise",
+                                          "legacyId":  1102,
+                                          "field":  "youTubeLink",
+                                          "verifiedValue":  "https://youtu.be/MpEydcQ1oDw?si=QdOuqoR-Dq_PLKTd"
+                                      }
+                                  ],
+    "result":  "Passed disposable end-to-end cutover rehearsal against a fresh migrated CoachHub SQL Server database."
+}
