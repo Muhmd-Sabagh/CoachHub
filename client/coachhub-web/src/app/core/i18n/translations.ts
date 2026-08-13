@@ -1,7 +1,7 @@
 export type Language = 'en' | 'ar';
 export const translations: Record<Language, Record<string, string>> = {
   en: {
-    'common.search': 'Search', 'common.loading': 'Loading…', 'common.comingSoon': 'Feature workspace ready for Phase 16',
+    'common.search': 'Search', 'common.loading': 'Loading…',
     'auth.eyebrow': 'Coaching operations, simplified', 'auth.title': 'Welcome back', 'auth.subtitle': 'Sign in to manage your clients, plans, and daily coaching work.',
     'auth.email': 'Email address', 'auth.password': 'Password', 'auth.togglePassword': 'Show or hide password', 'auth.signIn': 'Sign in', 'auth.signingIn': 'Signing in…', 'auth.error': 'We could not sign you in. Check your credentials and try again.',
     'shell.menu': 'Menu', 'shell.theme': 'Switch color theme', 'shell.toggle': 'Toggle navigation', 'shell.logout': 'Sign out', 'shell.language': 'العربية',
@@ -12,7 +12,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'dashboard.readyTitle': 'Your coaching workspace is ready', 'dashboard.readyText': 'Clients, subscriptions, assessments, nutrition, and training are organized as focused modules for the next delivery phase.'
   },
   ar: {
-    'common.search': 'بحث', 'common.loading': 'جارٍ التحميل…', 'common.comingSoon': 'مساحة الميزة جاهزة للمرحلة 16',
+    'common.search': 'بحث', 'common.loading': 'جارٍ التحميل…',
     'auth.eyebrow': 'إدارة التدريب ببساطة', 'auth.title': 'مرحباً بعودتك', 'auth.subtitle': 'سجّل الدخول لإدارة العملاء والخطط وأعمال التدريب اليومية.',
     'auth.email': 'البريد الإلكتروني', 'auth.password': 'كلمة المرور', 'auth.togglePassword': 'إظهار أو إخفاء كلمة المرور', 'auth.signIn': 'تسجيل الدخول', 'auth.signingIn': 'جارٍ تسجيل الدخول…', 'auth.error': 'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.',
     'shell.menu': 'القائمة', 'shell.theme': 'تغيير نمط الألوان', 'shell.toggle': 'فتح أو إغلاق التنقل', 'shell.logout': 'تسجيل الخروج', 'shell.language': 'English',

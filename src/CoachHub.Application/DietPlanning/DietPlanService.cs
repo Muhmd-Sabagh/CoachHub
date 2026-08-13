@@ -87,6 +87,9 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
         return await MapAsync(aggregate, cancellationToken);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken) =>
+        await repository.DeleteAsync(await RequiredAsync(id, true, cancellationToken), cancellationToken);
+
     private DietPlan CreatePlan(string nameEn, string? nameAr, Guid? clientId)
     {
         DietPlan? plan = null;

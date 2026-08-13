@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<LoginCommandHandler>();
         services.AddScoped<FormAdminService>();
         services.AddScoped<FormSubmissionService>();
+        services.AddScoped<AssessmentAdminQueryService>();
         services.AddScoped<AssessmentImportService>();
         services.AddScoped<ClientService>();
         services.AddScoped<SubscriptionService>();

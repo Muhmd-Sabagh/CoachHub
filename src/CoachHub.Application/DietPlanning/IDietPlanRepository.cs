@@ -20,5 +20,6 @@ public interface IDietPlanRepository
     Task<bool> ClientExistsAsync(Guid id, CancellationToken cancellationToken);
     Task AddAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken);
     Task ReplaceChildrenAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken);
+    Task DeleteAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken);
 }
