@@ -2,6 +2,7 @@ using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Clients;
+using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Media;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<AssessmentImportService>();
         services.AddScoped<ClientService>();
         services.AddScoped<SubscriptionService>();
+        services.AddScoped<DietPlanService>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<MediaService>();
         services.AddScoped<FoodService>();
