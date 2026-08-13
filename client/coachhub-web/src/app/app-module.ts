@@ -17,5 +17,27 @@ import { PaginationComponent } from './shared/components/pagination/pagination.c
 import { SearchFilterComponent } from './shared/components/search-filter/search-filter.component';
 import { StatusBadgeComponent } from './shared/components/status-badge/status-badge.component';
 import { TranslatePipe } from './shared/pipes/translate.pipe';
-@NgModule({ declarations: [App, ShellComponent, LoginComponent, DashboardComponent, SettingsComponent, CatalogComponent, ClientsComponent, AssessmentsComponent, PlansComponent, PaginationComponent, SearchFilterComponent, StatusBadgeComponent, TranslatePipe], imports: [BrowserModule, FormsModule, ReactiveFormsModule, AppRoutingModule], providers: [provideBrowserGlobalErrorListeners(), provideHttpClient(withInterceptors([authInterceptor]))], bootstrap: [App] })
+@NgModule({
+  declarations: [
+    App,
+    ShellComponent,
+    LoginComponent,
+    DashboardComponent,
+    SettingsComponent,
+    CatalogComponent,
+    ClientsComponent,
+    AssessmentsComponent,
+    PlansComponent,
+    PaginationComponent,
+    SearchFilterComponent,
+    StatusBadgeComponent,
+    TranslatePipe,
+  ],
+  imports: [BrowserModule, FormsModule, ReactiveFormsModule, AppRoutingModule],
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideHttpClient(withInterceptors([authInterceptor])),
+  ],
+  bootstrap: [App],
+})
 export class AppModule {}
