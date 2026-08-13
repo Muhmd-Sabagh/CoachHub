@@ -59,6 +59,20 @@ public sealed class Client : Entity
         IsActive = isActive;
     }
 
+    public void RecordAssessmentSubmission(CoachHub.Domain.Assessments.AssessmentFormType formType)
+    {
+        if (formType == CoachHub.Domain.Assessments.AssessmentFormType.InitialAssessment)
+        {
+            if (DietStatus == PlanWorkflowStatus.NotStarted) DietStatus = PlanWorkflowStatus.WaitingForPlan;
+            if (WorkoutStatus == PlanWorkflowStatus.NotStarted) WorkoutStatus = PlanWorkflowStatus.WaitingForPlan;
+            return;
+        }
+
+        if (DietStatus is PlanWorkflowStatus.OnPlan or PlanWorkflowStatus.WaitingForPlan)
+            DietStatus = PlanWorkflowStatus.ReviewRequired;
+        if (WorkoutStatus is PlanWorkflowStatus.OnPlan or PlanWorkflowStatus.WaitingForPlan)
+            WorkoutStatus = PlanWorkflowStatus.ReviewRequired;
+    }
     public void RegenerateFormCode(string formCode) =>
         FormCode = Code(formCode, 10, 50, nameof(formCode));
 

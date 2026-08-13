@@ -1,4 +1,6 @@
+using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Media;
+using CoachHub.Domain.Assessments;
 using CoachHub.Domain.Media;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +24,12 @@ public sealed class MediaRepository(CoachHubDbContext dbContext) : IMediaReposit
 
     public async Task DeleteAsync(MediaAsset media, CancellationToken cancellationToken)
     {
+        if (await dbContext.Set<FormAnswer>()
+                .AnyAsync(answer => answer.MediaId == media.Id, cancellationToken))
+        {
+            throw new ConflictException(
+                "Media referenced by a submitted assessment cannot be deleted.");
+        }
         dbContext.Set<MediaAsset>().Remove(media);
         await dbContext.SaveChangesAsync(cancellationToken);
     }

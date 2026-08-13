@@ -29,6 +29,11 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.Training.LegacyExerciseImportRecord), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Clients.Client), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Clients.Subscription), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Assessments.FormDefinition), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Assessments.FormVersion), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Assessments.FormQuestion), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Assessments.FormSubmission), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Assessments.FormAnswer), entityTypes);
         Assert.DoesNotContain(entityTypes, type => type.Name is
             "ClientAssessment" or "ClientUpdate" or "GymDbContext");
     }
