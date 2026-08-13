@@ -1,7 +1,9 @@
+using CoachHub.API.Auditing;
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Errors;
 using CoachHub.API.Settings;
 using CoachHub.Application;
+using CoachHub.Application.Auditing;
 using CoachHub.Infrastructure;
 using CoachHub.Infrastructure.Auth;
 using System.Threading.RateLimiting;
@@ -20,6 +22,8 @@ builder.Services.AddInfrastructure(
     builder.Configuration,
     builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"));
 builder.Services.AddCoachHubAuthentication(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditActorAccessor, HttpAuditActorAccessor>();
 builder.Services.AddControllers();
 builder.Services.AddRateLimiter(options =>
 {

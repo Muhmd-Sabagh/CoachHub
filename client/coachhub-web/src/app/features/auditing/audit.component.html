@@ -1,0 +1,92 @@
+<section class="page-heading">
+  <p class="eyebrow">Security and accountability</p>
+  <h1>Audit trail</h1>
+  <p>Review who changed CoachHub records and when. Sensitive field values are never copied here.</p>
+</section>
+
+<section class="card workbench">
+  <div class="toolbar">
+    <form class="filter-row" (ngSubmit)="applySearch()">
+      <label>
+        <span>Search actor or entity</span>
+        <input name="search" [(ngModel)]="search" />
+      </label>
+      <label>
+        <span>Entity</span>
+        <select name="entityType" [(ngModel)]="entityType">
+          <option value="">All entities</option>
+          @for (type of ['Client', 'Subscription', 'FormDefinition', 'FormSubmission', 'DietPlan', 'WorkoutPlan', 'FoodItem', 'Exercise', 'MediaAsset']; track type) {
+            <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Operation</span>
+        <select name="operation" [(ngModel)]="operation">
+          <option value="">All operations</option>
+          <option>Create</option>
+          <option>Update</option>
+          <option>Delete</option>
+        </select>
+      </label>
+      <label>
+        <span>Actor</span>
+        <select name="actorKind" [(ngModel)]="actorKind">
+          <option value="">All actors</option>
+          <option>Administrator</option>
+          <option>PublicClient</option>
+          <option>System</option>
+        </select>
+      </label>
+      <label><span>From</span><input type="datetime-local" name="from" [(ngModel)]="occurredFrom" /></label>
+      <label><span>To</span><input type="datetime-local" name="to" [(ngModel)]="occurredTo" /></label>
+      <button class="button button-primary">Search</button>
+      <button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+    </form>
+  </div>
+
+  @if (error) { <p class="form-error">{{ error }}</p> }
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Occurred</th>
+          <th>Operation</th>
+          <th>Entity</th>
+          <th>Actor</th>
+          <th>Record ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading) {
+          <tr><td colspan="5" class="table-message">Loading...</td></tr>
+        }
+        @for (entry of page.items; track entry.id) {
+          <tr>
+            <td><strong>{{ entry.occurredAt | date: 'medium' }}</strong></td>
+            <td><strong>{{ entry.operation }}</strong></td>
+            <td><strong>{{ entry.entityType }}</strong></td>
+            <td>
+              <strong>{{ actor(entry) }}</strong>
+              <small>{{ entry.actorKind }}</small>
+            </td>
+            <td><code>{{ entry.entityId || 'Not assigned' }}</code></td>
+          </tr>
+        }
+        @if (!loading && !page.items.length) {
+          <tr><td colspan="5" class="table-message">No audit entries match the applied filters.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" [attr.aria-label]="'Pagination, ' + page.totalCount + ' audit entries'">
+    <span>{{ page.totalCount }} records</span>
+    <div>
+      <button class="button button-secondary" type="button" (click)="previous()" [disabled]="page.pageNumber <= 1">Previous</button>
+      <span>Page {{ page.pageNumber }} of {{ page.totalPages || 1 }}</span>
+      <button class="button button-secondary" type="button" (click)="next()" [disabled]="page.pageNumber >= page.totalPages">Next</button>
+    </div>
+  </div>
+</section>

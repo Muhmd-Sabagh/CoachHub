@@ -31,6 +31,11 @@ const routes: Routes = [
       { path: 'nutrition', component: CatalogComponent, data: { kind: 'foods' } },
       { path: 'training', component: CatalogComponent, data: { kind: 'exercises' } },
       { path: 'plans', component: PlansComponent },
+      {
+        path: 'audit',
+        loadComponent: () =>
+          import('./features/auditing/audit.component').then((module) => module.AuditComponent),
+      },
       { path: 'settings', component: SettingsComponent },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

@@ -1,3 +1,4 @@
+using CoachHub.Application.Auditing;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth;
@@ -10,6 +11,7 @@ using CoachHub.Application.ReferenceData;
 using CoachHub.Application.SavedPlans;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
+using CoachHub.Infrastructure.Auditing;
 using CoachHub.Infrastructure.Assessments;
 using CoachHub.Infrastructure.Assessments.Importing;
 using CoachHub.Infrastructure.Auth;
@@ -76,6 +78,7 @@ public static class DependencyInjection
         services.AddScoped<AdminBootstrapper>();
 
         AddMedia(services, configuration, allowLocalMediaStorage);
+        services.AddScoped<IAuditQueryRepository, AuditQueryRepository>();
         services.AddScoped(typeof(IReferenceRepository<>), typeof(ReferenceRepository<>));
         services.AddScoped<ISavedPlanQueryRepository, SavedPlanQueryRepository>();
         services.AddScoped<IFoodRepository, FoodRepository>();

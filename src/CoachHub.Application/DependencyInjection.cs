@@ -1,3 +1,4 @@
+using CoachHub.Application.Auditing;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth.Login;
@@ -18,6 +19,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddScoped<AuditQueryService>();
         services.AddScoped<LoginCommandHandler>();
         services.AddScoped<FormAdminService>();
         services.AddScoped<FormSubmissionService>();
