@@ -34,6 +34,13 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormQuestion), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormSubmission), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormAnswer), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlan), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanVersion), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.Meal), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.MealFoodItem), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanNote), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementGroup), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementOption), entityTypes);
         Assert.DoesNotContain(entityTypes, type => type.Name is
             "ClientAssessment" or "ClientUpdate" or "GymDbContext");
     }
