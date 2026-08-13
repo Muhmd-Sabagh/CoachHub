@@ -17,6 +17,7 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(User), entityTypes);
         Assert.Contains(typeof(Role), entityTypes);
         Assert.Contains(typeof(UserRole), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Auditing.AuditEntry), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Media.MediaAsset), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.ReferenceData.Package), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.ReferenceData.Currency), entityTypes);

@@ -33,6 +33,7 @@ The Angular production environment expects `/api` on the same trusted origin. If
 - Keep SQL backups and private media backups encrypted. Test restore procedures and deletion propagation.
 - Do not expose `.coachhub-media`, data exports, migration artifacts, test results, or source directories through the web server.
 - Restrict `/health` at the load balancer or private network. Its payload is deliberately minimal and contains no dependency or version details.
+- Grant application identities append/read access to `AuditEntries`, but no routine update/delete permission. Approve retention, archive, legal-hold, and database-administrator access before go-live.
 
 ## Release procedure
 
@@ -43,7 +44,8 @@ The Angular production environment expects `/api` on the same trusted origin. If
 5. Deploy to staging with production-equivalent identity, database permissions, proxy headers, and private media settings.
 6. Smoke test login, client search, subscription status, assessment access/submission/update, media upload/open authorization, diet/workout save/reorder/reload, and bilingual PDF preview/download.
 7. Confirm anonymous requests receive `401` on admin and media routes, invalid access codes reveal no form, login throttling returns `429`, and sensitive responses include `Cache-Control: no-store`.
-8. Promote, monitor errors/latency/rate-limit events, and retain a rollback artifact and database recovery procedure.
+8. Create, update, and delete a staging record; confirm metadata-only audit entries identify the administrator and contain no business field values.
+9. Promote, monitor errors/latency/rate-limit events, and retain a rollback artifact and database recovery procedure.
 
 ## Secret and legacy-data handling
 

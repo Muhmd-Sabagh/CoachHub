@@ -1,6 +1,7 @@
 export type Language = 'en' | 'ar';
 export const translations: Record<Language, Record<string, string>> = {
   en: {
+    'nav.audit': 'Audit trail',
     'common.search': 'Search',
     'common.loading': 'Loading…',
     'auth.eyebrow': 'Coaching operations, simplified',
@@ -39,6 +40,7 @@ export const translations: Record<Language, Record<string, string>> = {
       'Clients, subscriptions, assessments, nutrition, and training are organized as focused modules for the next delivery phase.',
   },
   ar: {
+    'nav.audit': '\u0633\u062c\u0644 \u0627\u0644\u062a\u062f\u0642\u064a\u0642',
     'common.search': 'بحث',
     'common.loading': 'جارٍ التحميل…',
     'auth.eyebrow': 'إدارة التدريب ببساطة',

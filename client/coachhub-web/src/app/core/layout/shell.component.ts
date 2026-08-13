@@ -12,7 +12,8 @@ export class ShellComponent implements OnInit {
     { route: '/dashboard', label: 'nav.dashboard', icon: 'DB' }, { route: '/clients', label: 'nav.clients', icon: 'CL' },
     { route: '/subscriptions', label: 'nav.subscriptions', icon: 'SB' }, { route: '/assessments', label: 'nav.assessments', icon: 'AS' },
     { route: '/nutrition', label: 'nav.nutrition', icon: 'NU' }, { route: '/training', label: 'nav.training', icon: 'TR' },
-    { route: '/plans', label: 'nav.plans', icon: 'PL' }, { route: '/settings', label: 'nav.settings', icon: 'ST' }
+    { route: '/plans', label: 'nav.plans', icon: 'PL' }, { route: '/audit', label: 'nav.audit', icon: 'AU' },
+    { route: '/settings', label: 'nav.settings', icon: 'ST' }
   ];
   constructor(readonly auth: AuthService, readonly config: AppConfigService, readonly i18n: I18nService, readonly theme: ThemeService) {}
   ngOnInit(): void { this.config.load().subscribe(); }
