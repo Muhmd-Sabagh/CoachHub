@@ -48,5 +48,25 @@ public sealed class SubscriptionConfiguration : IEntityTypeConfiguration<Subscri
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<PaymentAccount>().WithMany().HasForeignKey(subscription => subscription.PaymentAccountId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(subscription => subscription.Renewals)
+            .WithOne()
+            .HasForeignKey(renewal => renewal.SubscriptionId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public sealed class SubscriptionRenewalConfiguration : IEntityTypeConfiguration<SubscriptionRenewal>
+{
+    public void Configure(EntityTypeBuilder<SubscriptionRenewal> builder)
+    {
+        builder.ToTable("SubscriptionRenewals");
+        builder.HasKey(renewal => renewal.Id);
+        builder.Property(renewal => renewal.Price).HasPrecision(18, 2).IsRequired();
+        builder.HasIndex(renewal => new { renewal.SubscriptionId, renewal.SequenceNumber }).IsUnique();
+        builder.HasIndex(renewal => renewal.RecordedAt);
+        builder.HasOne<Currency>().WithMany().HasForeignKey(renewal => renewal.CurrencyId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<PaymentAccount>().WithMany().HasForeignKey(renewal => renewal.PaymentAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

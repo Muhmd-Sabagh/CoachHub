@@ -70,6 +70,14 @@ public sealed class ClientsController(
         CancellationToken cancellationToken) =>
         subscriptionService.UpdateAsync(clientId, id, input, cancellationToken);
 
+    [HttpPost("{clientId:guid}/subscriptions/{id:guid}/renewals")]
+    public Task<SubscriptionResponse> RenewSubscription(
+        Guid clientId,
+        Guid id,
+        SubscriptionRenewalInput input,
+        CancellationToken cancellationToken) =>
+        subscriptionService.RenewAsync(clientId, id, input, cancellationToken);
+
     [HttpDelete("{clientId:guid}/subscriptions/{id:guid}")]
     public async Task<IActionResult> DeleteSubscription(
         Guid clientId,

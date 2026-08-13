@@ -85,6 +85,11 @@ public sealed class ClientService(
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var client = await FindRequiredAsync(id, cancellationToken);
+        if (client.Subscriptions.Any(subscription => subscription.Renewals.Count > 0))
+        {
+            throw new ConflictException(
+                "A client with subscription renewal history cannot be deleted.");
+        }
         await repository.DeleteAsync(client, cancellationToken);
     }
 

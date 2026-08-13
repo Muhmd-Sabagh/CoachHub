@@ -115,6 +115,77 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
     }
 
     [Fact]
+    public async Task Administrator_can_record_renewal_history_without_rewriting_it()
+    {
+        await AuthenticateAsync();
+        var suffix = Guid.NewGuid().ToString("N");
+        var package = await CreatePackageAsync("Renewal package " + suffix);
+        var originalCurrency = await CreateCurrencyAsync("O" + suffix[..5].ToUpperInvariant());
+        var renewalCurrency = await CreateCurrencyAsync("R" + suffix[..5].ToUpperInvariant());
+        var renewalAccount = await CreatePaymentAsync("Renewal account " + suffix);
+        var client = await CreateClientAsync("Renewal client " + suffix);
+        var startDate = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(-1);
+
+        var create = await _client.PostAsJsonAsync(
+            $"/api/clients/{client.Id}/subscriptions",
+            new SubscriptionInput(
+                package.Id,
+                startDate,
+                1,
+                500,
+                originalCurrency.Id,
+                null,
+                0));
+        create.EnsureSuccessStatusCode();
+        var subscription = (await create.Content.ReadFromJsonAsync<SubscriptionResponse>())!;
+
+        var renew = await _client.PostAsJsonAsync(
+            $"/api/clients/{client.Id}/subscriptions/{subscription.Id}/renewals",
+            new SubscriptionRenewalInput(2, 750, renewalCurrency.Id, renewalAccount.Id));
+
+        renew.EnsureSuccessStatusCode();
+        var renewed = (await renew.Content.ReadFromJsonAsync<SubscriptionResponse>())!;
+        Assert.Equal(1, renewed.RenewalCount);
+        Assert.Equal(3, renewed.DurationMonths);
+        Assert.Equal(subscription.EndDate.AddMonths(2), renewed.EndDate);
+        var transaction = Assert.Single(renewed.Renewals);
+        Assert.Equal(1, transaction.SequenceNumber);
+        Assert.Equal(subscription.EndDate, transaction.PreviousEndDate);
+        Assert.Equal(renewed.EndDate, transaction.NewEndDate);
+        Assert.Equal(renewalCurrency.Id, transaction.CurrencyId);
+        Assert.Equal(renewalAccount.Id, transaction.PaymentAccountId);
+
+        var detail = await _client.GetFromJsonAsync<ClientDetailResponse>($"/api/clients/{client.Id}");
+        Assert.Single(Assert.Single(detail!.Subscriptions).Renewals);
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/clients/{client.Id}/subscriptions/{subscription.Id}",
+            new SubscriptionInput(
+                package.Id,
+                startDate,
+                4,
+                900,
+                originalCurrency.Id,
+                null,
+                1));
+        Assert.Equal(HttpStatusCode.Conflict, update.StatusCode);
+        Assert.Equal(
+            HttpStatusCode.Conflict,
+            (await _client.DeleteAsync(
+                $"/api/clients/{client.Id}/subscriptions/{subscription.Id}")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.Conflict,
+            (await _client.DeleteAsync($"/api/clients/{client.Id}")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.Conflict,
+            (await _client.DeleteAsync(
+                $"/api/reference-data/currencies/{renewalCurrency.Id}")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.Conflict,
+            (await _client.DeleteAsync(
+                $"/api/reference-data/payment-accounts/{renewalAccount.Id}")).StatusCode);
+    }
+    [Fact]
     public async Task Invalid_subscription_reference_and_ranges_are_validation_errors()
     {
         await AuthenticateAsync();

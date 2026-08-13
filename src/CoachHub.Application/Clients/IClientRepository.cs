@@ -14,5 +14,6 @@ public interface IClientRepository
     Task DeleteAsync(Client client, CancellationToken cancellationToken);
     Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken);
     Task AddSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken);
+    Task AddRenewalAsync(SubscriptionRenewal renewal, CancellationToken cancellationToken);
     Task DeleteSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken);
 }

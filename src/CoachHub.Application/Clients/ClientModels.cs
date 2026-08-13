@@ -66,6 +66,23 @@ public sealed record SubscriptionInput(
     Guid? PaymentAccountId,
     int RenewalCount);
 
+public sealed record SubscriptionRenewalInput(
+    int DurationMonths,
+    decimal Price,
+    Guid CurrencyId,
+    Guid? PaymentAccountId);
+
+public sealed record SubscriptionRenewalResponse(
+    Guid Id,
+    int SequenceNumber,
+    DateOnly PreviousEndDate,
+    DateOnly NewEndDate,
+    int DurationMonths,
+    decimal Price,
+    Guid CurrencyId,
+    Guid? PaymentAccountId,
+    DateTimeOffset RecordedAt);
+
 public sealed record SubscriptionResponse(
     Guid Id,
     Guid ClientId,
@@ -77,4 +94,5 @@ public sealed record SubscriptionResponse(
     Guid CurrencyId,
     Guid? PaymentAccountId,
     int RenewalCount,
-    bool IsActive);
+    bool IsActive,
+    IReadOnlyList<SubscriptionRenewalResponse> Renewals);

@@ -4,6 +4,8 @@ namespace CoachHub.Domain.Clients;
 
 public sealed class Subscription : Entity
 {
+    private readonly List<SubscriptionRenewal> _renewals = [];
+
     private Subscription() { }
 
     public Guid ClientId { get; private set; }
@@ -15,6 +17,7 @@ public sealed class Subscription : Entity
     public Guid CurrencyId { get; private set; }
     public Guid? PaymentAccountId { get; private set; }
     public int RenewalCount { get; private set; }
+    public IReadOnlyCollection<SubscriptionRenewal> Renewals => _renewals;
 
     public static Subscription Create(
         Guid clientId,
@@ -48,6 +51,11 @@ public sealed class Subscription : Entity
         Guid? paymentAccountId,
         int renewalCount)
     {
+        if (_renewals.Count > 0)
+        {
+            throw new InvalidOperationException("A renewed subscription cannot be edited.");
+        }
+
         if (packageId == Guid.Empty) throw new ArgumentException("A package is required.", nameof(packageId));
         if (currencyId == Guid.Empty) throw new ArgumentException("A currency is required.", nameof(currencyId));
         if (durationMonths is < 1 or > 120) throw new ArgumentOutOfRangeException(nameof(durationMonths));
@@ -61,6 +69,34 @@ public sealed class Subscription : Entity
         CurrencyId = currencyId;
         PaymentAccountId = paymentAccountId;
         RenewalCount = renewalCount;
+    }
+
+    public SubscriptionRenewal Renew(
+        int durationMonths,
+        decimal price,
+        Guid currencyId,
+        Guid? paymentAccountId,
+        DateTimeOffset recordedAt)
+    {
+        if (RenewalCount >= 1000)
+        {
+            throw new InvalidOperationException("The subscription renewal limit has been reached.");
+        }
+
+        var renewal = SubscriptionRenewal.Create(
+            Id,
+            RenewalCount + 1,
+            EndDate,
+            durationMonths,
+            price,
+            currencyId,
+            paymentAccountId,
+            recordedAt);
+        EndDate = renewal.NewEndDate;
+        DurationMonths += durationMonths;
+        RenewalCount++;
+        _renewals.Add(renewal);
+        return renewal;
     }
 
     public bool IsActiveOn(DateOnly date) => date >= StartDate && date < EndDate;
