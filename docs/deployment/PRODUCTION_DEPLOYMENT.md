@@ -46,7 +46,8 @@ The Angular production environment expects `/api` on the same trusted origin. If
 7. Confirm anonymous requests receive `401` on admin and media routes, invalid access codes reveal no form, login throttling returns `429`, and sensitive responses include `Cache-Control: no-store`.
 8. Create, update, and delete a staging record; confirm metadata-only audit entries identify the administrator and contain no business field values.
 9. Record a staging subscription renewal; confirm the end date and count advance once, history reloads, and the renewed subscription and its client cannot be deleted.
-10. Promote, monitor errors/latency/rate-limit events, and retain a rollback artifact and database recovery procedure.
+10. Compare the operational dashboard against staging source records for one reporting period; verify package/account totals stay separated by currency and are labelled commercial activity, not revenue.
+11. Promote, monitor errors/latency/rate-limit events, and retain a rollback artifact and database recovery procedure.
 
 ## Secret and legacy-data handling
 
