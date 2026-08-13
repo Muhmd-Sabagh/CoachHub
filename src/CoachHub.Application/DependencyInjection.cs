@@ -1,5 +1,6 @@
 using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Media;
+using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,8 @@ public static class DependencyInjection
     {
         services.AddScoped<LoginCommandHandler>();
         services.AddScoped<MediaService>();
+        services.AddScoped<FoodService>();
+        services.AddScoped<LegacyFoodImportService>();
         services.AddScoped<PackageService>();
         services.AddScoped<CurrencyService>();
         services.AddScoped<PaymentAccountService>();
