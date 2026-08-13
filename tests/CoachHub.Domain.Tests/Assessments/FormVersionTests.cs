@@ -38,4 +38,14 @@ public sealed class FormVersionTests
         Assert.Equal("Original text", answer.QuestionTextSnapshot);
         Assert.Equal(QuestionType.Number, answer.QuestionTypeSnapshot);
     }
-}
+
+    [Fact]
+    public void Imported_media_rejects_lookalike_google_hosts()
+    {
+        var version = FormVersion.CreateDraft(Guid.NewGuid(), 1);
+        var question = FormQuestion.Create(
+            version.Id, null, Guid.NewGuid(), "Photo", QuestionType.MediaUpload, true, 0);
+        Assert.Throws<ArgumentException>(() => FormAnswer.Create(
+            Guid.NewGuid(), question, "\"https://evilgoogle.com/photo\"", null,
+            "https://evilgoogle.com/photo"));
+    }}

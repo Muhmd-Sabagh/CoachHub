@@ -1,4 +1,5 @@
 using CoachHub.Application.Assessments;
+using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Clients;
 using CoachHub.Application.Media;
@@ -16,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<LoginCommandHandler>();
         services.AddScoped<FormAdminService>();
         services.AddScoped<FormSubmissionService>();
+        services.AddScoped<AssessmentImportService>();
         services.AddScoped<ClientService>();
         services.AddScoped<SubscriptionService>();
         services.AddSingleton(TimeProvider.System);

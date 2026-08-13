@@ -1,4 +1,5 @@
 using CoachHub.Application.Assessments;
+using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Clients;
 using CoachHub.Application.Media;
@@ -6,6 +7,7 @@ using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Training;
 using CoachHub.Infrastructure.Assessments;
+using CoachHub.Infrastructure.Assessments.Importing;
 using CoachHub.Infrastructure.Auth;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Clients;
@@ -71,6 +73,8 @@ public static class DependencyInjection
         services.AddScoped<IExerciseRepository, ExerciseRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IFormRepository, FormRepository>();
+        services.AddScoped<IFormImportRepository, FormImportRepository>();
+        services.AddSingleton<IAssessmentWorkbookParser, XlsxAssessmentWorkbookParser>();
         services.AddSingleton<IClientCodeGenerator, SecureClientCodeGenerator>();
         return services;
     }
