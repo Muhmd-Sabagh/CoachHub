@@ -1,9 +1,11 @@
 using CoachHub.Application.Auth;
 using CoachHub.Application.Media;
+using CoachHub.Application.ReferenceData;
 using CoachHub.Infrastructure.Auth;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Media;
 using CoachHub.Infrastructure.Persistence;
+using CoachHub.Infrastructure.ReferenceData;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -56,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<AdminBootstrapper>();
 
         AddMedia(services, configuration, allowLocalMediaStorage);
+        services.AddScoped(typeof(IReferenceRepository<>), typeof(ReferenceRepository<>));
         return services;
     }
 
