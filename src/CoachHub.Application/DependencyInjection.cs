@@ -8,6 +8,7 @@ using CoachHub.Application.Media;
 using CoachHub.Application.Pdf;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Application.Reporting;
 using CoachHub.Application.SavedPlans;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
@@ -34,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<FoodService>();
         services.AddScoped<LegacyFoodImportService>();
         services.AddScoped<PackageService>();
+        services.AddScoped<ReportingService>();
         services.AddScoped<CurrencyService>();
         services.AddScoped<PaymentAccountService>();
         services.AddScoped<FoodCategoryService>();
