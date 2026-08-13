@@ -32,10 +32,11 @@ public sealed class LegacyFoodImportService(
                 continue;
             }
 
-            var category = await repository.GetOrCreateUncategorizedAsync(cancellationToken);
+            var category = await repository.GetOrCreateCategoryAsync(
+                row.CategoryName ?? "Uncategorized", cancellationToken);
             var input = new FoodInput(
                 row.Name,
-                null,
+                row.NameAr,
                 category.Id,
                 row.Unit,
                 row.CaloriesPer100Units,

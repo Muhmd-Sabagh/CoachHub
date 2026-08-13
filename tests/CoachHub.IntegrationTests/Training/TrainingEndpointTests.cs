@@ -64,10 +64,11 @@ public sealed class TrainingEndpointTests : IClassFixture<CoachHubApiFactory>
     }
 
     [Fact]
-    public async Task Legacy_import_is_idempotent_reports_invalid_rows_and_uses_uncategorized()
+    public async Task Legacy_import_is_idempotent_and_uses_explicit_category_mapping()
     {
         await AuthenticateAsync();
         var legacyId = Random.Shared.Next(100000, int.MaxValue);
+        var categoryName = "Legacy Strength " + Guid.NewGuid().ToString("N");
         var rows = new[]
         {
             new LegacyExerciseImportRow(
@@ -75,7 +76,9 @@ public sealed class TrainingEndpointTests : IClassFixture<CoachHubApiFactory>
                 "Legacy Deadlift",
                 "https://www.youtube.com/watch?v=deadlift",
                 "/images/exercises/deadlift.jpg",
-                null),
+                null,
+                null,
+                categoryName),
             new LegacyExerciseImportRow(
                 legacyId + 1,
                 "Invalid Link",
@@ -101,9 +104,9 @@ public sealed class TrainingEndpointTests : IClassFixture<CoachHubApiFactory>
         Assert.Equal(1, repeatResult!.AlreadyImportedCount);
 
         var categories = await _client.GetFromJsonAsync<PagedResult<BilingualReferenceResponse>>(
-            "/api/reference-data/exercise-categories?searchTerm=Uncategorized&pageSize=100");
+            "/api/reference-data/exercise-categories?searchTerm=" + Uri.EscapeDataString(categoryName) + "&pageSize=100");
         Assert.NotNull(categories);
-        Assert.Single(categories.Items, item => item.NameEn == "Uncategorized");
+        Assert.Single(categories.Items, item => item.NameEn == categoryName);
     }
 
     [Fact]

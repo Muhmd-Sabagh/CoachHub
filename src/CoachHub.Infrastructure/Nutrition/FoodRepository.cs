@@ -66,10 +66,11 @@ public sealed class FoodRepository(CoachHubDbContext dbContext) : IFoodRepositor
             .AsNoTracking()
             .SingleOrDefaultAsync(record => record.LegacyId == legacyId, cancellationToken);
 
-    public async Task<FoodCategory> GetOrCreateUncategorizedAsync(
+    public async Task<FoodCategory> GetOrCreateCategoryAsync(
+        string categoryName,
         CancellationToken cancellationToken)
     {
-        const string categoryName = "Uncategorized";
+        categoryName = string.IsNullOrWhiteSpace(categoryName) ? "Uncategorized" : categoryName.Trim();
         var category = await dbContext.Set<FoodCategory>()
             .SingleOrDefaultAsync(item => item.NameEn == categoryName, cancellationToken);
         if (category is not null)

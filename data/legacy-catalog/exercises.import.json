@@ -1,0 +1,1406 @@
+[
+    {
+        "legacyId":  1,
+        "name":  "Barbell Biceps Curl",
+        "youTubeLink":  "https://youtube.com/shorts/9Q7qbqAFw9Y?si=Ra95F0CswyYdo3Mu",
+        "imagePath":  "/images/exercises/982ca5c4-1c8a-4c42-8717-47a238590f00_Barbell Biceps Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  9,
+        "name":  "Alternating DB hammer curls",
+        "youTubeLink":  "https://youtu.be/WGTCVgCqLqM?si=DkPL_rGLcmcHVeiB",
+        "imagePath":  "/images/exercises/de719b15-8503-4cb9-8580-7237b32167e6_Hammer-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1003,
+        "name":  "Seated Hammer Curl",
+        "youTubeLink":  "https://youtu.be/tESLZuEfhmk?si=6NSbM6oqbmDQYoZ-",
+        "imagePath":  "/images/exercises/e77e3ef2-9859-431f-8a72-166cf9fce05b_Seated-Hammer-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1004,
+        "name":  "Seated Incline DB Curl",
+        "youTubeLink":  "https://youtu.be/FM7725AeXPA?si=GenGyWmP1n5kYnsA",
+        "imagePath":  "/images/exercises/a16ae887-64c8-473c-b0a2-d171a08ec5a5_Seated-Incline-Dumbbell-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1005,
+        "name":  "Preacher Curl machine",
+        "youTubeLink":  "https://youtu.be/VfBnzGgu6as?si=_5bIUuBJq-S5IHUT",
+        "imagePath":  "/images/exercises/cf8ef513-a5d9-4062-9995-c6ccb40accbd_Lever-Preacher-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1007,
+        "name":  "One Arm Cable Curl",
+        "youTubeLink":  "https://youtu.be/dKyFMBSXPbY?si=9FmFTAhftktntvc_",
+        "imagePath":  "/images/exercises/7ff051ba-cc12-414c-b399-83d5a7a562e8_One-Arm-Cable-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1008,
+        "name":  "DB Reverse Curl",
+        "youTubeLink":  "https://youtu.be/hUA-fIpM7nA?si=uVfttLZKM2YMbQM3",
+        "imagePath":  "/images/exercises/bd9a79ba-4c9c-4d9e-afab-28b6d462b72c_dumbbell-reverse-curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1009,
+        "name":  "Seated Close-Grip Concentration Curl",
+        "youTubeLink":  "https://youtu.be/QfiyiAWsQK4?si=xZXVonOemvJ6ruCh",
+        "imagePath":  "/images/exercises/fee3ddcb-f1b5-4337-9c2d-64026789e411_Seated-close-grip-concentration-curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1010,
+        "name":  "Biceps Leg Concentration Curl",
+        "youTubeLink":  "https://youtu.be/VMbDQ8PZazY?si=zE2Y3x8GGVh6VKCg",
+        "imagePath":  "/images/exercises/b9d3782e-d454-45e5-baa3-68ac5b540058_Biceps-Leg-Concentration-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1011,
+        "name":  "Cable Single Arm Hammer Curl",
+        "youTubeLink":  "https://youtu.be/JxXABDrAFBo?si=IUwuPacK4ysxS35N",
+        "imagePath":  "/images/exercises/aef273ea-8a25-4c84-9389-90bc5a95e5c9_cable-single-arm-hammer-curl (1).gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1012,
+        "name":  "Seated DB Curl",
+        "youTubeLink":  "https://youtu.be/BsULGO70tcU?si=GSnvkKTTNC6J1v-H",
+        "imagePath":  "/images/exercises/713aaa8a-5191-4693-a2c1-96fd5a258e96_Seated-Zottman-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1013,
+        "name":  "Double Arm DB Curl",
+        "youTubeLink":  "https://youtu.be/HnHuhf4hEWY?si=OMMhKEee0_PKUBE6",
+        "imagePath":  "/images/exercises/2401c267-3710-4315-ad9e-4e1389eaa83c_Double-Arm-Dumbbell-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1014,
+        "name":  "EZ Bar Preacher Curl",
+        "youTubeLink":  "https://youtu.be/sxA__DoLsgo?si=_zj49BX0RK2UnbHo",
+        "imagePath":  "/images/exercises/32a6986a-8415-403d-8b37-d421a6e141ef_Z-Bar-Preacher-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1015,
+        "name":  "Cable Rope Hammer Curl",
+        "youTubeLink":  "https://youtu.be/-6ZgZZJTqZA?si=sEJvQ5rYj99t9yiI",
+        "imagePath":  "/images/exercises/12f374b9-78a5-4e42-a80d-474e84bf3112_rope-bicep-curls.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1016,
+        "name":  "Biceps Curl Machine",
+        "youTubeLink":  "https://youtu.be/kfE9Plm8Hks?si=l-c5st5De1pfq8ZX",
+        "imagePath":  "/images/exercises/9e1c958a-c510-49b9-89cc-f1ef4fa7ff05_Bicep-Curl-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1017,
+        "name":  "Cable Curl",
+        "youTubeLink":  "https://youtu.be/UsaY33N4KEw?si=kZFg-JRl72RHaTzi",
+        "imagePath":  "/images/exercises/5a24a80a-a368-4a94-9027-2647bac2e05f_cable-curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1018,
+        "name":  "Cable Reverse Grip EZ-bar Biceps Curl",
+        "youTubeLink":  "https://youtu.be/QbQcUdX7rqA?si=Pt8NrAlad1UgWd3H",
+        "imagePath":  "/images/exercises/a8cef4b0-00a6-4e2e-97de-422fb3203851_Cable-Reverse-Grip-EZ-bar-Biceps-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Biceps"
+    },
+    {
+        "legacyId":  1019,
+        "name":  "Barbell JM Press",
+        "youTubeLink":  "https://youtu.be/sQJzzZVqV3k?si=u7umb2hRNjspFe9y",
+        "imagePath":  "/images/exercises/00643c6e-9ff7-4b3a-a9bd-08ab8c56bd62_Barbell-JM-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1020,
+        "name":  "One Arm Triceps Pushdown",
+        "youTubeLink":  "https://youtu.be/Cp_bShvMY4c?si=ku0V50Y4iZLJ9SET",
+        "imagePath":  "/images/exercises/f5b2fba7-a081-462a-b6c5-f8d710a5ba46_One-arm-triceps-pushdown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1021,
+        "name":  "Triceps Push down",
+        "youTubeLink":  "https://youtu.be/6Fzep104f0s?si=daOW-HCSmwudJcik",
+        "imagePath":  "/images/exercises/e1f77875-eed7-4283-bf0a-516cfbc2768b_Pushdown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1022,
+        "name":  "Bench Dips",
+        "youTubeLink":  "https://youtu.be/larQGD02ndE?si=q3JNutpA448Q2naD",
+        "imagePath":  "/images/exercises/8852b6b5-7957-4cb9-ade9-e89f13a45927_Bench-Dips.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1023,
+        "name":  "Triceps Dips",
+        "youTubeLink":  "https://youtu.be/oA8Sxv2WeOs?si=zZ7T4KO9YedOH2wa",
+        "imagePath":  "/images/exercises/ed860b0e-6bdd-47ec-9588-6b8e1a81bf67_Triceps-Dips.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1024,
+        "name":  "Cable Overhead Triceps",
+        "youTubeLink":  "https://youtu.be/1u18yJELsh0?si=E68FMeDDIG0VHmIF",
+        "imagePath":  "/images/exercises/07d2949b-c46a-41d0-8043-cb72351b74d3_Cable-Rope-Overhead-Triceps-Extension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1025,
+        "name":  "Triceps Dips machine",
+        "youTubeLink":  "https://youtu.be/EY3F6g41RZ0?si=-LA6PkiNJhOoZEdE",
+        "imagePath":  "/images/exercises/f5d771f6-48ea-48a9-8ed5-2f2080b85cee_Triceps-Dip-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1026,
+        "name":  "Cable Triceps Kickback",
+        "youTubeLink":  "https://youtu.be/ZvF4Oi_6Vtg?si=lMSGPqlHTAwZcfNo",
+        "imagePath":  "/images/exercises/6f8b90c4-c3e4-4c6d-93ef-973a1708b38b_Cable-Tricep-Kickback.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1027,
+        "name":  "Triceps machine",
+        "youTubeLink":  "https://youtu.be/_JoblP7fggo?si=n5Pskt4b3Jo6KfZS",
+        "imagePath":  "/images/exercises/f4dffe02-845e-4750-a245-55708c76b9b8_Lever-Tricep-Extension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1028,
+        "name":  "DB Skull Crusher",
+        "youTubeLink":  "https://youtu.be/jPjhQ2hsAds?si=OkNInxKP-l2t4hM4",
+        "imagePath":  "/images/exercises/35ffe8a1-5316-46cd-86d0-b2fc9ccf6b80_Dumbbell-Skull-Crusher.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1029,
+        "name":  "Cable Incline Triceps overhead",
+        "youTubeLink":  "https://youtu.be/XwpXVjV2Wm8?si=T76hdKAwjKH_K4SV",
+        "imagePath":  "/images/exercises/d7ed3b6a-4ea0-41bd-98e9-219eb83a64a4_Cable-Incline-Triceps-Extension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1030,
+        "name":  "High Pulley Overhead Triceps Extension",
+        "youTubeLink":  "https://youtu.be/m8xLBm1IArw?si=mJEimBLcC7VTUHYE",
+        "imagePath":  "/images/exercises/740f330f-d872-4aaf-9b05-e7bcda8729f7_High-Pulley-Overhead-Tricep-Extension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1031,
+        "name":  "Cross Arm Push-up",
+        "youTubeLink":  "https://youtu.be/jfM1HGOmZtE?si=rvpPKWVWN8_CBA9y",
+        "imagePath":  "/images/exercises/c04f8fea-d883-4ac4-ae84-b803fc542553_Cross-Arm-Push-up.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1032,
+        "name":  "Cable One-Arm Overhead Triceps",
+        "youTubeLink":  "https://youtu.be/GTaXW-MpjII?si=ddv9_opQzSUDHePO",
+        "imagePath":  "/images/exercises/003abb43-fa5b-4ebe-9e7d-af498ce784a6_Cable-One-Arm-Overhead-Triceps-Extension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1033,
+        "name":  "Triceps Extension Machine",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/23e9e7ae-b6c4-41f6-b840-a505de3e8799_Triceps-Extension-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1034,
+        "name":  "Triceps Dip Machine",
+        "youTubeLink":  "https://youtu.be/ajWW13UWsmo?si=2lKsw7Igo2TjF7DH",
+        "imagePath":  "/images/exercises/161a3b81-ba19-4bc7-a045-5c514100216b_Triceps-Dips.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1035,
+        "name":  "Cable Crossover Triceps Extension",
+        "youTubeLink":  "https://youtu.be/mQKXj9cvEbA?si=W9eVT0U7l40Tv1Ea",
+        "imagePath":  "/images/exercises/1db02ebc-5a9d-44a6-8cda-07b018febc6b_Cable-Crossover-Triceps-Extension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Triceps"
+    },
+    {
+        "legacyId":  1036,
+        "name":  "Bar Bench Press",
+        "youTubeLink":  "https://youtu.be/ejI1Nlsul9k?si=Th3K6GoNEJrOnIOq",
+        "imagePath":  "/images/exercises/9cae63e5-7063-4911-b498-d86bf78b311e_Barbell-Bench-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1037,
+        "name":  "Incline Chest Fly Machine",
+        "youTubeLink":  "https://youtu.be/zLVzDumJgOc?si=uKzv98E3-KWBF_y4",
+        "imagePath":  "/images/exercises/8e9dc7dc-eca8-4084-9582-e9cb608c8c50_Incline-Chest-Fly-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1038,
+        "name":  "Pec Deck Fly",
+        "youTubeLink":  "https://youtu.be/FDay9wFe5uE?si=Gx5xAL8gArdwAixd",
+        "imagePath":  "/images/exercises/81f37587-d8ff-43ea-a3a8-46e3e53d552a_10301301-Lever-Pec-Deck-Fly_Chest_720.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1039,
+        "name":  "high to low chest fly",
+        "youTubeLink":  "https://youtu.be/hhruLxo9yZU?si=iDJd6JrgYwl3QsXS",
+        "imagePath":  "/images/exercises/a0477187-f344-40e4-9103-6e70671d1d09_High-Cable-Crossover.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1040,
+        "name":  "Incline Bar Bench Press",
+        "youTubeLink":  "https://youtu.be/lJ2o89kcnxY?si=HLNT2AcserX1ZKMu",
+        "imagePath":  "/images/exercises/0677ddce-aa1b-4954-b5e6-e40121392e6c_Incline-Barbell-Bench-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1041,
+        "name":  "Dumbbell Fly",
+        "youTubeLink":  "https://youtu.be/Nhvz9EzdJ4U?si=kL_PZm6IMNwNjaDA",
+        "imagePath":  "/images/exercises/d2b08d99-3987-4387-8856-fe313f5796b1_Dumbbell-Fly.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1042,
+        "name":  "DB Bench Press",
+        "youTubeLink":  "https://youtu.be/YQ2s_Y7g5Qk?si=YeJHnphopoWounZh",
+        "imagePath":  "/images/exercises/f6fcab4c-5ec1-49bb-a287-0fbb11932ae7_Dumbbell-Press-1.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1043,
+        "name":  "Cable Crossover chest",
+        "youTubeLink":  "https://youtu.be/t2C-xkBrLZM?si=imavkEa__z8iUjgN",
+        "imagePath":  "/images/exercises/90b04d9e-a89e-434b-8dea-de55ecd9e602_Cable-Crossover.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1044,
+        "name":  "Incline DB Fly",
+        "youTubeLink":  "https://youtu.be/ETO4moWiCXI?si=r6nx0r9whS68Hded",
+        "imagePath":  "/images/exercises/c7f3a15c-de31-4152-a8c2-978f6f4630e2_Incline-Dumbbell-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1045,
+        "name":  "Incline DB Press",
+        "youTubeLink":  "https://youtu.be/5CECBjd7HLQ?si=4RKaChA9DCikEOqs",
+        "imagePath":  "/images/exercises/317146e2-7106-460e-a2b8-8520cdf4d271_Incline-Dumbbell-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1046,
+        "name":  "Machine Fly",
+        "youTubeLink":  "https://youtu.be/sAeDw6xhFFw?si=R8AejqlMmIE7M4Zp",
+        "imagePath":  "/images/exercises/3105fa51-c098-4988-80ab-1831471eca70_Pec-Deck-Fly.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1047,
+        "name":  "Machine Incline Chest Press",
+        "youTubeLink":  "https://youtu.be/bLWdsESOazs?si=IunVWFyMIj7oJ5fA",
+        "imagePath":  "/images/exercises/7ff5e0a2-5300-43ed-bccb-79a31d220355_Lever-Incline-Chest-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1048,
+        "name":  "Chest Dips",
+        "youTubeLink":  "https://youtu.be/oA8Sxv2WeOs?si=da7uvCjUg_tw24j6",
+        "imagePath":  "/images/exercises/9f34e640-ac71-4d76-a18c-c3f705b1332b_Chest-Dips.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1049,
+        "name":  "Assisted Chest Dip",
+        "youTubeLink":  "https://youtu.be/g3o0dC_qCns?si=e_HPoRk7qEgVRxmz",
+        "imagePath":  "/images/exercises/141c2046-7864-445c-b874-379d1b579cff_Assisted-Chest-Dip.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1050,
+        "name":  "Lying Cable Fly",
+        "youTubeLink":  "https://youtu.be/NskaFl2Gioo?si=MdgRSXEOQ0CAyB_D",
+        "imagePath":  "/images/exercises/fac35e55-ffd6-4ad9-b029-e0fbd1ff618d_Lying-Cable-Fly.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1051,
+        "name":  "Drop Push-Up",
+        "youTubeLink":  "https://youtu.be/McdvOZUllPU?si=5EWyg6HfhEKVRsd2",
+        "imagePath":  "/images/exercises/9c13b90b-8ead-42c3-8d29-23f4327ebdbc_Drop-Push-Up.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1052,
+        "name":  "Decline Chest Press Machine",
+        "youTubeLink":  "https://youtu.be/jNn3rWpUMN0?si=qFzUyO1junhzYfSq",
+        "imagePath":  "/images/exercises/14783678-e846-4d2c-a5b9-ec385d8ad27e_Decline-Chest-Press-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1053,
+        "name":  "Decline Chest Press Machine",
+        "youTubeLink":  "https://youtu.be/KToduhYhACw?si=3D3zYmS41is3nCKc",
+        "imagePath":  "/images/exercises/d98c97af-43d2-499d-8d15-4f4ec8587320_Lever-Decline-Chest-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1054,
+        "name":  "Lying Chest Press Machine",
+        "youTubeLink":  "https://youtu.be/sreMgnjczh4?si=PSroIJFBHLhFpc3b",
+        "imagePath":  "/images/exercises/7e0436ec-6355-416d-9d6c-1ed40b96b571_Lying-Chest-Press-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1055,
+        "name":  "Smith Machine Bench Press",
+        "youTubeLink":  "https://youtu.be/O5viuEPDXKY?si=GH9B4qGHlXPxXBrm",
+        "imagePath":  "/images/exercises/327ca65f-db62-4e1a-ab89-a7e11d5180f8_Smith-Machine-Bench-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1056,
+        "name":  "Smith Machine Incline Bench Press",
+        "youTubeLink":  "https://youtu.be/8urE8Z8AMQ4?si=X1jmrLK0wwX8DbR4",
+        "imagePath":  "/images/exercises/53fea174-b883-46f4-88c5-aeccd254ad6b_Smith-Machine-Incline-Bench-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1057,
+        "name":  "Incline Chest Press Machine",
+        "youTubeLink":  "https://youtu.be/Sy0q1pgw-AE?si=jcnSuK6AvMI1qozp",
+        "imagePath":  "/images/exercises/8a78fe6e-7ff9-4a1e-a167-a8948d5d5ec2_Lever-Incline-Chest-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1058,
+        "name":  "Incline Push-up",
+        "youTubeLink":  "https://youtu.be/Me9bHFAxnCs?si=XgFYqESeT9x2zTnu",
+        "imagePath":  "/images/exercises/a7d301fa-4043-4e14-965b-6624799bf976_Incline-Push-Up.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1059,
+        "name":  "Decline Chest Press Machine",
+        "youTubeLink":  "https://youtu.be/KToduhYhACw?si=TA7Fq_gCI-e2OHfV",
+        "imagePath":  "/images/exercises/ddc59949-c336-468e-894f-1a43425a9e6d_Lever-Decline-Chest-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1060,
+        "name":  "İncline Cable Fly",
+        "youTubeLink":  "https://youtu.be/GwpA8-VcEk8?si=jC0a3To7eQY-yL8Q",
+        "imagePath":  "/images/exercises/e536500e-d485-4276-bbdd-93026e0e02e2_Incline-Cable-Fly.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Chest"
+    },
+    {
+        "legacyId":  1061,
+        "name":  "Lat Pulldown machine",
+        "youTubeLink":  "https://youtu.be/IhO6r9kKTXQ?si=LA7DCTVXmbQcBaQu",
+        "imagePath":  "/images/exercises/b7d5bbc9-907b-41b4-87c3-6edd1a687dbf_Front-Pulldown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1062,
+        "name":  "Lat Pulldown Wide grip",
+        "youTubeLink":  "https://youtu.be/O-_EOo6IY3U?si=lvO_NxzG4EVmL6Dt",
+        "imagePath":  "/images/exercises/8d5d52ec-c9ff-4264-ac46-8a61680c0386_Lat-Pulldown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1063,
+        "name":  "Seated Cable Row wide grip",
+        "youTubeLink":  "https://youtu.be/sjJ0z4R3w0M?si=PGAbbJLfHhTpBbT8",
+        "imagePath":  "/images/exercises/196e3ab4-9737-4823-9a34-b2ac87d1a7f2_Seated-Cable-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1064,
+        "name":  "Barbell Bent Over Row",
+        "youTubeLink":  "https://youtu.be/bm0_q9bR_HA?si=pe8xkoNTHvVz48cH",
+        "imagePath":  "/images/exercises/e6f9ccc9-47c4-4f20-93d7-1f7a9f15583c_Barbell-Bent-Over-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1065,
+        "name":  "Cable Straight Arm Pulldown",
+        "youTubeLink":  "https://youtu.be/jYIWugY50nk?si=i97QlviviDTFPNcB",
+        "imagePath":  "/images/exercises/510f16d1-fd19-42b8-99e5-50cd627043b8_Cable-Straight-Arm-Pulldown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1066,
+        "name":  "T-Bar Row",
+        "youTubeLink":  "https://youtu.be/BVSTYt02SuY?si=SdGO-zGluK4vpXmF",
+        "imagePath":  "/images/exercises/d076b59b-9b28-4a1d-bb08-0dd52c445d8a_Lever-Reverse-T-Bar-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1067,
+        "name":  "DB Row",
+        "youTubeLink":  "https://youtu.be/DMo3HJoawrU?si=AoOtn-HG8Qg2Gh5d",
+        "imagePath":  "/images/exercises/20e033ca-052a-4bde-af6a-90efe89d2a72_Dumbbell-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1068,
+        "name":  "Reverse Lat Pulldown",
+        "youTubeLink":  "https://youtu.be/SNiwpA13ZLU?si=e_-nc-D2Gudcgbaq",
+        "imagePath":  "/images/exercises/793c2bc5-a05e-45a7-b595-603c14dd852e_Reverse-Lat-Pulldown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1069,
+        "name":  "Seated Row Machine",
+        "youTubeLink":  "https://youtu.be/8A1L68C3_iM?si=V8bdBoWuBUSGirGF",
+        "imagePath":  "/images/exercises/e6502ebc-e8b5-4d5b-af93-3543e9b5e9b7_Seated-Row-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1070,
+        "name":  "Smith Machine Bent Over Row",
+        "youTubeLink":  "https://youtu.be/3QcJggd_L24?si=gpxuWARTh0RZfWK8",
+        "imagePath":  "/images/exercises/23fd96f7-d3cc-46a8-87a5-0137fe910680_Smith-Machine-Bent-Over-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1071,
+        "name":  "Cable Pullover",
+        "youTubeLink":  "https://youtu.be/Hb767heoC0o?si=e8HYedKQhkXVO-8M",
+        "imagePath":  "/images/exercises/54828c43-71cd-4802-ae67-1eb0314dee4b_Rope-Straight-Arm-Pulldown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1072,
+        "name":  "Assisted Pull-up",
+        "youTubeLink":  "https://youtu.be/BOqrRMjxkj8?si=C0t05CKcw7dgnt6P",
+        "imagePath":  "/images/exercises/9ffd3637-8a17-4c3e-8186-fd2960d9be1c_Assisted-Pull-up.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1073,
+        "name":  "Close Grip Cable Row",
+        "youTubeLink":  "https://youtu.be/SLOtxuaStoQ?si=5PGrVndLGQ4pKtLY",
+        "imagePath":  "/images/exercises/72a4f567-2ee0-4c22-aeba-d96f5d5ef4cb_close-grip-cable-row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1074,
+        "name":  "Rope Straight Arm Pulldown",
+        "youTubeLink":  "https://youtu.be/CqsO1bQl9QI?si=NIpcjAmrB1ST04ze",
+        "imagePath":  "/images/exercises/8e954f9a-f2dc-4f93-8005-bce05f59156b_Rope-Straight-Arm-Pulldown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1075,
+        "name":  "Lat Pulldown Close Grip",
+        "youTubeLink":  "https://youtu.be/8hzVLzu-RJk?si=e94WwEMpUa5pHK-A",
+        "imagePath":  "/images/exercises/a58c1688-cb81-4902-8e0d-f9bb44bf88cc_V-bar-Lat-Pulldown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1076,
+        "name":  "incline Cable Pullovers",
+        "youTubeLink":  "https://youtu.be/jQ3c9FauR7A?si=QL_qipIV3WGTMCNK",
+        "imagePath":  "/images/exercises/c813aba2-f7a1-455e-bc28-80b1c1fe1c46_Lying-Extension-Pullover.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1077,
+        "name":  "T-Bar Row free",
+        "youTubeLink":  "https://youtu.be/yPis7nlbqdY?si=DY2C6rBzODNlm652",
+        "imagePath":  "/images/exercises/8c1e7e20-d8ca-4e96-ba4c-2d8963f59ff4_Lever-T-bar-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1078,
+        "name":  "Pullover machine",
+        "youTubeLink":  "https://youtu.be/oxpAl14EYyc?si=-77CPkBbBftxzMzR",
+        "imagePath":  "/images/exercises/8ad788d2-e165-4b28-ac2a-89ad289644be_Lever-Pullover-plate-loaded.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1079,
+        "name":  "Pull up",
+        "youTubeLink":  "https://youtube.com/shorts/9rckBLbVe8c?si=Dp16DR2zkB3vokCv",
+        "imagePath":  "/images/exercises/9c02ebf8-ff81-4a46-a1da-2fcb2957ab6c_Pull-up.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1080,
+        "name":  "DB Shrug",
+        "youTubeLink":  "https://youtu.be/_t3lrPI6Ns4?si=Ia6NhvVQTld6SO1y",
+        "imagePath":  "/images/exercises/525ba92c-a2ee-4b70-967b-2542e72de947_Dumbbell-Shrug.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1081,
+        "name":  "Cable Shrug",
+        "youTubeLink":  "https://youtu.be/YykmcX2b-LY?si=ILr2YrYzstguiosZ",
+        "imagePath":  "/images/exercises/7ed82225-2e2c-4b93-8efc-acb5198807bb_Cable-Shrug.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1082,
+        "name":  "Prone Incline Shrug",
+        "youTubeLink":  "https://youtu.be/35wAsOWCyVM?si=6dFAqKJw5d0347Yq",
+        "imagePath":  "/images/exercises/4d3d3f7f-1250-4132-8913-0e2ec1d5e1c1_Dumbbell-Decline-Shrug.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1083,
+        "name":  "Shrug machine",
+        "youTubeLink":  "https://youtu.be/nDyC21LQKUk?si=eWgznWtD0RduRp0r",
+        "imagePath":  "/images/exercises/77402631-cb50-4a3f-b83c-7b6f4dbd21ab_Lever-Shrug.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1084,
+        "name":  "Seated Back Extension",
+        "youTubeLink":  "https://youtu.be/4sla2xidkD0?si=_gGNeovLrAhnqjTr",
+        "imagePath":  "/images/exercises/1a45444e-2ddf-4ca4-9be3-7a5b95d92c15_seated-back-extension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1086,
+        "name":  "Hyperextension",
+        "youTubeLink":  "https://youtube.com/shorts/9XN23dIEqLE?si=Gb5l6GJ5JfleetxI",
+        "imagePath":  "/images/exercises/f638e81e-8e2c-437c-a950-63c1af8c9495_hyperextension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1087,
+        "name":  "Floor Hyperextension",
+        "youTubeLink":  "https://youtu.be/UPdWrdrX6aI?si=zTjYJVSaxusK000r",
+        "imagePath":  "/images/exercises/828fd384-fca5-4081-bba6-e2eb217fdf4a_Floor-Hyperextension-1.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1088,
+        "name":  "Flat Bench Hyperextension",
+        "youTubeLink":  "https://youtube.com/shorts/gmNCLBY6PFo?si=yqycQirfOjDBmmgz",
+        "imagePath":  "/images/exercises/7665ad4e-3ed8-4a7f-adda-7e8096c67b55_Flat-Bench-Hyperextension.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1089,
+        "name":  "Frog Reverse Hyperextension",
+        "youTubeLink":  "https://youtu.be/zH8QN413Vuo?si=vRcGikrPGanENPF9",
+        "imagePath":  "/images/exercises/bb2a77e1-a7ad-4cda-94f0-688f1c3fab0c_Reverse-Hyperextensions.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1090,
+        "name":  "Bird Dog",
+        "youTubeLink":  "https://youtu.be/vzU5xrs1gMQ?si=htRcjx5sD9-2Kdqj",
+        "imagePath":  "/images/exercises/d7cbc600-92f4-4828-8319-61deb295f67c_Bird-Dog.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Back"
+    },
+    {
+        "legacyId":  1091,
+        "name":  "Smith Machine Squat",
+        "youTubeLink":  "https://youtu.be/-eO_VydErV0?si=S3hbaX-6yqfoNz2c",
+        "imagePath":  "/images/exercises/01ccc9ed-a8e2-4383-9136-ecaf6a087e12_smith-machine-squat.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1092,
+        "name":  "DB Goblet Squat",
+        "youTubeLink":  "https://youtu.be/a-dqF4NL2K4?si=nCj1hmMoOkPg5WaD",
+        "imagePath":  "/images/exercises/e791087f-eb9e-46c4-8021-09a4003ee59a_Dumbbell-Goblet-Squat.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1093,
+        "name":  "DB Walking Lunge",
+        "youTubeLink":  "https://youtu.be/eFWCn5iEbTU?si=WhOyyJ8Fsba--_-6",
+        "imagePath":  "/images/exercises/2927dbb6-aef8-4c71-b10b-792310fc5507_dumbbell-lunges.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1094,
+        "name":  "DB Squat",
+        "youTubeLink":  "https://youtu.be/v_c67Omje48?si=IANecnLK7LnV7VqI",
+        "imagePath":  "/images/exercises/679a35ce-e31b-47de-ab1c-a69ff24903c9_Dumbbell-Squat.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1095,
+        "name":  "DB Deadlift",
+        "youTubeLink":  "https://youtu.be/plb5jEO4Unw?si=A-0Tg--6rO61OZXW",
+        "imagePath":  "/images/exercises/f472fd6f-357a-4738-942f-406fe1879d56_dumbbell-deadlifts.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1096,
+        "name":  "DB Sumo Deadlift",
+        "youTubeLink":  "https://youtu.be/De9OUZz5W_I?si=4TSRjhLlXmyWJ52F",
+        "imagePath":  "/images/exercises/7dd3734f-8aed-4d2c-a32c-92dde7ed3517_dumbbell-sumo-deadlift.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1097,
+        "name":  "Barbell Squat",
+        "youTubeLink":  "https://youtu.be/-bJIpOq-LWk?si=4cPM17chXIN8vA9Q",
+        "imagePath":  "/images/exercises/98f42036-3df8-4d45-9c08-87b9d53ead3c_BARBELL-SQUAT.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1098,
+        "name":  "Leg Press",
+        "youTubeLink":  "https://youtu.be/yZmx_Ac3880?si=f-BytSZp8C1p7414",
+        "imagePath":  "/images/exercises/697066d0-547a-4509-a4ba-5802beb8ce5c_Leg-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1099,
+        "name":  "Barbell Deadlift",
+        "youTubeLink":  "https://youtu.be/yPqv3ejnZvc?si=1L7cX3x6ohLTWLWu",
+        "imagePath":  "/images/exercises/2ff2fb74-414e-4be1-82f4-0132f0179110_Barbell-Deadlift.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1100,
+        "name":  "Leg Curl lying",
+        "youTubeLink":  "https://youtu.be/SiwJ_T62l9c?si=835IIfOYMq7ltZOE",
+        "imagePath":  "/images/exercises/336b92ff-0177-44f1-9c25-4db54802606e_Leg-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1101,
+        "name":  "Seated Leg Curl",
+        "youTubeLink":  "https://youtu.be/x7PRWgaZyYw?si=0060K9yw-ZCrV1Ym",
+        "imagePath":  "/images/exercises/6703b1d3-35a4-4548-bb6d-81c400f4077b_Seated-Leg-Curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1102,
+        "name":  "Leg Extension",
+        "youTubeLink":  "https://youtu.be/MpEydcQ1oDw?si=QdOuqoR-Dq_PLKTd",
+        "imagePath":  "/images/exercises/3ffa10af-a0ef-44e2-9ba4-f2e509760b49_LEG-EXTENSION.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1103,
+        "name":  "barbell Romanian Deadlift",
+        "youTubeLink":  "https://youtu.be/bT5OOBgY4bc?si=LD1NHgST3k_G6puO",
+        "imagePath":  "/images/exercises/805d5976-bdfb-4ec8-b293-00fe98902c37_Barbell-Romanian-Deadlift.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1104,
+        "name":  "DB Bulgarian Split Squat",
+        "youTubeLink":  "https://youtu.be/vgn7bSXkgkA?si=s2trK9l-wHWaOVNF",
+        "imagePath":  "/images/exercises/fa73af0c-c468-495a-a925-e265b5be17df_Dumbbell-Bulgarian-Split-Squat.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1105,
+        "name":  "DB Romanian Deadlift",
+        "youTubeLink":  "https://youtu.be/5WxMW-Fu5KU?si=85F3jui7Jpb-x7by",
+        "imagePath":  "/images/exercises/f07d9088-3366-4bf0-a178-b7642a44ccf6_Dumbbell-Romanian-Deadlift.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1106,
+        "name":  "Hack Squats Machine",
+        "youTubeLink":  "https://youtu.be/8AXtP_CHO4k?si=dsMM07k3CYUe2Wu8",
+        "imagePath":  "/images/exercises/58108d71-b5ce-4044-ab12-8157210d0646_Sled-Hack-Squat.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1107,
+        "name":  "Barbell Sumo Deadlift",
+        "youTubeLink":  "https://youtu.be/pfSMst14EFk?si=rzKFS_G_X7EDAhKf",
+        "imagePath":  "/images/exercises/80c5697c-1d17-401e-a721-f034b34b0d36_Barbell-Sumo-Deadlift.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1108,
+        "name":  "DB Lunge",
+        "youTubeLink":  "https://youtu.be/9gglI77Kzq8?si=KiAFL90Z3ggqftMu",
+        "imagePath":  "/images/exercises/5fe83fff-2da8-4b49-a2d0-02b5a5b3342b_dumbbell-lunges.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1109,
+        "name":  "DB stiff Deadlift",
+        "youTubeLink":  "https://youtu.be/cYKYGwcg0U8?si=qskeBKtGO0ClYF50",
+        "imagePath":  "/images/exercises/a426ad04-ac1d-4d12-9a8e-035b62eeab01_Dumbbell-Straight-Leg-Deadlift.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1111,
+        "name":  "Deadlift machine",
+        "youTubeLink":  "https://youtu.be/uLX7Ue10WRU?si=8oAVy7SasGwm4VDV",
+        "imagePath":  "/images/exercises/031930c5-760b-4dcf-9292-436b5d3c88df_Lever-Deadlift.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1112,
+        "name":  "Cable Hip Adduction",
+        "youTubeLink":  "https://youtu.be/P1pLE1jmnI0?si=Xmq923avU4y3VnQ6",
+        "imagePath":  "/images/exercises/315ce7a9-39fd-45b3-99dd-f0456722c7a7_Cable-Hips-Adduction.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1113,
+        "name":  "Belt Squat",
+        "youTubeLink":  "https://youtu.be/Zj3oT1AauYs?si=a9LUHKu0_JnDMfPW",
+        "imagePath":  "/images/exercises/0f70bbc2-e82d-4744-9a97-32940ae873f7_belt-squat.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1114,
+        "name":  "Smith Machine Lunge",
+        "youTubeLink":  "https://youtu.be/n9AHAM7HoUc?si=b1MurudxPrtRWDV_",
+        "imagePath":  "/images/exercises/98258334-3c13-49d9-ae09-3d457ac97f13_Smith-Machine-Lunge.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1115,
+        "name":  "Hip Abduction Machine",
+        "youTubeLink":  "https://youtube.com/shorts/uwKOs7z3O3g?si=tTzQyA1YWjQSTELo",
+        "imagePath":  "/images/exercises/d3b5f313-3895-48ba-b6cc-49c074c429d6_HiP-ABDUCTION-MACHINE.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1116,
+        "name":  "Hip Adduction Machine",
+        "youTubeLink":  "https://youtu.be/e9AqTFMmP18?si=s1F_4CyhIe9sOZz0",
+        "imagePath":  "/images/exercises/e193f69e-6d6c-4e9c-abd2-5f320fdb8d92_HIP-ADDUCTION-MACHINE.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1117,
+        "name":  "Bodyweight Standing Calf Raise",
+        "youTubeLink":  "https://youtu.be/fQiMiUHWubw?si=coONAJpo2VuLimwp",
+        "imagePath":  "/images/exercises/3deee3c2-2678-408d-9049-815d9743d6c3_Standing-Calf-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1118,
+        "name":  "Standing Calf Raise DB",
+        "youTubeLink":  "https://youtu.be/PTn6icEeH3Y?si=Qws_xJpkmIsDmRex",
+        "imagePath":  "/images/exercises/7bb27d8a-a989-45d7-a048-942b9971c0a0_Dumbbell-Calf-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1119,
+        "name":  "Leg Press Calf Raise",
+        "youTubeLink":  "https://youtu.be/dhRz1Ns60Zg?si=wIjkOK-YObihLAtv",
+        "imagePath":  "/images/exercises/1a210d0f-5461-46fe-8fbf-d807e011900d_Leg-Press-Calf-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1120,
+        "name":  "Seated Calf Raise",
+        "youTubeLink":  "https://youtu.be/HSGjUouQZCQ?si=SlzoN8gL-NPXlRbt",
+        "imagePath":  "/images/exercises/98bd7b5e-e41f-46ab-87df-607803b3dfb4_Lever-Seated-Calf-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Lower Body"
+    },
+    {
+        "legacyId":  1121,
+        "name":  "lateral raise machine",
+        "youTubeLink":  "https://youtu.be/tavibkNpZLI?si=n9XTlZUxsU2vvBuu",
+        "imagePath":  "/images/exercises/7506978f-8129-421a-8556-d983ab739354_Lateral-Raise-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1122,
+        "name":  "seated DB lateral raise",
+        "youTubeLink":  "https://youtu.be/TiG5Un0pLdA?si=cqosTW08FGqJ3gma",
+        "imagePath":  "/images/exercises/5e6fc090-f0c9-4143-ab4e-176ef88cd7b7_Seated-Dumbbell-Lateral-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1123,
+        "name":  "cable lateral raise",
+        "youTubeLink":  "https://youtu.be/gjXX8g-VPXI?si=af_I14D3w19I695X",
+        "imagePath":  "/images/exercises/3b674e65-da63-4e80-a120-0be622f8889c_Cable-Lateral-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1124,
+        "name":  "DB chest supported lateral raises",
+        "youTubeLink":  "https://youtu.be/z3PRz2aVA10?si=NJGmYtjJxgvXd-7y",
+        "imagePath":  "/images/exercises/a6bc959c-0282-450d-9536-1e1125088f9e_Dumbbell-Chest-Supported-Lateral-Raises.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1125,
+        "name":  "45 degree incline row",
+        "youTubeLink":  "https://youtu.be/Nx0TzjgsI-0?si=XJ855guNyqhBGIwp",
+        "imagePath":  "/images/exercises/a5219635-9ece-4819-af53-f6683a3bb49f_45-Degree-Incline-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1126,
+        "name":  "DB front raise",
+        "youTubeLink":  "https://youtu.be/hRJ6tR5-if0?si=y5DozXHSnvdfWfD1",
+        "imagePath":  "/images/exercises/de475899-0fa0-44be-9234-860bc739a6ea_Alternating-Dumbbell-Front-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1127,
+        "name":  "cable front raise single arm",
+        "youTubeLink":  "https://youtu.be/b-JpHo8n9Xc?si=5mFRBP6F2jwrli-j",
+        "imagePath":  "/images/exercises/d1ca91f6-c30c-43b6-aca0-6d5bc6fef78f_Cable-Front-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1128,
+        "name":  "cable upright row",
+        "youTubeLink":  "https://youtu.be/WNz7O59GORA?si=dDPUXBLqSnlcJiOE",
+        "imagePath":  "/images/exercises/0c76047d-ea09-4913-89fe-5f67f5932d0b_Cable-Upright-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1129,
+        "name":  "DB shoulder press",
+        "youTubeLink":  "https://youtu.be/hOTABpGvhBc?si=s_lgjsiAYX3eKCX_",
+        "imagePath":  "/images/exercises/60dc7440-d9aa-4e71-82ae-48308cfa39f2_Dumbbell-Shoulder-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1130,
+        "name":  "face pull",
+        "youTubeLink":  "https://youtu.be/0Po47vvj9g4?si=VD6-pniPScL02zZH",
+        "imagePath":  "/images/exercises/0501098f-e84b-4f02-b255-1d98e99afa2c_Face-Pull.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1131,
+        "name":  "cable rear delt fly",
+        "youTubeLink":  "https://youtu.be/i6XZww83NdI?si=3eaFhOtdqiQ_LmHT",
+        "imagePath":  "/images/exercises/cb0e3cb7-92c2-42c1-837d-fe35fb489287_Full-Range-Of-Motion-Lat-Pulldown.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1132,
+        "name":  "shoulder press machine",
+        "youTubeLink":  "https://youtu.be/MjVDrYPD7Rs?si=lINaRyaNOiLEOPhl",
+        "imagePath":  "/images/exercises/5e292bac-e0b1-42e2-b157-417cb3540f7c_Lever-Shoulder-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1133,
+        "name":  "rear delt machine fly",
+        "youTubeLink":  "https://youtu.be/ZNPPLp9bJMI?si=zEG48oAAmg0D_8uA",
+        "imagePath":  "/images/exercises/4d1713f8-a6c1-4d23-9251-fd358316bbdd_Rear-Delt-Machine-Flys.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1134,
+        "name":  "seated rear DB raise",
+        "youTubeLink":  "https://youtu.be/nlkF7_2O_Lw?si=T9yXZHPi4betj9go",
+        "imagePath":  "/images/exercises/2721213a-a2e6-454f-8218-42ca8a160e50_Seated-Rear-Lateral-Dumbbell-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1135,
+        "name":  "smith machine shoulder press",
+        "youTubeLink":  "https://youtu.be/oObLIHuHdZM?si=o3iQA6yG7kQeeC4D",
+        "imagePath":  "/images/exercises/efdf0c2e-2234-46c3-bcfb-f5cced8438ab_Smith-Machine-Shoulder-Press.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Shoulders"
+    },
+    {
+        "legacyId":  1136,
+        "name":  "barbell hip thrust",
+        "youTubeLink":  "https://youtu.be/EF7jXP17DPE?si=h_yl4ClhDqUw-eMm",
+        "imagePath":  "/images/exercises/5f7e655c-46e8-41ae-8acc-f1a43cddd882_Barbell-Hip-Thrust.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Glutes"
+    },
+    {
+        "legacyId":  1137,
+        "name":  "smith hip thrust",
+        "youTubeLink":  "https://youtu.be/BakGsAociA4?si=n4pUjZ74NR6CuE25",
+        "imagePath":  "/images/exercises/270c0758-2386-449f-ac76-91a56f73c3e1_Smith-Machine-Hip-Thrust.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Glutes"
+    },
+    {
+        "legacyId":  1138,
+        "name":  "hip thrust machine",
+        "youTubeLink":  "https://youtu.be/ZSPmIyX9RZs?si=O8vK-2DgsjX5WXtj",
+        "imagePath":  "/images/exercises/3cae2acd-898a-40e0-9c24-94eb07bec68b_Hip-Thrust-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Glutes"
+    },
+    {
+        "legacyId":  1139,
+        "name":  "kick back glutes machine",
+        "youTubeLink":  "https://youtu.be/NLDBFtSNhqg?si=J-KtGL-J2q5gtUp7",
+        "imagePath":  "/images/exercises/a4f824e5-85a2-4f9e-8ca0-5d0148397ae0_Glute-Kickback-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Glutes"
+    },
+    {
+        "legacyId":  1140,
+        "name":  "Cable Kickbacks",
+        "youTubeLink":  "https://youtu.be/SqO-VUEak2M?si=bnLcbRgfuhImni6g",
+        "imagePath":  "/images/exercises/81771c43-b885-4521-a7d1-077c4756aba6_Cable-Donkey-Kickback.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Glutes"
+    },
+    {
+        "legacyId":  1141,
+        "name":  "Treadmill",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/729db5e7-b11b-4a2c-9f90-3ddd9ae52c28_45-Degree-Incline-Row.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Cardio"
+    },
+    {
+        "legacyId":  1142,
+        "name":  "Incline treadmill",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/b90242e0-3714-475b-9f33-86da1d20e45e_Incline-Treadmill.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Cardio"
+    },
+    {
+        "legacyId":  1143,
+        "name":  "assault air runnrt",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/af549e77-faf7-4667-a5ed-caba09b7e79e_Assault-Air-Runner.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Cardio"
+    },
+    {
+        "legacyId":  1144,
+        "name":  "Elliptical",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/66c3aa7e-845a-435f-9a9c-960fdeba7a20_Elliptical-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Cardio"
+    },
+    {
+        "legacyId":  1145,
+        "name":  "Rowing",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/80a9fba8-ce7a-4fd7-a8b2-e196a584ca05_Rowing-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Cardio"
+    },
+    {
+        "legacyId":  1146,
+        "name":  "walk wave",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/bfc56d31-79a1-482b-8964-7e2c64ec3b16_Walk-Wave-Machine.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Cardio"
+    },
+    {
+        "legacyId":  1147,
+        "name":  "stepmaster",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/9f548bb2-204e-4fbf-a281-9899e4b08d9c_Walking-on-Stepmill.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Cardio"
+    },
+    {
+        "legacyId":  1148,
+        "name":  "Leg Raise",
+        "youTubeLink":  "https://youtu.be/q0JVBRHoLz4?si=U4vd5MBuX6INxuhf",
+        "imagePath":  "/images/exercises/b6c2220e-604e-4ffc-b692-2da931f94c1a_Alternate-Lying-Floor-Leg-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    },
+    {
+        "legacyId":  1149,
+        "name":  "Wrist Curl",
+        "youTubeLink":  "https://youtu.be/3VLTzIrnb5g?si=8B_pnlCP9ss2Fg6p",
+        "imagePath":  "/images/exercises/6f4697be-f63a-4395-beb1-52a3168b5836_Barbell-Reverse-Wrist-Curl-Over-a-Bench.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Forearms"
+    },
+    {
+        "legacyId":  1150,
+        "name":  "bench side bend",
+        "youTubeLink":  "https://youtu.be/mt3FHB-u_nI?si=l1Sq7GSWBrn0_Eab",
+        "imagePath":  "/images/exercises/6c6a2aaa-f896-4666-81bb-730251c26e84_Bench-Side-Bend.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    },
+    {
+        "legacyId":  1151,
+        "name":  "cable side bend",
+        "youTubeLink":  "https://youtu.be/Hlj745HySio?si=TKJt3qX6O5f_aRUK",
+        "imagePath":  "/images/exercises/3514ddad-89ad-4025-9e09-486325466c59_Cable-Side-Bend.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    },
+    {
+        "legacyId":  1152,
+        "name":  "Captains-Chair-Leg-Raise",
+        "youTubeLink":  "https://youtu.be/skmbJPuUn3Q?si=C6v1gKT88M-gkS_i",
+        "imagePath":  "/images/exercises/80cc083c-c20f-4ada-911c-1b291e32ffdc_Captains-Chair-Leg-Raise.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    },
+    {
+        "legacyId":  1153,
+        "name":  "floor crunch",
+        "youTubeLink":  "https://youtu.be/HKskTq_4gSs?si=5s0v5an2p_wkKnCY",
+        "imagePath":  "/images/exercises/bee62737-f298-4062-9e61-861030665a2b_Floor-Crunch.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    },
+    {
+        "legacyId":  1154,
+        "name":  "Kneeling-Cable-Crunch",
+        "youTubeLink":  "https://youtu.be/6GMKPQVERzw?si=ARV5Mmic8ZLhh0I8",
+        "imagePath":  "/images/exercises/7287753b-961f-406d-bd5c-fa4f4ce5c5f7_Kneeling-Cable-Crunch.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    },
+    {
+        "legacyId":  1155,
+        "name":  "seated-barbell-finger-curl",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/a717aec1-60f3-4416-aca1-0a6af7cb9bf3_seated-barbell-finger-curl.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Forearms"
+    },
+    {
+        "legacyId":  1156,
+        "name":  "jump rope",
+        "youTubeLink":  null,
+        "imagePath":  "/images/exercises/8f0aef48-f782-49df-b587-083e6640ba87_Skip-Jump-Rope.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Cardio"
+    },
+    {
+        "legacyId":  1157,
+        "name":  "Standing-Cable-High-To-Low-Twist",
+        "youTubeLink":  "https://youtu.be/_mHR9ewsHZg?si=KMMgyyzi75HtEb0q",
+        "imagePath":  "/images/exercises/7cc74c70-ac96-486e-bf90-e0816544e3d6_Standing-Cable-High-To-Low-Twist.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    },
+    {
+        "legacyId":  1158,
+        "name":  "Standing-Cable-low-to-high-Twist",
+        "youTubeLink":  "https://youtu.be/QRz79_kfzGU?si=MbwxaBhtjILnqOVo",
+        "imagePath":  "/images/exercises/21ecf5a2-21cd-4972-8de5-8bd1ca769aff_Standing-Cable-low-to-high-Twist.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    },
+    {
+        "legacyId":  1159,
+        "name":  "standing-cable-twist",
+        "youTubeLink":  "https://youtu.be/u2MfrzcJFY0?si=689KpAsmtL_HyODr",
+        "imagePath":  "/images/exercises/87441619-4528-4b8d-87af-f22277a0209b_standing-cable-twist.gif",
+        "mediaId":  null,
+        "nameAr":  null,
+        "categoryName":  "Core"
+    }
+]

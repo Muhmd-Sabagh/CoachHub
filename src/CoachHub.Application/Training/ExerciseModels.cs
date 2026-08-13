@@ -41,7 +41,9 @@ public sealed record LegacyExerciseImportRow(
     string Name,
     string? YouTubeLink,
     string? ImagePath,
-    Guid? MediaId);
+    Guid? MediaId,
+    string? NameAr = null,
+    string? CategoryName = null);
 
 public sealed record LegacyExerciseImportRowResult(
     int LegacyId,

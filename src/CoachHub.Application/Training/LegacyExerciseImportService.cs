@@ -33,10 +33,11 @@ public sealed class LegacyExerciseImportService(
                 continue;
             }
 
-            var category = await repository.GetOrCreateUncategorizedAsync(cancellationToken);
+            var category = await repository.GetOrCreateCategoryAsync(
+                row.CategoryName ?? "Uncategorized", cancellationToken);
             var input = new ExerciseInput(
                 row.Name,
-                null,
+                row.NameAr,
                 category.Id,
                 row.MediaId,
                 row.YouTubeLink,

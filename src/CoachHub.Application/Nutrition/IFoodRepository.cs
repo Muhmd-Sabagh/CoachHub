@@ -12,7 +12,7 @@ public interface IFoodRepository
     Task SaveChangesAsync(CancellationToken cancellationToken);
     Task DeleteAsync(FoodItem food, CancellationToken cancellationToken);
     Task<LegacyFoodImportRecord?> FindLegacyImportAsync(int legacyId, CancellationToken cancellationToken);
-    Task<FoodCategory> GetOrCreateUncategorizedAsync(CancellationToken cancellationToken);
+    Task<FoodCategory> GetOrCreateCategoryAsync(string name, CancellationToken cancellationToken);
     Task AddImportedAsync(
         FoodItem food,
         LegacyFoodImportRecord importRecord,

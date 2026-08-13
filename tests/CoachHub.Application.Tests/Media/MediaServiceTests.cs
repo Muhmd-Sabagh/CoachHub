@@ -27,6 +27,23 @@ public sealed class MediaServiceTests
     }
 
     [Fact]
+    public async Task Legacy_gif_image_is_supported_for_exercise_migration()
+    {
+        var storage = new StubStorage();
+        var service = new MediaService(storage, new StubRepository());
+        await using var content = new MemoryStream([1, 2, 3]);
+
+        await service.UploadAsync(
+            content,
+            "exercise.gif",
+            "image/gif",
+            content.Length,
+            CancellationToken.None);
+
+        Assert.True(storage.StoreCalled);
+        Assert.Equal("image/gif", storage.ReceivedContentType);
+    }
+    [Fact]
     public async Task Unsupported_content_type_is_rejected_before_storage()
     {
         var storage = new StubStorage();

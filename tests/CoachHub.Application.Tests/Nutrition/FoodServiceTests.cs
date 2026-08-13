@@ -64,7 +64,7 @@ public sealed class FoodServiceTests
         public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteAsync(FoodItem food, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<LegacyFoodImportRecord?> FindLegacyImportAsync(int legacyId, CancellationToken cancellationToken) => Task.FromResult<LegacyFoodImportRecord?>(null);
-        public Task<FoodCategory> GetOrCreateUncategorizedAsync(CancellationToken cancellationToken) => Task.FromResult(FoodCategory.Create("Uncategorized", null));
+        public Task<FoodCategory> GetOrCreateCategoryAsync(string name, CancellationToken cancellationToken) => Task.FromResult(FoodCategory.Create(name, null));
         public Task AddImportedAsync(FoodItem food, LegacyFoodImportRecord importRecord, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 

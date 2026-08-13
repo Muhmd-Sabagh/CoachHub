@@ -53,7 +53,9 @@ public sealed record LegacyFoodImportRow(
     decimal CarbsPer100Units,
     decimal FatPer100Units,
     string? ImagePath,
-    Guid? MediaId);
+    Guid? MediaId,
+    string? NameAr = null,
+    string? CategoryName = null);
 
 public sealed record LegacyFoodImportRowResult(
     int LegacyId,
