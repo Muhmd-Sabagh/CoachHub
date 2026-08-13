@@ -172,7 +172,7 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
         using var form = new MultipartFormDataContent();
         form.Add(new StringContent(clientCode), "clientCode");
         form.Add(new StringContent(formCode), "formCode");
-        using var bytes = new ByteArrayContent([1, 2, 3]);
+        using var bytes = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
         bytes.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         form.Add(bytes, "file", "assessment.png");
         var response = await _client.PostAsync("/api/client-forms/media", form);

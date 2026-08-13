@@ -82,4 +82,54 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Invalid_login_response_is_not_cached_and_includes_defensive_headers()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new { email = "missing@coachhub.test", password = "WrongPassword!123" },
+            CancellationToken.None);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        Assert.Equal(
+            "nosniff",
+            Assert.Single(response.Headers.GetValues("X-Content-Type-Options")));
+        Assert.Equal(
+            "DENY",
+            Assert.Single(response.Headers.GetValues("X-Frame-Options")));
+        Assert.Equal(
+            "no-referrer",
+            Assert.Single(response.Headers.GetValues("Referrer-Policy")));
+        Assert.Equal(
+            "default-src 'none'; frame-ancestors 'none'",
+            Assert.Single(response.Headers.GetValues("Content-Security-Policy")));
+    }
+
+    [Fact]
+    public async Task Login_attempts_are_limited_per_remote_address()
+    {
+        await using var isolatedFactory = new CoachHubApiFactory();
+        using var client = isolatedFactory.CreateClient(new()
+        {
+            AllowAutoRedirect = false
+        });
+
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            var response = await client.PostAsJsonAsync(
+                "/api/auth/login",
+                new { email = "missing@coachhub.test", password = "WrongPassword!123" },
+                CancellationToken.None);
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        var rejected = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new { email = "missing@coachhub.test", password = "WrongPassword!123" },
+            CancellationToken.None);
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
+    }
 }

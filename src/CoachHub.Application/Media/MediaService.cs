@@ -101,13 +101,44 @@ public sealed class MediaService(
 
         if (!AllowedContentTypes.Contains(contentType))
         {
-            errors["contentType"] = ["JPEG, PNG, WebP, or PDF files are supported."];
+            errors["contentType"] = ["JPEG, PNG, WebP, GIF, or PDF files are supported."];
+        }
+        else if (content.CanRead && sizeBytes > 0 && !HasExpectedSignature(content, contentType))
+        {
+            errors["file"] = ["The file content does not match its declared content type."];
         }
 
         if (errors.Count > 0)
         {
             throw new ValidationException(errors);
         }
+    }
+
+    private static bool HasExpectedSignature(Stream content, string contentType)
+    {
+        if (!content.CanSeek)
+        {
+            return false;
+        }
+
+        var originalPosition = content.Position;
+        Span<byte> header = stackalloc byte[12];
+        var bytesRead = content.Read(header);
+        content.Position = originalPosition;
+
+        return contentType switch
+        {
+            "image/jpeg" => bytesRead >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF,
+            "image/png" => bytesRead >= 8 && header[0] == 0x89 &&
+                header[1..8].SequenceEqual("PNG\r\n\u001a\n"u8),
+            "image/webp" => bytesRead >= 12 &&
+                header[..4].SequenceEqual("RIFF"u8) &&
+                header[8..12].SequenceEqual("WEBP"u8),
+            "image/gif" => bytesRead >= 6 &&
+                (header[..6].SequenceEqual("GIF87a"u8) || header[..6].SequenceEqual("GIF89a"u8)),
+            "application/pdf" => bytesRead >= 5 && header[..5].SequenceEqual("%PDF-"u8),
+            _ => false
+        };
     }
 
     private static MediaMetadata ToMetadata(MediaAsset media) =>
