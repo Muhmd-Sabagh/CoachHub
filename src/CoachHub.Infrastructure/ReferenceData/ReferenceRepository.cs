@@ -1,5 +1,7 @@
+using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Domain.Nutrition;
 using CoachHub.Domain.ReferenceData;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -87,6 +89,13 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
 
     public async Task DeleteAsync(TEntity entity, CancellationToken cancellationToken)
     {
+        if (entity is FoodCategory category && await dbContext.Set<FoodItem>()
+                .AnyAsync(food => food.FoodCategoryId == category.Id, cancellationToken))
+        {
+            throw new ConflictException(
+                "Food category cannot be deleted while food items reference it. Deactivate it instead.");
+        }
+
         dbContext.Set<TEntity>().Remove(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
