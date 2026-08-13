@@ -1,4 +1,5 @@
 using CoachHub.Application.Auth.Login;
+using CoachHub.Application.Clients;
 using CoachHub.Application.Media;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
@@ -12,6 +13,9 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<LoginCommandHandler>();
+        services.AddScoped<ClientService>();
+        services.AddScoped<SubscriptionService>();
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<MediaService>();
         services.AddScoped<FoodService>();
         services.AddScoped<LegacyFoodImportService>();

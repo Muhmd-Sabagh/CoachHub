@@ -1,6 +1,7 @@
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Domain.Clients;
 using CoachHub.Domain.Nutrition;
 using CoachHub.Domain.ReferenceData;
 using CoachHub.Domain.Training;
@@ -105,6 +106,15 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
             throw new ConflictException(
                 "Exercise category cannot be deleted while exercises reference it. Deactivate it instead.");
         }
+        if (entity is Package package && await dbContext.Set<Subscription>()
+                .AnyAsync(subscription => subscription.PackageId == package.Id, cancellationToken))
+            throw new ConflictException("Package is referenced by subscriptions. Deactivate it instead.");
+        if (entity is Currency currency && await dbContext.Set<Subscription>()
+                .AnyAsync(subscription => subscription.CurrencyId == currency.Id, cancellationToken))
+            throw new ConflictException("Currency is referenced by subscriptions. Deactivate it instead.");
+        if (entity is PaymentAccount account && await dbContext.Set<Subscription>()
+                .AnyAsync(subscription => subscription.PaymentAccountId == account.Id, cancellationToken))
+            throw new ConflictException("Payment account is referenced by subscriptions. Deactivate it instead.");
         dbContext.Set<TEntity>().Remove(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
