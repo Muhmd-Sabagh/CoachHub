@@ -2,6 +2,7 @@ using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Media;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Application.Training;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CoachHub.Application;
@@ -19,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<PaymentAccountService>();
         services.AddScoped<FoodCategoryService>();
         services.AddScoped<ExerciseCategoryService>();
+        services.AddScoped<ExerciseService>();
+        services.AddScoped<LegacyExerciseImportService>();
         return services;
     }
 }

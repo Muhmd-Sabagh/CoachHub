@@ -25,6 +25,8 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.ReferenceData.ExerciseCategory), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Nutrition.FoodItem), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Nutrition.LegacyFoodImportRecord), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Training.Exercise), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Training.LegacyExerciseImportRecord), entityTypes);
         Assert.DoesNotContain(entityTypes, type => type.Name is
             "ClientAssessment" or "ClientUpdate" or "GymDbContext");
     }
