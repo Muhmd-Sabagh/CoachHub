@@ -368,3 +368,5 @@ FodyWeavers.xsd
 
 # Angular hidden folders
 .angular/
+# CoachHub development media storage
+.coachhub-media/

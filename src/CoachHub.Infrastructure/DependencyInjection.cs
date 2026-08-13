@@ -1,6 +1,8 @@
 using CoachHub.Application.Auth;
+using CoachHub.Application.Media;
 using CoachHub.Infrastructure.Auth;
 using CoachHub.Infrastructure.Auth.Persistence;
+using CoachHub.Infrastructure.Media;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +15,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        bool allowLocalMediaStorage = false)
     {
         var connectionString = configuration.GetConnectionString(DatabaseOptions.ConnectionStringName);
 
@@ -52,6 +55,40 @@ public static class DependencyInjection
         services.AddSingleton<ITokenIssuer, JwtTokenIssuer>();
         services.AddScoped<AdminBootstrapper>();
 
+        AddMedia(services, configuration, allowLocalMediaStorage);
         return services;
+    }
+
+    private static void AddMedia(
+        IServiceCollection services,
+        IConfiguration configuration,
+        bool allowLocalMediaStorage)
+    {
+        var options = configuration
+            .GetSection(MediaStorageOptions.SectionName)
+            .Get<MediaStorageOptions>()
+            ?? throw new InvalidOperationException("Media storage configuration is required.");
+
+        if (!string.Equals(options.Provider, "FileSystem", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "No supported external media provider is configured. FileSystem is development-only.");
+        }
+
+        if (!allowLocalMediaStorage)
+        {
+            throw new InvalidOperationException(
+                "FileSystem media storage is allowed only in Development or isolated tests.");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.StorageRoot))
+        {
+            throw new InvalidOperationException("Media StorageRoot is required.");
+        }
+
+        services.Configure<MediaStorageOptions>(
+            configuration.GetSection(MediaStorageOptions.SectionName));
+        services.AddScoped<IMediaStorage, FileSystemMediaStorage>();
+        services.AddScoped<IMediaRepository, MediaRepository>();
     }
 }

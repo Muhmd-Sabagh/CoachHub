@@ -9,7 +9,7 @@ namespace CoachHub.IntegrationTests.Persistence;
 public sealed class CoachHubDbContextTests
 {
     [Fact]
-    public void Model_contains_identity_but_no_legacy_business_entities()
+    public void Model_contains_identity_and_media_but_no_legacy_business_entities()
     {
         using var context = CreateContext();
         var entityTypes = context.Model.GetEntityTypes().Select(type => type.ClrType).ToArray();
@@ -17,6 +17,7 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(User), entityTypes);
         Assert.Contains(typeof(Role), entityTypes);
         Assert.Contains(typeof(UserRole), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Media.MediaAsset), entityTypes);
         Assert.DoesNotContain(entityTypes, type => type.Name is
             "ClientAssessment" or "ClientUpdate" or "GymDbContext");
     }
@@ -27,14 +28,18 @@ public sealed class CoachHubDbContextTests
         var values = new Dictionary<string, string?>
         {
             ["ConnectionStrings:" + DatabaseOptions.ConnectionStringName] =
-                DatabaseOptions.DevelopmentConnectionString
+                DatabaseOptions.DevelopmentConnectionString,
+            ["Media:Provider"] = "FileSystem",
+            ["Media:StorageRoot"] = Path.Combine(
+                Path.GetTempPath(),
+                "coachhub-media-registration-tests")
         };
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(values)
             .Build();
         var services = new ServiceCollection();
 
-        services.AddInfrastructure(configuration);
+        services.AddInfrastructure(configuration, allowLocalMediaStorage: true);
 
         using var provider = services.BuildServiceProvider();
         using var context = provider.GetRequiredService<CoachHubDbContext>();
