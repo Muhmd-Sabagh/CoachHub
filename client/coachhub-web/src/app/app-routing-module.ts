@@ -13,6 +13,13 @@ import { SettingsComponent } from './features/settings/settings.component';
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
   {
+    path: 'assessment',
+    loadComponent: () =>
+      import('./features/public-assessment/client-assessment.component').then(
+        (module) => module.ClientAssessmentComponent,
+      ),
+  },
+  {
     path: '',
     component: ShellComponent,
     canActivate: [authGuard],

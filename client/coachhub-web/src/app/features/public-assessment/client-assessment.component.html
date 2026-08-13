@@ -1,0 +1,329 @@
+<div class="public-assessment-page">
+  <header class="public-header">
+    <a class="public-brand" routerLink="/assessment" aria-label="CoachHub assessment home">
+      <span class="brand-mark">CH</span
+      ><span
+        ><strong>CoachHub</strong><small>{{ copy('brandSubtitle') }}</small></span
+      >
+    </a>
+    <div class="header-actions">
+      <span class="secure-pill"><span aria-hidden="true">✓</span>{{ copy('secure') }}</span
+      ><button class="language-button" type="button" (click)="i18n.toggle()">
+        {{ copy('language') }}
+      </button>
+    </div>
+  </header>
+
+  <main class="public-main">
+    @if (stage === 'access') {
+      <section class="access-layout">
+        <div class="access-story">
+          <span class="story-number">01</span>
+          <p class="eyebrow">{{ copy('accessEyebrow') }}</p>
+          <h1>{{ copy('accessTitle') }}</h1>
+          <p>{{ copy('accessText') }}</p>
+          <div class="story-path">
+            <span class="active"></span><span></span><span></span><small>Access</small
+            ><small>Assessment</small><small>Complete</small>
+          </div>
+        </div>
+        <form class="public-card access-card" (ngSubmit)="validateAccess()" novalidate>
+          <div class="card-icon" aria-hidden="true">→</div>
+          <label
+            ><span>{{ copy('clientCode') }}</span
+            ><input
+              name="clientCode"
+              [(ngModel)]="codes.clientCode"
+              autocomplete="off"
+              autocapitalize="characters"
+              [placeholder]="copy('clientCodeHint')"
+              required
+          /></label>
+          <label
+            ><span>{{ copy('formCode') }}</span
+            ><input
+              name="formCode"
+              [(ngModel)]="codes.formCode"
+              autocomplete="off"
+              autocapitalize="characters"
+              [placeholder]="copy('formCodeHint')"
+              required
+          /></label>
+          @if (error) {
+            <div class="public-error" role="alert">{{ error }}</div>
+          }
+          <button class="button button-primary button-block" type="submit" [disabled]="loading">
+            {{ loading ? copy('checking') : copy('continue') }} <span aria-hidden="true">→</span>
+          </button>
+          <p class="privacy-note"><span aria-hidden="true">●</span>{{ copy('privateNote') }}</p>
+        </form>
+      </section>
+    }
+
+    @if (stage === 'selection') {
+      <section class="selection-wrap">
+        <div class="public-heading">
+          <p class="eyebrow">{{ copy('selectionEyebrow') }}</p>
+          <h1>{{ copy('selectionTitle') }}</h1>
+          <p>{{ copy('selectionText') }}</p>
+        </div>
+        @if (error) {
+          <div class="public-error" role="alert">{{ error }}</div>
+        }
+        @if (access?.eligibleForms?.length) {
+          <div class="form-choice-grid">
+            @for (available of access!.eligibleForms; track available.id; let index = $index) {
+              <button
+                class="form-choice"
+                type="button"
+                (click)="selectForm(available)"
+                [disabled]="loading"
+              >
+                <span class="choice-number">{{ (index + 1).toString().padStart(2, '0') }}</span
+                ><span class="type-pill">{{
+                  available.formType === 'InitialAssessment' ? copy('initial') : copy('update')
+                }}</span>
+                <strong>{{ available.name }}</strong
+                ><span class="choice-action"
+                  >{{ copy('start') }} <span aria-hidden="true">→</span></span
+                >
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="public-card empty-public">
+            <span>✓</span>
+            <p>{{ copy('noForms') }}</p>
+          </div>
+        }
+        <button class="text-button" type="button" (click)="restart()">
+          ← {{ copy('differentCodes') }}
+        </button>
+      </section>
+    }
+
+    @if (stage === 'form' && form) {
+      <section class="form-wrap">
+        <aside class="form-intro">
+          <p class="eyebrow">{{ copy('formEyebrow') }}</p>
+          <h1>{{ form.name }}</h1>
+          <p>
+            {{ copy('welcome') }}, <strong>{{ access?.clientName }}</strong>
+          </p>
+          <div class="progress-block">
+            <div>
+              <span>{{ progress() }}% {{ copy('progress') }}</span
+              ><span>{{ form.questions.length }} {{ copy('questions') }}</span>
+            </div>
+            <div class="progress-track"><span [style.width.%]="progress()"></span></div>
+          </div>
+          <div class="section-index">
+            @for (section of form.sections; track section.id; let index = $index) {
+              <span
+                ><b>{{ index + 1 }}</b
+                >{{ section.title }}</span
+              >
+            }
+          </div>
+        </aside>
+        <form class="question-form" (ngSubmit)="submit()" novalidate>
+          @if (orderedQuestions(null).length) {
+            <section class="question-section public-card">
+              @for (question of orderedQuestions(null); track question.id; let index = $index) {
+                <ng-container
+                  *ngTemplateOutlet="
+                    questionTemplate;
+                    context: { $implicit: question, number: index + 1 }
+                  "
+                ></ng-container>
+              }
+            </section>
+          }
+          @for (section of form.sections; track section.id; let sectionIndex = $index) {
+            <section class="question-section public-card">
+              <header>
+                <span>{{ (sectionIndex + 1).toString().padStart(2, '0') }}</span>
+                <div>
+                  <small>{{ copy('section') }}</small>
+                  <h2>{{ section.title }}</h2>
+                </div>
+              </header>
+              @for (
+                question of orderedQuestions(section.id);
+                track question.id;
+                let index = $index
+              ) {
+                <ng-container
+                  *ngTemplateOutlet="
+                    questionTemplate;
+                    context: { $implicit: question, number: index + 1 }
+                  "
+                ></ng-container>
+              }
+            </section>
+          }
+          @if (error) {
+            <div class="public-error sticky-error" role="alert">{{ error }}</div>
+          }
+          <div class="submit-bar">
+            <p><span aria-hidden="true">✓</span>{{ copy('submittedNotice') }}</p>
+            <button class="button button-primary" type="submit" [disabled]="loading">
+              {{ loading ? copy('submitting') : copy('submit') }} <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </form>
+      </section>
+    }
+
+    @if (stage === 'success') {
+      <section class="success-wrap public-card">
+        <div class="success-check" aria-hidden="true">✓</div>
+        <p class="eyebrow">{{ copy('successEyebrow') }}</p>
+        <h1>{{ copy('successTitle') }}</h1>
+        <p>{{ copy('successText') }}</p>
+        <div class="submission-reference">
+          <span>{{ copy('reference') }}</span
+          ><strong>{{ submission?.submissionId }}</strong>
+        </div>
+        <div class="success-actions">
+          <button class="button button-primary" type="button" (click)="submitAnother()">
+            {{ copy('another') }}</button
+          ><button class="button button-secondary" type="button" (click)="restart()">
+            {{ copy('differentCodes') }}
+          </button>
+        </div>
+      </section>
+    }
+  </main>
+
+  <ng-template #questionTemplate let-question let-number="number">
+    <div
+      class="question"
+      [id]="'question-' + question.id"
+      [class.question-invalid]="touched.has(question.id) && invalid(question)"
+    >
+      <div class="question-title">
+        <span>{{ number.toString().padStart(2, '0') }}</span
+        ><label [for]="question.id"
+          >{{ question.text }}
+          @if (question.isRequired) {
+            <small>{{ copy('required') }}</small>
+          }
+        </label>
+      </div>
+      @switch (question.questionType) {
+        @case ('ShortText') {
+          <input
+            [id]="question.id"
+            [name]="question.id"
+            [(ngModel)]="answers[question.id]"
+            (blur)="touch(question.id)"
+          />
+        }
+        @case ('LongText') {
+          <textarea
+            [id]="question.id"
+            [name]="question.id"
+            [(ngModel)]="answers[question.id]"
+            (blur)="touch(question.id)"
+            rows="5"
+          ></textarea>
+        }
+        @case ('Number') {
+          <input
+            [id]="question.id"
+            [name]="question.id"
+            type="number"
+            step="any"
+            [(ngModel)]="answers[question.id]"
+            (blur)="touch(question.id)"
+          />
+        }
+        @case ('Date') {
+          <input
+            [id]="question.id"
+            [name]="question.id"
+            type="date"
+            [(ngModel)]="answers[question.id]"
+            (blur)="touch(question.id)"
+          />
+        }
+        @case ('Boolean') {
+          <div class="option-grid two">
+            <label class="option-card"
+              ><input
+                type="radio"
+                [name]="question.id"
+                [value]="true"
+                [(ngModel)]="answers[question.id]"
+                (change)="touch(question.id)"
+              /><span>{{ copy('yes') }}</span></label
+            ><label class="option-card"
+              ><input
+                type="radio"
+                [name]="question.id"
+                [value]="false"
+                [(ngModel)]="answers[question.id]"
+                (change)="touch(question.id)"
+              /><span>{{ copy('no') }}</span></label
+            >
+          </div>
+        }
+        @case ('SingleChoice') {
+          <p class="input-hint">{{ copy('chooseOne') }}</p>
+          <div class="option-grid">
+            @for (option of question.options; track option.id) {
+              <label class="option-card"
+                ><input
+                  type="radio"
+                  [name]="question.id"
+                  [value]="option.value"
+                  [(ngModel)]="answers[question.id]"
+                  (change)="touch(question.id)"
+                /><span>{{ option.label }}</span></label
+              >
+            }
+          </div>
+        }
+        @case ('MultipleChoice') {
+          <p class="input-hint">{{ copy('chooseMany') }}</p>
+          <div class="option-grid">
+            @for (option of question.options; track option.id) {
+              <label class="option-card"
+                ><input
+                  type="checkbox"
+                  [checked]="$any(answers[question.id])?.includes(option.value)"
+                  (change)="toggleChoice(question.id, option.value, $any($event.target).checked)"
+                /><span>{{ option.label }}</span></label
+              >
+            }
+          </div>
+        }
+        @case ('MediaUpload') {
+          <label class="upload-card"
+            ><input
+              [id]="question.id"
+              type="file"
+              accept="image/*"
+              (change)="upload(question, $event)"
+              [disabled]="uploading[question.id]"
+            /><span class="upload-symbol" aria-hidden="true">↑</span
+            ><strong>{{
+              uploading[question.id]
+                ? copy('uploading')
+                : media[question.id]
+                  ? copy('replace')
+                  : copy('upload')
+            }}</strong>
+            @if (media[question.id]) {
+              <small>{{ media[question.id].originalFileName }}</small>
+            }
+          </label>
+        }
+      }
+      @if (touched.has(question.id) && invalid(question)) {
+        <p class="field-error">{{ copy('required') }}</p>
+      }
+    </div>
+  </ng-template>
+</div>
