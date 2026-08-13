@@ -17,13 +17,13 @@ export class AuthService {
 
   login(request: LoginRequest): Observable<LoginResult> {
     return this.http.post<LoginResult>(`${environment.apiBaseUrl}/auth/login`, request).pipe(tap(result => {
-      localStorage.setItem(storageKey, JSON.stringify(result));
+      sessionStorage.setItem(storageKey, JSON.stringify(result));
       this.session.set(result);
     }));
   }
 
   logout(redirect = true): void {
-    localStorage.removeItem(storageKey);
+    sessionStorage.removeItem(storageKey);
     this.session.set(null);
     if (redirect) void this.router.navigate(['/login']);
   }
@@ -31,13 +31,13 @@ export class AuthService {
   accessToken(): string | null { return this.isAuthenticated() ? this.session()?.accessToken ?? null : null; }
 
   private restoreSession(): LoginResult | null {
-    const raw = localStorage.getItem(storageKey);
+    const raw = sessionStorage.getItem(storageKey);
     if (!raw) return null;
     try {
       const result = JSON.parse(raw) as LoginResult;
       if (this.isSessionValid(result)) return result;
     } catch { /* Discard malformed browser state. */ }
-    localStorage.removeItem(storageKey);
+    sessionStorage.removeItem(storageKey);
     return null;
   }
 

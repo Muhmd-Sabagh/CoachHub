@@ -12,7 +12,7 @@ public sealed class MediaServiceTests
         var storage = new StubStorage();
         var repository = new StubRepository();
         var service = new MediaService(storage, repository);
-        await using var content = new MemoryStream([1, 2, 3]);
+        await using var content = new MemoryStream([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
 
         var result = await service.UploadAsync(
             content,
@@ -31,7 +31,7 @@ public sealed class MediaServiceTests
     {
         var storage = new StubStorage();
         var service = new MediaService(storage, new StubRepository());
-        await using var content = new MemoryStream([1, 2, 3]);
+        await using var content = new MemoryStream("GIF89a"u8.ToArray());
 
         await service.UploadAsync(
             content,
@@ -59,6 +59,44 @@ public sealed class MediaServiceTests
                 CancellationToken.None));
 
         Assert.Contains("contentType", exception.Errors);
+        Assert.False(storage.StoreCalled);
+    }
+
+    [Fact]
+    public async Task Declared_content_type_must_match_the_file_signature()
+    {
+        var storage = new StubStorage();
+        var service = new MediaService(storage, new StubRepository());
+        await using var content = new MemoryStream("not-a-real-png"u8.ToArray());
+
+        var exception = await Assert.ThrowsAsync<ValidationException>(() =>
+            service.UploadAsync(
+                content,
+                "renamed.png",
+                "image/png",
+                content.Length,
+                CancellationToken.None));
+
+        Assert.Contains("file", exception.Errors);
+        Assert.False(storage.StoreCalled);
+    }
+
+    [Fact]
+    public async Task Oversized_content_is_rejected_without_allocating_the_declared_size()
+    {
+        var storage = new StubStorage();
+        var service = new MediaService(storage, new StubRepository());
+        await using var content = new MemoryStream("%PDF-1.7"u8.ToArray());
+
+        var exception = await Assert.ThrowsAsync<ValidationException>(() =>
+            service.UploadAsync(
+                content,
+                "large.pdf",
+                "application/pdf",
+                MediaService.MaximumFileSizeBytes + 1,
+                CancellationToken.None));
+
+        Assert.Contains("file", exception.Errors);
         Assert.False(storage.StoreCalled);
     }
 

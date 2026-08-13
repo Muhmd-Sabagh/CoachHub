@@ -120,7 +120,7 @@ public sealed class NutritionEndpointTests : IClassFixture<CoachHubApiFactory>
     private async Task<MediaMetadata> UploadImageAsync()
     {
         using var form = new MultipartFormDataContent();
-        using var bytes = new ByteArrayContent([1, 2, 3, 4]);
+        using var bytes = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
         bytes.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         form.Add(bytes, "file", "food.png");
         var response = await _client.PostAsync("/api/media", form);

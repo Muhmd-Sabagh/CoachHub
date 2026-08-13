@@ -4,6 +4,7 @@ using CoachHub.Application.Auth;
 using CoachHub.Application.Auth.Login;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CoachHub.API.Auth;
 
@@ -12,6 +13,7 @@ namespace CoachHub.API.Auth;
 public sealed class AuthController(LoginCommandHandler loginHandler) : ControllerBase
 {
     [AllowAnonymous]
+    [EnableRateLimiting("authentication")]
     [HttpPost("login")]
     [ProducesResponseType<LoginResult>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
