@@ -72,6 +72,7 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
     public Task<Client?> FindAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Set<Client>()
             .Include(client => client.Subscriptions)
+                .ThenInclude(subscription => subscription.Renewals)
             .SingleOrDefaultAsync(client => client.Id == id, cancellationToken);
     public Task<bool> ClientCodeExistsAsync(string code, CancellationToken cancellationToken) =>
         dbContext.Set<Client>().AnyAsync(client => client.ClientCode == code, cancellationToken);
@@ -90,10 +91,19 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         await dbContext.SaveChangesAsync(cancellationToken);
     }
     public Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.Set<Subscription>().SingleOrDefaultAsync(subscription => subscription.Id == id, cancellationToken);
+        dbContext.Set<Subscription>()
+            .Include(subscription => subscription.Renewals)
+            .SingleOrDefaultAsync(subscription => subscription.Id == id, cancellationToken);
     public async Task AddSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken)
     {
         dbContext.Set<Subscription>().Add(subscription);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+    public async Task AddRenewalAsync(
+        SubscriptionRenewal renewal,
+        CancellationToken cancellationToken)
+    {
+        dbContext.Set<SubscriptionRenewal>().Add(renewal);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
     public async Task DeleteSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken)

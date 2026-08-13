@@ -186,16 +186,37 @@
             @for (s of detail.subscriptions; track s.id) {
               <tr>
                 <td>{{ nameOf(packages, s.packageId) }}</td>
-                <td>{{ s.startDate }} → {{ s.endDate }}</td>
+                <td>{{ s.startDate }} to {{ s.endDate }}</td>
                 <td>{{ s.price }} {{ nameOf(currencies, s.currencyId) }}</td>
                 <td>{{ s.renewalCount }}</td>
                 <td class="actions">
-                  <button class="link-button" (click)="editSubscription(s)">Edit</button
-                  ><button class="link-button danger" (click)="removeSubscription(s)">
-                    Delete
-                  </button>
+                  <button class="link-button" (click)="openRenewal(s)">Renew</button>
+                  @if (!s.renewals.length) {
+                    <button class="link-button" (click)="editSubscription(s)">Edit</button>
+                    <button class="link-button danger" (click)="removeSubscription(s)">Delete</button>
+                  } @else {
+                    <small>History protected</small>
+                  }
                 </td>
               </tr>
+              @if (s.renewals.length) {
+                <tr>
+                  <td colspan="5">
+                    <div class="detail-grid">
+                      @for (renewal of s.renewals; track renewal.id) {
+                        <div>
+                          <span>Renewal #{{ renewal.sequenceNumber }}</span>
+                          <strong>{{ renewal.previousEndDate }} to {{ renewal.newEndDate }}</strong>
+                          <small>
+                            {{ renewal.price }} {{ nameOf(currencies, renewal.currencyId) }}
+                            via {{ nameOf(accounts, renewal.paymentAccountId) }}
+                          </small>
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
             }
             @if (!detail.subscriptions.length) {
               <tr>
@@ -252,15 +273,61 @@
             @for (x of accounts; track x.id) {
               <option [value]="x.id">{{ x.name }}</option>
             }
-          </select></label
-        ><label
-          ><span>Renewal count</span
-          ><input type="number" min="0" name="renewals" [(ngModel)]="subscription.renewalCount"
-        /></label>
+          </select></label>
+
         <footer class="modal-actions span-2">
           <button class="button button-secondary" type="button" (click)="subscriptionOpen = false">
             Cancel</button
           ><button class="button button-primary">Save</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+@if (renewalOpen && detail && renewingSubscription) {
+  <div class="modal-backdrop top-layer">
+    <section class="modal-card">
+      <header>
+        <div>
+          <p class="eyebrow">Subscription renewal</p>
+          <h2>Extend coverage</h2>
+        </div>
+        <button class="icon-button" (click)="renewalOpen = false">Close</button>
+      </header>
+      <p>
+        Current end date: <strong>{{ renewingSubscription.endDate }}</strong>.
+        The renewal is recorded permanently and extends from this date.
+      </p>
+      <form class="form-grid" (ngSubmit)="saveRenewal()">
+        <label>
+          <span>Additional months *</span>
+          <input type="number" min="1" max="120" name="renewalDuration" [(ngModel)]="renewal.durationMonths" required />
+        </label>
+        <label>
+          <span>Renewal price *</span>
+          <input type="number" min="0.01" step="0.01" name="renewalPrice" [(ngModel)]="renewal.price" required />
+        </label>
+        <label>
+          <span>Currency *</span>
+          <select name="renewalCurrency" [(ngModel)]="renewal.currencyId" required>
+            <option value="">Select</option>
+            @for (x of currencies; track x.id) {
+              <option [value]="x.id">{{ x.code }} {{ x.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>Payment account</span>
+          <select name="renewalAccount" [(ngModel)]="renewal.paymentAccountId">
+            <option value="">None</option>
+            @for (x of accounts; track x.id) {
+              <option [value]="x.id">{{ x.name }}</option>
+            }
+          </select>
+        </label>
+        <footer class="modal-actions span-2">
+          <button class="button button-secondary" type="button" (click)="renewalOpen = false">Cancel</button>
+          <button class="button button-primary" [disabled]="saving">Record renewal</button>
         </footer>
       </form>
     </section>

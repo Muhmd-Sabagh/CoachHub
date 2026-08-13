@@ -19,6 +19,8 @@ export class ClientsComponent implements OnInit {
   editorOpen = false;
   detailOpen = false;
   subscriptionOpen = false;
+  renewalOpen = false;
+  renewingSubscription: Subscription | null = null;
   editingId: string | null = null;
   detail: ClientDetail | null = null;
   packages: ReferenceRecord[] = [];
@@ -26,6 +28,7 @@ export class ClientsComponent implements OnInit {
   accounts: ReferenceRecord[] = [];
   editor = this.emptyClient();
   subscription = this.emptySubscription();
+  renewal = this.emptyRenewal();
   editingSubscriptionId: string | null = null;
   constructor(
     route: ActivatedRoute,
@@ -167,6 +170,34 @@ export class ClientsComponent implements OnInit {
       error: (e) => (this.error = apiErrorMessage(e)),
     });
   }
+  openRenewal(s: Subscription): void {
+    this.renewingSubscription = s;
+    this.renewal = {
+      ...this.emptyRenewal(),
+      currencyId: s.currencyId,
+      paymentAccountId: s.paymentAccountId ?? '',
+    };
+    this.renewalOpen = true;
+  }
+  saveRenewal(): void {
+    if (!this.detail || !this.renewingSubscription) return;
+    const input = {
+      ...this.renewal,
+      paymentAccountId: this.renewal.paymentAccountId || null,
+    };
+    this.saving = true;
+    this.data
+      .renewSubscription(this.detail.client.id, this.renewingSubscription.id, input)
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: () => {
+          this.renewalOpen = false;
+          this.renewingSubscription = null;
+          this.refreshDetail();
+        },
+        error: (e) => (this.error = apiErrorMessage(e)),
+      });
+  }
   removeSubscription(s: Subscription): void {
     if (this.detail && confirm('Delete this subscription?'))
       this.data
@@ -198,6 +229,14 @@ export class ClientsComponent implements OnInit {
       dietStatus: 'NotStarted',
       workoutStatus: 'NotStarted',
       isActive: true,
+    };
+  }
+  private emptyRenewal() {
+    return {
+      durationMonths: 1,
+      price: 0,
+      currencyId: '',
+      paymentAccountId: '',
     };
   }
   private emptySubscription() {

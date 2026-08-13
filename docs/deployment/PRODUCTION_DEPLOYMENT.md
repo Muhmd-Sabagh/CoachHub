@@ -45,7 +45,8 @@ The Angular production environment expects `/api` on the same trusted origin. If
 6. Smoke test login, client search, subscription status, assessment access/submission/update, media upload/open authorization, diet/workout save/reorder/reload, and bilingual PDF preview/download.
 7. Confirm anonymous requests receive `401` on admin and media routes, invalid access codes reveal no form, login throttling returns `429`, and sensitive responses include `Cache-Control: no-store`.
 8. Create, update, and delete a staging record; confirm metadata-only audit entries identify the administrator and contain no business field values.
-9. Promote, monitor errors/latency/rate-limit events, and retain a rollback artifact and database recovery procedure.
+9. Record a staging subscription renewal; confirm the end date and count advance once, history reloads, and the renewed subscription and its client cannot be deleted.
+10. Promote, monitor errors/latency/rate-limit events, and retain a rollback artifact and database recovery procedure.
 
 ## Secret and legacy-data handling
 

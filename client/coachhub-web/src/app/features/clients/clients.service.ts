@@ -17,6 +17,17 @@ export interface Client {
   isActive: boolean;
   subscriptionCount: number;
 }
+export interface SubscriptionRenewal {
+  id: string;
+  sequenceNumber: number;
+  previousEndDate: string;
+  newEndDate: string;
+  durationMonths: number;
+  price: number;
+  currencyId: string;
+  paymentAccountId?: string | null;
+  recordedAt: string;
+}
 export interface Subscription {
   id: string;
   clientId: string;
@@ -29,6 +40,7 @@ export interface Subscription {
   paymentAccountId?: string | null;
   renewalCount: number;
   isActive: boolean;
+  renewals: SubscriptionRenewal[];
 }
 export interface ClientDetail {
   client: Client;
@@ -61,6 +73,12 @@ export class ClientsService {
   }
   updateSubscription(clientId: string, id: string, input: object) {
     return this.http.put<Subscription>(`${this.url}/${clientId}/subscriptions/${id}`, input);
+  }
+  renewSubscription(clientId: string, id: string, input: object) {
+    return this.http.post<Subscription>(
+      `${this.url}/${clientId}/subscriptions/${id}/renewals`,
+      input,
+    );
   }
   deleteSubscription(clientId: string, id: string) {
     return this.http.delete<void>(`${this.url}/${clientId}/subscriptions/${id}`);

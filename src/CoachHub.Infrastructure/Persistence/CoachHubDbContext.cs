@@ -1,6 +1,7 @@
 using CoachHub.Application.Auditing;
 using CoachHub.Domain.Auditing;
 using CoachHub.Domain.Common;
+using CoachHub.Domain.Clients;
 using CoachHub.Infrastructure.Auth.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -59,6 +60,12 @@ public sealed class CoachHubDbContext(
     private void CaptureAuditEntries()
     {
         ChangeTracker.DetectChanges();
+        if (ChangeTracker.Entries<SubscriptionRenewal>().Any(entry =>
+                entry.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException(
+                "Subscription renewal transactions are append-only and cannot be modified or deleted.");
+        }
         var trackedAuditEntries = ChangeTracker.Entries<AuditEntry>().ToArray();
         if (trackedAuditEntries.Any(entry =>
                 entry.State is EntityState.Modified or EntityState.Deleted))

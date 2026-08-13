@@ -109,11 +109,17 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
         if (entity is Package package && await dbContext.Set<Subscription>()
                 .AnyAsync(subscription => subscription.PackageId == package.Id, cancellationToken))
             throw new ConflictException("Package is referenced by subscriptions. Deactivate it instead.");
-        if (entity is Currency currency && await dbContext.Set<Subscription>()
-                .AnyAsync(subscription => subscription.CurrencyId == currency.Id, cancellationToken))
+        if (entity is Currency currency &&
+            (await dbContext.Set<Subscription>()
+                .AnyAsync(subscription => subscription.CurrencyId == currency.Id, cancellationToken) ||
+             await dbContext.Set<SubscriptionRenewal>()
+                .AnyAsync(renewal => renewal.CurrencyId == currency.Id, cancellationToken)))
             throw new ConflictException("Currency is referenced by subscriptions. Deactivate it instead.");
-        if (entity is PaymentAccount account && await dbContext.Set<Subscription>()
-                .AnyAsync(subscription => subscription.PaymentAccountId == account.Id, cancellationToken))
+        if (entity is PaymentAccount account &&
+            (await dbContext.Set<Subscription>()
+                .AnyAsync(subscription => subscription.PaymentAccountId == account.Id, cancellationToken) ||
+             await dbContext.Set<SubscriptionRenewal>()
+                .AnyAsync(renewal => renewal.PaymentAccountId == account.Id, cancellationToken)))
             throw new ConflictException("Payment account is referenced by subscriptions. Deactivate it instead.");
         dbContext.Set<TEntity>().Remove(entity);
         await dbContext.SaveChangesAsync(cancellationToken);

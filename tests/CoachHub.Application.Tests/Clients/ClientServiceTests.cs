@@ -42,6 +42,7 @@ public sealed class ClientServiceTests
         public Task DeleteAsync(Client client, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Subscription?>(null);
         public Task AddSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task AddRenewalAsync(SubscriptionRenewal renewal, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }
