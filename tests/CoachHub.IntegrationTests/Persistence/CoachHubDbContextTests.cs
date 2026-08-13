@@ -1,4 +1,5 @@
 using CoachHub.Infrastructure;
+using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,11 +9,16 @@ namespace CoachHub.IntegrationTests.Persistence;
 public sealed class CoachHubDbContextTests
 {
     [Fact]
-    public void Baseline_model_contains_no_legacy_or_feature_entities()
+    public void Model_contains_identity_but_no_legacy_business_entities()
     {
         using var context = CreateContext();
+        var entityTypes = context.Model.GetEntityTypes().Select(type => type.ClrType).ToArray();
 
-        Assert.Empty(context.Model.GetEntityTypes());
+        Assert.Contains(typeof(User), entityTypes);
+        Assert.Contains(typeof(Role), entityTypes);
+        Assert.Contains(typeof(UserRole), entityTypes);
+        Assert.DoesNotContain(entityTypes, type => type.Name is
+            "ClientAssessment" or "ClientUpdate" or "GymDbContext");
     }
 
     [Fact]
@@ -20,7 +26,7 @@ public sealed class CoachHubDbContextTests
     {
         var values = new Dictionary<string, string?>
         {
-            [$"ConnectionStrings:{DatabaseOptions.ConnectionStringName}"] =
+            ["ConnectionStrings:" + DatabaseOptions.ConnectionStringName] =
                 DatabaseOptions.DevelopmentConnectionString
         };
         var configuration = new ConfigurationBuilder()
