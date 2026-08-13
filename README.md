@@ -16,4 +16,4 @@ Backend dependency direction:
 
 Build and test the backend with dotnet build CoachHub.slnx and dotnet test CoachHub.slnx --no-build.
 
-The existing Angular starter remains in gms.client until the Angular foundation phase, where it will be renamed and reorganized as client/coachhub-web.
+The Angular administration application lives in `client/coachhub-web`. Run `npm ci`, then `npm start` from that directory while CoachHub.API is running.

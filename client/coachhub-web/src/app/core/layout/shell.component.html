@@ -1,0 +1,24 @@
+<div class="app-shell" [class.sidebar-open]="sidebarOpen">
+  <button class="sidebar-backdrop" type="button" aria-label="Close navigation" (click)="closeSidebar()"></button>
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="brand-mark">CH</div><div><strong>{{ config.settings().productName }}</strong><span>{{ config.settings().coachName }}</span></div></div>
+    <p class="menu-caption">{{ 'shell.menu' | translate }}</p>
+    <nav class="sidebar-nav">
+      @for (item of navItems; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="active" (click)="closeSidebar()"><span class="nav-icon">{{ item.icon }}</span><span>{{ item.label | translate }}</span></a>
+      }
+    </nav>
+    <div class="sidebar-footer"><span class="status-dot"></span><div><strong>CoachHub</strong><small>API connected workspace</small></div></div>
+  </aside>
+  <div class="app-main">
+    <header class="topbar">
+      <button class="icon-button menu-button" type="button" [attr.aria-label]="'shell.toggle' | translate" (click)="sidebarOpen = !sidebarOpen"><span></span><span></span><span></span></button>
+      <div class="topbar-spacer"></div>
+      <button class="icon-button theme-button" type="button" [attr.aria-label]="'shell.theme' | translate" (click)="theme.toggle()">{{ theme.theme() === 'light' ? '☾' : '☀' }}</button>
+      <button class="language-button" type="button" (click)="i18n.toggle()">{{ 'shell.language' | translate }}</button>
+      <div class="user-chip"><span class="avatar">{{ (auth.currentUser()?.displayName || auth.currentUser()?.email || 'C').charAt(0).toUpperCase() }}</span><div><strong>{{ auth.currentUser()?.displayName || auth.currentUser()?.email }}</strong><small>{{ auth.currentUser()?.roles?.join(', ') }}</small></div></div>
+      <button class="button button-secondary" type="button" (click)="auth.logout()">{{ 'shell.logout' | translate }}</button>
+    </header>
+    <main class="page-content"><router-outlet /></main>
+  </div>
+</div>

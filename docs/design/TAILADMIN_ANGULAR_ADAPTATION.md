@@ -4,7 +4,7 @@
 
 CoachHub uses the locally supplied TailAdmin Next.js Free v2.3.0 project at W:\Work\GYM\free-nextjs-admin-dashboard-main as the mandatory visual template.
 
-TailAdmin is MIT licensed. CoachHub will reproduce the visual language and interaction patterns in Angular rather than adding Next.js, React, or React-specific packages to the application. Any copied or substantially adapted source/assets must retain the attribution recorded in THIRD_PARTY_NOTICES.md and third-party/TailAdmin-LICENSE.
+TailAdmin is MIT licensed. CoachHub will reproduce the visual language and interaction patterns in Angular rather than adding Next.js, React, or React-specific packages to the application. Any copied or substantially adapted source/assets must retain the attribution recorded in client/coachhub-web/THIRD_PARTY_NOTICES.md and client/coachhub-web/THIRD_PARTY_LICENSES/TailAdmin-MIT.txt.
 
 ## Non-negotiable visual language
 

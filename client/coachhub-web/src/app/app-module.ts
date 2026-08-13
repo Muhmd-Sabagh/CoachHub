@@ -1,0 +1,21 @@
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { BrowserModule } from '@angular/platform-browser';
+import { AppRoutingModule } from './app-routing-module';
+import { App } from './app';
+import { authInterceptor } from './core/auth/auth.interceptor';
+import { ShellComponent } from './core/layout/shell.component';
+import { LoginComponent } from './features/auth/login/login.component';
+import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { FeaturePlaceholderComponent } from './features/placeholder/feature-placeholder.component';
+import { SearchFilterComponent } from './shared/components/search-filter/search-filter.component';
+import { TranslatePipe } from './shared/pipes/translate.pipe';
+
+@NgModule({
+  declarations: [App, ShellComponent, LoginComponent, DashboardComponent, FeaturePlaceholderComponent, SearchFilterComponent, TranslatePipe],
+  imports: [BrowserModule, FormsModule, ReactiveFormsModule, AppRoutingModule],
+  providers: [provideBrowserGlobalErrorListeners(), provideHttpClient(withInterceptors([authInterceptor]))],
+  bootstrap: [App]
+})
+export class AppModule {}
