@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CoachHub.API/CoachHub.API.csproj" />
+    <Project Path="src/CoachHub.Application/CoachHub.Application.csproj" />
+    <Project Path="src/CoachHub.Domain/CoachHub.Domain.csproj" />
+    <Project Path="src/CoachHub.Infrastructure/CoachHub.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CoachHub.Application.Tests/CoachHub.Application.Tests.csproj" />
+    <Project Path="tests/CoachHub.Domain.Tests/CoachHub.Domain.Tests.csproj" />
+    <Project Path="tests/CoachHub.IntegrationTests/CoachHub.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
