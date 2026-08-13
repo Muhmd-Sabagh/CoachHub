@@ -1,0 +1,1 @@
+export interface CoachHubSettings { productName: string; coachName: string; }

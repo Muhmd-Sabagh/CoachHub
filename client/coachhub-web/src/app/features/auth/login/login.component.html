@@ -1,0 +1,24 @@
+<main class="auth-page">
+  <section class="auth-brand-panel" aria-label="CoachHub">
+    <div class="brand-mark large">CH</div>
+    <p class="eyebrow">{{ 'auth.eyebrow' | translate }}</p>
+    <h1>CoachHub</h1>
+    <p>{{ 'auth.subtitle' | translate }}</p>
+    <div class="auth-orbit" aria-hidden="true"><span></span><span></span><span></span></div>
+  </section>
+  <section class="auth-form-panel">
+    <button class="language-button" type="button" (click)="i18n.toggle()">{{ 'shell.language' | translate }}</button>
+    <form class="auth-card" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="brand-mark mobile-brand">CH</div>
+      <p class="eyebrow">CoachHub</p>
+      <h2>{{ 'auth.title' | translate }}</h2>
+      <p class="muted">{{ 'auth.subtitle' | translate }}</p>
+      <label><span>{{ 'auth.email' | translate }}</span><input type="email" formControlName="email" autocomplete="username" /></label>
+      <label><span>{{ 'auth.password' | translate }}</span><span class="password-field"><input [type]="showPassword ? 'text' : 'password'" formControlName="password" autocomplete="current-password" /><button type="button" (click)="showPassword = !showPassword" [attr.aria-label]="'auth.togglePassword' | translate">{{ showPassword ? 'Hide' : 'Show' }}</button></span></label>
+      @if (failed) { <p class="form-error" role="alert">{{ 'auth.error' | translate }}</p> }
+      <button class="button button-primary button-block" type="submit" [disabled]="submitting">
+        {{ (submitting ? 'auth.signingIn' : 'auth.signIn') | translate }}
+      </button>
+    </form>
+  </section>
+</main>

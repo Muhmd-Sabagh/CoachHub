@@ -1,0 +1,13 @@
+<section class="dashboard-hero">
+  <div><p class="eyebrow">{{ 'dashboard.eyebrow' | translate }}</p><h1>{{ 'dashboard.title' | translate }}, {{ auth.currentUser()?.displayName || auth.currentUser()?.email }}.</h1><p>{{ 'dashboard.subtitle' | translate }}</p></div>
+  <div class="hero-accent" aria-hidden="true"><span>CH</span></div>
+</section>
+<section class="dashboard-grid">
+  <article class="card search-card"><p class="eyebrow">{{ 'dashboard.findClient' | translate }}</p><app-search-filter [label]="'dashboard.findClient' | translate" [placeholder]="'dashboard.searchPlaceholder' | translate" (search)="findClient($event)" /></article>
+  <article class="card ready-card"><span class="success-icon">✓</span><div><h2>{{ 'dashboard.readyTitle' | translate }}</h2><p>{{ 'dashboard.readyText' | translate }}</p></div></article>
+</section>
+<section><div class="section-heading"><h2>{{ 'dashboard.quickActions' | translate }}</h2></div><div class="quick-actions">
+  <a routerLink="/clients" [queryParams]="{ action: 'new' }"><span class="action-icon">+</span><strong>{{ 'dashboard.addClient' | translate }}</strong><span class="arrow">→</span></a>
+  <a routerLink="/assessments"><span class="action-icon">AS</span><strong>{{ 'dashboard.reviewAssessments' | translate }}</strong><span class="arrow">→</span></a>
+  <a routerLink="/plans"><span class="action-icon">PL</span><strong>{{ 'dashboard.buildPlan' | translate }}</strong><span class="arrow">→</span></a>
+</div></section>

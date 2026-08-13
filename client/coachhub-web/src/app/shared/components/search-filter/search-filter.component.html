@@ -1,0 +1,4 @@
+<form class="search-filter" (ngSubmit)="submit()">
+  <label><span>{{ label }}</span><input name="searchTerm" [(ngModel)]="value" [placeholder]="placeholder" autocomplete="off" /></label>
+  <button class="button button-primary" type="submit">{{ 'common.search' | translate }}</button>
+</form>
