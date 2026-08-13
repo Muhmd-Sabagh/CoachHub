@@ -3,6 +3,7 @@ using CoachHub.Application.Common.Models;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Domain.Nutrition;
 using CoachHub.Domain.ReferenceData;
+using CoachHub.Domain.Training;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -96,6 +97,14 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
                 "Food category cannot be deleted while food items reference it. Deactivate it instead.");
         }
 
+        if (entity is ExerciseCategory exerciseCategory && await dbContext.Set<Exercise>()
+                .AnyAsync(exercise =>
+                    exercise.ExerciseCategoryId == exerciseCategory.Id,
+                    cancellationToken))
+        {
+            throw new ConflictException(
+                "Exercise category cannot be deleted while exercises reference it. Deactivate it instead.");
+        }
         dbContext.Set<TEntity>().Remove(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
     }

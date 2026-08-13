@@ -2,12 +2,14 @@ using CoachHub.Application.Auth;
 using CoachHub.Application.Media;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Application.Training;
 using CoachHub.Infrastructure.Auth;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Media;
 using CoachHub.Infrastructure.Persistence;
 using CoachHub.Infrastructure.Nutrition;
 using CoachHub.Infrastructure.ReferenceData;
+using CoachHub.Infrastructure.Training;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -62,6 +64,7 @@ public static class DependencyInjection
         AddMedia(services, configuration, allowLocalMediaStorage);
         services.AddScoped(typeof(IReferenceRepository<>), typeof(ReferenceRepository<>));
         services.AddScoped<IFoodRepository, FoodRepository>();
+        services.AddScoped<IExerciseRepository, ExerciseRepository>();
         return services;
     }
 
