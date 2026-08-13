@@ -1,0 +1,168 @@
+<section class="page-heading">
+  <p class="eyebrow">Catalog</p>
+  <h1>{{ title }}</h1>
+  <p>Search, filter, and maintain the active coaching catalog.</p>
+</section>
+<section class="card workbench">
+  <div class="toolbar">
+    <form class="filter-row" (ngSubmit)="applySearch()">
+      <label><span>Search</span><input name="search" [(ngModel)]="search" /></label
+      ><label
+        ><span>Category</span
+        ><select name="category" [(ngModel)]="categoryId">
+          <option value="">All</option>
+          @for (c of categories; track c.id) {
+            <option [value]="c.id">{{ c.nameEn }}</option>
+          }
+        </select></label
+      ><label
+        ><span>Status</span
+        ><select name="active" [(ngModel)]="active">
+          <option value="">All</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select></label
+      ><button class="button button-primary">Search</button
+      ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+    </form>
+    <button class="button button-primary" type="button" (click)="create()">Add {{ title }}</button>
+  </div>
+  @if (error) {
+    <p class="form-error">{{ error }}</p>
+  }
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Category</th>
+          @if (kind === 'foods') {
+            <th>Nutrition / 100</th>
+          } @else {
+            <th>Video</th>
+          }
+          <th>Status</th>
+          <th class="actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading) {
+          <tr>
+            <td colspan="5" class="table-message">Loading…</td>
+          </tr>
+        }
+        @for (item of page.items; track item.id) {
+          <tr>
+            <td>
+              <strong>{{ item.nameEn }}</strong
+              ><small>{{ item.nameAr || '—' }}</small>
+            </td>
+            <td>{{ categoryName(item.foodCategoryId || item.exerciseCategoryId) }}</td>
+            @if (kind === 'foods') {
+              <td>
+                <span class="metric">{{ item.caloriesPer100 }} kcal</span
+                ><small
+                  >P {{ item.proteinPer100 }} · C {{ item.carbohydratesPer100 }} · F
+                  {{ item.fatPer100 }}</small
+                >
+              </td>
+            } @else {
+              <td>
+                @if (item.youTubeUrl) {
+                  <a class="link-button" [href]="item.youTubeUrl" target="_blank" rel="noopener"
+                    >Open video</a
+                  >
+                } @else {
+                  —
+                }
+              </td>
+            }
+            <td><app-status-badge [value]="item.isActive ? 'Active' : 'Inactive'" /></td>
+            <td class="actions">
+              <button class="link-button" (click)="edit(item)">Edit</button
+              ><button class="link-button danger" (click)="remove(item)">Delete</button>
+            </td>
+          </tr>
+        }
+        @if (!loading && !page.items.length) {
+          <tr>
+            <td colspan="5" class="table-message">No records match the applied filters.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination
+    [page]="page.pageNumber"
+    [totalPages]="page.totalPages"
+    [totalCount]="page.totalCount"
+    (pageChange)="load($event)"
+  />
+</section>
+@if (editorOpen) {
+  <div class="modal-backdrop">
+    <section class="modal-card wide" role="dialog" aria-modal="true">
+      <header>
+        <div>
+          <p class="eyebrow">{{ editingId ? 'Edit' : 'New' }}</p>
+          <h2>{{ title }}</h2>
+        </div>
+        <button class="icon-button" (click)="close()">×</button>
+      </header>
+      <form class="form-grid" (ngSubmit)="save()">
+        <label
+          ><span>English name *</span
+          ><input name="nameEn" [(ngModel)]="editor.nameEn" required /></label
+        ><label
+          ><span>Arabic name</span
+          ><input name="nameAr" [(ngModel)]="editor.nameAr" dir="rtl" /></label
+        ><label
+          ><span>Category *</span
+          ><select name="categoryId" [(ngModel)]="editor.categoryId" required>
+            <option value="">Select</option>
+            @for (c of categories; track c.id) {
+              <option [value]="c.id">{{ c.nameEn }}</option>
+            }
+          </select></label
+        >
+        @if (kind === 'foods') {
+          <label
+            ><span>Measurement unit *</span
+            ><input name="unit" [(ngModel)]="editor.measurementUnit" required /></label
+          ><label
+            ><span>Calories / 100</span
+            ><input type="number" name="calories" [(ngModel)]="editor.calories" min="0" /></label
+          ><label
+            ><span>Protein / 100</span
+            ><input type="number" name="protein" [(ngModel)]="editor.protein" min="0" /></label
+          ><label
+            ><span>Carbohydrates / 100</span
+            ><input type="number" name="carbs" [(ngModel)]="editor.carbs" min="0" /></label
+          ><label
+            ><span>Fat / 100</span><input type="number" name="fat" [(ngModel)]="editor.fat" min="0"
+          /></label>
+        } @else {
+          <label
+            ><span>YouTube URL</span
+            ><input name="youtube" [(ngModel)]="editor.youTubeUrl" type="url"
+          /></label>
+        }
+        <label
+          ><span>Media ID</span
+          ><input
+            name="media"
+            [(ngModel)]="editor.mediaId"
+            placeholder="Optional uploaded media ID" /></label
+        ><label class="checkbox-row"
+          ><input type="checkbox" name="isActive" [(ngModel)]="editor.isActive" /> Active</label
+        >
+        <footer class="modal-actions span-2">
+          <button class="button button-secondary" type="button" (click)="close()">Cancel</button
+          ><button class="button button-primary" [disabled]="saving">
+            {{ saving ? 'Saving…' : 'Save' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}

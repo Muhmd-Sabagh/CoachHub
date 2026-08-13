@@ -1,10 +1,14 @@
 using CoachHub.Domain.Assessments;
+using CoachHub.Application.Common.Models;
 using CoachHub.Domain.Clients;
 
 namespace CoachHub.Application.Assessments;
 
 public interface IFormRepository
 {
+    Task<PagedResult<FormSummary>> ListDefinitionsAsync(FormAdminQuery query, CancellationToken cancellationToken);
+    Task<PagedResult<AssessmentSubmissionSummary>> ListSubmissionsAsync(AssessmentSubmissionQuery query, CancellationToken cancellationToken);
+    Task<AssessmentSubmissionDetail?> GetSubmissionAsync(Guid id, CancellationToken cancellationToken);
     Task AddFormAsync(FormDefinition definition, FormVersion draft, CancellationToken cancellationToken);
     Task<FormDefinition?> FindDefinitionAsync(Guid id, CancellationToken cancellationToken);
     Task<FormGraph?> FindDraftAsync(Guid definitionId, CancellationToken cancellationToken);

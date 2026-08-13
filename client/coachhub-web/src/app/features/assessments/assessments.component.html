@@ -1,0 +1,280 @@
+<section class="page-heading">
+  <p class="eyebrow">Assessments</p>
+  <h1>Forms & client responses</h1>
+  <p>Build versioned forms and review the answers preserved at submission time.</p>
+</section>
+<div class="resource-tabs">
+  <button [class.active]="tab === 'forms'" (click)="tab = 'forms'; search = ''; appliedSearch = ''">
+    Form builder</button
+  ><button
+    [class.active]="tab === 'submissions'"
+    (click)="tab = 'submissions'; search = ''; appliedSearch = ''"
+  >
+    Client responses
+  </button>
+</div>
+<section class="card workbench">
+  <div class="toolbar">
+    <form class="filter-row" (ngSubmit)="searchNow()">
+      <label><span>Search</span><input name="search" [(ngModel)]="search" /></label
+      ><button class="button button-primary">Search</button
+      ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+    </form>
+    @if (tab === 'forms') {
+      <button class="button button-primary" (click)="formEditor = true">Create form</button>
+    }
+  </div>
+  @if (error) {
+    <p class="form-error">{{ error }}</p>
+  }
+  @if (tab === 'forms') {
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Form</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of forms.items; track f.id) {
+            <tr>
+              <td>
+                <strong>{{ f.name }}</strong>
+              </td>
+              <td>{{ f.formType }}</td>
+              <td><app-status-badge [value]="f.isArchived ? 'Archived' : 'Active'" /></td>
+              <td class="actions">
+                <button class="link-button" (click)="openForm(f)">Build / preview</button
+                ><button class="link-button" (click)="archive(f)">
+                  {{ f.isArchived ? 'Restore' : 'Archive' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-pagination
+      [page]="forms.pageNumber"
+      [totalPages]="forms.totalPages"
+      [totalCount]="forms.totalCount"
+      (pageChange)="loadForms($event)"
+    />
+  } @else {
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Form</th>
+            <th>Submitted</th>
+            <th>Answers</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of submissions.items; track s.id) {
+            <tr>
+              <td>
+                <strong>{{ s.clientName }}</strong
+                ><small>{{ s.clientCode }}</small>
+              </td>
+              <td>
+                {{ s.formName }}<small>{{ s.formType }} · {{ s.source }}</small>
+              </td>
+              <td>{{ s.submittedAt | date: 'medium' }}</td>
+              <td>{{ s.answerCount }}</td>
+              <td><button class="link-button" (click)="reviewSubmission(s)">Review</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-pagination
+      [page]="submissions.pageNumber"
+      [totalPages]="submissions.totalPages"
+      [totalCount]="submissions.totalCount"
+      (pageChange)="loadSubmissions($event)"
+    />
+  }
+</section>
+@if (formEditor) {
+  <div class="modal-backdrop">
+    <section class="modal-card">
+      <header>
+        <h2>Create assessment form</h2>
+        <button class="icon-button" (click)="formEditor = false">×</button>
+      </header>
+      <form class="form-grid" (ngSubmit)="createForm()">
+        <label class="span-2"
+          ><span>Name *</span><input name="name" [(ngModel)]="newForm.name" required /></label
+        ><label class="span-2"
+          ><span>Form type</span
+          ><select name="type" [(ngModel)]="newForm.formType">
+            <option>InitialAssessment</option>
+            <option>UpdateAssessment</option>
+          </select></label
+        >
+        <footer class="modal-actions span-2">
+          <button class="button button-secondary" type="button" (click)="formEditor = false">
+            Cancel</button
+          ><button class="button button-primary">Create</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+@if (builder) {
+  <div class="modal-backdrop">
+    <section class="modal-card extra-wide">
+      <header>
+        <div>
+          <p class="eyebrow">Version {{ builder.versionNumber }} · {{ builder.status }}</p>
+          <h2>{{ builder.name }}</h2>
+        </div>
+        <button class="icon-button" (click)="builder = null">×</button>
+      </header>
+      <div class="toolbar">
+        <form class="inline-add" (ngSubmit)="addSection()">
+          <input
+            name="section"
+            [(ngModel)]="section.title"
+            placeholder="New section title"
+          /><button class="button button-secondary">Add section</button>
+        </form>
+        <div class="actions">
+          @if (builder.status === 'Draft') {
+            <button class="button button-secondary" (click)="addQuestion()">Add question</button
+            ><button class="button button-primary" (click)="publish()">Publish version</button>
+          } @else {
+            <button class="button button-primary" (click)="createDraft()">
+              Create editable draft
+            </button>
+          }
+        </div>
+      </div>
+      <div class="builder-list">
+        @for (q of builder.questions; track q.id) {
+          <article>
+            <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+            <div>
+              <strong>{{ q.text }}</strong
+              ><small>{{ q.questionType }} · {{ q.isRequired ? 'Required' : 'Optional' }}</small>
+            </div>
+            @if (builder.status === 'Draft') {
+              <div class="actions">
+                <button class="icon-button" title="Move up" (click)="move(q, -1)">↑</button
+                ><button class="icon-button" title="Move down" (click)="move(q, 1)">↓</button
+                ><button class="link-button" (click)="editQuestion(q)">Edit</button
+                ><button class="link-button danger" (click)="removeQuestion(q)">Delete</button>
+              </div>
+            }
+          </article>
+        }
+        @if (!builder.questions.length) {
+          <div class="empty-inline">Add the first question to this draft.</div>
+        }
+      </div>
+    </section>
+  </div>
+}
+@if (questionOpen && builder) {
+  <div class="modal-backdrop top-layer">
+    <section class="modal-card">
+      <header>
+        <h2>{{ editingQuestionId ? 'Edit' : 'Add' }} question</h2>
+        <button class="icon-button" (click)="questionOpen = false">×</button>
+      </header>
+      <form class="form-grid" (ngSubmit)="saveQuestion()">
+        <label class="span-2"
+          ><span>Question *</span
+          ><textarea name="text" [(ngModel)]="question.text" required></textarea></label
+        ><label
+          ><span>Type</span
+          ><select name="qtype" [(ngModel)]="question.questionType">
+            @for (
+              t of [
+                'ShortText',
+                'LongText',
+                'Number',
+                'Date',
+                'Boolean',
+                'SingleChoice',
+                'MultipleChoice',
+                'MediaUpload',
+              ];
+              track t
+            ) {
+              <option>{{ t }}</option>
+            }
+          </select></label
+        ><label
+          ><span>Section</span
+          ><select name="sectionId" [(ngModel)]="question.sectionId">
+            <option value="">No section</option>
+            @for (s of builder.sections; track s.id) {
+              <option [value]="s.id">{{ s.title }}</option>
+            }
+          </select></label
+        ><label class="checkbox-row span-2"
+          ><input type="checkbox" name="required" [(ngModel)]="question.isRequired" />
+          Required</label
+        >
+        @if (
+          question.questionType === 'SingleChoice' || question.questionType === 'MultipleChoice'
+        ) {
+          <div class="span-2 option-editor">
+            <div class="toolbar">
+              <strong>Options</strong
+              ><button class="link-button" type="button" (click)="addOption()">Add option</button>
+            </div>
+            @for (o of question.options; track $index) {
+              <div>
+                <input [name]="'value' + $index" [(ngModel)]="o.value" placeholder="Value" /><input
+                  [name]="'label' + $index"
+                  [(ngModel)]="o.label"
+                  placeholder="Label"
+                />
+              </div>
+            }
+          </div>
+        }
+        <footer class="modal-actions span-2">
+          <button class="button button-secondary" type="button" (click)="questionOpen = false">
+            Cancel</button
+          ><button class="button button-primary">Save question</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+@if (review.detail(); as d) {
+  <div class="modal-backdrop">
+    <section class="modal-card extra-wide persistent-modal">
+      <header>
+        <div>
+          <p class="eyebrow">{{ d.submission.formType }} · {{ d.submission.source }}</p>
+          <h2>{{ d.submission.clientName }} — {{ d.submission.formName }}</h2>
+        </div>
+        <button class="icon-button" (click)="review.close()">×</button>
+      </header>
+      <div class="answer-list">
+        @for (a of d.answers; track a.id) {
+          <article>
+            <span>{{ a.questionText }}</span
+            ><strong>{{ displayValue(a.valueJson) }}</strong>
+            @if (a.externalMediaUrl) {
+              <a [href]="a.externalMediaUrl" target="_blank">Open media</a>
+            }
+            @if (a.mediaId) {
+              <a [href]="'/api/media/' + a.mediaId" target="_blank">Open upload</a>
+            }
+          </article>
+        }
+      </div>
+    </section>
+  </div>
+}

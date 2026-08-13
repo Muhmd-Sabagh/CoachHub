@@ -1,0 +1,15 @@
+export interface CatalogItem {
+  id: string;
+  nameEn: string;
+  nameAr?: string | null;
+  foodCategoryId?: string;
+  exerciseCategoryId?: string;
+  measurementUnit?: string;
+  caloriesPer100?: number;
+  proteinPer100?: number;
+  carbohydratesPer100?: number;
+  fatPer100?: number;
+  mediaId?: string | null;
+  youTubeUrl?: string | null;
+  isActive: boolean;
+}

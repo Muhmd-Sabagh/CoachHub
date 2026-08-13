@@ -8,8 +8,11 @@ namespace CoachHub.API.Assessments;
 [ApiController]
 [Authorize(Roles = AuthRoles.Administrator)]
 [Route("api/assessment-forms")]
-public sealed class FormsController(FormAdminService service) : ControllerBase
+public sealed class FormsController(FormAdminService service, AssessmentAdminQueryService queries) : ControllerBase
 {
+    [HttpGet]
+    public Task<CoachHub.Application.Common.Models.PagedResult<FormSummary>> List([FromQuery] FormAdminQuery query, CancellationToken token) => queries.ListFormsAsync(query, token);
+
     [HttpPost]
     public async Task<ActionResult<FormVersionResponse>> Create(CreateFormInput input, CancellationToken token)
     {

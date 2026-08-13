@@ -62,6 +62,12 @@ public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanR
         if (transaction is not null) await transaction.CommitAsync(cancellationToken);
     }
 
+    public async Task DeleteAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken)
+    {
+        dbContext.Remove(aggregate.Plan);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken) => dbContext.SaveChangesAsync(cancellationToken);
 
     private IQueryable<T> Query<T>(bool tracking) where T : class =>

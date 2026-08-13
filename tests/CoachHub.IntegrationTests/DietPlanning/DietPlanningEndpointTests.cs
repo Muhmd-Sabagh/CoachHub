@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using CoachHub.Application.Auth.Login;
@@ -97,6 +98,9 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
             new EnergyCalculatorInput(30, BiologicalSex.Male, 80, 180, 1.55m, EnergyGoal.LoseWeight));
         Assert.Equal(1780m, calculator.BasalMetabolicRate);
         Assert.Equal(2259m, calculator.GoalCalories);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await _client.DeleteAsync($"/api/diet-plans/{copy.Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/diet-plans/{copy.Id}")).StatusCode);
     }
 
     private async Task AuthenticateAsync()

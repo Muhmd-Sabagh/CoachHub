@@ -35,6 +35,13 @@ public sealed class DietPlansController(DietPlanService service) : ControllerBas
     public Task<DietPlanResponse> Assign(Guid id, AssignDietPlanInput input, CancellationToken cancellationToken) =>
         service.AssignAsync(id, input.ClientId, cancellationToken);
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await service.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPut("{id:guid}/notes/{noteId:guid}/active")]
     public Task<DietPlanResponse> SetNoteActive(Guid id, Guid noteId, SetDietPlanNoteActiveInput input, CancellationToken cancellationToken) =>
         service.SetNoteActiveAsync(id, noteId, input.IsActive, cancellationToken);

@@ -118,6 +118,17 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
         Assert.Equal(PlanWorkflowStatus.ReviewRequired, detail!.Client.DietStatus);
         Assert.Equal(PlanWorkflowStatus.ReviewRequired, detail.Client.WorkoutStatus);
 
+        var forms = await _client.GetFromJsonAsync<CoachHub.Application.Common.Models.PagedResult<FormSummary>>(
+            $"/api/assessment-forms?searchTerm={Uri.EscapeDataString(initial.Name)}");
+        Assert.Contains(forms!.Items, item => item.Id == initial.DefinitionId);
+        var submissions = await _client.GetFromJsonAsync<CoachHub.Application.Common.Models.PagedResult<AssessmentSubmissionSummary>>(
+            $"/api/assessment-submissions?clientId={client.Id}");
+        Assert.Contains(submissions!.Items, item => item.Id == submitted.SubmissionId && item.AnswerCount == 8);
+        var reviewed = await _client.GetFromJsonAsync<AssessmentSubmissionDetail>(
+            $"/api/assessment-submissions/{submitted.SubmissionId}");
+        Assert.Equal(8, reviewed!.Answers.Count);
+        Assert.Contains(reviewed.Answers, answer => answer.QuestionText == "Short" && answer.ValueJson.Contains("text"));
+
         Assert.Equal(
             HttpStatusCode.Conflict,
             (await _client.DeleteAsync($"/api/media/{media.Id}")).StatusCode);

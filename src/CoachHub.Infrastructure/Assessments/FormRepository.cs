@@ -10,6 +10,35 @@ namespace CoachHub.Infrastructure.Assessments;
 
 public sealed class FormRepository(CoachHubDbContext dbContext) : IFormRepository
 {
+    public async Task<CoachHub.Application.Common.Models.PagedResult<FormSummary>> ListDefinitionsAsync(FormAdminQuery query, CancellationToken token)
+    {
+        var source = dbContext.Set<FormDefinition>().AsNoTracking();
+        if (query.SearchTerm is not null) source = source.Where(x => x.Name.Contains(query.SearchTerm));
+        if (query.FormType.HasValue) source = source.Where(x => x.FormType == query.FormType);
+        if (query.IsArchived.HasValue) source = source.Where(x => x.IsArchived == query.IsArchived);
+        var total = await source.LongCountAsync(token);
+        var items = await source.OrderBy(x => x.Name).Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize).Select(x => new FormSummary(x.Id, x.Name, x.FormType, x.IsArchived)).ToArrayAsync(token);
+        return new(items, query.PageNumber, query.PageSize, total);
+    }
+
+    public async Task<CoachHub.Application.Common.Models.PagedResult<AssessmentSubmissionSummary>> ListSubmissionsAsync(AssessmentSubmissionQuery query, CancellationToken token)
+    {
+        var source = from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id join definition in dbContext.Set<FormDefinition>().AsNoTracking() on submission.FormDefinitionId equals definition.Id select new { submission, client, definition };
+        if (query.ClientId.HasValue) source = source.Where(x => x.submission.ClientId == query.ClientId);
+        if (query.FormType.HasValue) source = source.Where(x => x.submission.FormType == query.FormType);
+        if (query.SearchTerm is not null) source = source.Where(x => x.client.Name.Contains(query.SearchTerm) || x.client.ClientCode.Contains(query.SearchTerm) || x.definition.Name.Contains(query.SearchTerm));
+        var total = await source.LongCountAsync(token);
+        var items = await source.OrderByDescending(x => x.submission.SubmittedAt).Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize).Select(x => new AssessmentSubmissionSummary(x.submission.Id, x.client.Id, x.client.Name, x.client.ClientCode, x.definition.Id, x.definition.Name, x.submission.FormType, x.submission.Source, x.submission.SubmittedAt, dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == x.submission.Id))).ToArrayAsync(token);
+        return new(items, query.PageNumber, query.PageSize, total);
+    }
+
+    public async Task<AssessmentSubmissionDetail?> GetSubmissionAsync(Guid id, CancellationToken token)
+    {
+        var summary = await (from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id join definition in dbContext.Set<FormDefinition>().AsNoTracking() on submission.FormDefinitionId equals definition.Id where submission.Id == id select new AssessmentSubmissionSummary(submission.Id, client.Id, client.Name, client.ClientCode, definition.Id, definition.Name, submission.FormType, submission.Source, submission.SubmittedAt, dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == submission.Id))).SingleOrDefaultAsync(token);
+        if (summary is null) return null;
+        var answers = await dbContext.Set<FormAnswer>().AsNoTracking().Where(x => x.FormSubmissionId == id).OrderBy(x => x.QuestionTextSnapshot).Select(x => new AssessmentAnswerResponse(x.Id, x.QuestionStableKey, x.QuestionTextSnapshot, x.QuestionTypeSnapshot, x.ValueJson, x.MediaId, x.ExternalMediaUrl)).ToArrayAsync(token);
+        return new(summary, answers);
+    }
     public async Task AddFormAsync(FormDefinition definition, FormVersion draft, CancellationToken token)
     {
         dbContext.Add(definition); dbContext.Add(draft); await dbContext.SaveChangesAsync(token);

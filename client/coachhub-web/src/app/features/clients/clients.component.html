@@ -1,0 +1,268 @@
+<section class="page-heading">
+  <p class="eyebrow">Relationships</p>
+  <h1>{{ subscriptionsWorkspace ? 'Subscriptions' : 'Clients' }}</h1>
+  <p>
+    {{
+      subscriptionsWorkspace
+        ? 'Find a client to review and maintain subscription history.'
+        : 'Manage client files, plan workflow, access codes, and subscriptions.'
+    }}
+  </p>
+</section>
+<section class="card workbench">
+  <div class="toolbar">
+    <form class="filter-row" (ngSubmit)="applySearch()">
+      <label><span>Search clients</span><input name="search" [(ngModel)]="search" /></label
+      ><label
+        ><span>Subscription</span
+        ><select name="subscription" [(ngModel)]="subscriptionStatus">
+          <option value="">All</option>
+          <option>Active</option>
+          <option>Expired</option>
+          <option>Inactive</option>
+        </select></label
+      ><label
+        ><span>Status</span
+        ><select name="active" [(ngModel)]="active">
+          <option value="">All</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select></label
+      ><button class="button button-primary">Search</button
+      ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+    </form>
+    <button class="button button-primary" (click)="create()">Add client</button>
+  </div>
+  @if (error) {
+    <p class="form-error">{{ error }}</p>
+  }
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Codes</th>
+          <th>Subscription</th>
+          <th>Plan workflow</th>
+          <th class="actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading) {
+          <tr>
+            <td colspan="5" class="table-message">Loading…</td>
+          </tr>
+        }
+        @for (c of page.items; track c.id) {
+          <tr>
+            <td>
+              <strong>{{ c.name }}</strong
+              ><small>{{ c.phone || c.email || 'No contact details' }}</small>
+            </td>
+            <td>
+              <code>{{ c.clientCode }}</code
+              ><small>Form {{ c.formCode }}</small>
+            </td>
+            <td>
+              <app-status-badge [value]="c.subscriptionStatus" /><small
+                >{{ c.subscriptionCount }} record(s)</small
+              >
+            </td>
+            <td>
+              <small>Diet: {{ c.dietStatus }}</small
+              ><small>Workout: {{ c.workoutStatus }}</small>
+            </td>
+            <td class="actions">
+              <button class="link-button" (click)="openDetail(c)">Open</button
+              ><button class="link-button" (click)="edit(c)">Edit</button
+              ><button class="link-button danger" (click)="remove(c)">Delete</button>
+            </td>
+          </tr>
+        }
+        @if (!loading && !page.items.length) {
+          <tr>
+            <td colspan="5" class="table-message">No clients match the applied filters.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination
+    [page]="page.pageNumber"
+    [totalPages]="page.totalPages"
+    [totalCount]="page.totalCount"
+    (pageChange)="load($event)"
+  />
+</section>
+@if (editorOpen) {
+  <div class="modal-backdrop">
+    <section class="modal-card">
+      <header>
+        <h2>{{ editingId ? 'Edit client' : 'New client' }}</h2>
+        <button class="icon-button" (click)="editorOpen = false">×</button>
+      </header>
+      <form class="form-grid" (ngSubmit)="save()">
+        <label><span>Name *</span><input name="name" [(ngModel)]="editor.name" required /></label
+        ><label
+          ><span>Join date</span
+          ><input
+            type="date"
+            name="joinDate"
+            [(ngModel)]="editor.joinDate"
+            [disabled]="!!editingId" /></label
+        ><label><span>Phone</span><input name="phone" [(ngModel)]="editor.phone" /></label
+        ><label
+          ><span>Email</span><input type="email" name="email" [(ngModel)]="editor.email"
+        /></label>
+        @if (editingId) {
+          <label
+            ><span>Diet status</span
+            ><select name="diet" [(ngModel)]="editor.dietStatus">
+              @for (s of ['NotStarted', 'WaitingForPlan', 'OnPlan', 'ReviewRequired']; track s) {
+                <option>{{ s }}</option>
+              }
+            </select></label
+          ><label
+            ><span>Workout status</span
+            ><select name="workout" [(ngModel)]="editor.workoutStatus">
+              @for (s of ['NotStarted', 'WaitingForPlan', 'OnPlan', 'ReviewRequired']; track s) {
+                <option>{{ s }}</option>
+              }
+            </select></label
+          ><label class="checkbox-row span-2"
+            ><input type="checkbox" name="active" [(ngModel)]="editor.isActive" /> Active</label
+          >
+        }
+        <footer class="modal-actions span-2">
+          <button class="button button-secondary" type="button" (click)="editorOpen = false">
+            Cancel</button
+          ><button class="button button-primary" [disabled]="saving">Save</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+@if (detailOpen && detail) {
+  <div class="modal-backdrop">
+    <section class="modal-card extra-wide">
+      <header>
+        <div>
+          <p class="eyebrow">Client file</p>
+          <h2>{{ detail.client.name }}</h2>
+        </div>
+        <button class="icon-button" (click)="detailOpen = false">×</button>
+      </header>
+      <div class="detail-grid">
+        <div>
+          <span>Client code</span><strong>{{ detail.client.clientCode }}</strong>
+        </div>
+        <div>
+          <span>Form code</span><strong>{{ detail.client.formCode }}</strong
+          ><button class="link-button" (click)="regenerate()">Regenerate</button>
+        </div>
+        <div>
+          <span>Joined</span><strong>{{ detail.client.joinDate }}</strong>
+        </div>
+        <div>
+          <span>Subscription</span><app-status-badge [value]="detail.client.subscriptionStatus" />
+        </div>
+      </div>
+      <div class="section-heading toolbar">
+        <h3>Subscriptions</h3>
+        <button class="button button-primary" (click)="addSubscription()">Add subscription</button>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Package</th>
+              <th>Dates</th>
+              <th>Price</th>
+              <th>Renewals</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of detail.subscriptions; track s.id) {
+              <tr>
+                <td>{{ nameOf(packages, s.packageId) }}</td>
+                <td>{{ s.startDate }} → {{ s.endDate }}</td>
+                <td>{{ s.price }} {{ nameOf(currencies, s.currencyId) }}</td>
+                <td>{{ s.renewalCount }}</td>
+                <td class="actions">
+                  <button class="link-button" (click)="editSubscription(s)">Edit</button
+                  ><button class="link-button danger" (click)="removeSubscription(s)">
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            }
+            @if (!detail.subscriptions.length) {
+              <tr>
+                <td colspan="5" class="table-message">No subscriptions yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+}
+@if (subscriptionOpen && detail) {
+  <div class="modal-backdrop top-layer">
+    <section class="modal-card">
+      <header>
+        <h2>{{ editingSubscriptionId ? 'Edit' : 'Add' }} subscription</h2>
+        <button class="icon-button" (click)="subscriptionOpen = false">×</button>
+      </header>
+      <form class="form-grid" (ngSubmit)="saveSubscription()">
+        <label
+          ><span>Package *</span
+          ><select name="package" [(ngModel)]="subscription.packageId" required>
+            <option value="">Select</option>
+            @for (x of packages; track x.id) {
+              <option [value]="x.id">{{ x.nameEn }}</option>
+            }
+          </select></label
+        ><label
+          ><span>Start date *</span
+          ><input type="date" name="start" [(ngModel)]="subscription.startDate" required /></label
+        ><label
+          ><span>Duration months *</span
+          ><input
+            type="number"
+            min="1"
+            name="duration"
+            [(ngModel)]="subscription.durationMonths" /></label
+        ><label
+          ><span>Price *</span
+          ><input type="number" min="0" name="price" [(ngModel)]="subscription.price" /></label
+        ><label
+          ><span>Currency *</span
+          ><select name="currency" [(ngModel)]="subscription.currencyId" required>
+            <option value="">Select</option>
+            @for (x of currencies; track x.id) {
+              <option [value]="x.id">{{ x.code }} {{ x.name }}</option>
+            }
+          </select></label
+        ><label
+          ><span>Payment account</span
+          ><select name="account" [(ngModel)]="subscription.paymentAccountId">
+            <option value="">None</option>
+            @for (x of accounts; track x.id) {
+              <option [value]="x.id">{{ x.name }}</option>
+            }
+          </select></label
+        ><label
+          ><span>Renewal count</span
+          ><input type="number" min="0" name="renewals" [(ngModel)]="subscription.renewalCount"
+        /></label>
+        <footer class="modal-actions span-2">
+          <button class="button button-secondary" type="button" (click)="subscriptionOpen = false">
+            Cancel</button
+          ><button class="button button-primary">Save</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
