@@ -7,6 +7,7 @@ using CoachHub.Application.Media;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Training;
+using CoachHub.Application.WorkoutPlanning;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CoachHub.Application;
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<ExerciseCategoryService>();
         services.AddScoped<ExerciseService>();
         services.AddScoped<LegacyExerciseImportService>();
+        services.AddScoped<WorkoutPlanService>();
         return services;
     }
 }
