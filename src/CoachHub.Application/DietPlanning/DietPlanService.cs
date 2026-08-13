@@ -209,7 +209,14 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
                     group.Title, group.Order,
                     aggregate.ReplacementOptions.Where(x => x.DietReplacementGroupId == group.Id).OrderBy(x => x.Order).Select(option =>
                         new DietReplacementOptionResponse(option.Id, option.ReplacementFoodItemId,
-                            option.ReplacementMealId, option.Quantity, option.Order, option.Notes,
+                            option.ReplacementMealId,
+                            option.ReplacementFoodItemId.HasValue
+                                ? foods[option.ReplacementFoodItemId.Value].NameEn
+                                : aggregate.Meals.Single(x => x.Id == option.ReplacementMealId!.Value).NameEn,
+                            option.ReplacementFoodItemId.HasValue
+                                ? foods[option.ReplacementFoodItemId.Value].NameAr
+                                : aggregate.Meals.Single(x => x.Id == option.ReplacementMealId!.Value).NameAr,
+                            option.Quantity, option.Order, option.Notes,
                             option.ReplacementFoodItemId.HasValue
                                 ? NutritionCalculator.Calculate(foods[option.ReplacementFoodItemId.Value], option.Quantity!.Value)
                                 : mealTotals[option.ReplacementMealId!.Value])).ToArray())).ToArray();

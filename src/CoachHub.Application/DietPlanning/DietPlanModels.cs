@@ -62,6 +62,7 @@ public sealed record DietReplacementGroupResponse(
     IReadOnlyList<DietReplacementOptionResponse> Options);
 public sealed record DietReplacementOptionResponse(
     Guid Id, Guid? ReplacementFoodItemId, Guid? ReplacementMealId,
+    string ReplacementNameEn, string? ReplacementNameAr,
     decimal? Quantity, int Order, string? Notes, NutritionTotals Totals);
 
 public enum BiologicalSex { Male, Female }
