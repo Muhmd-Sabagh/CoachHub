@@ -1,4 +1,4 @@
-﻿const en = {
+const en = {
   brandSubtitle: 'Client assessment',
   language: 'العربية',
   secure: 'Secure form',
