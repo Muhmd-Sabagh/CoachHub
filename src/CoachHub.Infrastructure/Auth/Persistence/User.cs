@@ -9,4 +9,6 @@ public sealed class User : IdentityUser<Guid>
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset? LastLoginAt { get; set; }
+
+    public Guid? ClientId { get; set; }
 }

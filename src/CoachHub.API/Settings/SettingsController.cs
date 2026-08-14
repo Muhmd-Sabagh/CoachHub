@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace CoachHub.API.Settings;
 
 [ApiController]
-[Authorize(Roles = AuthRoles.Administrator)]
+[Authorize(Policy = AuthPermissions.ManageSettings)]
 [Route("api/settings")]
 public sealed class SettingsController(IOptions<CoachHubOptions> options) : ControllerBase
 {

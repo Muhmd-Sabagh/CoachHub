@@ -24,8 +24,8 @@ try {
     if ($productionSettings.Authentication.BootstrapAdmin.Enabled) {
         throw 'Production administrator bootstrap must be disabled in tracked configuration.'
     }
-    if ($productionSettings.Media.Provider -ne 'External') {
-        throw 'Tracked production configuration must require private external media storage.'
+    if ($productionSettings.Media.Provider -ne 'S3') {
+        throw 'Tracked production configuration must select private S3-compatible media storage.'
     }
 
     if (-not $SkipRestore) {
@@ -52,11 +52,11 @@ try {
     Push-Location $clientRoot
     try {
         if (-not $SkipRestore) {
-            npm ci
+            npm ci --no-audit --prefer-offline
             Assert-LastCommandSucceeded 'Angular dependency restore'
         }
 
-        npm test -- --watch=false
+        npm test -- --watch=false --isolate=false
         Assert-LastCommandSucceeded 'Angular tests'
 
         npm run build

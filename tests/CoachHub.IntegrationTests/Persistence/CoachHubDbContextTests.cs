@@ -31,6 +31,11 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.Clients.Client), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Clients.Subscription), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Clients.SubscriptionRenewal), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Billing.Invoice), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Billing.Payment), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Billing.Refund), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Communications.Notification), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.PlanDelivery.DeliveredPlan), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormDefinition), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormVersion), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormQuestion), entityTypes);

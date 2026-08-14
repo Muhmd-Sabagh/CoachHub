@@ -6,4 +6,6 @@ public sealed record LoginResult(
     Guid UserId,
     string Email,
     string DisplayName,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions,
+    Guid? ClientId);

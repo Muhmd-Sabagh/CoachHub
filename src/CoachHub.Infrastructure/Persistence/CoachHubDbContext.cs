@@ -2,6 +2,8 @@ using CoachHub.Application.Auditing;
 using CoachHub.Domain.Auditing;
 using CoachHub.Domain.Common;
 using CoachHub.Domain.Clients;
+using CoachHub.Domain.Billing;
+using CoachHub.Domain.PlanDelivery;
 using CoachHub.Infrastructure.Auth.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -48,6 +50,8 @@ public sealed class CoachHubDbContext(
         {
             builder.ToTable("Users");
             builder.Property(user => user.DisplayName).HasMaxLength(200).IsRequired();
+            builder.HasIndex(user => user.ClientId).IsUnique().HasFilter("[ClientId] IS NOT NULL");
+            builder.HasOne<Client>().WithOne().HasForeignKey<User>(user => user.ClientId).OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<Role>().ToTable("Roles");
         modelBuilder.Entity<UserRole>().ToTable("UserRoles");
@@ -66,6 +70,10 @@ public sealed class CoachHubDbContext(
             throw new InvalidOperationException(
                 "Subscription renewal transactions are append-only and cannot be modified or deleted.");
         }
+        if (ChangeTracker.Entries<Refund>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Refund transactions are append-only.");
+        if (ChangeTracker.Entries<DeliveredPlan>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Delivered plan snapshots are append-only.");
         var trackedAuditEntries = ChangeTracker.Entries<AuditEntry>().ToArray();
         if (trackedAuditEntries.Any(entry =>
                 entry.State is EntityState.Modified or EntityState.Deleted))

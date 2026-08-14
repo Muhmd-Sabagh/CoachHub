@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CoachHub.Application.Auth;
 using CoachHub.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -47,7 +48,15 @@ public static class AuthenticationExtensions
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            foreach (var permission in AuthPermissions.All)
+            {
+                options.AddPolicy(permission, policy => policy.RequireAssertion(context =>
+                    context.User.IsInRole(AuthRoles.Administrator) ||
+                    context.User.HasClaim(AuthPermissions.ClaimType, permission)));
+            }
+        });
         return services;
     }
 }

@@ -30,6 +30,14 @@ export class AuthService {
 
   accessToken(): string | null { return this.isAuthenticated() ? this.session()?.accessToken ?? null : null; }
 
+  landingRoute(): string {
+    const user = this.session();
+    if (user?.roles.includes('Client')) return '/portal';
+    if (user?.roles.includes('Administrator') || user?.permissions?.includes('reports.view')) return '/dashboard';
+    const choices: Array<[string, string]> = [['clients.manage', '/clients'], ['assessments.manage', '/assessments'], ['catalog.manage', '/nutrition'], ['plans.manage', '/plans'], ['users.manage', '/operations'], ['billing.manage', '/operations'], ['communications.manage', '/operations'], ['audit.view', '/audit'], ['settings.manage', '/settings']];
+    return choices.find(([permission]) => user?.permissions?.includes(permission))?.[1] ?? '/login';
+  }
+
   private restoreSession(): LoginResult | null {
     const raw = sessionStorage.getItem(storageKey);
     if (!raw) return null;

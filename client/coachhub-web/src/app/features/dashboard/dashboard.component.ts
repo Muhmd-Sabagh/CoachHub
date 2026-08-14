@@ -1,15 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
-import { DashboardService, OperationalReport } from './dashboard.service';
+import { AdvancedReport, DashboardService, OperationalReport } from './dashboard.service';
 
 @Component({ selector: 'app-dashboard', templateUrl: './dashboard.component.html', standalone: false })
 export class DashboardComponent implements OnInit {
   from = this.isoDate(-29);
   to = this.isoDate(0);
   report: OperationalReport | null = null;
+  advanced: AdvancedReport | null = null;
   loading = false;
   error = '';
 
@@ -26,10 +27,10 @@ export class DashboardComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = '';
-    this.data.overview(this.from, this.to)
+    forkJoin([this.data.overview(this.from, this.to), this.data.advanced(this.from, this.to)])
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: (report) => (this.report = report),
+        next: ([report, advanced]) => { this.report = report; this.advanced = advanced; },
         error: (error) => (this.error = apiErrorMessage(error)),
       });
   }

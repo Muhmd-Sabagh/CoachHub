@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Assessments;
 
 [ApiController]
-[Authorize(Roles = AuthRoles.Administrator)]
+[Authorize(Policy = AuthPermissions.ManageAssessments)]
 [Route("api/assessment-forms")]
 public sealed class FormsController(FormAdminService service, AssessmentAdminQueryService queries) : ControllerBase
 {

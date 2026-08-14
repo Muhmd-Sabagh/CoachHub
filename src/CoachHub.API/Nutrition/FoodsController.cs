@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Nutrition;
 
 [ApiController]
-[Authorize(Roles = AuthRoles.Administrator)]
+[Authorize(Policy = AuthPermissions.ManageCatalog)]
 [Route("api/nutrition/foods")]
 public sealed class FoodsController(
     FoodService foodService,

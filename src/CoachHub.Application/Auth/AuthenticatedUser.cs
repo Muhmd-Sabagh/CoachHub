@@ -4,4 +4,6 @@ public sealed record AuthenticatedUser(
     Guid Id,
     string Email,
     string DisplayName,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions,
+    Guid? ClientId);

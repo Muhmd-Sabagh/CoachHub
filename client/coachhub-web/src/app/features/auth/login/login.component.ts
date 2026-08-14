@@ -13,13 +13,13 @@ export class LoginComponent {
   readonly form;
   constructor(fb: FormBuilder, private readonly auth: AuthService, private readonly route: ActivatedRoute, private readonly router: Router, readonly i18n: I18nService) {
     this.form = fb.nonNullable.group({ email: ['', [Validators.required, Validators.email]], password: ['', Validators.required] });
-    if (auth.isAuthenticated()) void router.navigate(['/dashboard']);
+    if (auth.isAuthenticated()) void router.navigateByUrl(auth.landingRoute());
   }
   submit(): void {
     if (this.form.invalid || this.submitting) { this.form.markAllAsTouched(); return; }
     this.submitting = true; this.failed = false;
     this.auth.login(this.form.getRawValue()).pipe(finalize(() => this.submitting = false)).subscribe({
-      next: () => void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard'),
+      next: result => void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') || this.auth.landingRoute()),
       error: () => this.failed = true
     });
   }

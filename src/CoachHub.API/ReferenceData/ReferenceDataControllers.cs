@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.ReferenceData;
 
 [ApiController]
-[Authorize(Roles = AuthRoles.Administrator)]
+[Authorize(Policy = AuthPermissions.ManageSettings)]
 public abstract class ReferenceDataController<TEntity, TInput, TResponse>(
     ReferenceDataService<TEntity, TInput, TResponse> service) : ControllerBase
     where TEntity : ActiveReferenceEntity
