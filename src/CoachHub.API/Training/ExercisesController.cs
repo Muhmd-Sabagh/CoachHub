@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Training;
 
 [ApiController]
-[Authorize(Roles = AuthRoles.Administrator)]
+[Authorize(Policy = AuthPermissions.ManageCatalog)]
 [Route("api/training/exercises")]
 public sealed class ExercisesController(
     ExerciseService exerciseService,

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Media;
 
 [ApiController]
-[Authorize(Roles = AuthRoles.Administrator)]
+[Authorize(Policy = AuthPermissions.ManageMedia)]
 [Route("api/media")]
 public sealed class MediaController(MediaService mediaService) : ControllerBase
 {

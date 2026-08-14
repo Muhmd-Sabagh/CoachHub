@@ -13,7 +13,9 @@ public sealed class LoginCommandHandlerTests
             Guid.NewGuid(),
             "admin@coachhub.test",
             "Administrator",
-            [AuthRoles.Administrator]);
+            [AuthRoles.Administrator],
+            [],
+            null);
         var identity = new StubIdentityGateway(user);
         var issuer = new StubTokenIssuer();
         var handler = new LoginCommandHandler(identity, issuer);

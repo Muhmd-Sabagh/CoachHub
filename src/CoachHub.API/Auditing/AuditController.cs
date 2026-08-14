@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Auditing;
 
 [ApiController]
-[Authorize(Roles = AuthRoles.Administrator)]
+[Authorize(Policy = AuthPermissions.ViewAudit)]
 [Route("api/audit-entries")]
 public sealed class AuditController(AuditQueryService service) : ControllerBase
 {

@@ -2,10 +2,13 @@ using CoachHub.Application.Auditing;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth;
+using CoachHub.Application.Billing;
+using CoachHub.Application.Communications;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Media;
 using CoachHub.Application.Pdf;
+using CoachHub.Application.PlanDelivery;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Reporting;
@@ -17,10 +20,13 @@ using CoachHub.Infrastructure.Assessments;
 using CoachHub.Infrastructure.Assessments.Importing;
 using CoachHub.Infrastructure.Auth;
 using CoachHub.Infrastructure.Auth.Persistence;
+using CoachHub.Infrastructure.Billing;
+using CoachHub.Infrastructure.Communications;
 using CoachHub.Infrastructure.Clients;
 using CoachHub.Infrastructure.DietPlanning;
 using CoachHub.Infrastructure.Media;
 using CoachHub.Infrastructure.Pdf;
+using CoachHub.Infrastructure.PlanDelivery;
 using CoachHub.Infrastructure.Persistence;
 using CoachHub.Infrastructure.Nutrition;
 using CoachHub.Infrastructure.ReferenceData;
@@ -69,13 +75,24 @@ public static class DependencyInjection
                 options.User.RequireUniqueEmail = true;
             })
             .AddRoles<Role>()
-            .AddEntityFrameworkStores<CoachHubDbContext>();
+            .AddEntityFrameworkStores<CoachHubDbContext>()
+            .AddDefaultTokenProviders();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<AuthExperienceOptions>(configuration.GetSection(AuthExperienceOptions.SectionName));
+        services.Configure<CommunicationOptions>(configuration.GetSection(CommunicationOptions.SectionName));
         services.Configure<AdminBootstrapOptions>(
             configuration.GetSection(AdminBootstrapOptions.SectionName));
 
         services.AddScoped<IIdentityGateway, IdentityGateway>();
+        services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IBillingRepository, BillingRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IPlanDeliveryRepository, PlanDeliveryRepository>();
+        services.AddScoped<INotificationSender, EmailNotificationSender>();
+        services.AddHttpClient<WhatsAppNotificationSender>();
+        services.AddScoped<INotificationSender>(provider => provider.GetRequiredService<WhatsAppNotificationSender>());
+        services.AddHostedService<NotificationDispatcher>();
         services.AddSingleton<ITokenIssuer, JwtTokenIssuer>();
         services.AddScoped<AdminBootstrapper>();
 
@@ -88,6 +105,7 @@ public static class DependencyInjection
         services.AddScoped<IWorkoutPlanRepository, WorkoutPlanRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IReportingRepository, ReportingRepository>();
+        services.AddScoped<IAdvancedReportingRepository, AdvancedReportingRepository>();
         services.AddScoped<IDietPlanRepository, DietPlanRepository>();
         services.AddScoped<IFormRepository, FormRepository>();
         services.AddScoped<IFormImportRepository, FormImportRepository>();
@@ -106,26 +124,38 @@ public static class DependencyInjection
             .Get<MediaStorageOptions>()
             ?? throw new InvalidOperationException("Media storage configuration is required.");
 
-        if (!string.Equals(options.Provider, "FileSystem", StringComparison.OrdinalIgnoreCase))
+        var fileSystem = string.Equals(options.Provider, "FileSystem", StringComparison.OrdinalIgnoreCase);
+        var s3 = string.Equals(options.Provider, "S3", StringComparison.OrdinalIgnoreCase);
+        if (!fileSystem && !s3)
         {
-            throw new InvalidOperationException(
-                "No supported external media provider is configured. FileSystem is development-only.");
+            throw new InvalidOperationException("Media Provider must be FileSystem or S3.");
         }
 
-        if (!allowLocalMediaStorage)
+        if (fileSystem && !allowLocalMediaStorage)
         {
             throw new InvalidOperationException(
                 "FileSystem media storage is allowed only in Development or isolated tests.");
         }
 
-        if (string.IsNullOrWhiteSpace(options.StorageRoot))
+        if (fileSystem && string.IsNullOrWhiteSpace(options.StorageRoot))
         {
             throw new InvalidOperationException("Media StorageRoot is required.");
         }
 
-        services.Configure<MediaStorageOptions>(
-            configuration.GetSection(MediaStorageOptions.SectionName));
-        services.AddScoped<IMediaStorage, FileSystemMediaStorage>();
+        services.AddOptions<MediaStorageOptions>()
+            .Bind(configuration.GetSection(MediaStorageOptions.SectionName))
+            .Validate(value => fileSystem
+                ? !string.IsNullOrWhiteSpace(value.StorageRoot)
+                : !string.IsNullOrWhiteSpace(value.BucketName) &&
+                  !string.IsNullOrWhiteSpace(value.AccessKey) &&
+                  !string.IsNullOrWhiteSpace(value.SecretKey),
+                "Selected media provider configuration is incomplete.")
+            .ValidateOnStart();
+        services.AddScoped<FileSystemMediaStorage>();
+        services.AddScoped<S3MediaStorage>();
+        services.AddScoped<IMediaStorage>(provider => fileSystem
+            ? provider.GetRequiredService<FileSystemMediaStorage>()
+            : provider.GetRequiredService<S3MediaStorage>());
         services.AddScoped<IMediaRepository, MediaRepository>();
         services.AddScoped<IPlanPdfClientRepository, PlanPdfClientRepository>();
         services.AddSingleton<IPlanPdfRenderer, QuestPlanPdfRenderer>();

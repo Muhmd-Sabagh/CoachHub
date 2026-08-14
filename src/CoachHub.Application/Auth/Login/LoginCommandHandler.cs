@@ -34,7 +34,9 @@ public sealed class LoginCommandHandler(
             user.Id,
             user.Email,
             user.DisplayName,
-            user.Roles);
+            user.Roles,
+            user.Permissions,
+            user.ClientId);
     }
 
     private static IReadOnlyDictionary<string, string[]> Validate(LoginCommand command)

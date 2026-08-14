@@ -12,6 +12,9 @@ import { SettingsComponent } from './features/settings/settings.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'forgot-password', loadComponent: () => import('./features/auth/password-recovery.component').then(m => m.PasswordRecoveryComponent) },
+  { path: 'reset-password', loadComponent: () => import('./features/auth/password-recovery.component').then(m => m.PasswordRecoveryComponent) },
+  { path: 'portal', canActivate: [authGuard], loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
   {
     path: 'assessment',
     loadComponent: () =>
@@ -31,6 +34,7 @@ const routes: Routes = [
       { path: 'nutrition', component: CatalogComponent, data: { kind: 'foods' } },
       { path: 'training', component: CatalogComponent, data: { kind: 'exercises' } },
       { path: 'plans', component: PlansComponent },
+      { path: 'operations', loadComponent: () => import('./features/operations/operations.component').then(m => m.OperationsComponent) },
       {
         path: 'audit',
         loadComponent: () =>

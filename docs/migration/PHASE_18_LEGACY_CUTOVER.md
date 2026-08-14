@@ -59,6 +59,8 @@ The importer uploads each image through `/api/media`, imports one catalog row th
 
 ## Cutover checklist
 
+Record evidence and accountable approvals in `docs/deployment/PRODUCTION_SIGNOFF.md`. Unchecked items require production-owner action and must not be represented as completed by repository changes alone.
+
 - [ ] Rotate the credential found in the legacy application's tracked configuration before any archive is shared.
 - [ ] Preserve an encrypted, access-controlled copy of the original MDF/LDF and media directories.
 - [ ] Make the legacy application read-only before the final export.

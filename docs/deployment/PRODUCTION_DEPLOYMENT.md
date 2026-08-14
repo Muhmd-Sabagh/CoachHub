@@ -2,11 +2,11 @@
 
 This runbook defines the minimum production configuration and release evidence for CoachHub. It does not authorize a deployment by itself.
 
-## Current deployment blocker
+## Production media provider
 
-Production startup intentionally rejects local file-system media storage. A private external implementation of `IMediaStorage` must be selected and registered before production deployment. The provider must keep body photos, health documents, assessment uploads, exercise media, and plan assets private; access must be mediated by authenticated/authorized application endpoints or short-lived provider URLs.
+Production uses the concrete S3-compatible implementation of `IMediaStorage`. It supports AWS S3, Cloudflare R2, MinIO, and compatible private endpoints. Startup validation rejects an incomplete bucket/access-key/secret-key configuration, and file-system storage remains limited to Development and isolated tests.
 
-Do not change the tracked `Media:Provider` value from `External` to `FileSystem` to bypass this control. Record the selected provider, region, encryption, retention, deletion, backup, and signed-URL policy in the deployment change.
+Keep the bucket private, encrypted, access logged, and scoped to the configured key prefix. Record provider, endpoint/region, encryption, retention, deletion propagation, backup/restore, and incident-revocation policy in the signed release record. CoachHub retrieves objects with provider credentials and serves them through authorized API endpoints; it does not require anonymous object URLs.
 
 ## Required environment values
 
@@ -22,6 +22,9 @@ Use the platform secret store and ASP.NET Core double-underscore configuration k
 | Bootstrap enabled | `Authentication__BootstrapAdmin__Enabled` | `false` after the first controlled bootstrap |
 | Bootstrap credentials | matching bootstrap keys | Supply only during a supervised first start, then remove and rotate |
 | Media provider settings | provider-specific secret keys | Private buckets/containers only; no public anonymous object access |
+| Password reset URL | `Authentication__Experience__PasswordResetUrl` | Trusted HTTPS Angular reset route |
+| SMTP | `Communications__FromEmail`, host/user/password keys | Required only when email delivery is enabled |
+| WhatsApp | phone-number ID/access-token keys | Required only when WhatsApp delivery is enabled |
 
 The Angular production environment expects `/api` on the same trusted origin. If frontend and API origins differ, add an explicit narrow CORS policy; never use wildcard origins with credentials.
 
@@ -47,7 +50,11 @@ The Angular production environment expects `/api` on the same trusted origin. If
 8. Create, update, and delete a staging record; confirm metadata-only audit entries identify the administrator and contain no business field values.
 9. Record a staging subscription renewal; confirm the end date and count advance once, history reloads, and the renewed subscription and its client cannot be deleted.
 10. Compare the operational dashboard against staging source records for one reporting period; verify package/account totals stay separated by currency and are labelled commercial activity, not revenue.
-11. Promote, monitor errors/latency/rate-limit events, and retain a rollback artifact and database recovery procedure.
+11. Provision a Client account, complete password recovery, and verify the portal exposes only that client's details, invoices, and delivered plans.
+12. Issue, partially settle, fully settle, and refund a staging invoice; verify currency-separated analytics.
+13. Dispatch test email/WhatsApp notifications and confirm bounded failures when a provider is intentionally disabled.
+14. Record a diet and workout delivery; change the source plan and verify the historical snapshot remains unchanged.
+15. Complete and sign `docs/deployment/PRODUCTION_SIGNOFF.md`, then promote and monitor errors/latency/rate-limit events.
 
 ## Secret and legacy-data handling
 

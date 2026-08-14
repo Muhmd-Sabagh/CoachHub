@@ -14,6 +14,8 @@ public sealed class ControllerAuthorizationTests
     private static readonly HashSet<string> ExpectedAnonymousActions =
     [
         $"{nameof(AuthController)}.{nameof(AuthController.Login)}",
+        $"{nameof(AuthController)}.{nameof(AuthController.RequestReset)}",
+        $"{nameof(AuthController)}.{nameof(AuthController.Reset)}",
         $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.Validate)}",
         $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.Questions)}",
         $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.Submit)}",
@@ -21,7 +23,7 @@ public sealed class ControllerAuthorizationTests
     ];
 
     [Fact]
-    public void Every_controller_action_is_explicitly_admin_only_or_an_approved_rate_limited_public_action()
+    public void Every_controller_action_is_explicitly_authorized_or_an_approved_rate_limited_public_action()
     {
         var actualAnonymousActions = new HashSet<string>();
 
@@ -41,12 +43,7 @@ public sealed class ControllerAuthorizationTests
                     continue;
                 }
 
-                var roles = Attributes<AuthorizeAttribute>(controller, action)
-                    .SelectMany(attribute => (attribute.Roles ?? string.Empty)
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                    .ToHashSet(StringComparer.Ordinal);
-
-                Assert.Contains(AuthRoles.Administrator, roles);
+                Assert.NotEmpty(Attributes<AuthorizeAttribute>(controller, action));
             }
         }
 

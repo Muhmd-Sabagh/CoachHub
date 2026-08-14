@@ -35,11 +35,17 @@ public sealed class IdentityGateway(UserManager<User> userManager) : IIdentityGa
         }
 
         var roles = await userManager.GetRolesAsync(user);
+        var permissions = (await userManager.GetClaimsAsync(user))
+            .Where(claim => claim.Type == AuthPermissions.ClaimType)
+            .Select(claim => claim.Value)
+            .ToArray();
 
         return new AuthenticatedUser(
             user.Id,
             user.Email ?? email,
             user.DisplayName,
-            roles.ToArray());
+            roles.ToArray(),
+            permissions,
+            user.ClientId);
     }
 }

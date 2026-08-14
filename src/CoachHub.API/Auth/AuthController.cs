@@ -10,44 +10,43 @@ namespace CoachHub.API.Auth;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(LoginCommandHandler loginHandler) : ControllerBase
+public sealed class AuthController(LoginCommandHandler loginHandler, IAccountService accounts) : ControllerBase
 {
     [AllowAnonymous]
     [EnableRateLimiting("authentication")]
     [HttpPost("login")]
-    [ProducesResponseType<LoginResult>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<LoginResult>> Login(
-        LoginRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<LoginResult>> Login(LoginRequest request, CancellationToken token)
     {
-        var result = await loginHandler.HandleAsync(
-            new LoginCommand(request.Email, request.Password),
-            cancellationToken);
-
-        if (result is null)
-        {
-            return Unauthorized(new ProblemDetails
-            {
-                Status = StatusCodes.Status401Unauthorized,
-                Title = "Invalid credentials",
-                Detail = "The email or password is incorrect."
-            });
-        }
-
-        return Ok(result);
+        var result = await loginHandler.HandleAsync(new LoginCommand(request.Email, request.Password), token);
+        return result is null ? Unauthorized(new ProblemDetails { Status = 401, Title = "Invalid credentials", Detail = "The email or password is incorrect." }) : Ok(result);
     }
 
-    [Authorize(Roles = AuthRoles.Administrator)]
+    [AllowAnonymous]
+    [EnableRateLimiting("authentication")]
+    [HttpPost("password-reset/request")]
+    public async Task<IActionResult> RequestReset(PasswordResetRequest request, CancellationToken token)
+    {
+        await accounts.RequestPasswordResetAsync(request.Email, token);
+        return Accepted();
+    }
+
+    [AllowAnonymous]
+    [EnableRateLimiting("authentication")]
+    [HttpPost("password-reset/complete")]
+    public async Task<IActionResult> Reset(PasswordResetInput input, CancellationToken token)
+    {
+        await accounts.ResetPasswordAsync(input, token);
+        return NoContent();
+    }
+
+    [Authorize]
     [HttpGet("me")]
-    [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<CurrentUserResponse> Me()
     {
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? string.Empty;
         var roles = User.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToArray();
-
-        return Ok(new CurrentUserResponse(userId, User.Identity?.Name, roles));
+        var permissions = User.FindAll(AuthPermissions.ClaimType).Select(claim => claim.Value).ToArray();
+        var clientId = Guid.TryParse(User.FindFirstValue("client_id"), out var parsed) ? parsed : (Guid?)null;
+        return Ok(new CurrentUserResponse(userId, User.Identity?.Name, roles, permissions, clientId));
     }
 }

@@ -1,2 +1,2 @@
 export interface LoginRequest { email: string; password: string; }
-export interface LoginResult { accessToken: string; expiresAt: string; userId: string; email: string; displayName: string; roles: string[]; }
+export interface LoginResult { accessToken: string; expiresAt: string; userId: string; email: string; displayName: string; roles: string[]; permissions: string[]; clientId?: string | null; }

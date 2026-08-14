@@ -42,9 +42,15 @@ export interface OperationalReport {
   }>;
 }
 
+export interface AdvancedReport { from: string; to: string; assessmentAdherencePercent: number; renewalRetentionPercent: number; clientsWithProgressHistory: number; deliveredPlans: number; notificationsSent: number; notificationSuccessPercent: number; settlement: Array<{ currencyCode: string; invoiced: number; settled: number; refunded: number; outstanding: number }>; }
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   constructor(private readonly http: HttpClient) {}
+
+  advanced(from: string, to: string) {
+    return this.http.get<AdvancedReport>(`${environment.apiBaseUrl}/reporting/advanced`, { params: queryParams({ from, to }) });
+  }
 
   overview(from: string, to: string) {
     return this.http.get<OperationalReport>(`${environment.apiBaseUrl}/reporting/overview`, {

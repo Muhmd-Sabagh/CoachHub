@@ -2,10 +2,13 @@ using CoachHub.Application.Auditing;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth.Login;
+using CoachHub.Application.Billing;
+using CoachHub.Application.Communications;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Media;
 using CoachHub.Application.Pdf;
+using CoachHub.Application.PlanDelivery;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Reporting;
@@ -22,6 +25,9 @@ public static class DependencyInjection
     {
         services.AddScoped<AuditQueryService>();
         services.AddScoped<LoginCommandHandler>();
+        services.AddScoped<BillingService>();
+        services.AddScoped<NotificationService>();
+        services.AddScoped<PlanDeliveryService>();
         services.AddScoped<FormAdminService>();
         services.AddScoped<FormSubmissionService>();
         services.AddScoped<AssessmentAdminQueryService>();
@@ -36,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<LegacyFoodImportService>();
         services.AddScoped<PackageService>();
         services.AddScoped<ReportingService>();
+        services.AddScoped<AdvancedReportingService>();
         services.AddScoped<CurrencyService>();
         services.AddScoped<PaymentAccountService>();
         services.AddScoped<FoodCategoryService>();
