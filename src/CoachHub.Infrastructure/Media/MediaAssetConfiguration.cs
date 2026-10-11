@@ -1,4 +1,6 @@
+using CoachHub.Domain.Clients;
 using CoachHub.Domain.Media;
+using CoachHub.Infrastructure.Auth.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,5 +18,12 @@ public sealed class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAsse
         builder.Property(media => media.ContentType).HasMaxLength(100).IsRequired();
         builder.Property(media => media.SizeBytes).IsRequired();
         builder.Property(media => media.CreatedAt).IsRequired();
+        builder.Ignore(media => media.IsPlatformMedia);
+
+        // The coach foreign key and the visibility filter come from TenantModel.
+        builder.HasIndex(media => media.ClientId);
+        builder.HasOne<Client>().WithMany().HasForeignKey(media => media.ClientId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(media => media.OwnerUserId);
+        builder.HasOne<User>().WithMany().HasForeignKey(media => media.OwnerUserId).OnDelete(DeleteBehavior.SetNull);
     }
 }

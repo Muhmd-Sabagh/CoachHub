@@ -15,6 +15,7 @@ const routes: Routes = [
   { path: 'forgot-password', loadComponent: () => import('./features/auth/password-recovery.component').then(m => m.PasswordRecoveryComponent) },
   { path: 'reset-password', loadComponent: () => import('./features/auth/password-recovery.component').then(m => m.PasswordRecoveryComponent) },
   { path: 'portal', canActivate: [roleGuard('Client')], loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
+  { path: 'portal/account', canActivate: [roleGuard('Client')], data: { outsideShell: true }, loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
   {
     path: 'assessment',
     loadComponent: () =>
@@ -43,6 +44,7 @@ const routes: Routes = [
           import('./features/auditing/audit.component').then((module) => module.AuditComponent),
       },
       { path: 'settings', component: SettingsComponent },
+      { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],
   },

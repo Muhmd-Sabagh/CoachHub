@@ -10,7 +10,7 @@ namespace CoachHub.Infrastructure.Auth;
 public sealed class JwtTokenIssuer(IOptions<JwtOptions> options) : ITokenIssuer
 {
     private readonly JwtOptions _options = options.Value;
-    public IssuedToken Issue(AuthenticatedUser user)
+    public IssuedToken Issue(AuthenticatedUser user, Guid sessionId)
     {
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_options.AccessTokenMinutes);
         var claims = new List<Claim>
@@ -18,7 +18,8 @@ public sealed class JwtTokenIssuer(IOptions<JwtOptions> options) : ITokenIssuer
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Name, user.DisplayName),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(AuthClaims.SessionId, sessionId.ToString())
         };
         claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
         if (user.CoachId.HasValue) claims.Add(new Claim(AuthClaims.CoachId, user.CoachId.Value.ToString()));

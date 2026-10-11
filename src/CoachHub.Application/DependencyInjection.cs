@@ -2,6 +2,7 @@ using CoachHub.Application.Auditing;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth.Login;
+using CoachHub.Application.Auth.Sessions;
 using CoachHub.Application.Billing;
 using CoachHub.Application.Coaches;
 using CoachHub.Application.Communications;
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<AuditQueryService>();
         services.AddScoped<CoachOwnership>();
         services.AddScoped<LoginCommandHandler>();
+        services.AddScoped<SessionService>();
         services.AddScoped<BillingService>();
         services.AddScoped<NotificationService>();
         services.AddScoped<PlanDeliveryService>();

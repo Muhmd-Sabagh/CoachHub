@@ -3,7 +3,7 @@
 > **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
 >
 > - D1: the `Staff` role and claim-based permissions are replaced by Administrator / Coach / Client roles with coach tenancy (P1).
-> - §2: email-only login, client-side-only logout and no refresh tokens are replaced by username-or-email login and server-side sessions (P1, P2).
+> - §2: email-only login, client-side-only logout and no refresh tokens are replaced by username-or-email login (P1) and server-side sessions (P2): 15-minute access tokens, a rotating HttpOnly refresh cookie, server sign-out and per-device session management. See [P02_SESSIONS.md](../product/phases/P02_SESSIONS.md).
 
 ## Decision
 

@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Coaches;
 using CoachHub.Domain.Common;
+using CoachHub.Domain.Media;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoachHub.Infrastructure.Persistence;
@@ -57,9 +58,40 @@ internal static class TenantModel
             ownRecord = Expression.Equal(clientId, Expression.Convert(currentClient, clientId.Type));
         }
 
+        if (clrType == typeof(MediaAsset))
+        {
+            return MediaFilter(entity, tenant, unrestricted, clientScoped, sameCoach, ownRecord);
+        }
+
         var body = Expression.OrElse(
             unrestricted,
             Expression.AndAlso(sameCoach, Expression.OrElse(Expression.Not(clientScoped), ownRecord)));
+        return Expression.Lambda(body, entity);
+    }
+
+    /// <summary>
+    /// Media visibility (see <see cref="MediaAsset"/>): <c>Unrestricted || (signed in &amp;&amp; platform media)
+    /// || (CoachId == current coach &amp;&amp; (!client scope || coach library || the client's own media))</c>.
+    /// </summary>
+    private static LambdaExpression MediaFilter(
+        ParameterExpression entity,
+        Expression tenant,
+        Expression unrestricted,
+        Expression clientScoped,
+        Expression sameCoach,
+        Expression ownRecord)
+    {
+        var signedIn = Expression.Property(tenant, nameof(CoachHubDbContext.TenantSignedIn));
+        var noCoach = Expression.Equal(
+            Expression.Property(entity, nameof(MediaAsset.CoachId)), Expression.Constant(null, typeof(Guid?)));
+        var noClient = Expression.Equal(
+            Expression.Property(entity, nameof(MediaAsset.ClientId)), Expression.Constant(null, typeof(Guid?)));
+
+        var platform = Expression.AndAlso(signedIn, noCoach);
+        var tenantMedia = Expression.AndAlso(
+            sameCoach,
+            Expression.OrElse(Expression.Not(clientScoped), Expression.OrElse(noClient, ownRecord)));
+        var body = Expression.OrElse(unrestricted, Expression.OrElse(platform, tenantMedia));
         return Expression.Lambda(body, entity);
     }
 }

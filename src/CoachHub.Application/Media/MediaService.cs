@@ -23,6 +23,7 @@ public sealed class MediaService(
         string originalFileName,
         string contentType,
         long sizeBytes,
+        MediaOwner owner,
         CancellationToken cancellationToken)
     {
         ValidateUpload(content, originalFileName, contentType, sizeBytes);
@@ -38,7 +39,10 @@ public sealed class MediaService(
             originalFileName,
             contentType,
             sizeBytes,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            owner.CoachId,
+            owner.ClientId,
+            owner.UploadedByUserId);
 
         try
         {
@@ -73,9 +77,34 @@ public sealed class MediaService(
         var media = await repository.FindAsync(id, cancellationToken)
             ?? throw new NotFoundException("Media", id);
 
-        await storage.DeleteAsync(media.StorageKey, cancellationToken);
+        // Remove the row first: a referenced file is refused there and its content must survive.
         await repository.DeleteAsync(media, cancellationToken);
+        await storage.DeleteAsync(media.StorageKey, cancellationToken);
     }
+
+    /// <summary>
+    /// Removes stored content whose rows were already deleted (for example with a deleted client).
+    /// Best effort: a failure leaves an unreferenced object, never a broken row.
+    /// </summary>
+    public async Task DeleteContentAsync(IEnumerable<string> storageKeys, CancellationToken cancellationToken)
+    {
+        foreach (var key in storageKeys)
+        {
+            try
+            {
+                await storage.DeleteAsync(key, cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // The row is gone, so nothing can reach the object any more.
+            }
+        }
+    }
+
+    /// <summary>Catalog entries (foods, exercises) may only show platform images, never tenant or client media.</summary>
+    public static bool IsPlatformImage(Domain.Media.MediaAsset? media) =>
+        media is not null && media.IsPlatformMedia &&
+        media.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
 
     private static void ValidateUpload(
         Stream content,

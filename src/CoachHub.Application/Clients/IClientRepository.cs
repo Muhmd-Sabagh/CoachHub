@@ -11,7 +11,12 @@ public interface IClientRepository
     Task<bool> FormCodeExistsAsync(string code, CancellationToken cancellationToken);
     Task AddAsync(Client client, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken);
-    Task DeleteAsync(Client client, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Deletes the client with their login account, sessions and media rows in one transaction.
+    /// Returns the storage keys of the deleted media so their content can be removed afterwards.
+    /// </summary>
+    Task<IReadOnlyList<string>> DeleteAsync(Client client, CancellationToken cancellationToken);
 
     /// <summary>
     /// True when deleting the client would destroy commercial records: invoices, renewals, or
@@ -21,7 +26,7 @@ public interface IClientRepository
 
     /// <summary>
     /// Moves the client and its coaching records (assigned plans, form submissions, delivered
-    /// plans) to another coach in one transaction. Commercial records stay with their coach (D7).
+    /// plans, the client's media) to another coach in one transaction. Commercial records stay with their coach (D7).
     /// </summary>
     Task TransferAsync(Client client, Guid toCoachId, CancellationToken cancellationToken);
     Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken);

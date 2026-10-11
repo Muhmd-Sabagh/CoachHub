@@ -1,10 +1,12 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { NgModule, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
+import { firstValueFrom } from 'rxjs';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { AuthService } from './core/auth/auth.service';
 import { ShellComponent } from './core/layout/shell.component';
 import { AssessmentsComponent } from './features/assessments/assessments.component';
 import { LoginComponent } from './features/auth/login/login.component';
@@ -37,6 +39,8 @@ import { TranslatePipe } from './shared/pipes/translate.pipe';
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withInterceptors([authInterceptor])),
+    // A new tab, or a reload after the access token expired, signs in again from the refresh cookie.
+    provideAppInitializer(() => firstValueFrom(inject(AuthService).ensureSession())),
   ],
   bootstrap: [App],
 })

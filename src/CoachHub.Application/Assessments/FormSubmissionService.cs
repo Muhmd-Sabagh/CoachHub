@@ -68,6 +68,7 @@ public sealed class FormSubmissionService(
                 continue;
             }
             var valueJson = await ValidateAnswerAsync(
+                client.Id,
                 question,
                 graph.Options.Where(option => option.FormQuestionId == question.Id).ToArray(),
                 inputAnswer,
@@ -89,6 +90,7 @@ public sealed class FormSubmissionService(
     }
 
     private async Task<string> ValidateAnswerAsync(
+        Guid clientId,
         FormQuestion question,
         IReadOnlyList<QuestionOption> options,
         AnswerInput answer,
@@ -130,7 +132,8 @@ public sealed class FormSubmissionService(
                 if (valid)
                 {
                     var media = await mediaRepository.FindAsync(answer.MediaId!.Value, cancellationToken);
-                    valid = media is not null;
+                    // Only the client's own uploads: another client's media ID must not be attachable (§62).
+                    valid = media is not null && media.ClientId == clientId;
                 }
                 break;
             default:
@@ -142,6 +145,18 @@ public sealed class FormSubmissionService(
         return question.QuestionType == QuestionType.MediaUpload
             ? JsonSerializer.Serialize(answer.MediaId)
             : value.GetRawText();
+    }
+
+    /// <summary>
+    /// Validates the legacy client and form codes for an upload and returns the owner of the file:
+    /// the matched client. Retired with the code-based forms in P5 (D5).
+    /// </summary>
+    public async Task<MediaOwner> ResolveUploadOwnerAsync(
+        FormAccessInput input,
+        CancellationToken cancellationToken)
+    {
+        var client = await FindClientAsync(input, cancellationToken);
+        return MediaOwner.OfClient(client.CoachId, client.Id, uploadedByUserId: null);
     }
 
     private async Task<CoachHub.Domain.Clients.Client> FindClientAsync(

@@ -2,6 +2,7 @@ using CoachHub.Application.Auditing;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth;
+using CoachHub.Application.Auth.Sessions;
 using CoachHub.Application.Billing;
 using CoachHub.Application.Coaches;
 using CoachHub.Application.Communications;
@@ -40,6 +41,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace CoachHub.Infrastructure;
 
@@ -86,8 +88,16 @@ public static class DependencyInjection
         services.Configure<AdminBootstrapOptions>(
             configuration.GetSection(AdminBootstrapOptions.SectionName));
 
+        services.AddOptions<SessionOptions>()
+            .Bind(configuration.GetSection(SessionOptions.SectionName))
+            .PostConfigure(options => options.Validate())
+            .ValidateOnStart();
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<SessionOptions>>().Value);
+
         services.AddScoped<IIdentityGateway, IdentityGateway>();
+        services.AddScoped<IUserSessionRepository, UserSessionRepository>();
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IMyAccountService, MyAccountService>();
         services.AddScoped<ICoachRepository, CoachRepository>();
         services.AddScoped<ICoachAdministrationService, CoachAdministrationService>();
         services.AddScoped<IBillingRepository, BillingRepository>();

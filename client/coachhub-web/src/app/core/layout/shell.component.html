@@ -16,7 +16,7 @@
       <div class="topbar-spacer"></div>
       <button class="icon-button theme-button" type="button" [attr.aria-label]="'shell.theme' | translate" (click)="theme.toggle()">{{ theme.theme() === 'light' ? '☾' : '☀' }}</button>
       <button class="language-button" type="button" (click)="i18n.toggle()">{{ 'shell.language' | translate }}</button>
-      <div class="user-chip"><span class="avatar">{{ (auth.currentUser()?.displayName || auth.currentUser()?.email || 'C').charAt(0).toUpperCase() }}</span><div><strong>{{ auth.currentUser()?.displayName || auth.currentUser()?.email }}</strong><small>{{ auth.currentUser()?.roles?.join(', ') }}</small></div></div>
+      <a class="user-chip" routerLink="/account" [attr.aria-label]="'shell.account' | translate"><span class="avatar">{{ (auth.currentUser()?.displayName || auth.currentUser()?.email || 'C').charAt(0).toUpperCase() }}</span><div><strong>{{ auth.currentUser()?.displayName || auth.currentUser()?.email }}</strong><small>{{ auth.currentUser()?.roles?.join(', ') }}</small></div></a>
       <button class="button button-secondary" type="button" (click)="auth.logout()">{{ 'shell.logout' | translate }}</button>
     </header>
     <main class="page-content"><router-outlet /></main>

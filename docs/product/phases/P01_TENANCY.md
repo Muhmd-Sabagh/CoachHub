@@ -1,6 +1,6 @@
 # P1 — Tenancy, roles and re-baseline
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P1 · **Branch:** `phase/p01-tenancy` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P1 · **Branch:** `phase/p01-tenancy` · **Status:** Merged (PR #2).
 **Covers:** D1, D7 (new), §2, §52, §56, §62.
 
 ## Purpose

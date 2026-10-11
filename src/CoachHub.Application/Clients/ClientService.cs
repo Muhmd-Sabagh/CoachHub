@@ -2,6 +2,7 @@ using System.Net.Mail;
 using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
+using CoachHub.Application.Media;
 using CoachHub.Domain.Clients;
 
 namespace CoachHub.Application.Clients;
@@ -11,6 +12,7 @@ public sealed class ClientService(
     IClientCodeGenerator codeGenerator,
     CoachOwnership ownership,
     ICoachRepository coaches,
+    MediaService media,
     TimeProvider timeProvider)
 {
     public async Task<PagedResult<ClientResponse>> ListAsync(
@@ -95,7 +97,8 @@ public sealed class ClientService(
             throw new ConflictException(
                 "A client with invoices, renewals, or another coach's subscriptions cannot be deleted. Deactivate the client instead.");
         }
-        await repository.DeleteAsync(client, cancellationToken);
+        var storageKeys = await repository.DeleteAsync(client, cancellationToken);
+        await media.DeleteContentAsync(storageKeys, CancellationToken.None);
     }
 
     public async Task<ClientResponse> TransferAsync(

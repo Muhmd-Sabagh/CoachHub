@@ -33,6 +33,17 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Every open tab refreshes about every 15 minutes, and each new tab once at start-up, so this
+    // is looser than sign-in. Replays are caught by rotation, not by the limit.
+    options.AddPolicy("session-refresh", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     options.AddPolicy("client-forms", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -71,6 +82,7 @@ app.Use(async (context, next) =>
         context.Response.Headers.Append("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
 
         if (context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/auth") ||
+            context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/me") ||
             context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/client-forms"))
         {
             context.Response.Headers.CacheControl = "no-store, no-cache, max-age=0";

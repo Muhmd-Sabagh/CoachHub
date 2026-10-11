@@ -6,6 +6,7 @@ using CoachHub.Domain.Common;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Billing;
 using CoachHub.Domain.Coaches;
+using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Infrastructure.Auth.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -34,6 +35,7 @@ public sealed class CoachHubDbContext(
     internal bool TenantClientScoped => currentUser?.Scope == TenantScope.Client;
     internal Guid TenantCoachId => currentUser?.CoachId ?? Guid.Empty;
     internal Guid TenantClientId => currentUser?.ClientId ?? Guid.Empty;
+    internal bool TenantSignedIn => currentUser?.Scope is TenantScope.Coach or TenantScope.Client;
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -67,6 +69,9 @@ public sealed class CoachHubDbContext(
             builder.HasOne<Client>().WithOne().HasForeignKey<User>(user => user.ClientId).OnDelete(DeleteBehavior.Restrict);
             builder.HasIndex(user => user.CoachId).IsUnique().HasFilter("[CoachId] IS NOT NULL");
             builder.HasOne<Coach>().WithOne().HasForeignKey<User>(user => user.CoachId).OnDelete(DeleteBehavior.Restrict);
+            builder.Property(user => user.PreferredLanguage).HasMaxLength(5);
+            builder.Property(user => user.PhoneNumber).HasMaxLength(30);
+            builder.HasOne<MediaAsset>().WithMany().HasForeignKey(user => user.AvatarMediaId).OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<Role>().ToTable("Roles");
         modelBuilder.Entity<UserRole>().ToTable("UserRoles");
@@ -78,8 +83,9 @@ public sealed class CoachHubDbContext(
     }
 
     /// <summary>
-    /// Defense in depth behind the query filters: a coach or client may only write rows of
-    /// their own coach, and anonymous callers may not write coach-owned rows at all.
+    /// Defense in depth behind the query filters: a coach may only write rows of their own coach,
+    /// a client only rows of their own (their client record, or rows whose ClientId is theirs),
+    /// and anonymous callers may not write coach-owned rows at all.
     /// </summary>
     private void EnforceTenantOwnership()
     {
@@ -103,7 +109,20 @@ public sealed class CoachHubDbContext(
             {
                 throw new ForbiddenException("The record belongs to another coach.");
             }
+            if (TenantClientScoped && !BelongsToCurrentClient(entry))
+            {
+                throw new ForbiddenException("The record belongs to another client.");
+            }
         }
+    }
+
+    private bool BelongsToCurrentClient(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+    {
+        if (entry.Entity is Client client) return client.Id == TenantClientId;
+        if (entry.Metadata.FindProperty("ClientId") is null) return false;
+        var property = entry.Property("ClientId");
+        return Equals(property.CurrentValue, TenantClientId) &&
+            (entry.State != EntityState.Modified || Equals(property.OriginalValue, TenantClientId));
     }
 
     private void CaptureAuditEntries()

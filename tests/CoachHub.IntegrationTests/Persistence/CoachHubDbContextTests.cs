@@ -16,6 +16,7 @@ public sealed class CoachHubDbContextTests
 
         Assert.Contains(typeof(User), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Coaches.Coach), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Auth.UserSession), entityTypes);
         Assert.Contains(typeof(Role), entityTypes);
         Assert.Contains(typeof(UserRole), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Auditing.AuditEntry), entityTypes);
@@ -91,7 +92,8 @@ public sealed class CoachHubDbContextTests
                            typeof(CoachHub.Domain.Common.IOptionalTenantOwned).IsAssignableFrom(type.ClrType))
             .ToArray();
 
-        Assert.Equal(15, owned.Length);
+        // 15 coach-owned business types (P1) plus MediaAsset (P2), which also admits platform rows.
+        Assert.Equal(16, owned.Length);
         Assert.All(owned, type =>
         {
             Assert.NotEmpty(type.GetDeclaredQueryFilters());
