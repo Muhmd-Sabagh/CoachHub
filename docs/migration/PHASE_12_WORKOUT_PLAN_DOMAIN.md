@@ -1,5 +1,10 @@
 # Phase 12 — Workout Plan Domain
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D3: prescriptions kept as bounded strings are replaced by structured typed fields, set grouping and block types (P9).
+> - D4: plans gain version history (P6).
+
 ## Outcome
 
 Phase 12 replaces the legacy workout-plan maker with a normalized, API-first aggregate. Administrators can create, retrieve, edit, deep-copy, assign, unassign, and delete complete workout plans; persist day and exercise ordering; and control ordered plan-note visibility.

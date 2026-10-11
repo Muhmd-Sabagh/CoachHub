@@ -16,6 +16,7 @@ public sealed class GlobalExceptionHandler(
         var (statusCode, title) = exception switch
         {
             ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
+            ForbiddenException => (StatusCodes.Status403Forbidden, "Access denied"),
             NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             ConflictException => (StatusCodes.Status409Conflict, "Request conflict"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")

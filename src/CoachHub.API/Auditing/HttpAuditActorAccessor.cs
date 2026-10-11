@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using CoachHub.Application.Auditing;
@@ -22,7 +23,7 @@ public sealed class HttpAuditActorAccessor(IHttpContextAccessor httpContextAcces
                     context.User.Identity.Name);
             }
 
-            if (context?.Request.Path.StartsWithSegments("/api/client-forms") == true)
+            if (context?.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/client-forms") == true)
             {
                 return new AuditActor(AuditActorKind.PublicClient);
             }

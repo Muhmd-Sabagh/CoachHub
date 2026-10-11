@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Media;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ namespace CoachHub.API.Media;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManageMedia)]
-[Route("api/media")]
+[Route(ApiRoutes.V1 + "/media")]
 public sealed class MediaController(MediaService mediaService) : ControllerBase
 {
     [HttpPost]

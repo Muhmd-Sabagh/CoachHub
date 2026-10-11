@@ -11,7 +11,7 @@ public sealed class MediaEndpointTests(CoachHubApiFactory factory) :
     {
         using var client = factory.CreateClient();
 
-        var response = await client.GetAsync($"/api/media/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/api/v1/media/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

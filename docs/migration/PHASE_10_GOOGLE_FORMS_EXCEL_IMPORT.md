@@ -1,5 +1,9 @@
 # Phase 10 — Google Forms / Excel Import
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D5: matching imported rows by form code depends on the retired code-based access; import scope is revisited in P5.
+
 ## Outcome
 
 Phase 10 imports Google Forms responses exported as `.xlsx` into the Phase 9 `FormSubmission` and `FormAnswer` model. It introduces import configuration and provenance only; there is no parallel assessment domain. The administrator endpoints follow the TailAdmin-derived authenticated dashboard contract established in Phase 4.

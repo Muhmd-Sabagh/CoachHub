@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
@@ -9,7 +10,7 @@ namespace CoachHub.API.Training;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManageCatalog)]
-[Route("api/training/exercises")]
+[Route(ApiRoutes.V1 + "/training/exercises")]
 public sealed class ExercisesController(
     ExerciseService exerciseService,
     LegacyExerciseImportService importService) : ControllerBase

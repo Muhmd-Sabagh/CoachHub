@@ -29,7 +29,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
         var client = await CreateClientAsync("Reporting client " + suffix, today);
 
         var subscriptionResponse = await _client.PostAsJsonAsync(
-            $"/api/clients/{client.Id}/subscriptions",
+            $"/api/v1/clients/{client.Id}/subscriptions",
             new SubscriptionInput(
                 package.Id,
                 today.AddDays(-1),
@@ -40,7 +40,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
                 0));
         subscriptionResponse.EnsureSuccessStatusCode();
         var secondSubscription = await _client.PostAsJsonAsync(
-            $"/api/clients/{client.Id}/subscriptions",
+            $"/api/v1/clients/{client.Id}/subscriptions",
             new SubscriptionInput(
                 package.Id,
                 today.AddDays(-1),
@@ -52,7 +52,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
         secondSubscription.EnsureSuccessStatusCode();
 
         var report = await _client.GetFromJsonAsync<OperationalReport>(
-            $"/api/reporting/overview?from={today.AddDays(-1):yyyy-MM-dd}&to={today:yyyy-MM-dd}");
+            $"/api/v1/reporting/overview?from={today.AddDays(-1):yyyy-MM-dd}&to={today:yyyy-MM-dd}");
 
         Assert.NotNull(report);
         Assert.Equal(today.AddDays(-1), report.From);
@@ -85,19 +85,19 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
     {
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await _client.GetAsync("/api/reporting/overview")).StatusCode);
+            (await _client.GetAsync("/api/v1/reporting/overview")).StatusCode);
 
         await AuthenticateAsync();
         Assert.Equal(
             HttpStatusCode.BadRequest,
             (await _client.GetAsync(
-                "/api/reporting/overview?from=2026-08-14&to=2026-08-13")).StatusCode);
+                "/api/v1/reporting/overview?from=2026-08-14&to=2026-08-13")).StatusCode);
     }
 
     private async Task AuthenticateAsync()
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
         response.EnsureSuccessStatusCode();
         var login = await response.Content.ReadFromJsonAsync<LoginResult>();
@@ -108,7 +108,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
     private async Task<ClientResponse> CreateClientAsync(string name, DateOnly joinDate)
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/clients",
+            "/api/v1/clients",
             new ClientCreateInput(name, null, null, joinDate));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<ClientResponse>())!;
@@ -117,7 +117,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
     private async Task<PackageResponse> CreatePackageAsync(string name)
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/reference-data/packages",
+            "/api/v1/reference-data/packages",
             new PackageInput(name, null, null, true));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<PackageResponse>())!;
@@ -126,7 +126,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
     private async Task<CurrencyResponse> CreateCurrencyAsync(string code)
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/reference-data/currencies",
+            "/api/v1/reference-data/currencies",
             new CurrencyInput(code, "Reporting currency", "$", true));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<CurrencyResponse>())!;
@@ -135,7 +135,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
     private async Task<PaymentAccountResponse> CreatePaymentAsync(string name)
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/reference-data/payment-accounts",
+            "/api/v1/reference-data/payment-accounts",
             new PaymentAccountInput(name, "Reporting", true));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<PaymentAccountResponse>())!;

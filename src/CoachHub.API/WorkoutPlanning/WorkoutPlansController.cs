@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.WorkoutPlanning;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ namespace CoachHub.API.WorkoutPlanning;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManagePlans)]
-[Route("api/workout-plans")]
+[Route(ApiRoutes.V1 + "/workout-plans")]
 public sealed class WorkoutPlansController(WorkoutPlanService service) : ControllerBase
 {
     [HttpGet("{id:guid}")]

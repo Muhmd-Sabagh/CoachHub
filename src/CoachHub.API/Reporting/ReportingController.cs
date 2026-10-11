@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Reporting;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ namespace CoachHub.API.Reporting;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ViewReports)]
-[Route("api/reporting")]
+[Route(ApiRoutes.V1 + "/reporting")]
 public sealed class ReportingController(ReportingService service, AdvancedReportingService advanced) : ControllerBase
 {
     [HttpGet("overview")]

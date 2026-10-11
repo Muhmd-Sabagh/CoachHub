@@ -6,8 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $solution = Join-Path $repositoryRoot 'CoachHub.slnx'
-$clientRoot = Join-Path $repositoryRoot 'client\coachhub-web'
-$resultsRoot = Join-Path $repositoryRoot 'artifacts\test-results'
+$clientRoot = Join-Path $repositoryRoot 'client/coachhub-web'
+$resultsRoot = Join-Path $repositoryRoot 'artifacts/test-results'
 
 function Assert-LastCommandSucceeded([string]$description) {
     if ($LASTEXITCODE -ne 0) {
@@ -17,7 +17,7 @@ function Assert-LastCommandSucceeded([string]$description) {
 
 Push-Location $repositoryRoot
 try {
-    $productionSettings = Get-Content -Raw 'src\CoachHub.API\appsettings.json' | ConvertFrom-Json
+    $productionSettings = Get-Content -Raw 'src/CoachHub.API/appsettings.json' | ConvertFrom-Json
     if (-not [string]::IsNullOrWhiteSpace($productionSettings.Authentication.Jwt.SigningKey)) {
         throw 'Production JWT signing keys must be supplied by the deployment environment.'
     }

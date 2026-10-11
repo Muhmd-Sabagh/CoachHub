@@ -21,13 +21,13 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
     {
         await AuthenticateAsync();
         var category = await PostAsync<BilingualReferenceResponse>(
-            "/api/reference-data/food-categories",
+            "/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("Diet planning " + Guid.NewGuid().ToString("N"), null));
-        var oats = await PostAsync<FoodResponse>("/api/nutrition/foods",
+        var oats = await PostAsync<FoodResponse>("/api/v1/nutrition/foods",
             new FoodInput("Oats", "شوفان", category.Id, "gram", 100, 10, 20, 5, null));
-        var eggs = await PostAsync<FoodResponse>("/api/nutrition/foods",
+        var eggs = await PostAsync<FoodResponse>("/api/v1/nutrition/foods",
             new FoodInput("Eggs", null, category.Id, "gram", 200, 20, 5, 10, null));
-        var client = await PostAsync<ClientResponse>("/api/clients",
+        var client = await PostAsync<ClientResponse>("/api/v1/clients",
             new ClientCreateInput("Plan client", null, null, null));
 
         var noteId = Guid.NewGuid(); var versionId = Guid.NewGuid();
@@ -49,7 +49,7 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
                         new(Guid.NewGuid(), null, dinnerId, null, 1, "whole meal")
                     ])])]);
 
-        var created = await PostAsync<DietPlanResponse>("/api/diet-plans", input);
+        var created = await PostAsync<DietPlanResponse>("/api/v1/diet-plans", input);
         Assert.Null(created.NameAr);
         Assert.Equal(250m, created.Totals.Weight);
         Assert.Equal(350m, created.Totals.Calories);
@@ -71,41 +71,41 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
                 ]
             }]
         };
-        var updateResponse = await _client.PutAsJsonAsync($"/api/diet-plans/{created.Id}", reordered);
+        var updateResponse = await _client.PutAsJsonAsync($"/api/v1/diet-plans/{created.Id}", reordered);
         updateResponse.EnsureSuccessStatusCode();
         var updated = (await updateResponse.Content.ReadFromJsonAsync<DietPlanResponse>())!;
         Assert.Equal(client.Id, updated.ClientId);
         Assert.Equal(dinnerId, updated.Versions[0].Meals[0].Id);
 
         var noteResponse = await _client.PutAsJsonAsync(
-            $"/api/diet-plans/{created.Id}/notes/{noteId}/active", new SetDietPlanNoteActiveInput(false));
+            $"/api/v1/diet-plans/{created.Id}/notes/{noteId}/active", new SetDietPlanNoteActiveInput(false));
         noteResponse.EnsureSuccessStatusCode();
         Assert.False((await noteResponse.Content.ReadFromJsonAsync<DietPlanResponse>())!.Notes[0].IsActive);
 
         var unassign = await _client.PutAsJsonAsync(
-            $"/api/diet-plans/{created.Id}/assignment", new AssignDietPlanInput(null));
+            $"/api/v1/diet-plans/{created.Id}/assignment", new AssignDietPlanInput(null));
         unassign.EnsureSuccessStatusCode();
         Assert.Null((await unassign.Content.ReadFromJsonAsync<DietPlanResponse>())!.ClientId);
 
         var copy = await PostAsync<DietPlanResponse>(
-            $"/api/diet-plans/{created.Id}/copies", new CopyDietPlanInput("Copied", null, client.Id));
+            $"/api/v1/diet-plans/{created.Id}/copies", new CopyDietPlanInput("Copied", null, client.Id));
         Assert.NotEqual(created.Id, copy.Id);
         Assert.NotEqual(versionId, copy.Versions[0].Id);
         Assert.Equal(client.Id, copy.ClientId);
         Assert.Equal(created.Totals, copy.Totals);
 
-        var calculator = await PostAsync<EnergyCalculatorResponse>("/api/nutrition-calculator/energy",
+        var calculator = await PostAsync<EnergyCalculatorResponse>("/api/v1/nutrition-calculator/energy",
             new EnergyCalculatorInput(30, BiologicalSex.Male, 80, 180, 1.55m, EnergyGoal.LoseWeight));
         Assert.Equal(1780m, calculator.BasalMetabolicRate);
         Assert.Equal(2259m, calculator.GoalCalories);
 
-        Assert.Equal(HttpStatusCode.NoContent, (await _client.DeleteAsync($"/api/diet-plans/{copy.Id}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/diet-plans/{copy.Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await _client.DeleteAsync($"/api/v1/diet-plans/{copy.Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/v1/diet-plans/{copy.Id}")).StatusCode);
     }
 
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync("/api/auth/login",
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/login",
             new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
         response.EnsureSuccessStatusCode();
         var login = await response.Content.ReadFromJsonAsync<LoginResult>();

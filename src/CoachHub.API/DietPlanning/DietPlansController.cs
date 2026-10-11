@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.DietPlanning;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ namespace CoachHub.API.DietPlanning;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManagePlans)]
-[Route("api/diet-plans")]
+[Route(ApiRoutes.V1 + "/diet-plans")]
 public sealed class DietPlansController(DietPlanService service) : ControllerBase
 {
     [HttpGet("{id:guid}")]
@@ -49,7 +50,7 @@ public sealed class DietPlansController(DietPlanService service) : ControllerBas
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManagePlans)]
-[Route("api/nutrition-calculator")]
+[Route(ApiRoutes.V1 + "/nutrition-calculator")]
 public sealed class NutritionCalculatorController : ControllerBase
 {
     [HttpPost("energy")]

@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ namespace CoachHub.API.Assessments;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManageAssessments)]
-[Route("api/assessment-forms")]
+[Route(ApiRoutes.V1 + "/assessment-forms")]
 public sealed class FormsController(FormAdminService service, AssessmentAdminQueryService queries) : ControllerBase
 {
     [HttpGet]

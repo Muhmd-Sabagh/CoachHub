@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth;
 using CoachHub.Infrastructure.Assessments.Importing;
@@ -8,7 +9,7 @@ namespace CoachHub.API.Assessments;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManageAssessments)]
-[Route("api/assessment-imports/profiles")]
+[Route(ApiRoutes.V1 + "/assessment-imports/profiles")]
 public sealed class AssessmentImportsController(AssessmentImportService service) : ControllerBase
 {
     [HttpPost]

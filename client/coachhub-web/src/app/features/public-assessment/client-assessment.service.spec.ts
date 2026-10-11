@@ -33,13 +33,13 @@ describe('ClientAssessmentService', () => {
   it('uses code-protected public endpoints without putting codes in the URL', () => {
     const codes = { clientCode: 'CLIENT-1', formCode: 'FORM-1' };
     service.validateAccess(codes).subscribe();
-    const access = http.expectOne('/api/client-forms/access/validate');
+    const access = http.expectOne('/api/v1/client-forms/access/validate');
     expect(access.request.method).toBe('POST');
     expect(access.request.body).toEqual(codes);
     access.flush({ clientId: '1', clientName: 'Client', eligibleForms: [] });
 
     service.getForm('definition-1', codes).subscribe();
-    const form = http.expectOne('/api/client-forms/definition-1/questions');
+    const form = http.expectOne('/api/v1/client-forms/definition-1/questions');
     expect(form.request.method).toBe('POST');
     expect(form.request.body).toEqual(codes);
     form.flush({ definitionId: 'definition-1', sections: [], questions: [] });
@@ -51,7 +51,7 @@ describe('ClientAssessmentService', () => {
         { questionId: 'q1', value: 72.5, mediaId: null },
       ])
       .subscribe();
-    const request = http.expectOne('/api/client-forms/submissions');
+    const request = http.expectOne('/api/v1/client-forms/submissions');
     expect(request.request.body).toEqual({
       clientCode: 'C',
       formCode: 'F',

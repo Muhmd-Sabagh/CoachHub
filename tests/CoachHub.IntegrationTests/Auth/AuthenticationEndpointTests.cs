@@ -37,7 +37,7 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
         }
 
         var loginResponse = await _client.PostAsJsonAsync(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             new
             {
                 email = CoachHubApiFactory.AdminEmail,
@@ -55,7 +55,7 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", login.AccessToken);
 
-        var meResponse = await _client.GetAsync("/api/auth/me", CancellationToken.None);
+        var meResponse = await _client.GetAsync("/api/v1/auth/me", CancellationToken.None);
 
         Assert.Equal(HttpStatusCode.OK, meResponse.StatusCode);
     }
@@ -66,7 +66,7 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
         _client.DefaultRequestHeaders.Authorization = null;
 
         var response = await _client.GetAsync(
-            "/api/auth/me",
+            "/api/v1/auth/me",
             CancellationToken.None);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -76,7 +76,7 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
     public async Task Public_registration_endpoint_does_not_exist()
     {
         var response = await _client.PostAsync(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             content: null,
             CancellationToken.None);
 
@@ -87,7 +87,7 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
     public async Task Invalid_login_response_is_not_cached_and_includes_defensive_headers()
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             new { email = "missing@coachhub.test", password = "WrongPassword!123" },
             CancellationToken.None);
 
@@ -119,14 +119,14 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
         for (var attempt = 0; attempt < 10; attempt++)
         {
             var response = await client.PostAsJsonAsync(
-                "/api/auth/login",
+                "/api/v1/auth/login",
                 new { email = "missing@coachhub.test", password = "WrongPassword!123" },
                 CancellationToken.None);
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
         var rejected = await client.PostAsJsonAsync(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             new { email = "missing@coachhub.test", password = "WrongPassword!123" },
             CancellationToken.None);
 

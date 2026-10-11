@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using CoachHub.Application.Auth;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace CoachHub.API.Auth;
 
 [ApiController]
-[Route("api/auth")]
+[Route(ApiRoutes.V1 + "/auth")]
 public sealed class AuthController(LoginCommandHandler loginHandler, IAccountService accounts) : ControllerBase
 {
     [AllowAnonymous]

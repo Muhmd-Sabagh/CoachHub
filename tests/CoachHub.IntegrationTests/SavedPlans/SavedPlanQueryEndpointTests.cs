@@ -23,19 +23,19 @@ public sealed class SavedPlanQueryEndpointTests : IClassFixture<CoachHubApiFacto
     public async Task Administrator_can_page_sort_and_filter_combined_plan_summaries()
     {
         await AuthenticateAsync();
-        var client = await PostAsync<ClientResponse>("/api/clients", new ClientCreateInput("Query Client", null, null, null));
-        var category = await PostAsync<BilingualReferenceResponse>("/api/reference-data/food-categories",
+        var client = await PostAsync<ClientResponse>("/api/v1/clients", new ClientCreateInput("Query Client", null, null, null));
+        var category = await PostAsync<BilingualReferenceResponse>("/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("Query foods " + Guid.NewGuid().ToString("N"), null));
-        var food = await PostAsync<FoodResponse>("/api/nutrition/foods",
+        var food = await PostAsync<FoodResponse>("/api/v1/nutrition/foods",
             new FoodInput("Query food", null, category.Id, "gram", 100, 10, 20, 5, null));
 
         var mealId = Guid.NewGuid();
-        var diet = await PostAsync<DietPlanResponse>("/api/diet-plans", new DietPlanInput(
+        var diet = await PostAsync<DietPlanResponse>("/api/v1/diet-plans", new DietPlanInput(
             "Alpha Diet", null, client.Id, [],
             [new(Guid.NewGuid(), "Standard", null, 0, true, null,
                 [new(mealId, "Meal", null, 0, null,
                     [new(Guid.NewGuid(), food.Id, 150, 0, null)])], [])]));
-        var workout = await PostAsync<WorkoutPlanResponse>("/api/workout-plans", new WorkoutPlanInput(
+        var workout = await PostAsync<WorkoutPlanResponse>("/api/v1/workout-plans", new WorkoutPlanInput(
             "Beta Workout", "تمرين", client.Id, [],
             [
                 new(Guid.NewGuid(), "Day One", null, null, null, 0, []),
@@ -43,7 +43,7 @@ public sealed class SavedPlanQueryEndpointTests : IClassFixture<CoachHubApiFacto
             ]));
 
         var firstPage = await _client.GetFromJsonAsync<PagedResult<SavedPlanSummary>>(
-            "/api/saved-plans?pageNumber=1&pageSize=1&sortBy=name&sortDescending=false");
+            "/api/v1/saved-plans?pageNumber=1&pageSize=1&sortBy=name&sortDescending=false");
         Assert.NotNull(firstPage);
         Assert.Equal(2, firstPage.TotalCount);
         Assert.Single(firstPage.Items);
@@ -66,20 +66,20 @@ public sealed class SavedPlanQueryEndpointTests : IClassFixture<CoachHubApiFacto
         Assert.Null(workoutSummary.TotalCalories);
         Assert.Equal("تمرين", workoutSummary.NameAr);
 
-        var invalid = await _client.GetAsync("/api/saved-plans?minCalories=1&minWorkoutDays=1");
+        var invalid = await _client.GetAsync("/api/v1/saved-plans?minCalories=1&minWorkoutDays=1");
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
     }
 
     [Fact]
     public async Task Saved_plan_query_rejects_anonymous_access() =>
-        Assert.Equal(HttpStatusCode.Unauthorized, (await _client.GetAsync("/api/saved-plans")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _client.GetAsync("/api/v1/saved-plans")).StatusCode);
 
     private Task<PagedResult<SavedPlanSummary>> GetAsync(string query) =>
-        _client.GetFromJsonAsync<PagedResult<SavedPlanSummary>>("/api/saved-plans?" + query)!;
+        _client.GetFromJsonAsync<PagedResult<SavedPlanSummary>>("/api/v1/saved-plans?" + query)!;
 
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync("/api/auth/login",
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/login",
             new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
         response.EnsureSuccessStatusCode();
         var login = await response.Content.ReadFromJsonAsync<LoginResult>();

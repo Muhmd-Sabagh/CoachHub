@@ -1,5 +1,10 @@
 # Phase 9 — Dynamic Assessment Engine
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D5: anonymous access by client code and form code is retired; clients submit while logged in (P5).
+> - D1: form definitions become coach-owned (P5).
+
 ## Outcome
 
 Phase 9 replaces static assessment columns with a versioned form engine. It supports `InitialAssessment` and `UpdateAssessment` forms, preserves historical question and answer meaning, and routes media answers through the existing provider-backed Media module.

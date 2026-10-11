@@ -11,8 +11,28 @@ permissions:
 
 jobs:
   verify:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 30
+
+    # Ephemeral SQL Server for integration tests that must run on the real provider
+    # (query filters, constraints, migrations). The SA password is CI-only and the
+    # container is reachable only from this job.
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: CoachHub_CI_only_2026!
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CoachHub_CI_only_2026!' -C -Q 'SELECT 1' -b"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      COACHHUB_TEST_SQL: Server=localhost,1433;User ID=sa;Password=CoachHub_CI_only_2026!;Encrypt=True;TrustServerCertificate=True
 
     steps:
       - name: Check out source

@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Clients;
 using CoachHub.Application.Common.Models;
@@ -8,7 +9,7 @@ namespace CoachHub.API.Clients;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManageClients)]
-[Route("api/clients")]
+[Route(ApiRoutes.V1 + "/clients")]
 public sealed class ClientsController(
     ClientService clientService,
     SubscriptionService subscriptionService) : ControllerBase
@@ -59,7 +60,7 @@ public sealed class ClientsController(
         CancellationToken cancellationToken)
     {
         var created = await subscriptionService.CreateAsync(clientId, input, cancellationToken);
-        return Created($"/api/clients/{clientId}/subscriptions/{created.Id}", created);
+        return Created($"/{ApiRoutes.V1}/clients/{clientId}/subscriptions/{created.Id}", created);
     }
 
     [HttpPut("{clientId:guid}/subscriptions/{id:guid}")]

@@ -30,9 +30,9 @@ public sealed class AssessmentImportEndpointTests : IClassFixture<CoachHubApiFac
     public async Task Xlsx_import_uses_stable_mappings_shared_domain_diagnostics_and_deduplication()
     {
         await AuthenticateAsync();
-        var client = await PostAsync<ClientResponse>("/api/clients",
+        var client = await PostAsync<ClientResponse>("/api/v1/clients",
             new ClientCreateInput("Import Client " + Guid.NewGuid(), null, null, null));
-        var form = await PostAsync<FormVersionResponse>("/api/assessment-forms",
+        var form = await PostAsync<FormVersionResponse>("/api/v1/assessment-forms",
             new CreateFormInput("Imported Updates " + Guid.NewGuid(), AssessmentFormType.UpdateAssessment));
         var questions = new[]
         {
@@ -47,14 +47,14 @@ public sealed class AssessmentImportEndpointTests : IClassFixture<CoachHubApiFac
                 [new("a", "Alpha", 0), new("b", "Beta", 1)]),
             await AddQuestion(form.DefinitionId, "Media", QuestionType.MediaUpload, [])
         };
-        await PostEmptyAsync<FormVersionResponse>($"/api/assessment-forms/{form.DefinitionId}/publish");
+        await PostEmptyAsync<FormVersionResponse>($"/api/v1/assessment-forms/{form.DefinitionId}/publish");
         var headers = new[]
         {
             "Form Code", "Timestamp", "Response ID", "Short Header", "Long Header",
             "Number Header", "Date Header", "Boolean Header", "Single Header",
             "Multiple Header", "Media Header", "Unexpected Question"
         };
-        var profile = await PostAsync<ImportProfileResponse>("/api/assessment-imports/profiles",
+        var profile = await PostAsync<ImportProfileResponse>("/api/v1/assessment-imports/profiles",
             new SaveImportProfileInput(form.DefinitionId, "Google Export", "Form Responses 1",
                 "Form Code", "Timestamp", "Response ID",
                 questions.Select((question, index) => new ImportColumnMappingInput(
@@ -75,7 +75,7 @@ public sealed class AssessmentImportEndpointTests : IClassFixture<CoachHubApiFac
         file.Headers.ContentType = new MediaTypeHeaderValue(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         multipart.Add(file, "file", "google-responses.xlsx");
-        var response = await _client.PostAsync($"/api/assessment-imports/profiles/{profile.Id}/imports", multipart);
+        var response = await _client.PostAsync($"/api/v1/assessment-imports/profiles/{profile.Id}/imports", multipart);
         response.EnsureSuccessStatusCode();
         var summary = (await response.Content.ReadFromJsonAsync<AssessmentImportSummary>())!;
 
@@ -103,13 +103,13 @@ public sealed class AssessmentImportEndpointTests : IClassFixture<CoachHubApiFac
 
     private async Task<QuestionResponse> AddQuestion(
         Guid definitionId, string text, QuestionType type, IReadOnlyList<OptionInput> options) =>
-        await PostAsync<QuestionResponse>($"/api/assessment-forms/{definitionId}/questions",
+        await PostAsync<QuestionResponse>($"/api/v1/assessment-forms/{definitionId}/questions",
             new QuestionInput(null, text, type, true, Array.IndexOf(
                 new[] { "Short", "Long", "Number", "Date", "Boolean", "Single", "Multiple", "Media" }, text), options));
 
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync("/api/auth/login",
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/login",
             new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
         response.EnsureSuccessStatusCode();
         var login = await response.Content.ReadFromJsonAsync<LoginResult>();

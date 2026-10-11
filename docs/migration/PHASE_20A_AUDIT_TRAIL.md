@@ -1,5 +1,9 @@
 # Phase 20A - administrative audit trail
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D2: metadata-only audit is replaced by audit entries that record the affected client, the real actor role and previous values (P3).
+
 ## Scope decision
 
 Phase 20 is an optional enhancement backlog, not one indivisible implementation phase. Audit trail was promoted first because the business documentation identifies missing audit history around medical details and body photos as a privacy-governance gap. Client portal, payments, notifications, fine-grained permissions, reporting, background jobs, and delivery integrations remain separate future decisions.

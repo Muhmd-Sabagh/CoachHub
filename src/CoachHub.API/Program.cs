@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.API.Auditing;
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Errors;
@@ -74,8 +75,8 @@ app.Use(async (context, next) =>
         context.Response.Headers.ContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'";
         context.Response.Headers.Append("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
 
-        if (context.Request.Path.StartsWithSegments("/api/auth") ||
-            context.Request.Path.StartsWithSegments("/api/client-forms"))
+        if (context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/auth") ||
+            context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/client-forms"))
         {
             context.Response.Headers.CacheControl = "no-store, no-cache, max-age=0";
             context.Response.Headers.Pragma = "no-cache";

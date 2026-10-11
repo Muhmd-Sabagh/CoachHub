@@ -1,5 +1,10 @@
 # Phase 21 — Final Product and Production Completion
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D1: the single configured coach and global `Staff` permissions are replaced by coach tenancy with Administrator / Coach / Client roles (P1).
+> - D6: revenue is reported (P15).
+
 ## Outcome
 
 Phase 21 promotes every deferred Phase 20 product capability and closes the in-repository production blockers. It keeps the TailAdmin-derived Angular design, the four-layer architecture, thin controllers, private media, and append-only operational history.

@@ -1,5 +1,11 @@
 # Phase 11 — Diet Plans and Nutrition Calculator
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D4: `DietPlanVersion` (ordered variant tabs) is renamed and plans gain real version history with save-in-place or save-as-new-version (P6).
+> - §14 and §15: the fixed ±500 kcal goal and the single protein g/kg + fat % mode are replaced by configurable deficit/surplus % and three macro modes (P7).
+> - D1: Administrator-only access is replaced by coach-owned plans (P1).
+
 ## Outcome
 
 Phase 11 replaces the legacy diet-plan maker with a normalized, API-first aggregate. Administrators can create, edit, copy, assign, unassign, and retrieve a complete plan; reorder every nested collection; activate or deactivate notes; define structured food or whole-meal alternatives; and calculate prescribed nutrition and daily energy targets.
