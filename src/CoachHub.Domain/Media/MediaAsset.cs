@@ -46,9 +46,18 @@ public sealed class MediaAsset : Entity
 
         return new MediaAsset(
             storageKey,
-            Path.GetFileName(originalFileName),
+            FileNameOnly(originalFileName),
             contentType,
             sizeBytes,
             createdAt);
+    }
+
+    // Browsers on Windows may send "C:\dir\name.png"; Path.GetFileName ignores '\' on Linux,
+    // so strip both separators regardless of the host OS.
+    private static string FileNameOnly(string originalFileName)
+    {
+        var name = originalFileName[(originalFileName.LastIndexOfAny(['/', '\\']) + 1)..];
+        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(originalFileName));
+        return name;
     }
 }
