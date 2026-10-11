@@ -1,7 +1,9 @@
 using CoachHub.Application.Auth;
+using CoachHub.Application.Auth.Sessions;
 using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
+using CoachHub.Domain.Auth;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Coaches;
 using CoachHub.Infrastructure.Auth;
@@ -17,6 +19,7 @@ public sealed class CoachAdministrationService(
     CoachHubDbContext db,
     UserManager<User> users,
     RoleManager<Role> roles,
+    SessionService sessions,
     TimeProvider timeProvider) : ICoachAdministrationService
 {
     public async Task<PagedResult<CoachResponse>> ListAsync(CoachQuery query, CancellationToken cancellationToken)
@@ -88,6 +91,8 @@ public sealed class CoachAdministrationService(
             AccountRules.Ensure(await users.UpdateAsync(user));
         }
         await db.SaveChangesAsync(cancellationToken);
+        if (!coach.IsActive && user is not null)
+            await sessions.RevokeAllAsync(user.Id, null, SessionEndReason.AccountDisabled, cancellationToken);
         return await MapAsync(coach, cancellationToken);
     }
 

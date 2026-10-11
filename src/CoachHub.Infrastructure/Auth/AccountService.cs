@@ -1,6 +1,8 @@
 using CoachHub.Application.Auth;
+using CoachHub.Application.Auth.Sessions;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Communications;
+using CoachHub.Domain.Auth;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Communications;
 using CoachHub.Infrastructure.Auth.Persistence;
@@ -22,7 +24,7 @@ public sealed class AuthExperienceOptions
 /// <see cref="Coaches.CoachAdministrationService"/>.
 /// </summary>
 public sealed class AccountService(UserManager<User> users, RoleManager<Role> roles, CoachHubDbContext db,
-    NotificationService notifications, IOptions<AuthExperienceOptions> options) : IAccountService
+    NotificationService notifications, SessionService sessions, IOptions<AuthExperienceOptions> options) : IAccountService
 {
     public async Task<IReadOnlyList<AccountResponse>> ListAsync(CancellationToken token)
     {
@@ -65,6 +67,7 @@ public sealed class AccountService(UserManager<User> users, RoleManager<Role> ro
         user.DisplayName = input.DisplayName.Trim();
         user.IsActive = input.IsActive;
         AccountRules.Ensure(await users.UpdateAsync(user));
+        if (!user.IsActive) await sessions.RevokeAllAsync(user.Id, null, SessionEndReason.AccountDisabled, token);
         return await Map(user);
     }
 
@@ -86,6 +89,8 @@ public sealed class AccountService(UserManager<User> users, RoleManager<Role> ro
         var user = await users.FindByEmailAsync(input.Email.Trim());
         if (user is null || !user.IsActive) throw Validation("token", "The reset request is invalid or expired.");
         AccountRules.Ensure(await users.ResetPasswordAsync(user, input.Token, input.NewPassword));
+        // Whoever knew the old password may hold a session; a reset signs every device out.
+        await sessions.RevokeAllAsync(user.Id, null, SessionEndReason.PasswordReset, token);
     }
 
     private async Task<string> ValidateAsync(CreateAccountInput input, CancellationToken token)

@@ -27,6 +27,12 @@ public static class AuthenticationExtensions
                 "JWT Issuer, Audience, and a SigningKey of at least 32 characters are required.");
         }
 
+        if (jwtOptions.AccessTokenMinutes is < 5 or > 60)
+        {
+            throw new InvalidOperationException(
+                "JWT AccessTokenMinutes must be between 5 and 60; sessions last through refresh tokens.");
+        }
+
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -55,6 +61,7 @@ public static class AuthenticationExtensions
             options.AddPolicy(AuthPolicies.AdminOnly, policy => policy.RequireRole(AuthRoles.Administrator));
             options.AddPolicy(AuthPolicies.CoachOrAdmin, policy => policy.RequireRole(AuthRoles.Administrator, AuthRoles.Coach));
             options.AddPolicy(AuthPolicies.ClientOnly, policy => policy.RequireRole(AuthRoles.Client));
+            options.AddPolicy(AuthPolicies.AnyRole, policy => policy.RequireRole(AuthRoles.All));
         });
         return services;
     }

@@ -1,12 +1,14 @@
+using CoachHub.Application.Auth.Sessions;
 using CoachHub.Application.Common.Exceptions;
 
 namespace CoachHub.Application.Auth.Login;
 
 public sealed class LoginCommandHandler(
     IIdentityGateway identityGateway,
-    ITokenIssuer tokenIssuer)
+    SessionService sessions)
 {
-    public async Task<LoginResult?> HandleAsync(
+    /// <summary>Signs in and starts a new session, or returns null for invalid credentials.</summary>
+    public async Task<SessionTokens?> HandleAsync(
         LoginCommand command,
         CancellationToken cancellationToken)
     {
@@ -26,17 +28,7 @@ public sealed class LoginCommandHandler(
             return null;
         }
 
-        var token = tokenIssuer.Issue(user);
-
-        return new LoginResult(
-            token.AccessToken,
-            token.ExpiresAt,
-            user.Id,
-            user.Email,
-            user.DisplayName,
-            user.Roles,
-            user.CoachId,
-            user.ClientId);
+        return await sessions.StartAsync(user, command.Client, cancellationToken);
     }
 
     private static IReadOnlyDictionary<string, string[]> Validate(LoginCommand command)

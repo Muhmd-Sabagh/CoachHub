@@ -16,6 +16,7 @@ public sealed class JwtOptions
     [MinLength(32)]
     public string SigningKey { get; init; } = string.Empty;
 
-    [Range(5, 1440)]
-    public int AccessTokenMinutes { get; init; } = 60;
+    /// <summary>Kept short: sessions stay signed in through the rotating refresh token.</summary>
+    [Range(5, 60)]
+    public int AccessTokenMinutes { get; init; } = 15;
 }

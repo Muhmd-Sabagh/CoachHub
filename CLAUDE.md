@@ -98,7 +98,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 - **Versioning (D4):** never overwrite a plan version when the coach chose "new version". Delivered-plan snapshots stay immutable.
 - **Client access (D5):**
   - Do not add anonymous endpoints.
-  - The only approved anonymous surface is authentication (login and password reset).
+  - The only approved anonymous surface is authentication: login, session refresh and password reset.
   - When retiring `/api/client-forms`, update `ControllerAuthorizationTests`.
 - **Audit (D2)**
   - Capture the real actor role and the affected client.
@@ -123,8 +123,10 @@ Treat these as planned rework, not conventions to preserve.
 
 ## Security invariants (keep)
 
-- `tests/CoachHub.IntegrationTests/Security/ControllerAuthorizationTests.cs` pins the anonymous API surface (every anonymous action must be rate-limited) and requires every `[Authorize]` to use an `AuthPolicies` role policy: `AdminOnly`, `CoachOrAdmin` or `ClientOnly`.
-- Platform catalogs (foods, exercises, currencies, categories) and media writes are `AdminOnly`; coaches read them.
+- `tests/CoachHub.IntegrationTests/Security/ControllerAuthorizationTests.cs` pins the anonymous API surface (every anonymous action must be rate-limited) and requires every `[Authorize]` to use an `AuthPolicies` role policy: `AdminOnly`, `CoachOrAdmin`, `ClientOnly` or `AnyRole` (self-service).
+- Platform catalogs (foods, exercises, currencies, categories) and `/media` writes are `AdminOnly`; coaches read them.
+- Media has an owner (P2, `MediaOwner`): platform media is visible to every signed-in user, a coach's library to the coach and their clients, client media to the client and their coach. Catalog entries may reference platform images only.
+- Sessions (P2): access tokens last 15 minutes; the refresh token is a rotating, hashed, HttpOnly `SameSite=Strict` cookie scoped to `/api/v1/auth`. Self-service endpoints act on the account in the token, never on an ID from the request. When an account loses access, end its sessions with `SessionService.RevokeAllAsync`.
 - Append-only rows: `SubscriptionRenewal`, `Refund`, `DeliveredPlan` and `AuditEntry` cannot be modified or deleted (enforced in `CoachHubDbContext`).
 - Tracked `appsettings.json` keeps an empty JWT `SigningKey`, `BootstrapAdmin.Enabled=false` and `Media.Provider=S3`. `Verify-Release.ps1` fails otherwise.
 - FileSystem media is allowed only in Development and Testing.
@@ -145,7 +147,7 @@ Treat these as planned rework, not conventions to preserve.
 
 - NgModule-based app. Feature folders live under `src/app/features`, each with a `*.service.ts` per API area.
 - Visual language comes from TailAdmin through CSS custom properties; see `docs/design/TAILADMIN_ANGULAR_ADAPTATION.md`. Per-coach branding (D1) must override these tokens at runtime, so never hard-code colors in features.
-- The token lives in `sessionStorage`. The API is the authorization boundary; route guards are UX only.
+- The access token lives in `sessionStorage`; the refresh token is an HttpOnly cookie that scripts never see. `AuthService` refreshes silently (interceptor, guards, app initializer). The API is the authorization boundary; route guards are UX only.
 
 ## Workflow
 

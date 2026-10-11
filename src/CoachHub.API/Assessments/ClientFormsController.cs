@@ -33,10 +33,10 @@ public sealed class ClientFormsController(FormSubmissionService service, MediaSe
         [FromForm] IFormFile file,
         CancellationToken token)
     {
-        await service.ValidateAccessAsync(new(clientCode, formCode), token);
+        var owner = await service.ResolveUploadOwnerAsync(new(clientCode, formCode), token);
         await using var content = file.OpenReadStream();
         var media = await mediaService.UploadAsync(
-            content, file.FileName, file.ContentType, file.Length, token);
+            content, file.FileName, file.ContentType, file.Length, owner, token);
         return StatusCode(StatusCodes.Status201Created, media);
     }
 }

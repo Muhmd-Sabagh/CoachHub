@@ -4,8 +4,10 @@ using CoachHub.Domain.Assessments;
 using CoachHub.Domain.Billing;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.DietPlanning;
+using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -91,10 +93,40 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
     }
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
         dbContext.SaveChangesAsync(cancellationToken);
-    public async Task DeleteAsync(Client client, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<string>> DeleteAsync(Client client, CancellationToken cancellationToken)
     {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // The client's login goes with the client; its sessions and role links cascade, and its
+        // uploads lose their uploader.
+        var account = await dbContext.Set<User>()
+            .SingleOrDefaultAsync(user => user.ClientId == client.Id, cancellationToken);
+        if (account is not null)
+        {
+            dbContext.Set<User>().Remove(account);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        // Order matters, so each step saves on its own: answers (cascading with their submission)
+        // reference media, and media references the client. Coaching rows and client media
+        // follow the client on transfer, so they all belong to the client's current coach.
+        var submissions = await dbContext.Set<FormSubmission>()
+            .Where(submission => submission.ClientId == client.Id)
+            .ToArrayAsync(cancellationToken);
+        dbContext.Set<FormSubmission>().RemoveRange(submissions);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var media = await dbContext.Set<MediaAsset>()
+            .Where(asset => asset.ClientId == client.Id)
+            .ToArrayAsync(cancellationToken);
+        dbContext.Set<MediaAsset>().RemoveRange(media);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        var storageKeys = media.Select(asset => asset.StorageKey).ToArray();
+
         dbContext.Set<Client>().Remove(client);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return storageKeys;
     }
 
     public async Task<bool> HasProtectedHistoryAsync(Client client, CancellationToken cancellationToken) =>
@@ -125,6 +157,9 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         await dbContext.Set<DeliveredPlan>().IgnoreQueryFilters()
             .Where(delivery => delivery.ClientId == client.Id && delivery.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(delivery => delivery.CoachId, toCoachId), cancellationToken);
+        await dbContext.Set<MediaAsset>().IgnoreQueryFilters()
+            .Where(asset => asset.ClientId == client.Id && asset.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(asset => asset.CoachId, (Guid?)toCoachId), cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
     public Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken) =>

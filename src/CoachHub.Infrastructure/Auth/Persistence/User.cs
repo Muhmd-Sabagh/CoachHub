@@ -15,4 +15,10 @@ public sealed class User : IdentityUser<Guid>
 
     /// <summary>Set for Client accounts: the client this login belongs to.</summary>
     public Guid? ClientId { get; set; }
+
+    /// <summary>"en" or "ar" (<see cref="Application.Auth.UiLanguages"/>); null follows the browser.</summary>
+    public string? PreferredLanguage { get; set; }
+
+    /// <summary>The profile picture (§2), stored as media owned by this account.</summary>
+    public Guid? AvatarMediaId { get; set; }
 }

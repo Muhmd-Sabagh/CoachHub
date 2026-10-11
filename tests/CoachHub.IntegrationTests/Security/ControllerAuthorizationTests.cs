@@ -14,6 +14,7 @@ public sealed class ControllerAuthorizationTests
     private static readonly HashSet<string> ExpectedAnonymousActions =
     [
         $"{nameof(AuthController)}.{nameof(AuthController.Login)}",
+        $"{nameof(AuthController)}.{nameof(AuthController.Refresh)}",
         $"{nameof(AuthController)}.{nameof(AuthController.RequestReset)}",
         $"{nameof(AuthController)}.{nameof(AuthController.Reset)}",
         $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.Validate)}",
@@ -57,7 +58,7 @@ public sealed class ControllerAuthorizationTests
     [Fact]
     public void Every_authorization_attribute_names_a_known_role_policy()
     {
-        string[] known = [AuthPolicies.AdminOnly, AuthPolicies.CoachOrAdmin, AuthPolicies.ClientOnly];
+        string[] known = [AuthPolicies.AdminOnly, AuthPolicies.CoachOrAdmin, AuthPolicies.ClientOnly, AuthPolicies.AnyRole];
         var offending = new List<string>();
 
         foreach (var controller in ApiControllers())
@@ -72,6 +73,14 @@ public sealed class ControllerAuthorizationTests
         }
 
         Assert.True(offending.Count == 0, "Use AuthPolicies role policies: " + string.Join("; ", offending));
+    }
+
+    [Fact]
+    public void Session_refresh_has_its_own_rate_limit_policy()
+    {
+        var refresh = typeof(AuthController).GetMethod(nameof(AuthController.Refresh))!;
+
+        Assert.Equal("session-refresh", refresh.GetCustomAttribute<EnableRateLimitingAttribute>()!.PolicyName);
     }
 
     [Fact]

@@ -19,6 +19,7 @@ public sealed class MediaServiceTests
             @"..\portrait.png",
             "image/png",
             content.Length,
+            MediaOwner.Platform(null),
             CancellationToken.None);
 
         Assert.Equal("portrait.png", result.OriginalFileName);
@@ -38,6 +39,7 @@ public sealed class MediaServiceTests
             "exercise.gif",
             "image/gif",
             content.Length,
+            MediaOwner.Platform(null),
             CancellationToken.None);
 
         Assert.True(storage.StoreCalled);
@@ -56,6 +58,7 @@ public sealed class MediaServiceTests
                 "payload.exe",
                 "application/octet-stream",
                 content.Length,
+                MediaOwner.Platform(null),
                 CancellationToken.None));
 
         Assert.Contains("contentType", exception.Errors);
@@ -75,6 +78,7 @@ public sealed class MediaServiceTests
                 "renamed.png",
                 "image/png",
                 content.Length,
+                MediaOwner.Platform(null),
                 CancellationToken.None));
 
         Assert.Contains("file", exception.Errors);
@@ -94,14 +98,68 @@ public sealed class MediaServiceTests
                 "large.pdf",
                 "application/pdf",
                 MediaService.MaximumFileSizeBytes + 1,
+                MediaOwner.Platform(null),
                 CancellationToken.None));
 
         Assert.Contains("file", exception.Errors);
         Assert.False(storage.StoreCalled);
     }
 
+    [Fact]
+    public async Task Upload_records_the_owner_of_the_file()
+    {
+        var repository = new StubRepository();
+        var service = new MediaService(new StubStorage(), repository);
+        await using var content = new MemoryStream([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        var owner = MediaOwner.OfClient(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+
+        await service.UploadAsync(content, "progress.png", "image/png", content.Length, owner, CancellationToken.None);
+
+        Assert.Equal(owner.CoachId, repository.Added!.CoachId);
+        Assert.Equal(owner.ClientId, repository.Added.ClientId);
+        Assert.Equal(owner.UploadedByUserId, repository.Added.OwnerUserId);
+    }
+
+    [Fact]
+    public async Task Delete_keeps_the_content_when_the_row_cannot_be_deleted()
+    {
+        var media = MediaAsset.Create("stored", "a.png", "image/png", 8, DateTimeOffset.UtcNow, null, null, null);
+        var storage = new StubStorage();
+        var service = new MediaService(storage, new StubRepository(media, refuseDelete: true));
+
+        await Assert.ThrowsAsync<ConflictException>(() => service.DeleteAsync(media.Id, CancellationToken.None));
+
+        Assert.Empty(storage.Deleted);
+    }
+
+    [Fact]
+    public async Task Delete_content_continues_past_storage_failures()
+    {
+        var storage = new StubStorage { FailOn = "first" };
+        var service = new MediaService(storage, new StubRepository());
+
+        await service.DeleteContentAsync(["first", "second"], CancellationToken.None);
+
+        Assert.Equal(["second"], storage.Deleted);
+    }
+
+    [Fact]
+    public void Only_platform_images_qualify_for_catalog_entries()
+    {
+        var coachId = Guid.NewGuid();
+        Assert.True(MediaService.IsPlatformImage(
+            MediaAsset.Create("a", "a.png", "image/png", 8, DateTimeOffset.UtcNow, null, null, null)));
+        Assert.False(MediaService.IsPlatformImage(
+            MediaAsset.Create("b", "b.pdf", "application/pdf", 8, DateTimeOffset.UtcNow, null, null, null)));
+        Assert.False(MediaService.IsPlatformImage(
+            MediaAsset.Create("c", "c.png", "image/png", 8, DateTimeOffset.UtcNow, coachId, Guid.NewGuid(), null)));
+        Assert.False(MediaService.IsPlatformImage(null));
+    }
+
     private sealed class StubStorage : IMediaStorage
     {
+        public List<string> Deleted { get; } = [];
+        public string? FailOn { get; init; }
         public bool StoreCalled { get; private set; }
         public string? ReceivedContentType { get; private set; }
 
@@ -119,11 +177,15 @@ public sealed class MediaServiceTests
         public Task<Stream> OpenReadAsync(string storageKey, CancellationToken cancellationToken) =>
             Task.FromResult<Stream>(new MemoryStream());
 
-        public Task DeleteAsync(string storageKey, CancellationToken cancellationToken) =>
-            Task.CompletedTask;
+        public Task DeleteAsync(string storageKey, CancellationToken cancellationToken)
+        {
+            if (storageKey == FailOn) throw new IOException("Storage unavailable.");
+            Deleted.Add(storageKey);
+            return Task.CompletedTask;
+        }
     }
 
-    private sealed class StubRepository : IMediaRepository
+    private sealed class StubRepository(MediaAsset? existing = null, bool refuseDelete = false) : IMediaRepository
     {
         public MediaAsset? Added { get; private set; }
 
@@ -134,9 +196,9 @@ public sealed class MediaServiceTests
         }
 
         public Task<MediaAsset?> FindAsync(Guid id, CancellationToken cancellationToken) =>
-            Task.FromResult<MediaAsset?>(null);
+            Task.FromResult(existing?.Id == id ? existing : null);
 
         public Task DeleteAsync(MediaAsset media, CancellationToken cancellationToken) =>
-            Task.CompletedTask;
+            refuseDelete ? throw new ConflictException("Referenced.") : Task.CompletedTask;
     }
 }

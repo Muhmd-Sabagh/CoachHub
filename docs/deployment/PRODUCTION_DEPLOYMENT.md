@@ -18,7 +18,8 @@ Use the platform secret store and ASP.NET Core double-underscore configuration k
 | JWT issuer | `Authentication__Jwt__Issuer` | Stable HTTPS application identity |
 | JWT audience | `Authentication__Jwt__Audience` | Stable CoachHub web audience |
 | JWT signing key | `Authentication__Jwt__SigningKey` | Random secret of at least 32 characters; rotate through the secret store |
-| Token lifetime | `Authentication__Jwt__AccessTokenMinutes` | 5?60 minutes unless risk review approves otherwise |
+| Access-token lifetime | `Authentication__Jwt__AccessTokenMinutes` | 5–60 minutes (default 15); sessions stay signed in through refresh tokens |
+| Session lifetimes | `Authentication__Sessions__IdleDays`, `__AbsoluteDays`, `__RotationGraceSeconds` | Defaults 14 idle days, 30 absolute days, 30-second rotation grace. The refresh cookie is `Secure`, so the site must be served over HTTPS |
 | Bootstrap enabled | `Authentication__BootstrapAdmin__Enabled` | `false` after the first controlled bootstrap |
 | Bootstrap credentials | matching bootstrap keys | Supply only during a supervised first start, then remove and rotate |
 | Media provider settings | provider-specific secret keys | Private buckets/containers only; no public anonymous object access |

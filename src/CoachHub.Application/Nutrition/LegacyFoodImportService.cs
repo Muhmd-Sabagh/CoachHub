@@ -94,9 +94,9 @@ public sealed class LegacyFoodImportService(
         if (row.MediaId.HasValue)
         {
             var media = await mediaRepository.FindAsync(row.MediaId.Value, cancellationToken);
-            if (media is null || !media.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            if (!MediaService.IsPlatformImage(media))
             {
-                errors.Add("MediaId must reference an existing image uploaded through Media.");
+                errors.Add("MediaId must reference an existing platform image uploaded through Media.");
             }
         }
 

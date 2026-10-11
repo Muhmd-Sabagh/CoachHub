@@ -15,7 +15,7 @@ public sealed class ClientPortalEndpointTests(CoachHubApiFactory factory) : ICla
     public async Task Client_role_without_a_linked_client_is_forbidden_not_a_server_error()
     {
         var token = factory.Services.GetRequiredService<ITokenIssuer>().Issue(new AuthenticatedUser(
-            Guid.NewGuid(), "unlinked-client@coachhub.test", "Unlinked Client", [AuthRoles.Client], CoachId: null, ClientId: null));
+            Guid.NewGuid(), "unlinked-client@coachhub.test", "Unlinked Client", [AuthRoles.Client], CoachId: null, ClientId: null), Guid.NewGuid());
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 

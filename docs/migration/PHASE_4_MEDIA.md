@@ -1,5 +1,9 @@
 # Phase 4 media storage abstraction
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D7, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - §52, §62 (P2): media has an owner. Platform media (no coach) is visible to every signed-in user, a coach's library to the coach and their clients, and client media to the client and their coach. Reads are open to every role and filtered centrally; uploads and deletes through `/api/v1/media` stay Administrator-only. See [P02_SESSIONS.md](../product/phases/P02_SESSIONS.md).
+
 ## Architecture
 
 Business modules depend on IMediaStorage and MediaService in Application. They store only MediaAsset identifiers and never deployment paths. Infrastructure owns provider details and metadata persistence. API endpoints are Administrator-only and thin.

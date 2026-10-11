@@ -44,11 +44,29 @@ public sealed class IdentityGateway(UserManager<User> userManager, CoachHubDbCon
             throw new InvalidOperationException("The authenticated user's login timestamp could not be updated.");
         }
 
-        var roles = await userManager.GetRolesAsync(user);
+        return await ToAuthenticatedUserAsync(user, coachId);
+    }
 
+    public async Task<AuthenticatedUser?> FindActiveAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // A lockout only throttles password guessing; it does not end sessions that already exist,
+        // otherwise anyone could sign a user out by mistyping their password five times.
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null || !user.IsActive) return null;
+
+        var coachId = await ResolveCoachAsync(user, cancellationToken);
+        if (user.CoachId.HasValue && coachId is null) return null;
+        return await ToAuthenticatedUserAsync(user, coachId);
+    }
+
+    private async Task<AuthenticatedUser> ToAuthenticatedUserAsync(User user, Guid? coachId)
+    {
+        var roles = await userManager.GetRolesAsync(user);
         return new AuthenticatedUser(
             user.Id,
-            user.Email ?? login,
+            user.Email ?? user.UserName ?? string.Empty,
             user.DisplayName,
             roles.ToArray(),
             coachId,

@@ -124,11 +124,11 @@ public sealed class ExerciseService(
         if (input.MediaId.HasValue)
         {
             var media = await mediaRepository.FindAsync(input.MediaId.Value, cancellationToken);
-            if (media is null || !media.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            if (!MediaService.IsPlatformImage(media))
             {
                 throw new ValidationException(new Dictionary<string, string[]>
                 {
-                    ["mediaId"] = ["The selected media must be an existing image."]
+                    ["mediaId"] = ["The selected media must be an existing platform image."]
                 });
             }
         }

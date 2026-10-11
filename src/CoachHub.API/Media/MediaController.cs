@@ -1,3 +1,4 @@
+using CoachHub.API.Auth;
 using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Media;
@@ -6,8 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CoachHub.API.Media;
 
+/// <summary>
+/// Media is served only here. Who may open a file is decided by its owner (platform, coach
+/// library, or client media; see MediaAsset), enforced by the tenant filters: others get 404.
+/// </summary>
 [ApiController]
-[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
+[Authorize(Policy = AuthPolicies.AnyRole)]
 [Route(ApiRoutes.V1 + "/media")]
 public sealed class MediaController(MediaService mediaService) : ControllerBase
 {
@@ -25,6 +30,7 @@ public sealed class MediaController(MediaService mediaService) : ControllerBase
             file.FileName,
             file.ContentType,
             file.Length,
+            MediaOwner.Platform(User.RequiredUserId()),
             cancellationToken);
 
         return CreatedAtAction(nameof(Open), new { id = media.Id }, media);
