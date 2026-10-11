@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Communications;
@@ -18,6 +17,10 @@ public sealed class AuthExperienceOptions
     public string PasswordResetUrl { get; init; } = string.Empty;
 }
 
+/// <summary>
+/// Administrator and Client login accounts. Coach accounts are managed with their coach by
+/// <see cref="Coaches.CoachAdministrationService"/>.
+/// </summary>
 public sealed class AccountService(UserManager<User> users, RoleManager<Role> roles, CoachHubDbContext db,
     NotificationService notifications, IOptions<AuthExperienceOptions> options) : IAccountService
 {
@@ -31,23 +34,38 @@ public sealed class AccountService(UserManager<User> users, RoleManager<Role> ro
 
     public async Task<AccountResponse> CreateAsync(CreateAccountInput input, CancellationToken token)
     {
-        token.ThrowIfCancellationRequested(); Validate(input.Roles, input.Permissions, input.ClientId);
-        if (input.ClientId.HasValue && !await db.Set<Client>().AnyAsync(x => x.Id == input.ClientId, token)) throw new NotFoundException("Client", input.ClientId.Value);
-        var user = new User { UserName = input.Email.Trim(), Email = input.Email.Trim(), EmailConfirmed = true,
-            DisplayName = input.DisplayName.Trim(), IsActive = true, ClientId = input.ClientId, LockoutEnabled = true };
-        var result = string.IsNullOrWhiteSpace(input.Password) ? await users.CreateAsync(user) : await users.CreateAsync(user, input.Password);
-        Ensure(result, "create account"); await ApplyAccess(user, input.Roles, input.Permissions);
+        token.ThrowIfCancellationRequested();
+        var role = await ValidateAsync(input, token);
+        var user = new User
+        {
+            UserName = AccountRules.UserName(input.UserName, input.Email),
+            Email = input.Email.Trim(),
+            EmailConfirmed = true,
+            DisplayName = input.DisplayName.Trim(),
+            IsActive = true,
+            ClientId = role == AuthRoles.Client ? input.ClientId : null,
+            LockoutEnabled = true
+        };
+        AccountRules.Ensure(string.IsNullOrWhiteSpace(input.Password)
+            ? await users.CreateAsync(user)
+            : await users.CreateAsync(user, input.Password));
+        await AccountRules.EnsureRoleAsync(roles, role);
+        AccountRules.Ensure(await users.AddToRoleAsync(user, role));
         return await Map(user);
     }
 
     public async Task<AccountResponse> UpdateAsync(Guid id, UpdateAccountInput input, CancellationToken token)
     {
-        token.ThrowIfCancellationRequested(); Validate(input.Roles, input.Permissions, null, validateClientRole: false);
+        token.ThrowIfCancellationRequested();
+        if (string.IsNullOrWhiteSpace(input.DisplayName) || input.DisplayName.Trim().Length > 200)
+            throw Validation("displayName", "A display name of at most 200 characters is required.");
         var user = await users.FindByIdAsync(id.ToString()) ?? throw new NotFoundException("Account", id);
-        if (input.Roles.Contains(AuthRoles.Client, StringComparer.OrdinalIgnoreCase) != user.ClientId.HasValue)
-            throw new ArgumentException("Client role accounts must remain linked to exactly one client.");
-        user.DisplayName = input.DisplayName.Trim(); user.IsActive = input.IsActive; Ensure(await users.UpdateAsync(user), "update account");
-        await ApplyAccess(user, input.Roles, input.Permissions); return await Map(user);
+        if (user.CoachId.HasValue)
+            throw new ConflictException("Coach accounts are managed through coach administration.");
+        user.DisplayName = input.DisplayName.Trim();
+        user.IsActive = input.IsActive;
+        AccountRules.Ensure(await users.UpdateAsync(user));
+        return await Map(user);
     }
 
     public async Task RequestPasswordResetAsync(string email, CancellationToken token)
@@ -58,35 +76,47 @@ public sealed class AccountService(UserManager<User> users, RoleManager<Role> ro
         if (string.IsNullOrWhiteSpace(resetUrl)) throw new InvalidOperationException("Password reset URL is not configured.");
         var code = await users.GeneratePasswordResetTokenAsync(user);
         var url = $"{resetUrl}?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(code)}";
-        await notifications.ScheduleAsync(new(user.ClientId, NotificationChannel.Email, user.Email,
+        await notifications.SchedulePlatformAsync(new(user.ClientId, NotificationChannel.Email, user.Email,
             "CoachHub password reset", $"Use this one-time link to reset your password: {url}", null), token);
     }
 
     public async Task ResetPasswordAsync(PasswordResetInput input, CancellationToken token)
     {
-        token.ThrowIfCancellationRequested(); var user = await users.FindByEmailAsync(input.Email.Trim());
-        if (user is null || !user.IsActive) throw new ValidationException(new Dictionary<string, string[]> { ["token"] = ["The reset request is invalid or expired."] });
-        Ensure(await users.ResetPasswordAsync(user, input.Token, input.NewPassword), "reset password");
+        token.ThrowIfCancellationRequested();
+        var user = await users.FindByEmailAsync(input.Email.Trim());
+        if (user is null || !user.IsActive) throw Validation("token", "The reset request is invalid or expired.");
+        AccountRules.Ensure(await users.ResetPasswordAsync(user, input.Token, input.NewPassword));
     }
 
-    private async Task ApplyAccess(User user, IReadOnlyList<string> requestedRoles, IReadOnlyList<string> permissions)
+    private async Task<string> ValidateAsync(CreateAccountInput input, CancellationToken token)
     {
-        var desiredRoles = requestedRoles.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        foreach (var role in desiredRoles) if (!await roles.RoleExistsAsync(role)) Ensure(await roles.CreateAsync(new Role { Name = role }), "create role");
-        var current = await users.GetRolesAsync(user); var remove = current.Except(desiredRoles, StringComparer.OrdinalIgnoreCase).ToArray(); var add = desiredRoles.Except(current, StringComparer.OrdinalIgnoreCase).ToArray();
-        if (remove.Length > 0) Ensure(await users.RemoveFromRolesAsync(user, remove), "remove roles"); if (add.Length > 0) Ensure(await users.AddToRolesAsync(user, add), "add roles");
-        var claims = await users.GetClaimsAsync(user); var old = claims.Where(x => x.Type == AuthPermissions.ClaimType).ToArray(); if (old.Length > 0) Ensure(await users.RemoveClaimsAsync(user, old), "remove permissions");
-        var desired = permissions.Distinct(StringComparer.Ordinal).Select(x => new Claim(AuthPermissions.ClaimType, x)).ToArray(); if (desired.Length > 0) Ensure(await users.AddClaimsAsync(user, desired), "add permissions");
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(input.Email)) errors["email"] = ["An email address is required."];
+        if (string.IsNullOrWhiteSpace(input.DisplayName) || input.DisplayName.Trim().Length > 200)
+            errors["displayName"] = ["A display name of at most 200 characters is required."];
+        var role = AuthRoles.All.SingleOrDefault(x => string.Equals(x, input.Role?.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (role is null || role == AuthRoles.Coach)
+            errors["role"] = ["Choose Administrator or Client. Coach accounts are created with their coach."];
+        else if (role == AuthRoles.Client && !input.ClientId.HasValue)
+            errors["clientId"] = ["A Client account must be linked to a client."];
+        else if (role != AuthRoles.Client && input.ClientId.HasValue)
+            errors["clientId"] = ["Only Client accounts can be linked to a client."];
+        if (errors.Count > 0) throw new ValidationException(errors);
+
+        if (role == AuthRoles.Client)
+        {
+            if (!await db.Set<Client>().AnyAsync(x => x.Id == input.ClientId, token))
+                throw new NotFoundException("Client", input.ClientId!.Value);
+            if (await users.Users.AnyAsync(x => x.ClientId == input.ClientId, token))
+                throw new ConflictException("The client already has a login account.");
+        }
+        return role!;
     }
 
-    private async Task<AccountResponse> Map(User user) => new(user.Id, user.Email ?? string.Empty, user.DisplayName, user.IsActive, user.ClientId,
-        (await users.GetRolesAsync(user)).ToArray(), (await users.GetClaimsAsync(user)).Where(x => x.Type == AuthPermissions.ClaimType).Select(x => x.Value).Order().ToArray());
-    private static void Validate(IReadOnlyList<string> requestedRoles, IReadOnlyList<string> permissions, Guid? clientId, bool validateClientRole = true)
-    {
-        var allowedRoles = new[] { AuthRoles.Administrator, AuthRoles.Staff, AuthRoles.Client };
-        if (requestedRoles.Count == 0 || requestedRoles.Any(x => !allowedRoles.Contains(x, StringComparer.OrdinalIgnoreCase))) throw new ArgumentException("Only Administrator, Staff, and Client roles are supported.");
-        if (permissions.Any(x => !AuthPermissions.All.Contains(x, StringComparer.Ordinal))) throw new ArgumentException("An unknown permission was requested.");
-        if (validateClientRole && requestedRoles.Contains(AuthRoles.Client, StringComparer.OrdinalIgnoreCase) != clientId.HasValue) throw new ArgumentException("Client role accounts must be linked to exactly one client.");
-    }
-    private static void Ensure(IdentityResult result, string operation) { if (!result.Succeeded) throw new InvalidOperationException($"Unable to {operation}: {string.Join("; ", result.Errors.Select(x => x.Description))}"); }
+    private async Task<AccountResponse> Map(User user) => new(user.Id, user.Email ?? string.Empty,
+        user.UserName ?? string.Empty, user.DisplayName, user.IsActive,
+        (await users.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty, user.CoachId, user.ClientId);
+
+    private static ValidationException Validation(string field, string message) =>
+        new(new Dictionary<string, string[]> { [field] = [message] });
 }

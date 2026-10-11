@@ -26,8 +26,9 @@ public abstract class ReferenceDataService<TEntity, TInput, TResponse>(
     public async Task<TResponse> CreateAsync(TInput input, CancellationToken cancellationToken)
     {
         Validate(input);
-        await EnsureUniqueAsync(UniquenessKey(input), null, cancellationToken);
-        var entity = Create(input);
+        var ownerCoachId = await ResolveOwnerAsync(input, cancellationToken);
+        await EnsureUniqueAsync(UniquenessKey(input), null, ownerCoachId, cancellationToken);
+        var entity = Create(input, ownerCoachId);
         await repository.AddAsync(entity, cancellationToken);
         return Map(entity);
     }
@@ -36,7 +37,7 @@ public abstract class ReferenceDataService<TEntity, TInput, TResponse>(
     {
         Validate(input);
         var entity = await FindRequiredAsync(id, cancellationToken);
-        await EnsureUniqueAsync(UniquenessKey(input), id, cancellationToken);
+        await EnsureUniqueAsync(UniquenessKey(input), id, OwnerOf(entity), cancellationToken);
         Update(entity, input);
         await repository.SaveChangesAsync(cancellationToken);
         return Map(entity);
@@ -51,7 +52,13 @@ public abstract class ReferenceDataService<TEntity, TInput, TResponse>(
     protected abstract string ResourceName { get; }
     protected abstract void Validate(TInput input);
     protected abstract string UniquenessKey(TInput input);
-    protected abstract TEntity Create(TInput input);
+    protected abstract TEntity Create(TInput input, Guid? ownerCoachId);
+
+    /// <summary>Coach-owned reference data resolves its owning coach; platform data has none.</summary>
+    protected virtual Task<Guid?> ResolveOwnerAsync(TInput input, CancellationToken cancellationToken) =>
+        Task.FromResult<Guid?>(null);
+
+    protected virtual Guid? OwnerOf(TEntity entity) => null;
     protected abstract void Update(TEntity entity, TInput input);
     protected abstract TResponse Map(TEntity entity);
 
@@ -98,9 +105,10 @@ public abstract class ReferenceDataService<TEntity, TInput, TResponse>(
     private async Task EnsureUniqueAsync(
         string key,
         Guid? excludingId,
+        Guid? ownerCoachId,
         CancellationToken cancellationToken)
     {
-        if (await repository.KeyExistsAsync(key.Trim(), excludingId, cancellationToken))
+        if (await repository.KeyExistsAsync(key.Trim(), excludingId, ownerCoachId, cancellationToken))
         {
             throw new ConflictException($"{ResourceName} with the same business key already exists.");
         }

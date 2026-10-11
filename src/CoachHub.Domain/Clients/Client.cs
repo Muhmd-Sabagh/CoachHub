@@ -3,12 +3,13 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Clients;
 
-public sealed class Client : Entity
+public sealed class Client : Entity, ITenantOwned
 {
     private readonly List<Subscription> _subscriptions = [];
 
     private Client() { }
 
+    public Guid CoachId { get; private set; }
     public string ClientCode { get; private set; } = string.Empty;
     public string FormCode { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
@@ -21,6 +22,7 @@ public sealed class Client : Entity
     public IReadOnlyCollection<Subscription> Subscriptions => _subscriptions;
 
     public static Client Create(
+        Guid coachId,
         string clientCode,
         string formCode,
         string name,
@@ -30,6 +32,7 @@ public sealed class Client : Entity
     {
         var client = new Client
         {
+            CoachId = TenantKey.Required(coachId),
             ClientCode = Code(clientCode, 8, 50, nameof(clientCode)),
             FormCode = Code(formCode, 10, 50, nameof(formCode)),
             JoinDate = joinDate,
@@ -76,12 +79,29 @@ public sealed class Client : Entity
     public void RegenerateFormCode(string formCode) =>
         FormCode = Code(formCode, 10, 50, nameof(formCode));
 
+    /// <summary>
+    /// Moves the client to another coach. Commercial history stays with the coach who sold it (D7).
+    /// </summary>
+    public void TransferTo(Guid coachId)
+    {
+        coachId = TenantKey.Required(coachId);
+        if (coachId == CoachId)
+        {
+            throw new InvalidOperationException("The client already belongs to this coach.");
+        }
+        CoachId = coachId;
+    }
+
     public void AddSubscription(Subscription subscription)
     {
         ArgumentNullException.ThrowIfNull(subscription);
         if (subscription.ClientId != Id)
         {
             throw new ArgumentException("Subscription belongs to another client.", nameof(subscription));
+        }
+        if (subscription.CoachId != CoachId)
+        {
+            throw new ArgumentException("Subscription was sold by another coach.", nameof(subscription));
         }
         _subscriptions.Add(subscription);
     }

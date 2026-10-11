@@ -13,7 +13,8 @@ public interface IFormRepository
     Task<FormDefinition?> FindDefinitionAsync(Guid id, CancellationToken cancellationToken);
     Task<FormGraph?> FindDraftAsync(Guid definitionId, CancellationToken cancellationToken);
     Task<FormGraph?> FindLatestPublishedAsync(Guid definitionId, CancellationToken cancellationToken);
-    Task<IReadOnlyList<FormDefinition>> ListPublishedDefinitionsAsync(CancellationToken cancellationToken);
+    /// <summary>Published forms of one coach: clients only ever see their own coach's forms.</summary>
+    Task<IReadOnlyList<FormDefinition>> ListPublishedDefinitionsAsync(Guid coachId, CancellationToken cancellationToken);
     Task AddSectionAsync(FormSection section, CancellationToken cancellationToken);
     Task AddQuestionAsync(FormQuestion question, IReadOnlyList<QuestionOption> options, CancellationToken cancellationToken);
     Task UpdateQuestionAsync(FormQuestion question, IReadOnlyList<QuestionOption> options, CancellationToken cancellationToken);

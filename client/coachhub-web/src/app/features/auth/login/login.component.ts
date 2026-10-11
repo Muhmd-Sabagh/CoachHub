@@ -12,7 +12,7 @@ export class LoginComponent {
   failed = false;
   readonly form;
   constructor(fb: FormBuilder, private readonly auth: AuthService, private readonly route: ActivatedRoute, private readonly router: Router, readonly i18n: I18nService) {
-    this.form = fb.nonNullable.group({ email: ['', [Validators.required, Validators.email]], password: ['', Validators.required] });
+    this.form = fb.nonNullable.group({ login: ['', Validators.required], password: ['', Validators.required] });
     if (auth.isAuthenticated()) void router.navigateByUrl(auth.landingRoute());
   }
   submit(): void {

@@ -1,5 +1,10 @@
 # Phase 8 clients and subscriptions
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D7, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D1/D7 (P1): every client belongs to a coach; subscriptions and renewals belong to the coach who sold them. Administrators can transfer a client to another coach; commercial history stays with the selling coach.
+> - P1: a client with invoices, renewals, or another coach's subscriptions cannot be deleted.
+
 ## Delivered scope
 
 Administrator-only client APIs at `api/clients` provide create, detail, update, delete, form-code rotation, server-side listing, and nested subscription commands. The client detail response aggregates current profile data with subscriptions for the Angular client-file screen.

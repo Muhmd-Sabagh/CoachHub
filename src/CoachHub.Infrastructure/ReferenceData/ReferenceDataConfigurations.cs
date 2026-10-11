@@ -9,18 +9,19 @@ public sealed class PackageConfiguration : IEntityTypeConfiguration<Package>
     public void Configure(EntityTypeBuilder<Package> builder)
     {
         builder.ToTable("Packages");
-        ConfigureBilingual(builder);
+        ConfigureBilingual(builder, uniqueName: false);
+        builder.HasIndex(item => new { item.CoachId, item.NameEn }).IsUnique();
         builder.Property(item => item.Description).HasMaxLength(500);
     }
 
-    internal static void ConfigureBilingual<T>(EntityTypeBuilder<T> builder)
+    internal static void ConfigureBilingual<T>(EntityTypeBuilder<T> builder, bool uniqueName = true)
         where T : ActiveReferenceEntity, IBilingualReference
     {
         builder.HasKey(item => item.Id);
         builder.Property(item => item.IsActive).IsRequired();
         builder.Property(item => item.NameEn).HasMaxLength(100).IsRequired();
         builder.Property(item => item.NameAr).HasMaxLength(100);
-        builder.HasIndex(item => item.NameEn).IsUnique();
+        if (uniqueName) builder.HasIndex(item => item.NameEn).IsUnique();
     }
 }
 
@@ -63,7 +64,7 @@ public sealed class PaymentAccountConfiguration : IEntityTypeConfiguration<Payme
         builder.ToTable("PaymentAccounts");
         builder.HasKey(item => item.Id);
         builder.Property(item => item.Name).HasMaxLength(100).IsRequired();
-        builder.HasIndex(item => item.Name).IsUnique();
+        builder.HasIndex(item => new { item.CoachId, item.Name }).IsUnique();
         builder.Property(item => item.Details).HasMaxLength(500);
         builder.Property(item => item.IsActive).IsRequired();
     }

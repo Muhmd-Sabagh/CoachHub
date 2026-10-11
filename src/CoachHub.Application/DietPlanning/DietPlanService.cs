@@ -1,10 +1,11 @@
+using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.Nutrition;
 
 namespace CoachHub.Application.DietPlanning;
 
-public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider timeProvider)
+public sealed class DietPlanService(IDietPlanRepository repository, CoachOwnership ownership, TimeProvider timeProvider)
 {
     public async Task<DietPlanResponse> GetAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -12,10 +13,12 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
         return await MapAsync(aggregate, cancellationToken);
     }
 
-    public async Task<DietPlanResponse> CreateAsync(DietPlanInput input, CancellationToken cancellationToken)
+    public async Task<DietPlanResponse> CreateAsync(DietPlanInput input, CancellationToken cancellationToken) =>
+        await CreateForCoachAsync(await ResolveCoachAsync(input.ClientId, input.CoachId, cancellationToken), input, cancellationToken);
+
+    private async Task<DietPlanResponse> CreateForCoachAsync(Guid coachId, DietPlanInput input, CancellationToken cancellationToken)
     {
-        await ValidateClientAsync(input.ClientId, cancellationToken);
-        var plan = CreatePlan(input.NameEn, input.NameAr, input.ClientId);
+        var plan = CreatePlan(coachId, input.NameEn, input.NameAr, input.ClientId);
         var aggregate = Build(plan, input);
         await ValidateReferencesAsync(aggregate, cancellationToken);
         await repository.AddAsync(aggregate, cancellationToken);
@@ -25,8 +28,8 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
     public async Task<DietPlanResponse> UpdateAsync(
         Guid id, DietPlanInput input, CancellationToken cancellationToken)
     {
-        await ValidateClientAsync(input.ClientId, cancellationToken);
         var existing = await RequiredAsync(id, true, cancellationToken);
+        await ValidateClientAsync(existing.Plan.CoachId, input.ClientId, cancellationToken);
         TryDomain(() => existing.Plan.Update(input.NameEn, input.NameAr, input.ClientId));
         var aggregate = Build(existing.Plan, input);
         await ValidateReferencesAsync(aggregate, cancellationToken);
@@ -37,8 +40,8 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
     public async Task<DietPlanResponse> CopyAsync(
         Guid id, CopyDietPlanInput input, CancellationToken cancellationToken)
     {
-        await ValidateClientAsync(input.ClientId, cancellationToken);
         var source = await RequiredAsync(id, false, cancellationToken);
+        await ValidateClientAsync(source.Plan.CoachId, input.ClientId, cancellationToken);
         var versionIds = source.Versions.ToDictionary(x => x.Id, _ => Guid.NewGuid());
         var mealIds = source.Meals.ToDictionary(x => x.Id, _ => Guid.NewGuid());
         var itemIds = source.FoodItems.ToDictionary(x => x.Id, _ => Guid.NewGuid());
@@ -63,14 +66,14 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
                                 Guid.NewGuid(), option.ReplacementFoodItemId,
                                 option.ReplacementMealId.HasValue ? mealIds[option.ReplacementMealId.Value] : null,
                                 option.Quantity, option.Order, option.Notes)).ToArray())).ToArray())).ToArray());
-        return await CreateAsync(copyInput, cancellationToken);
+        return await CreateForCoachAsync(source.Plan.CoachId, copyInput, cancellationToken);
     }
 
     public async Task<DietPlanResponse> AssignAsync(
         Guid id, Guid? clientId, CancellationToken cancellationToken)
     {
-        await ValidateClientAsync(clientId, cancellationToken);
         var aggregate = await RequiredAsync(id, true, cancellationToken);
+        await ValidateClientAsync(aggregate.Plan.CoachId, clientId, cancellationToken);
         TryDomain(() => aggregate.Plan.Assign(clientId));
         await repository.SaveChangesAsync(cancellationToken);
         return await MapAsync(aggregate, cancellationToken);
@@ -90,10 +93,10 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken) =>
         await repository.DeleteAsync(await RequiredAsync(id, true, cancellationToken), cancellationToken);
 
-    private DietPlan CreatePlan(string nameEn, string? nameAr, Guid? clientId)
+    private DietPlan CreatePlan(Guid coachId, string nameEn, string? nameAr, Guid? clientId)
     {
         DietPlan? plan = null;
-        TryDomain(() => plan = DietPlan.Create(nameEn, nameAr, clientId, timeProvider.GetUtcNow()));
+        TryDomain(() => plan = DietPlan.Create(coachId, nameEn, nameAr, clientId, timeProvider.GetUtcNow()));
         return plan!;
     }
 
@@ -180,10 +183,27 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
         if (missing.Length > 0) throw Validation("foodItemIds", "One or more food items do not exist.");
     }
 
-    private async Task ValidateClientAsync(Guid? clientId, CancellationToken cancellationToken)
+    /// <summary>A client-assigned plan belongs to the client's coach; a template to the creating coach.</summary>
+    private async Task<Guid> ResolveCoachAsync(Guid? clientId, Guid? requestedCoachId, CancellationToken cancellationToken)
     {
-        if (clientId.HasValue && !await repository.ClientExistsAsync(clientId.Value, cancellationToken))
-            throw Validation("clientId", "The selected client does not exist.");
+        if (clientId is { } id)
+        {
+            var clientCoachId = await repository.FindClientCoachIdAsync(id, cancellationToken)
+                ?? throw Validation("clientId", "The selected client does not exist.");
+            if (requestedCoachId.HasValue && requestedCoachId.Value != clientCoachId)
+                throw Validation("coachId", "The client belongs to another coach.");
+            return clientCoachId;
+        }
+        return await ownership.ForNewRecordAsync(requestedCoachId, cancellationToken);
+    }
+
+    private async Task ValidateClientAsync(Guid planCoachId, Guid? clientId, CancellationToken cancellationToken)
+    {
+        if (clientId is not { } id) return;
+        var clientCoachId = await repository.FindClientCoachIdAsync(id, cancellationToken)
+            ?? throw Validation("clientId", "The selected client does not exist.");
+        if (clientCoachId != planCoachId)
+            throw Validation("clientId", "The client belongs to another coach.");
     }
 
     private async Task<DietPlanResponse> MapAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken)
@@ -227,7 +247,7 @@ public sealed class DietPlanService(IDietPlanRepository repository, TimeProvider
             return new DietPlanVersionResponse(version.Id, version.NameEn, version.NameAr, version.Order,
                 version.IsActiveForPdf, version.Notes, meals, groups, total);
         }).ToArray();
-        return new DietPlanResponse(aggregate.Plan.Id, aggregate.Plan.NameEn, aggregate.Plan.NameAr,
+        return new DietPlanResponse(aggregate.Plan.Id, aggregate.Plan.CoachId, aggregate.Plan.NameEn, aggregate.Plan.NameAr,
             aggregate.Plan.ClientId, aggregate.Plan.CreatedAt,
             aggregate.Notes.OrderBy(x => x.Order).Select(x => new DietPlanNoteResponse(x.Id, x.Text, x.Order, x.IsActive)).ToArray(),
             versions, NutritionCalculator.Round(versions.Aggregate(NutritionTotals.Zero, (sum, version) => sum + version.Totals)));

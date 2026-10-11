@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Media;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManageMedia)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/media")]
 public sealed class MediaController(MediaService mediaService) : ControllerBase
 {
     [HttpPost]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     [RequestSizeLimit(MediaService.MaximumFileSizeBytes)]
     [ProducesResponseType<MediaMetadata>(StatusCodes.Status201Created)]
     public async Task<ActionResult<MediaMetadata>> Upload(
@@ -39,6 +40,7 @@ public sealed class MediaController(MediaService mediaService) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)

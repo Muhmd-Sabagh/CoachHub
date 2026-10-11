@@ -13,7 +13,7 @@ namespace CoachHub.API.ClientPortal;
 
 [ApiController]
 [Route(ApiRoutes.V1 + "/client-portal")]
-[Authorize(Roles = AuthRoles.Client)]
+[Authorize(Policy = AuthPolicies.ClientOnly)]
 public sealed class ClientPortalController(ClientService clients, BillingService billing, PlanDeliveryService deliveries) : ControllerBase
 {
     [HttpGet("overview")]
@@ -22,6 +22,6 @@ public sealed class ClientPortalController(ClientService clients, BillingService
         var clientId = RequiredClientId();
         return new(await clients.GetAsync(clientId, token), await billing.ListAsync(clientId, token), await deliveries.ListAsync(clientId, token));
     }
-    private Guid RequiredClientId() => Guid.TryParse(User.FindFirstValue("client_id"), out var id) && id != Guid.Empty ? id : throw new ForbiddenException("Client account is not linked.");
+    private Guid RequiredClientId() => Guid.TryParse(User.FindFirstValue(AuthClaims.ClientId), out var id) && id != Guid.Empty ? id : throw new ForbiddenException("Client account is not linked.");
 }
 public sealed record ClientPortalResponse(ClientDetailResponse Client, IReadOnlyList<InvoiceResponse> Invoices, IReadOnlyList<DeliveredPlanResponse> DeliveredPlans);

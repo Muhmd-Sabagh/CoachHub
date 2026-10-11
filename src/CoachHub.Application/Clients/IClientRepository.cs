@@ -12,6 +12,18 @@ public interface IClientRepository
     Task AddAsync(Client client, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken);
     Task DeleteAsync(Client client, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// True when deleting the client would destroy commercial records: invoices, renewals, or
+    /// subscriptions sold by another coach. Checked across all coaches.
+    /// </summary>
+    Task<bool> HasProtectedHistoryAsync(Client client, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Moves the client and its coaching records (assigned plans, form submissions, delivered
+    /// plans) to another coach in one transaction. Commercial records stay with their coach (D7).
+    /// </summary>
+    Task TransferAsync(Client client, Guid toCoachId, CancellationToken cancellationToken);
     Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken);
     Task AddSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken);
     Task AddRenewalAsync(SubscriptionRenewal renewal, CancellationToken cancellationToken);

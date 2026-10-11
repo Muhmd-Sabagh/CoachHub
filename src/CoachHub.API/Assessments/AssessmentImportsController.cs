@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Assessments;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManageAssessments)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/assessment-imports/profiles")]
 public sealed class AssessmentImportsController(AssessmentImportService service) : ControllerBase
 {

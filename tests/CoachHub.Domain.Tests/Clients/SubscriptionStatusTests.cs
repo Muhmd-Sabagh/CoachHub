@@ -33,11 +33,14 @@ public sealed class SubscriptionStatusTests
         Assert.Equal(SubscriptionStatus.Expired, client.GetSubscriptionStatus(Today));
     }
 
+    private static readonly Guid CoachId = Guid.NewGuid();
+
     private static Client CreateClient() =>
-        Client.Create("A1B2C3D4", "A1B2C3D4E5", "Client", null, null, Today);
+        Client.Create(CoachId, "A1B2C3D4", "A1B2C3D4E5", "Client", null, null, Today);
 
     private static Subscription CreateSubscription(Guid clientId, DateOnly startDate, int months) =>
         Subscription.Create(
+            CoachId,
             clientId,
             Guid.NewGuid(),
             startDate,

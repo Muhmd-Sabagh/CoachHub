@@ -3,7 +3,8 @@ namespace CoachHub.Application.WorkoutPlanning;
 public sealed record WorkoutPlanInput(
     string NameEn, string? NameAr, Guid? ClientId,
     IReadOnlyCollection<WorkoutPlanNoteInput> Notes,
-    IReadOnlyCollection<WorkoutDayInput> Days);
+    IReadOnlyCollection<WorkoutDayInput> Days,
+    Guid? CoachId = null);
 public sealed record WorkoutPlanNoteInput(Guid Id, string Text, int Order, bool IsActive);
 public sealed record WorkoutDayInput(
     Guid Id, string NameEn, string? NameAr, string? Subtitle, string? Notes, int Order,
@@ -16,7 +17,7 @@ public sealed record AssignWorkoutPlanInput(Guid? ClientId);
 public sealed record SetWorkoutPlanNoteActiveInput(bool IsActive);
 
 public sealed record WorkoutPlanResponse(
-    Guid Id, string NameEn, string? NameAr, Guid? ClientId, DateTimeOffset CreatedAt,
+    Guid Id, Guid CoachId, string NameEn, string? NameAr, Guid? ClientId, DateTimeOffset CreatedAt,
     IReadOnlyList<WorkoutPlanNoteResponse> Notes, IReadOnlyList<WorkoutDayResponse> Days);
 public sealed record WorkoutPlanNoteResponse(Guid Id, string Text, int Order, bool IsActive);
 public sealed record WorkoutDayResponse(

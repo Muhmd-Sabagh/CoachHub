@@ -12,19 +12,25 @@ namespace CoachHub.IntegrationTests.WorkoutPlanning;
 
 public sealed class WorkoutPlanningEndpointTests : IClassFixture<CoachHubApiFactory>
 {
+    private readonly CoachHubApiFactory _factory;
     private readonly HttpClient _client;
-    public WorkoutPlanningEndpointTests(CoachHubApiFactory factory) =>
+    private readonly HttpClient _admin;
+    public WorkoutPlanningEndpointTests(CoachHubApiFactory factory)
+    {
+        _factory = factory;
         _client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _admin = factory.CreateAdminClient();
+    }
 
     [Fact]
     public async Task Administrator_can_manage_reorder_copy_assign_notes_and_delete_workout_plan()
     {
         await AuthenticateAsync();
-        var category = await PostAsync<BilingualReferenceResponse>("/api/v1/reference-data/exercise-categories",
+        var category = await AdminPostAsync<BilingualReferenceResponse>("/api/v1/reference-data/exercise-categories",
             new BilingualReferenceInput("Plan exercises " + Guid.NewGuid().ToString("N"), null));
-        var press = await PostAsync<ExerciseResponse>("/api/v1/training/exercises",
+        var press = await AdminPostAsync<ExerciseResponse>("/api/v1/training/exercises",
             new ExerciseInput("Bench Press", "ضغط صدر", category.Id, null, "https://youtu.be/example", true));
-        var squat = await PostAsync<ExerciseResponse>("/api/v1/training/exercises",
+        var squat = await AdminPostAsync<ExerciseResponse>("/api/v1/training/exercises",
             new ExerciseInput("Squat", null, category.Id, null, null, true));
         var client = await PostAsync<ClientResponse>("/api/v1/clients",
             new ClientCreateInput("Workout client", null, null, null));
@@ -88,18 +94,28 @@ public sealed class WorkoutPlanningEndpointTests : IClassFixture<CoachHubApiFact
     public async Task Workout_plan_endpoints_reject_anonymous_access() =>
         Assert.Equal(HttpStatusCode.Unauthorized, (await _client.GetAsync($"/api/v1/workout-plans/{Guid.NewGuid()}")).StatusCode);
 
+    private System.Net.Http.Headers.AuthenticationHeaderValue? _coachAuthorization;
+
+    /// <summary>
+    /// Signs in as this test's coach (created on first use): tenant data is created in that
+    /// coach's workspace, isolated from every other test.
+    /// </summary>
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/login",
-            new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
-        response.EnsureSuccessStatusCode();
-        var login = await response.Content.ReadFromJsonAsync<LoginResult>();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login!.AccessToken);
+        _coachAuthorization ??= (await _factory.CreateCoachClientAsync()).DefaultRequestHeaders.Authorization;
+        _client.DefaultRequestHeaders.Authorization = _coachAuthorization;
     }
 
     private async Task<T> PostAsync<T>(string uri, object input)
     {
         var response = await _client.PostAsJsonAsync(uri, input); response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<T>())!;
+    }
+
+    /// <summary>Platform catalog setup (foods, exercises, categories) is administrator work.</summary>
+    private async Task<T> AdminPostAsync<T>(string uri, object input)
+    {
+        var response = await _admin.PostAsJsonAsync(uri, input); response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<T>())!;
     }
 }

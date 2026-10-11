@@ -23,7 +23,7 @@ describe('AuthService and authInterceptor', () => {
   afterEach(() => { http.verify(); sessionStorage.clear(); });
 
   it('logs in through the API and attaches the returned bearer token', () => {
-    service.login({ email: 'coach@example.com', password: 'Password!123' }).subscribe();
+    service.login({ login: 'coach@example.com', password: 'Password!123' }).subscribe();
     const login = http.expectOne('/api/v1/auth/login');
     expect(login.request.method).toBe('POST');
     expect(login.request.headers.has('Authorization')).toBe(false);
@@ -36,5 +36,17 @@ describe('AuthService and authInterceptor', () => {
     const settings = http.expectOne('/api/v1/settings');
     expect(settings.request.headers.get('Authorization')).toBe('Bearer test-token');
     settings.flush({ productName: 'CoachHub', coachName: 'Coach' });
+  });
+
+  it.each([
+    [['Administrator'], '/dashboard', true, false],
+    [['Coach'], '/dashboard', false, true],
+    [['Client'], '/portal', false, false],
+  ])('routes %j to their landing page', (roles, landing, isAdmin, isCoach) => {
+    service.login({ login: 'user', password: 'Password!123' }).subscribe();
+    http.expectOne('/api/v1/auth/login').flush({ ...loginResult, roles });
+    expect(service.landingRoute()).toBe(landing);
+    expect(service.isAdmin()).toBe(isAdmin);
+    expect(service.isCoach()).toBe(isCoach);
   });
 });

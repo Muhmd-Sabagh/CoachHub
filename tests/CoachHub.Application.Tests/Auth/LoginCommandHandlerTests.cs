@@ -14,7 +14,7 @@ public sealed class LoginCommandHandlerTests
             "admin@coachhub.test",
             "Administrator",
             [AuthRoles.Administrator],
-            [],
+            null,
             null);
         var identity = new StubIdentityGateway(user);
         var issuer = new StubTokenIssuer();
@@ -56,7 +56,7 @@ public sealed class LoginCommandHandlerTests
                 new LoginCommand("", ""),
                 CancellationToken.None));
 
-        Assert.Contains("email", exception.Errors);
+        Assert.Contains("login", exception.Errors);
         Assert.Contains("password", exception.Errors);
     }
 

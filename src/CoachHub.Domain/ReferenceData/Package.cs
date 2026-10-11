@@ -1,16 +1,20 @@
+using CoachHub.Domain.Common;
+
 namespace CoachHub.Domain.ReferenceData;
 
-public sealed class Package : ActiveReferenceEntity, IBilingualReference
+public sealed class Package : ActiveReferenceEntity, IBilingualReference, ITenantOwned
 {
     private Package() { }
+
+    public Guid CoachId { get; private set; }
 
     public string NameEn { get; private set; } = string.Empty;
     public string? NameAr { get; private set; }
     public string? Description { get; private set; }
 
-    public static Package Create(string nameEn, string? nameAr, string? description, bool isActive = true)
+    public static Package Create(Guid coachId, string nameEn, string? nameAr, string? description, bool isActive = true)
     {
-        var item = new Package();
+        var item = new Package { CoachId = TenantKey.Required(coachId) };
         item.Update(nameEn, nameAr, description, isActive);
         return item;
     }

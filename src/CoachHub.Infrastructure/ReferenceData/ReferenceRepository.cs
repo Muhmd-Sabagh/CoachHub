@@ -42,14 +42,15 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
     public Task<bool> KeyExistsAsync(
         string key,
         Guid? excludingId,
+        Guid? coachId,
         CancellationToken cancellationToken)
     {
         var normalized = key.Trim().ToUpper();
 
         if (typeof(TEntity) == typeof(Package))
         {
-            return dbContext.Set<Package>().AnyAsync(
-                item => item.NameEn.ToUpper() == normalized && (!excludingId.HasValue || item.Id != excludingId.Value),
+            return dbContext.Set<Package>().IgnoreQueryFilters().AnyAsync(
+                item => item.CoachId == coachId && item.NameEn.ToUpper() == normalized && (!excludingId.HasValue || item.Id != excludingId.Value),
                 cancellationToken);
         }
         if (typeof(TEntity) == typeof(FoodCategory))
@@ -72,8 +73,8 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
         }
         if (typeof(TEntity) == typeof(PaymentAccount))
         {
-            return dbContext.Set<PaymentAccount>().AnyAsync(
-                item => item.Name.ToUpper() == normalized && (!excludingId.HasValue || item.Id != excludingId.Value),
+            return dbContext.Set<PaymentAccount>().IgnoreQueryFilters().AnyAsync(
+                item => item.CoachId == coachId && item.Name.ToUpper() == normalized && (!excludingId.HasValue || item.Id != excludingId.Value),
                 cancellationToken);
         }
 

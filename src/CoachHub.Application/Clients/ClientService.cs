@@ -1,4 +1,5 @@
 using System.Net.Mail;
+using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
 using CoachHub.Domain.Clients;
@@ -8,6 +9,8 @@ namespace CoachHub.Application.Clients;
 public sealed class ClientService(
     IClientRepository repository,
     IClientCodeGenerator codeGenerator,
+    CoachOwnership ownership,
+    ICoachRepository coaches,
     TimeProvider timeProvider)
 {
     public async Task<PagedResult<ClientResponse>> ListAsync(
@@ -40,9 +43,11 @@ public sealed class ClientService(
         CancellationToken cancellationToken)
     {
         Validate(input.Name, input.Phone, input.Email);
+        var coachId = await ownership.ForNewRecordAsync(input.CoachId, cancellationToken);
         var clientCode = await UniqueCodeAsync(true, cancellationToken);
         var formCode = await UniqueCodeAsync(false, cancellationToken);
         var client = Client.Create(
+            coachId,
             clientCode,
             formCode,
             input.Name,
@@ -85,16 +90,32 @@ public sealed class ClientService(
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var client = await FindRequiredAsync(id, cancellationToken);
-        if (client.Subscriptions.Any(subscription => subscription.Renewals.Count > 0))
+        if (await repository.HasProtectedHistoryAsync(client, cancellationToken))
         {
             throw new ConflictException(
-                "A client with subscription renewal history cannot be deleted.");
+                "A client with invoices, renewals, or another coach's subscriptions cannot be deleted. Deactivate the client instead.");
         }
         await repository.DeleteAsync(client, cancellationToken);
     }
 
+    public async Task<ClientResponse> TransferAsync(
+        Guid id,
+        ClientTransferInput input,
+        CancellationToken cancellationToken)
+    {
+        var client = await FindRequiredAsync(id, cancellationToken);
+        var target = await coaches.FindAsync(input.CoachId, cancellationToken)
+            ?? throw new NotFoundException("Coach", input.CoachId);
+        if (!target.IsActive) throw new ConflictException("The selected coach is inactive.");
+        if (target.Id == client.CoachId) throw new ConflictException("The client already belongs to this coach.");
+        await repository.TransferAsync(client, target.Id, cancellationToken);
+        var transferred = await FindRequiredAsync(id, cancellationToken);
+        return Map(transferred, Today());
+    }
+
     internal static ClientResponse Map(Client client, DateOnly today) => new(
         client.Id,
+        client.CoachId,
         client.ClientCode,
         client.FormCode,
         client.Name,

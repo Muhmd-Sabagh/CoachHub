@@ -24,7 +24,7 @@ public sealed class DeliveredPlanConfiguration : IEntityTypeConfiguration<Delive
 }
 public sealed class PlanDeliveryRepository(CoachHubDbContext db, IDietPlanRepository diets, IWorkoutPlanRepository workouts) : IPlanDeliveryRepository
 {
-    public async Task<(string Name, string SnapshotJson)?> SnapshotAsync(DeliveredPlanType type, Guid planId, Guid versionId, string language, CancellationToken token)
+    public async Task<(Guid CoachId, string Name, string SnapshotJson)?> SnapshotAsync(DeliveredPlanType type, Guid planId, Guid versionId, string language, CancellationToken token)
     {
         if (type == DeliveredPlanType.Diet)
         {
@@ -46,14 +46,14 @@ public sealed class PlanDeliveryRepository(CoachHubDbContext db, IDietPlanReposi
                 ReplacementOptions = aggregate.ReplacementOptions.Where(x => groupIds.Contains(x.DietReplacementGroupId))
             };
             var name = language == "ar" ? aggregate.Plan.NameAr ?? aggregate.Plan.NameEn : aggregate.Plan.NameEn;
-            return (name, JsonSerializer.Serialize(snapshot));
+            return (aggregate.Plan.CoachId, name, JsonSerializer.Serialize(snapshot));
         }
 
         if (versionId != planId) return null;
         var workout = await workouts.FindAsync(planId, false, token);
         if (workout is null) return null;
         var workoutName = language == "ar" ? workout.Plan.NameAr ?? workout.Plan.NameEn : workout.Plan.NameEn;
-        return (workoutName, JsonSerializer.Serialize(workout));
+        return (workout.Plan.CoachId, workoutName, JsonSerializer.Serialize(workout));
     }
     public async Task<IReadOnlyList<DeliveredPlan>> ListAsync(Guid clientId, CancellationToken token) => await db.Set<DeliveredPlan>().AsNoTracking().Where(x => x.ClientId == clientId).OrderByDescending(x => x.DeliveredAt).ToArrayAsync(token);
     public async Task AddAsync(DeliveredPlan delivery, CancellationToken token) { db.Add(delivery); await db.SaveChangesAsync(token); }

@@ -15,7 +15,7 @@ public sealed class CurrencyService(IReferenceRepository<Currency> repository)
         ThrowValidation(errors);
     }
     protected override string UniquenessKey(CurrencyInput input) => input.Code;
-    protected override Currency Create(CurrencyInput input) =>
+    protected override Currency Create(CurrencyInput input, Guid? ownerCoachId) =>
         Currency.Create(input.Code, input.Name, input.Symbol, input.IsActive);
     protected override void Update(Currency entity, CurrencyInput input) =>
         entity.Update(input.Code, input.Name, input.Symbol, input.IsActive);

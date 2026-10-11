@@ -18,8 +18,8 @@ public sealed class AuthController(LoginCommandHandler loginHandler, IAccountSer
     [HttpPost("login")]
     public async Task<ActionResult<LoginResult>> Login(LoginRequest request, CancellationToken token)
     {
-        var result = await loginHandler.HandleAsync(new LoginCommand(request.Email, request.Password), token);
-        return result is null ? Unauthorized(new ProblemDetails { Status = 401, Title = "Invalid credentials", Detail = "The email or password is incorrect." }) : Ok(result);
+        var result = await loginHandler.HandleAsync(new LoginCommand(request.Login, request.Password), token);
+        return result is null ? Unauthorized(new ProblemDetails { Status = 401, Title = "Invalid credentials", Detail = "The login or password is incorrect." }) : Ok(result);
     }
 
     [AllowAnonymous]
@@ -46,8 +46,8 @@ public sealed class AuthController(LoginCommandHandler loginHandler, IAccountSer
     {
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? string.Empty;
         var roles = User.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToArray();
-        var permissions = User.FindAll(AuthPermissions.ClaimType).Select(claim => claim.Value).ToArray();
-        var clientId = Guid.TryParse(User.FindFirstValue("client_id"), out var parsed) ? parsed : (Guid?)null;
-        return Ok(new CurrentUserResponse(userId, User.Identity?.Name, roles, permissions, clientId));
+        var coachId = Guid.TryParse(User.FindFirstValue(AuthClaims.CoachId), out var coach) ? coach : (Guid?)null;
+        var clientId = Guid.TryParse(User.FindFirstValue(AuthClaims.ClientId), out var client) ? client : (Guid?)null;
+        return Ok(new CurrentUserResponse(userId, User.Identity?.Name, roles, coachId, clientId));
     }
 }

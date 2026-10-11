@@ -40,7 +40,7 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
             "/api/v1/auth/login",
             new
             {
-                email = CoachHubApiFactory.AdminEmail,
+                login = CoachHubApiFactory.AdminEmail,
                 password = CoachHubApiFactory.AdminPassword
             },
             CancellationToken.None);
@@ -88,7 +88,7 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
     {
         var response = await _client.PostAsJsonAsync(
             "/api/v1/auth/login",
-            new { email = "missing@coachhub.test", password = "WrongPassword!123" },
+            new { login = "missing@coachhub.test", password = "WrongPassword!123" },
             CancellationToken.None);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -120,14 +120,14 @@ public sealed class AuthenticationEndpointTests : IClassFixture<CoachHubApiFacto
         {
             var response = await client.PostAsJsonAsync(
                 "/api/v1/auth/login",
-                new { email = "missing@coachhub.test", password = "WrongPassword!123" },
+                new { login = "missing@coachhub.test", password = "WrongPassword!123" },
                 CancellationToken.None);
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
         var rejected = await client.PostAsJsonAsync(
             "/api/v1/auth/login",
-            new { email = "missing@coachhub.test", password = "WrongPassword!123" },
+            new { login = "missing@coachhub.test", password = "WrongPassword!123" },
             CancellationToken.None);
 
         Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);

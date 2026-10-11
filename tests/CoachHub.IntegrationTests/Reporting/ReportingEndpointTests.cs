@@ -11,10 +11,16 @@ namespace CoachHub.IntegrationTests.Reporting;
 
 public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
 {
+    private readonly CoachHubApiFactory _factory;
     private readonly HttpClient _client;
+    private readonly HttpClient _admin;
 
-    public ReportingEndpointTests(CoachHubApiFactory factory) =>
+    public ReportingEndpointTests(CoachHubApiFactory factory)
+    {
+        _factory = factory;
         _client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _admin = factory.CreateAdminClient();
+    }
 
     [Fact]
     public async Task Administrator_receives_operational_and_separated_commercial_metrics()
@@ -94,15 +100,16 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
                 "/api/v1/reporting/overview?from=2026-08-14&to=2026-08-13")).StatusCode);
     }
 
+    private System.Net.Http.Headers.AuthenticationHeaderValue? _coachAuthorization;
+
+    /// <summary>
+    /// Signs in as this test's coach (created on first use): tenant data is created in that
+    /// coach's workspace, isolated from every other test.
+    /// </summary>
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync(
-            "/api/v1/auth/login",
-            new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
-        response.EnsureSuccessStatusCode();
-        var login = await response.Content.ReadFromJsonAsync<LoginResult>();
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", login!.AccessToken);
+        _coachAuthorization ??= (await _factory.CreateCoachClientAsync()).DefaultRequestHeaders.Authorization;
+        _client.DefaultRequestHeaders.Authorization = _coachAuthorization;
     }
 
     private async Task<ClientResponse> CreateClientAsync(string name, DateOnly joinDate)
@@ -125,7 +132,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
 
     private async Task<CurrencyResponse> CreateCurrencyAsync(string code)
     {
-        var response = await _client.PostAsJsonAsync(
+        var response = await _admin.PostAsJsonAsync(
             "/api/v1/reference-data/currencies",
             new CurrencyInput(code, "Reporting currency", "$", true));
         response.EnsureSuccessStatusCode();

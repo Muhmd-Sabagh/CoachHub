@@ -31,8 +31,9 @@ public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanR
         IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
         await dbContext.Set<FoodItem>().AsNoTracking().Where(x => ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
 
-    public Task<bool> ClientExistsAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.Set<Client>().AnyAsync(x => x.Id == id, cancellationToken);
+    public Task<Guid?> FindClientCoachIdAsync(Guid clientId, CancellationToken cancellationToken) =>
+        dbContext.Set<Client>().Where(x => x.Id == clientId).Select(x => (Guid?)x.CoachId)
+            .SingleOrDefaultAsync(cancellationToken);
 
     public async Task AddAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken)
     {

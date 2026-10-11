@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.DietPlanning;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManagePlans)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/diet-plans")]
 public sealed class DietPlansController(DietPlanService service) : ControllerBase
 {
@@ -49,7 +49,7 @@ public sealed class DietPlansController(DietPlanService service) : ControllerBas
 }
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManagePlans)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/nutrition-calculator")]
 public sealed class NutritionCalculatorController : ControllerBase
 {

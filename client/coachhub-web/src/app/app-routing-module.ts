@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/auth.guard';
 import { ShellComponent } from './core/layout/shell.component';
 import { AssessmentsComponent } from './features/assessments/assessments.component';
 import { LoginComponent } from './features/auth/login/login.component';
@@ -14,7 +14,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', loadComponent: () => import('./features/auth/password-recovery.component').then(m => m.PasswordRecoveryComponent) },
   { path: 'reset-password', loadComponent: () => import('./features/auth/password-recovery.component').then(m => m.PasswordRecoveryComponent) },
-  { path: 'portal', canActivate: [authGuard], loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
+  { path: 'portal', canActivate: [roleGuard('Client')], loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
   {
     path: 'assessment',
     loadComponent: () =>
@@ -25,7 +25,7 @@ const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
-    canActivate: [authGuard],
+    canActivate: [roleGuard('Administrator', 'Coach')],
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'clients', component: ClientsComponent },
@@ -34,9 +34,11 @@ const routes: Routes = [
       { path: 'nutrition', component: CatalogComponent, data: { kind: 'foods' } },
       { path: 'training', component: CatalogComponent, data: { kind: 'exercises' } },
       { path: 'plans', component: PlansComponent },
+      { path: 'coaches', canActivate: [roleGuard('Administrator')], loadComponent: () => import('./features/coaches/coaches.component').then(m => m.CoachesComponent) },
       { path: 'operations', loadComponent: () => import('./features/operations/operations.component').then(m => m.OperationsComponent) },
       {
         path: 'audit',
+        canActivate: [roleGuard('Administrator')],
         loadComponent: () =>
           import('./features/auditing/audit.component').then((module) => module.AuditComponent),
       },

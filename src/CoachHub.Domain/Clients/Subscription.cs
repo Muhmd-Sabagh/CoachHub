@@ -2,12 +2,14 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Clients;
 
-public sealed class Subscription : Entity
+public sealed class Subscription : Entity, ITenantOwned
 {
     private readonly List<SubscriptionRenewal> _renewals = [];
 
     private Subscription() { }
 
+    /// <summary>The coach who sold the subscription. Never changes, even if the client is transferred.</summary>
+    public Guid CoachId { get; private set; }
     public Guid ClientId { get; private set; }
     public Guid PackageId { get; private set; }
     public DateOnly StartDate { get; private set; }
@@ -20,6 +22,7 @@ public sealed class Subscription : Entity
     public IReadOnlyCollection<SubscriptionRenewal> Renewals => _renewals;
 
     public static Subscription Create(
+        Guid coachId,
         Guid clientId,
         Guid packageId,
         DateOnly startDate,
@@ -30,7 +33,7 @@ public sealed class Subscription : Entity
         int renewalCount)
     {
         if (clientId == Guid.Empty) throw new ArgumentException("A client is required.", nameof(clientId));
-        var subscription = new Subscription { ClientId = clientId };
+        var subscription = new Subscription { CoachId = TenantKey.Required(coachId), ClientId = clientId };
         subscription.Update(
             packageId,
             startDate,
@@ -84,6 +87,7 @@ public sealed class Subscription : Entity
         }
 
         var renewal = SubscriptionRenewal.Create(
+            CoachId,
             Id,
             RenewalCount + 1,
             EndDate,

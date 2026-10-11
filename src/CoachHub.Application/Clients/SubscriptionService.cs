@@ -17,15 +17,17 @@ public sealed class SubscriptionService(
         SubscriptionInput input,
         CancellationToken cancellationToken)
     {
-        if (await repository.FindAsync(clientId, cancellationToken) is null)
-            throw new NotFoundException("Client", clientId);
+        var client = await repository.FindAsync(clientId, cancellationToken)
+            ?? throw new NotFoundException("Client", clientId);
         Validate(input);
         await ValidateReferencesAsync(
+            client.CoachId,
             input.PackageId,
             input.CurrencyId,
             input.PaymentAccountId,
             cancellationToken);
         var subscription = Subscription.Create(
+            client.CoachId,
             clientId,
             input.PackageId,
             input.StartDate,
@@ -45,12 +47,13 @@ public sealed class SubscriptionService(
         CancellationToken cancellationToken)
     {
         Validate(input);
+        var subscription = await FindRequiredAsync(clientId, id, cancellationToken);
         await ValidateReferencesAsync(
+            subscription.CoachId,
             input.PackageId,
             input.CurrencyId,
             input.PaymentAccountId,
             cancellationToken);
-        var subscription = await FindRequiredAsync(clientId, id, cancellationToken);
         if (subscription.Renewals.Count > 0)
         {
             throw new ConflictException(
@@ -75,8 +78,9 @@ public sealed class SubscriptionService(
         CancellationToken cancellationToken)
     {
         Validate(input);
-        await ValidateReferencesAsync(null, input.CurrencyId, input.PaymentAccountId, cancellationToken);
         var subscription = await FindRequiredAsync(clientId, id, cancellationToken);
+        await ValidateReferencesAsync(
+            subscription.CoachId, null, input.CurrencyId, input.PaymentAccountId, cancellationToken);
         if (subscription.RenewalCount >= 1000)
         {
             throw new ConflictException("The subscription renewal limit has been reached.");
@@ -139,20 +143,23 @@ public sealed class SubscriptionService(
             : throw new NotFoundException("Subscription", id);
     }
 
+    /// <summary>Packages and payment accounts must belong to the coach who sells the subscription.</summary>
     private async Task ValidateReferencesAsync(
+        Guid coachId,
         Guid? packageId,
         Guid currencyId,
         Guid? paymentAccountId,
         CancellationToken cancellationToken)
     {
         var errors = new Dictionary<string, string[]>();
-        if (packageId.HasValue && await packages.FindAsync(packageId.Value, cancellationToken) is null)
-            errors["packageId"] = ["The selected package does not exist."];
+        if (packageId.HasValue &&
+            (await packages.FindAsync(packageId.Value, cancellationToken))?.CoachId != coachId)
+            errors["packageId"] = ["The selected package does not exist for this coach."];
         if (await currencies.FindAsync(currencyId, cancellationToken) is null)
             errors["currencyId"] = ["The selected currency does not exist."];
         if (paymentAccountId.HasValue &&
-            await paymentAccounts.FindAsync(paymentAccountId.Value, cancellationToken) is null)
-            errors["paymentAccountId"] = ["The selected payment account does not exist."];
+            (await paymentAccounts.FindAsync(paymentAccountId.Value, cancellationToken))?.CoachId != coachId)
+            errors["paymentAccountId"] = ["The selected payment account does not exist for this coach."];
         if (errors.Count > 0) throw new ValidationException(errors);
     }
 

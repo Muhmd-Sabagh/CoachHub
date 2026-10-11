@@ -55,6 +55,26 @@ public sealed class ControllerAuthorizationTests
     }
 
     [Fact]
+    public void Every_authorization_attribute_names_a_known_role_policy()
+    {
+        string[] known = [AuthPolicies.AdminOnly, AuthPolicies.CoachOrAdmin, AuthPolicies.ClientOnly];
+        var offending = new List<string>();
+
+        foreach (var controller in ApiControllers())
+        {
+            var attributes = controller.GetCustomAttributes<AuthorizeAttribute>(inherit: true)
+                .Concat(controller.GetMethods().SelectMany(method => method.GetCustomAttributes<AuthorizeAttribute>(inherit: true)));
+            foreach (var attribute in attributes)
+            {
+                if (attribute.Roles is not null || (attribute.Policy is { } policy && !known.Contains(policy)))
+                    offending.Add($"{controller.Name}: Policy={attribute.Policy}, Roles={attribute.Roles}");
+            }
+        }
+
+        Assert.True(offending.Count == 0, "Use AuthPolicies role policies: " + string.Join("; ", offending));
+    }
+
+    [Fact]
     public void Authentication_and_client_form_public_surfaces_use_separate_limit_policies()
     {
         var login = typeof(AuthController).GetMethod(nameof(AuthController.Login))!;

@@ -3,7 +3,7 @@ import { Injectable, computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginRequest, LoginResult } from './auth.models';
+import { LoginRequest, LoginResult, Role } from './auth.models';
 
 const storageKey = 'coachhub.session';
 
@@ -28,14 +28,16 @@ export class AuthService {
     if (redirect) void this.router.navigate(['/login']);
   }
 
+  hasRole(role: Role): boolean { return !!this.session()?.roles.includes(role); }
+  isAdmin(): boolean { return this.hasRole('Administrator'); }
+  isCoach(): boolean { return this.hasRole('Coach'); }
+
   accessToken(): string | null { return this.isAuthenticated() ? this.session()?.accessToken ?? null : null; }
 
   landingRoute(): string {
-    const user = this.session();
-    if (user?.roles.includes('Client')) return '/portal';
-    if (user?.roles.includes('Administrator') || user?.permissions?.includes('reports.view')) return '/dashboard';
-    const choices: Array<[string, string]> = [['clients.manage', '/clients'], ['assessments.manage', '/assessments'], ['catalog.manage', '/nutrition'], ['plans.manage', '/plans'], ['users.manage', '/operations'], ['billing.manage', '/operations'], ['communications.manage', '/operations'], ['audit.view', '/audit'], ['settings.manage', '/settings']];
-    return choices.find(([permission]) => user?.permissions?.includes(permission))?.[1] ?? '/login';
+    if (this.hasRole('Client')) return '/portal';
+    if (this.isAdmin() || this.isCoach()) return '/dashboard';
+    return '/login';
   }
 
   private restoreSession(): LoginResult | null {

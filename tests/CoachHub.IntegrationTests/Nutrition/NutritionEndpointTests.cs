@@ -12,11 +12,15 @@ namespace CoachHub.IntegrationTests.Nutrition;
 
 public sealed class NutritionEndpointTests : IClassFixture<CoachHubApiFactory>
 {
+    private readonly CoachHubApiFactory _factory;
     private readonly HttpClient _client;
+    private readonly HttpClient _admin;
 
     public NutritionEndpointTests(CoachHubApiFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _admin = factory.CreateAdminClient();
     }
 
     [Fact]
@@ -97,15 +101,11 @@ public sealed class NutritionEndpointTests : IClassFixture<CoachHubApiFactory>
             (await _client.GetAsync("/api/v1/nutrition/foods")).StatusCode);
     }
 
-    private async Task AuthenticateAsync()
+    /// <summary>Platform catalogs are maintained by administrators.</summary>
+    private Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync(
-            "/api/v1/auth/login",
-            new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
-        response.EnsureSuccessStatusCode();
-        var login = await response.Content.ReadFromJsonAsync<LoginResult>();
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", login!.AccessToken);
+        _client.DefaultRequestHeaders.Authorization = _admin.DefaultRequestHeaders.Authorization;
+        return Task.CompletedTask;
     }
 
     private async Task<BilingualReferenceResponse> CreateCategoryAsync(string name)

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Reporting;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ViewReports)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/reporting")]
 public sealed class ReportingController(ReportingService service, AdvancedReportingService advanced) : ControllerBase
 {

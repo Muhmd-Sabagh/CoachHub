@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoachHub.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CoachHubDbContext))]
-    [Migration("20260813151837_AddAuditTrail")]
-    partial class AddAuditTrail
+    [Migration("20261011222728_ProductBaseline")]
+    partial class ProductBaseline
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -79,6 +79,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("FormType")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -93,6 +96,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
 
                     b.ToTable("FormDefinitions", (string)null);
                 });
@@ -136,6 +141,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ExternalIdHeader")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -164,6 +172,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
 
                     b.HasIndex("FormDefinitionId", "Name")
                         .IsUnique();
@@ -247,6 +257,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ClientId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ExternalSubmissionId")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -278,6 +291,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
 
                     b.HasIndex("FormDefinitionId");
 
@@ -403,6 +418,141 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.ToTable("AuditEntries", (string)null);
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.Billing.Invoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CurrencyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("DueAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("IssuedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Paid")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid?>("SubscriptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("SubscriptionId");
+
+                    b.HasIndex("ClientId", "IssuedAt");
+
+                    b.HasIndex("CoachId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("Invoices", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Billing.Payment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PaymentAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("PaymentAccountId");
+
+                    b.HasIndex("RecordedAt");
+
+                    b.ToTable("Payments", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Billing.Refund", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("RecordedAt");
+
+                    b.ToTable("Refunds", (string)null);
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Clients.Client", b =>
                 {
                     b.Property<Guid>("Id")
@@ -413,6 +563,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("DietStatus")
                         .IsRequired()
@@ -453,6 +606,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasIndex("ClientCode")
                         .IsUnique();
 
+                    b.HasIndex("CoachId");
+
                     b.HasIndex("FormCode")
                         .IsUnique();
 
@@ -468,6 +623,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CurrencyId")
@@ -497,6 +655,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CoachId");
+
                     b.HasIndex("CurrencyId");
 
                     b.HasIndex("PackageId");
@@ -508,6 +668,144 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.ToTable("Subscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.Clients.SubscriptionRenewal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CurrencyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DurationMonths")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("NewEndDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("PaymentAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("PreviousEndDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("SequenceNumber")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("PaymentAccountId");
+
+                    b.HasIndex("RecordedAt");
+
+                    b.HasIndex("SubscriptionId", "SequenceNumber")
+                        .IsUnique();
+
+                    b.ToTable("SubscriptionRenewals", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Coaches.Coach", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DisplayName");
+
+                    b.ToTable("Coaches", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Communications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Recipient")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<DateTimeOffset>("ScheduledAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("Status", "ScheduledAt");
+
+                    b.ToTable("Notifications", (string)null);
+                });
+
             modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -515,6 +813,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -532,6 +833,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
+
+                    b.HasIndex("CoachId");
 
                     b.ToTable("DietPlans", (string)null);
                 });
@@ -859,6 +1162,65 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.ToTable("LegacyFoodImports", (string)null);
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.PlanDelivery.DeliveredPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("DeliveredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<Guid?>("NotificationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PlanNameSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("PlanType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("NotificationId");
+
+                    b.HasIndex("ClientId", "DeliveredAt");
+
+                    b.ToTable("DeliveredPlans", (string)null);
+                });
+
             modelBuilder.Entity("CoachHub.Domain.ReferenceData.Currency", b =>
                 {
                     b.Property<Guid>("Id")
@@ -948,6 +1310,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -966,7 +1331,7 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NameEn")
+                    b.HasIndex("CoachId", "NameEn")
                         .IsUnique();
 
                     b.ToTable("Packages", (string)null);
@@ -976,6 +1341,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Details")
@@ -992,7 +1360,7 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("CoachId", "Name")
                         .IsUnique();
 
                     b.ToTable("PaymentAccounts", (string)null);
@@ -1158,6 +1526,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ClientId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -1173,6 +1544,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
+
+                    b.HasIndex("CoachId");
 
                     b.ToTable("WorkoutPlans", (string)null);
                 });
@@ -1242,6 +1615,12 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -1298,6 +1677,14 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique()
+                        .HasFilter("[ClientId] IS NOT NULL");
+
+                    b.HasIndex("CoachId")
+                        .IsUnique()
+                        .HasFilter("[CoachId] IS NOT NULL");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -1433,6 +1820,15 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.Assessments.FormDefinition", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Assessments.FormImportColumnMapping", b =>
                 {
                     b.HasOne("CoachHub.Domain.Assessments.FormImportProfile", null)
@@ -1444,6 +1840,12 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoachHub.Domain.Assessments.FormImportProfile", b =>
                 {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("CoachHub.Domain.Assessments.FormDefinition", null)
                         .WithMany()
                         .HasForeignKey("FormDefinitionId")
@@ -1482,6 +1884,12 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("CoachHub.Domain.Assessments.FormDefinition", null)
                         .WithMany()
                         .HasForeignKey("FormDefinitionId")
@@ -1513,12 +1921,88 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.Billing.Invoice", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.ReferenceData.Currency", null)
+                        .WithMany()
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Clients.Subscription", null)
+                        .WithMany()
+                        .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Billing.Payment", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Billing.Invoice", null)
+                        .WithMany("Payments")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.ReferenceData.PaymentAccount", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Billing.Refund", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Billing.Payment", null)
+                        .WithMany("Refunds")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Clients.Client", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Clients.Subscription", b =>
                 {
                     b.HasOne("CoachHub.Domain.Clients.Client", null)
                         .WithMany("Subscriptions")
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("CoachHub.Domain.ReferenceData.Currency", null)
@@ -1539,12 +2023,57 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.Clients.SubscriptionRenewal", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.ReferenceData.Currency", null)
+                        .WithMany()
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.ReferenceData.PaymentAccount", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CoachHub.Domain.Clients.Subscription", null)
+                        .WithMany("Renewals")
+                        .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Communications.Notification", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlan", b =>
                 {
                     b.HasOne("CoachHub.Domain.Clients.Client", null)
                         .WithMany()
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlanNote", b =>
@@ -1651,6 +2180,44 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.PlanDelivery.DeliveredPlan", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Communications.Notification", null)
+                        .WithMany()
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.ReferenceData.Package", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.ReferenceData.PaymentAccount", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Training.Exercise", b =>
                 {
                     b.HasOne("CoachHub.Domain.ReferenceData.ExerciseCategory", null)
@@ -1704,6 +2271,12 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.WorkoutPlanNote", b =>
@@ -1713,6 +2286,19 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasForeignKey("WorkoutPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Infrastructure.Auth.Persistence.User", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithOne()
+                        .HasForeignKey("CoachHub.Infrastructure.Auth.Persistence.User", "ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithOne()
+                        .HasForeignKey("CoachHub.Infrastructure.Auth.Persistence.User", "CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("CoachHub.Infrastructure.Auth.Persistence.UserRole", b =>
@@ -1766,9 +2352,24 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.Billing.Invoice", b =>
+                {
+                    b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Billing.Payment", b =>
+                {
+                    b.Navigation("Refunds");
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Clients.Client", b =>
                 {
                     b.Navigation("Subscriptions");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Clients.Subscription", b =>
+                {
+                    b.Navigation("Renewals");
                 });
 #pragma warning restore 612, 618
         }

@@ -102,6 +102,9 @@
         <button class="icon-button" (click)="editorOpen = false">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="save()">
+        @if (isAdmin && !editingId) {
+          <label><span>Coach *</span><select name="coachId" [(ngModel)]="editor.coachId" required><option value="">Choose a coach</option>@for (coach of coaches; track coach.id) {<option [value]="coach.id">{{ coach.displayName }}</option>}</select></label>
+        }
         <label><span>Name *</span><input name="name" [(ngModel)]="editor.name" required /></label
         ><label
           ><span>Join date</span
@@ -167,6 +170,14 @@
           <span>Subscription</span><app-status-badge [value]="detail.client.subscriptionStatus" />
         </div>
       </div>
+      @if (isAdmin) {
+        <form class="filter-row" (ngSubmit)="transfer()">
+          <label><span>Coach</span><strong>{{ coachName(detail.client.coachId) }}</strong></label>
+          <label><span>Transfer to</span><select name="transferCoachId" [(ngModel)]="transferCoachId"><option value="">Choose a coach</option>@for (coach of coaches; track coach.id) {@if (coach.id !== detail.client.coachId) {<option [value]="coach.id">{{ coach.displayName }}</option>}}</select></label>
+          <button class="button button-secondary" type="submit" [disabled]="!transferCoachId || saving">Transfer client</button>
+        </form>
+        <p class="muted">Plans, assessments and deliveries move with the client. Subscriptions and invoices stay with the coach who sold them.</p>
+      }
       <div class="section-heading toolbar">
         <h3>Subscriptions</h3>
         <button class="button button-primary" (click)="addSubscription()">Add subscription</button>

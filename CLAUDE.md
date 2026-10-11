@@ -86,11 +86,13 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 ## Rules for new work (from D1–D6)
 
-- **Tenancy (D1)**
-  - Every coach-owned entity carries the coach/tenant key.
-  - Enforce isolation centrally (EF global query filters plus authorization), never per-endpoint by convention.
-  - Admin bypasses tenant filters explicitly.
-  - Clients see only their own data and their coach's branding.
+- **Tenancy (D1, D7)** — implemented in P1; see `docs/product/phases/P01_TENANCY.md`.
+  - A coach-owned entity implements `ITenantOwned` (or `IOptionalTenantOwned`) from `Domain/Common/TenantOwnership.cs` and takes `coachId` in its `Create` factory. `TenantModel` then adds its `Coach` foreign key and global query filter automatically; never filter by coach by hand.
+  - `ICurrentUser.Scope` (Application) drives the filters: Administrator and system work are `Unrestricted`, a coach sees their tenant, a client sees only their own rows, anonymous callers see nothing. `CoachHubDbContext` also rejects cross-tenant writes on save.
+  - New records: use `CoachOwnership.ForNewRecordAsync` (coach = self; Administrator must name an active coach). Records derived from another record take that record's `CoachId`, and references must stay within one coach (`CoachOwnership.EnsureSameCoach`).
+  - Use `IgnoreQueryFilters()` only for deliberate cross-tenant reads (global uniqueness checks, transfer, identity lookups) and comment why.
+  - Commercial records keep the selling coach forever; coaching records follow the client on transfer (D7).
+  - Tenant-isolation tests run on SQL Server (`CoachHubSqlApiFactory`); see `tests/CoachHub.IntegrationTests/Tenancy`.
 - **Ownership (§62):** every endpoint verifies the caller may access the specific client's data, files and photos, not only that they hold a permission.
 - **Structured data (D3):** use typed numeric or enum fields for prescriptions (sets, rep min/max, load, RIR, RPE, tempo, rest, duration, set grouping, block type), profile data, and all tracking time-series. Free-text notes go alongside, never instead.
 - **Versioning (D4):** never overwrite a plan version when the coach chose "new version". Delivered-plan snapshots stay immutable.
@@ -110,7 +112,6 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 The codebase implements phases 0–21 of the legacy migration as a single-coach back office. Known gaps against REQUIREMENTS.md:
 
-- no Coach or tenant entity;
 - thin `Client` profile;
 - string-based workout prescriptions;
 - `DietPlanVersion` currently means *variant tabs*, not history, and `PUT` replaces plan content in place;
@@ -122,7 +123,8 @@ Treat these as planned rework, not conventions to preserve.
 
 ## Security invariants (keep)
 
-- `tests/CoachHub.IntegrationTests/Security/ControllerAuthorizationTests.cs` pins the anonymous API surface. Every anonymous action must be rate-limited.
+- `tests/CoachHub.IntegrationTests/Security/ControllerAuthorizationTests.cs` pins the anonymous API surface (every anonymous action must be rate-limited) and requires every `[Authorize]` to use an `AuthPolicies` role policy: `AdminOnly`, `CoachOrAdmin` or `ClientOnly`.
+- Platform catalogs (foods, exercises, currencies, categories) and media writes are `AdminOnly`; coaches read them.
 - Append-only rows: `SubscriptionRenewal`, `Refund`, `DeliveredPlan` and `AuditEntry` cannot be modified or deleted (enforced in `CoachHubDbContext`).
 - Tracked `appsettings.json` keeps an empty JWT `SigningKey`, `BootstrapAdmin.Enabled=false` and `Media.Provider=S3`. `Verify-Release.ps1` fails otherwise.
 - FileSystem media is allowed only in Development and Testing.

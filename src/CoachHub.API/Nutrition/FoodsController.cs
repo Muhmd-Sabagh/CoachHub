@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Nutrition;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManageCatalog)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/nutrition/foods")]
 public sealed class FoodsController(
     FoodService foodService,
@@ -28,6 +28,7 @@ public sealed class FoodsController(
         foodService.GetAsync(id, cancellationToken);
 
     [HttpPost]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<FoodResponse>> Create(
@@ -39,6 +40,7 @@ public sealed class FoodsController(
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -49,6 +51,7 @@ public sealed class FoodsController(
         foodService.UpdateAsync(id, input, cancellationToken);
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
@@ -58,6 +61,7 @@ public sealed class FoodsController(
     }
 
     [HttpPost("legacy-import")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     [ProducesResponseType<LegacyFoodImportResult>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     public Task<LegacyFoodImportResult> ImportLegacy(

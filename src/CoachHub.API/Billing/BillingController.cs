@@ -8,7 +8,7 @@ namespace CoachHub.API.Billing;
 
 [ApiController]
 [Route(ApiRoutes.V1 + "/billing/invoices")]
-[Authorize(Policy = AuthPermissions.ManageBilling)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 public sealed class BillingController(BillingService service) : ControllerBase
 {
     [HttpGet] public Task<IReadOnlyList<InvoiceResponse>> List([FromQuery] Guid? clientId, CancellationToken token) => service.ListAsync(clientId, token);

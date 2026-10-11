@@ -2,18 +2,19 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.DietPlanning;
 
-public sealed class DietPlan : Entity
+public sealed class DietPlan : Entity, ITenantOwned
 {
     private DietPlan() { }
+    public Guid CoachId { get; private set; }
     public string NameEn { get; private set; } = string.Empty;
     public string? NameAr { get; private set; }
     public Guid? ClientId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
     public static DietPlan Create(
-        string nameEn, string? nameAr, Guid? clientId, DateTimeOffset createdAt)
+        Guid coachId, string nameEn, string? nameAr, Guid? clientId, DateTimeOffset createdAt)
     {
-        var plan = new DietPlan { CreatedAt = createdAt };
+        var plan = new DietPlan { CoachId = TenantKey.Required(coachId), CreatedAt = createdAt };
         plan.Update(nameEn, nameAr, clientId);
         return plan;
     }

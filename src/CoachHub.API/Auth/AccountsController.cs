@@ -7,7 +7,7 @@ namespace CoachHub.API.Auth;
 
 [ApiController]
 [Route(ApiRoutes.V1 + "/accounts")]
-[Authorize(Policy = AuthPermissions.ManageUsers)]
+[Authorize(Policy = AuthPolicies.AdminOnly)]
 public sealed class AccountsController(IAccountService service) : ControllerBase
 {
     [HttpGet] public Task<IReadOnlyList<AccountResponse>> List(CancellationToken token) => service.ListAsync(token);

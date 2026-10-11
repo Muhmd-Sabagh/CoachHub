@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.Clients;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManageClients)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/clients")]
 public sealed class ClientsController(
     ClientService clientService,
@@ -45,6 +45,15 @@ public sealed class ClientsController(
         Guid id,
         CancellationToken cancellationToken) =>
         new(await clientService.RegenerateFormCodeAsync(id, cancellationToken));
+
+    /// <summary>Moves the client to another coach (§56, D7).</summary>
+    [HttpPost("{id:guid}/transfer")]
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
+    public Task<ClientResponse> Transfer(
+        Guid id,
+        ClientTransferInput input,
+        CancellationToken cancellationToken) =>
+        clientService.TransferAsync(id, input, cancellationToken);
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)

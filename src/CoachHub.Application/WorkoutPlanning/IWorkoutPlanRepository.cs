@@ -12,7 +12,8 @@ public interface IWorkoutPlanRepository
     Task<WorkoutPlanAggregate?> FindAsync(Guid id, bool tracking, CancellationToken cancellationToken);
     Task<IReadOnlyDictionary<Guid, Exercise>> FindExercisesAsync(
         IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
-    Task<bool> ClientExistsAsync(Guid id, CancellationToken cancellationToken);
+    /// <summary>The client's current coach, or null when the client is not visible.</summary>
+    Task<Guid?> FindClientCoachIdAsync(Guid clientId, CancellationToken cancellationToken);
     Task AddAsync(WorkoutPlanAggregate aggregate, CancellationToken cancellationToken);
     Task ReplaceChildrenAsync(WorkoutPlanAggregate aggregate, CancellationToken cancellationToken);
     Task DeleteAsync(WorkoutPlanAggregate aggregate, CancellationToken cancellationToken);

@@ -8,7 +8,7 @@ namespace CoachHub.API.PlanDelivery;
 
 [ApiController]
 [Route(ApiRoutes.V1 + "/plan-deliveries")]
-[Authorize(Policy = AuthPermissions.ManagePlans)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 public sealed class PlanDeliveriesController(PlanDeliveryService service) : ControllerBase
 {
     [HttpGet] public Task<IReadOnlyList<DeliveredPlanResponse>> List([FromQuery] Guid clientId, CancellationToken token) => service.ListAsync(clientId, token);

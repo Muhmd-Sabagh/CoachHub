@@ -13,11 +13,15 @@ namespace CoachHub.IntegrationTests.Clients;
 
 public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
 {
+    private readonly CoachHubApiFactory _factory;
     private readonly HttpClient _client;
+    private readonly HttpClient _admin;
 
     public ClientEndpointTests(CoachHubApiFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _admin = factory.CreateAdminClient();
     }
 
     [Fact]
@@ -98,7 +102,7 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
             (await _client.DeleteAsync($"/api/v1/reference-data/packages/{package.Id}")).StatusCode);
         Assert.Equal(
             HttpStatusCode.Conflict,
-            (await _client.DeleteAsync($"/api/v1/reference-data/currencies/{currency.Id}")).StatusCode);
+            (await _admin.DeleteAsync($"/api/v1/reference-data/currencies/{currency.Id}")).StatusCode);
         Assert.Equal(
             HttpStatusCode.Conflict,
             (await _client.DeleteAsync($"/api/v1/reference-data/payment-accounts/{payment.Id}")).StatusCode);
@@ -178,7 +182,7 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
             (await _client.DeleteAsync($"/api/v1/clients/{client.Id}")).StatusCode);
         Assert.Equal(
             HttpStatusCode.Conflict,
-            (await _client.DeleteAsync(
+            (await _admin.DeleteAsync(
                 $"/api/v1/reference-data/currencies/{renewalCurrency.Id}")).StatusCode);
         Assert.Equal(
             HttpStatusCode.Conflict,
@@ -211,14 +215,16 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
         Assert.Equal(HttpStatusCode.Unauthorized, (await _client.GetAsync("/api/v1/clients")).StatusCode);
     }
 
+    private System.Net.Http.Headers.AuthenticationHeaderValue? _coachAuthorization;
+
+    /// <summary>
+    /// Signs in as this test's coach (created on first use): tenant data is created in that
+    /// coach's workspace, isolated from every other test.
+    /// </summary>
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync(
-            "/api/v1/auth/login",
-            new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
-        response.EnsureSuccessStatusCode();
-        var login = await response.Content.ReadFromJsonAsync<LoginResult>();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login!.AccessToken);
+        _coachAuthorization ??= (await _factory.CreateCoachClientAsync()).DefaultRequestHeaders.Authorization;
+        _client.DefaultRequestHeaders.Authorization = _coachAuthorization;
     }
 
     private async Task<ClientResponse> CreateClientAsync(string name)
@@ -241,7 +247,7 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
 
     private async Task<CurrencyResponse> CreateCurrencyAsync(string code)
     {
-        var response = await _client.PostAsJsonAsync(
+        var response = await _admin.PostAsJsonAsync(
             "/api/v1/reference-data/currencies",
             new CurrencyInput(code, "Test Currency", "$", true));
         response.EnsureSuccessStatusCode();

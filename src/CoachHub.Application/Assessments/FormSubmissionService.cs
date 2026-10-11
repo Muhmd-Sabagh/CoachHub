@@ -16,7 +16,7 @@ public sealed class FormSubmissionService(
         CancellationToken cancellationToken)
     {
         var client = await FindClientAsync(input, cancellationToken);
-        var definitions = await repository.ListPublishedDefinitionsAsync(cancellationToken);
+        var definitions = await repository.ListPublishedDefinitionsAsync(client.CoachId, cancellationToken);
         var hasInitial = await repository.HasInitialSubmissionAsync(client.Id, cancellationToken);
         var eligible = definitions
             .Where(definition => !definition.IsArchived)
@@ -46,6 +46,8 @@ public sealed class FormSubmissionService(
         var client = await FindClientAsync(new(input.ClientCode, input.FormCode), cancellationToken);
         var graph = await repository.FindLatestPublishedAsync(input.FormDefinitionId, cancellationToken)
             ?? throw new NotFoundException("Published form", input.FormDefinitionId);
+        if (graph.Definition.CoachId != client.CoachId)
+            throw new NotFoundException("Published form", input.FormDefinitionId);
         if (graph.Definition.IsArchived) throw new ConflictException("This form is archived.");
         if (graph.Definition.FormType == AssessmentFormType.InitialAssessment &&
             await repository.HasInitialSubmissionAsync(client.Id, cancellationToken))
@@ -74,7 +76,7 @@ public sealed class FormSubmissionService(
         }
 
         var submission = FormSubmission.Create(
-            client.Id, graph.Definition.Id, graph.Version.Id, graph.Definition.FormType,
+            client.CoachId, client.Id, graph.Definition.Id, graph.Version.Id, graph.Definition.FormType,
             SubmissionSource.CoachHubSystem, timeProvider.GetUtcNow());
         var answers = pendingAnswers.Select(answer => FormAnswer.Create(
             submission.Id,

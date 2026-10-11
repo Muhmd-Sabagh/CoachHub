@@ -48,14 +48,13 @@ public static class AuthenticationExtensions
                 };
             });
 
+        // Role policies decide who may call an endpoint; which rows they see is decided by the
+        // tenant query filters (see CoachHubDbContext).
         services.AddAuthorization(options =>
         {
-            foreach (var permission in AuthPermissions.All)
-            {
-                options.AddPolicy(permission, policy => policy.RequireAssertion(context =>
-                    context.User.IsInRole(AuthRoles.Administrator) ||
-                    context.User.HasClaim(AuthPermissions.ClaimType, permission)));
-            }
+            options.AddPolicy(AuthPolicies.AdminOnly, policy => policy.RequireRole(AuthRoles.Administrator));
+            options.AddPolicy(AuthPolicies.CoachOrAdmin, policy => policy.RequireRole(AuthRoles.Administrator, AuthRoles.Coach));
+            options.AddPolicy(AuthPolicies.ClientOnly, policy => policy.RequireRole(AuthRoles.Client));
         });
         return services;
     }

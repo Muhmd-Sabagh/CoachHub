@@ -5,6 +5,7 @@ import { PagedResult } from '../../shared/models/paged-result';
 import { queryParams } from '../../shared/services/query-params';
 export interface Client {
   id: string;
+  coachId: string;
   clientCode: string;
   formCode: string;
   name: string;
@@ -64,6 +65,10 @@ export class ClientsService {
   }
   delete(id: string) {
     return this.http.delete<void>(`${this.url}/${id}`);
+  }
+  /** Administrator only: moves the client to another coach (commercial history stays, D7). */
+  transfer(id: string, coachId: string) {
+    return this.http.post<Client>(`${this.url}/${id}/transfer`, { coachId });
   }
   regenerate(id: string) {
     return this.http.post<{ formCode: string }>(`${this.url}/${id}/form-code/regenerate`, {});

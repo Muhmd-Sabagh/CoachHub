@@ -11,7 +11,7 @@ public sealed class PackageServiceTests
     public async Task Create_accepts_optional_arabic_name_and_maps_response()
     {
         var repository = new FakeRepository();
-        var service = new PackageService(repository);
+        var service = new PackageService(repository, TestTenancy.CoachOwnership());
 
         var response = await service.CreateAsync(
             new PackageInput("Premium", null, "Coaching", true),
@@ -19,6 +19,7 @@ public sealed class PackageServiceTests
 
         Assert.Equal("Premium", response.NameEn);
         Assert.Null(response.NameAr);
+        Assert.Equal(TestTenancy.CoachId, response.CoachId);
         Assert.NotNull(repository.Added);
     }
 
@@ -26,7 +27,7 @@ public sealed class PackageServiceTests
     public async Task Create_rejects_missing_english_name()
     {
         var repository = new FakeRepository();
-        var service = new PackageService(repository);
+        var service = new PackageService(repository, TestTenancy.CoachOwnership());
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
             service.CreateAsync(
@@ -41,7 +42,7 @@ public sealed class PackageServiceTests
     public async Task Duplicate_english_name_is_a_conflict()
     {
         var repository = new FakeRepository { KeyExists = true };
-        var service = new PackageService(repository);
+        var service = new PackageService(repository, TestTenancy.CoachOwnership());
 
         await Assert.ThrowsAsync<ConflictException>(() =>
             service.CreateAsync(
@@ -58,7 +59,7 @@ public sealed class PackageServiceTests
             Task.FromResult(new PagedResult<Package>([], query.PageNumber, query.PageSize, 0));
         public Task<Package?> FindAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult<Package?>(null);
-        public Task<bool> KeyExistsAsync(string key, Guid? excludingId, CancellationToken cancellationToken) =>
+        public Task<bool> KeyExistsAsync(string key, Guid? excludingId, Guid? coachId, CancellationToken cancellationToken) =>
             Task.FromResult(KeyExists);
         public Task AddAsync(Package entity, CancellationToken cancellationToken)
         {

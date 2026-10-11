@@ -2,9 +2,10 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Assessments;
 
-public sealed class FormImportProfile : Entity
+public sealed class FormImportProfile : Entity, ITenantOwned
 {
     private FormImportProfile() { }
+    public Guid CoachId { get; private set; }
     public Guid FormDefinitionId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string SheetName { get; private set; } = string.Empty;
@@ -13,11 +14,11 @@ public sealed class FormImportProfile : Entity
     public string? ExternalIdHeader { get; private set; }
 
     public static FormImportProfile Create(
-        Guid definitionId, string name, string sheetName,
+        Guid coachId, Guid definitionId, string name, string sheetName,
         string formCodeHeader, string timestampHeader, string? externalIdHeader)
     {
         if (definitionId == Guid.Empty) throw new ArgumentException("Form is required.", nameof(definitionId));
-        return new FormImportProfile { FormDefinitionId = definitionId }.Update(
+        return new FormImportProfile { CoachId = TenantKey.Required(coachId), FormDefinitionId = definitionId }.Update(
             name, sheetName, formCodeHeader, timestampHeader, externalIdHeader);
     }
 

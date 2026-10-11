@@ -8,7 +8,7 @@ namespace CoachHub.API.Communications;
 
 [ApiController]
 [Route(ApiRoutes.V1 + "/notifications")]
-[Authorize(Policy = AuthPermissions.ManageCommunications)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 public sealed class NotificationsController(NotificationService service) : ControllerBase
 {
     [HttpGet] public Task<IReadOnlyList<NotificationResponse>> List(CancellationToken token) => service.ListAsync(token);

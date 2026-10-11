@@ -7,7 +7,7 @@ public sealed class DietPlanTests
     [Fact]
     public void Plan_and_nested_entities_normalize_bilingual_content_and_order()
     {
-        var plan = DietPlan.Create("  Cutting plan ", null, null, DateTimeOffset.UtcNow);
+        var plan = DietPlan.Create(Guid.NewGuid(), "  Cutting plan ", null, null, DateTimeOffset.UtcNow);
         var version = DietPlanVersion.Create(Guid.NewGuid(), plan.Id, " High carb ", " ", 1, true, null);
         var meal = Meal.Create(Guid.NewGuid(), version.Id, " Breakfast ", " إفطار ", 0, null);
 

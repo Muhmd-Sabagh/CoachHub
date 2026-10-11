@@ -1,6 +1,11 @@
 using CoachHub.Application.Clients;
 using CoachHub.Application.Common.Models;
+using CoachHub.Domain.Assessments;
+using CoachHub.Domain.Billing;
 using CoachHub.Domain.Clients;
+using CoachHub.Domain.DietPlanning;
+using CoachHub.Domain.PlanDelivery;
+using CoachHub.Domain.WorkoutPlanning;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,10 +79,11 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
             .Include(client => client.Subscriptions)
                 .ThenInclude(subscription => subscription.Renewals)
             .SingleOrDefaultAsync(client => client.Id == id, cancellationToken);
+    // Client and form codes are unique across all coaches, so these checks ignore tenant filters.
     public Task<bool> ClientCodeExistsAsync(string code, CancellationToken cancellationToken) =>
-        dbContext.Set<Client>().AnyAsync(client => client.ClientCode == code, cancellationToken);
+        dbContext.Set<Client>().IgnoreQueryFilters().AnyAsync(client => client.ClientCode == code, cancellationToken);
     public Task<bool> FormCodeExistsAsync(string code, CancellationToken cancellationToken) =>
-        dbContext.Set<Client>().AnyAsync(client => client.FormCode == code, cancellationToken);
+        dbContext.Set<Client>().IgnoreQueryFilters().AnyAsync(client => client.FormCode == code, cancellationToken);
     public async Task AddAsync(Client client, CancellationToken cancellationToken)
     {
         dbContext.Set<Client>().Add(client);
@@ -89,6 +95,37 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
     {
         dbContext.Set<Client>().Remove(client);
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> HasProtectedHistoryAsync(Client client, CancellationToken cancellationToken) =>
+        await dbContext.Set<Invoice>().IgnoreQueryFilters()
+            .AnyAsync(invoice => invoice.ClientId == client.Id, cancellationToken) ||
+        await dbContext.Set<Subscription>().IgnoreQueryFilters()
+            .AnyAsync(subscription => subscription.ClientId == client.Id &&
+                (subscription.CoachId != client.CoachId || subscription.Renewals.Any()), cancellationToken);
+
+    public async Task TransferAsync(Client client, Guid toCoachId, CancellationToken cancellationToken)
+    {
+        var fromCoachId = client.CoachId;
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        client.TransferTo(toCoachId);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Coaching records follow the client. Commercial records (subscriptions, renewals,
+        // invoices, payments, refunds) stay with the coach who sold them (D7).
+        await dbContext.Set<DietPlan>().IgnoreQueryFilters()
+            .Where(plan => plan.ClientId == client.Id && plan.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(plan => plan.CoachId, toCoachId), cancellationToken);
+        await dbContext.Set<WorkoutPlan>().IgnoreQueryFilters()
+            .Where(plan => plan.ClientId == client.Id && plan.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(plan => plan.CoachId, toCoachId), cancellationToken);
+        await dbContext.Set<FormSubmission>().IgnoreQueryFilters()
+            .Where(submission => submission.ClientId == client.Id && submission.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(submission => submission.CoachId, toCoachId), cancellationToken);
+        await dbContext.Set<DeliveredPlan>().IgnoreQueryFilters()
+            .Where(delivery => delivery.ClientId == client.Id && delivery.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(delivery => delivery.CoachId, toCoachId), cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
     public Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Set<Subscription>()

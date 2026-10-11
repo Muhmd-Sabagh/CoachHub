@@ -2,7 +2,8 @@ using CoachHub.Domain.Communications;
 
 namespace CoachHub.Application.Communications;
 
-public sealed record NotificationInput(Guid? ClientId, NotificationChannel Channel, string Recipient, string Subject, string Body, DateTimeOffset? ScheduledAt);
+/// <param name="CoachId">For messages without a client: required for coaches' own workspace when an administrator schedules on a coach's behalf; omit for platform messages.</param>
+public sealed record NotificationInput(Guid? ClientId, NotificationChannel Channel, string Recipient, string Subject, string Body, DateTimeOffset? ScheduledAt, Guid? CoachId = null);
 public sealed record NotificationResponse(Guid Id, Guid? ClientId, NotificationChannel Channel, string Recipient, string Subject, DateTimeOffset ScheduledAt, NotificationStatus Status, int AttemptCount, DateTimeOffset? SentAt, string? LastError);
 public interface INotificationRepository
 {

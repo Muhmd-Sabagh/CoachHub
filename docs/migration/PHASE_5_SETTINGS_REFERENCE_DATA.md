@@ -1,5 +1,10 @@
 # Phase 5 settings and reference data
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D7, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D7 (P1): packages and payment accounts belong to the coach who sells them and are unique per coach; currencies and food/exercise categories stay platform data that only administrators change.
+> - D1 (P1): the `CoachHub:CoachName` setting was removed; the coach name comes from the signed-in coach.
+
 ## Delivered scope
 
 The settings API exposes the configured product and coach identity at `GET /api/settings`. `CoachName` remains configuration-driven through the validated `CoachHub` options section and is not stored or hard-coded in the UI.

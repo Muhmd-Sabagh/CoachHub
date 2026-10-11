@@ -31,7 +31,7 @@ public sealed class AuditTrailTests
             .UseInMemoryDatabase("AuditTrail-" + Guid.NewGuid())
             .Options;
         await using var context = new CoachHubDbContext(options, actor);
-        var package = Package.Create("Audited package", null, null);
+        var package = Package.Create(Guid.NewGuid(), "Audited package", null, null);
 
         context.Add(package);
         await context.SaveChangesAsync();
@@ -72,7 +72,7 @@ public sealed class AuditTrailTests
         using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new
         {
-            email = CoachHubApiFactory.AdminEmail,
+            login = CoachHubApiFactory.AdminEmail,
             password = CoachHubApiFactory.AdminPassword
         });
         loginResponse.EnsureSuccessStatusCode();
@@ -82,9 +82,10 @@ public sealed class AuditTrailTests
             new AuthenticationHeaderValue("Bearer", login.AccessToken);
 
         var packageName = "Audit " + Guid.NewGuid().ToString("N");
+        var coachId = await factory.CreateCoachAsync();
         var createResponse = await client.PostAsJsonAsync(
             "/api/v1/reference-data/packages",
-            new PackageInput(packageName, null, null, true));
+            new PackageInput(packageName, null, null, true, coachId));
         createResponse.EnsureSuccessStatusCode();
         var package = await createResponse.Content.ReadFromJsonAsync<PackageResponse>();
         Assert.NotNull(package);

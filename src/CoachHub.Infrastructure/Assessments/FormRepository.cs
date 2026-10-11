@@ -23,7 +23,7 @@ public sealed class FormRepository(CoachHubDbContext dbContext) : IFormRepositor
 
     public async Task<CoachHub.Application.Common.Models.PagedResult<AssessmentSubmissionSummary>> ListSubmissionsAsync(AssessmentSubmissionQuery query, CancellationToken token)
     {
-        var source = from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id join definition in dbContext.Set<FormDefinition>().AsNoTracking() on submission.FormDefinitionId equals definition.Id select new { submission, client, definition };
+        var source = from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id join definition in dbContext.Set<FormDefinition>().IgnoreQueryFilters().AsNoTracking() on submission.FormDefinitionId equals definition.Id select new { submission, client, definition };
         if (query.ClientId.HasValue) source = source.Where(x => x.submission.ClientId == query.ClientId);
         if (query.FormType.HasValue) source = source.Where(x => x.submission.FormType == query.FormType);
         if (query.SearchTerm is not null) source = source.Where(x => x.client.Name.Contains(query.SearchTerm) || x.client.ClientCode.Contains(query.SearchTerm) || x.definition.Name.Contains(query.SearchTerm));
@@ -34,7 +34,7 @@ public sealed class FormRepository(CoachHubDbContext dbContext) : IFormRepositor
 
     public async Task<AssessmentSubmissionDetail?> GetSubmissionAsync(Guid id, CancellationToken token)
     {
-        var summary = await (from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id join definition in dbContext.Set<FormDefinition>().AsNoTracking() on submission.FormDefinitionId equals definition.Id where submission.Id == id select new AssessmentSubmissionSummary(submission.Id, client.Id, client.Name, client.ClientCode, definition.Id, definition.Name, submission.FormType, submission.Source, submission.SubmittedAt, dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == submission.Id))).SingleOrDefaultAsync(token);
+        var summary = await (from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id join definition in dbContext.Set<FormDefinition>().IgnoreQueryFilters().AsNoTracking() on submission.FormDefinitionId equals definition.Id where submission.Id == id select new AssessmentSubmissionSummary(submission.Id, client.Id, client.Name, client.ClientCode, definition.Id, definition.Name, submission.FormType, submission.Source, submission.SubmittedAt, dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == submission.Id))).SingleOrDefaultAsync(token);
         if (summary is null) return null;
         var answers = await dbContext.Set<FormAnswer>().AsNoTracking().Where(x => x.FormSubmissionId == id).OrderBy(x => x.QuestionTextSnapshot).Select(x => new AssessmentAnswerResponse(x.Id, x.QuestionStableKey, x.QuestionTextSnapshot, x.QuestionTypeSnapshot, x.ValueJson, x.MediaId, x.ExternalMediaUrl)).ToArrayAsync(token);
         return new(summary, answers);
@@ -48,18 +48,21 @@ public sealed class FormRepository(CoachHubDbContext dbContext) : IFormRepositor
     public async Task<FormGraph?> FindDraftAsync(Guid definitionId, CancellationToken token)
     {
         var version = await dbContext.Set<FormVersion>().SingleOrDefaultAsync(
-            item => item.FormDefinitionId == definitionId && item.Status == FormVersionStatus.Draft, token);
+            item => item.FormDefinitionId == definitionId && item.Status == FormVersionStatus.Draft &&
+                dbContext.Set<FormDefinition>().Any(definition => definition.Id == definitionId), token);
         return version is null ? null : await GraphAsync(version, token);
     }
     public async Task<FormGraph?> FindLatestPublishedAsync(Guid definitionId, CancellationToken token)
     {
         var version = await dbContext.Set<FormVersion>().AsNoTracking()
-            .Where(item => item.FormDefinitionId == definitionId && item.Status == FormVersionStatus.Published)
+            .Where(item => item.FormDefinitionId == definitionId && item.Status == FormVersionStatus.Published &&
+                dbContext.Set<FormDefinition>().Any(definition => definition.Id == definitionId))
             .OrderByDescending(item => item.VersionNumber).FirstOrDefaultAsync(token);
         return version is null ? null : await GraphAsync(version, token, true);
     }
-    public async Task<IReadOnlyList<FormDefinition>> ListPublishedDefinitionsAsync(CancellationToken token) =>
+    public async Task<IReadOnlyList<FormDefinition>> ListPublishedDefinitionsAsync(Guid coachId, CancellationToken token) =>
         await dbContext.Set<FormDefinition>().AsNoTracking()
+            .Where(definition => definition.CoachId == coachId)
             .Where(definition => dbContext.Set<FormVersion>().Any(version =>
                 version.FormDefinitionId == definition.Id && version.Status == FormVersionStatus.Published))
             .OrderBy(definition => definition.Name).ToArrayAsync(token);
