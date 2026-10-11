@@ -15,6 +15,15 @@ CoachHub is a multi-coach online coaching platform: a .NET 10 modular monolith A
 | **D5** | Clients log in. **Code-based public forms are retired.** |
 | **D6** | Dashboards report **revenue** (per currency, with a defined recognition rule). |
 
+**[docs/product/ROADMAP.md](docs/product/ROADMAP.md)** sets the approved phase order (P0–P18) and per-phase scope. Work one phase at a time on a `phase/pNN-<slug>` branch and record each phase in `docs/product/phases/PNN_<NAME>.md`.
+
+The owner settled these on 2026-10-12, in addition to D1–D6:
+
+- No data needs preserving, so migrations are re-baselined in P1.
+- The `Staff` role is removed; the roles are Administrator, Coach and Client.
+- Nutrition is built first after the foundation phases.
+- The client UI is a mobile-first area inside the same Angular app.
+
 `docs/migration/PHASE_*.md` records how the *current* code was built. Use it for context. Where it conflicts with REQUIREMENTS.md, the requirements win. Update or annotate the phase doc when you rework that area.
 
 When a requirement is ambiguous, or a change would contradict D1–D6, stop and ask. Don't pick an interpretation silently.
