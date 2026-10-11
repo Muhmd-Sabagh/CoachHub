@@ -24,7 +24,7 @@ describe('AuthService and authInterceptor', () => {
 
   it('logs in through the API and attaches the returned bearer token', () => {
     service.login({ email: 'coach@example.com', password: 'Password!123' }).subscribe();
-    const login = http.expectOne('/api/auth/login');
+    const login = http.expectOne('/api/v1/auth/login');
     expect(login.request.method).toBe('POST');
     expect(login.request.headers.has('Authorization')).toBe(false);
     login.flush(loginResult);
@@ -32,8 +32,8 @@ describe('AuthService and authInterceptor', () => {
     expect(sessionStorage.getItem('coachhub.session')).toContain('test-token');
     expect(localStorage.getItem('coachhub.session')).toBeNull();
 
-    TestBed.inject(HttpClient).get('/api/settings').subscribe();
-    const settings = http.expectOne('/api/settings');
+    TestBed.inject(HttpClient).get('/api/v1/settings').subscribe();
+    const settings = http.expectOne('/api/v1/settings');
     expect(settings.request.headers.get('Authorization')).toBe('Bearer test-token');
     settings.flush({ productName: 'CoachHub', coachName: 'Coach' });
   });

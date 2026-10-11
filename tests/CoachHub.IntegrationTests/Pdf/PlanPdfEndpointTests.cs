@@ -21,17 +21,17 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
     public async Task Preview_and_download_generate_english_and_arabic_pdfs_without_server_files()
     {
         await AuthenticateAsync();
-        var foodCategory = await PostAsync<BilingualReferenceResponse>("/api/reference-data/food-categories",
+        var foodCategory = await PostAsync<BilingualReferenceResponse>("/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("PDF food " + Guid.NewGuid().ToString("N"), null));
-        var food = await PostAsync<FoodResponse>("/api/nutrition/foods",
+        var food = await PostAsync<FoodResponse>("/api/v1/nutrition/foods",
             new FoodInput("Oats", "شوفان", foodCategory.Id, "g", 389, 16.9m, 66.3m, 6.9m, null));
-        var exerciseCategory = await PostAsync<BilingualReferenceResponse>("/api/reference-data/exercise-categories",
+        var exerciseCategory = await PostAsync<BilingualReferenceResponse>("/api/v1/reference-data/exercise-categories",
             new BilingualReferenceInput("PDF exercise " + Guid.NewGuid().ToString("N"), null));
-        var press = await PostAsync<ExerciseResponse>("/api/training/exercises",
+        var press = await PostAsync<ExerciseResponse>("/api/v1/training/exercises",
             new ExerciseInput("Bench Press", "ضغط الصدر", exerciseCategory.Id, null, "https://youtu.be/example", true));
 
         var mealId = Guid.NewGuid();
-        var diet = await PostAsync<DietPlanResponse>("/api/diet-plans", new DietPlanInput(
+        var diet = await PostAsync<DietPlanResponse>("/api/v1/diet-plans", new DietPlanInput(
             "Performance Diet", "خطة الأداء", null,
             [new(Guid.NewGuid(), "Visible coach note", 0, true), new(Guid.NewGuid(), "Hidden coach note", 1, false)],
             [
@@ -41,7 +41,7 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
                 new(Guid.NewGuid(), "Hidden version", "نسخة مخفية", 1, false, null,
                     [new(Guid.NewGuid(), "Hidden meal", null, 0, null, [])], [])
             ]));
-        var workout = await PostAsync<WorkoutPlanResponse>("/api/workout-plans", new WorkoutPlanInput(
+        var workout = await PostAsync<WorkoutPlanResponse>("/api/v1/workout-plans", new WorkoutPlanInput(
             "Strength Builder", "بناء القوة", null,
             [new(Guid.NewGuid(), "Visible workout note", 0, true), new(Guid.NewGuid(), "Hidden workout note", 1, false)],
             [new(Guid.NewGuid(), "Push Day", "يوم الدفع", "Upper body", "Warm up", 0,
@@ -51,13 +51,13 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
                 ])]));
 
         var serverPdfFilesBefore = Directory.GetFiles(AppContext.BaseDirectory, "*.pdf", SearchOption.AllDirectories);
-        var dietPreview = await _client.GetAsync($"/api/diet-plans/{diet.Id}/pdf/preview?language=English");
+        var dietPreview = await _client.GetAsync($"/api/v1/diet-plans/{diet.Id}/pdf/preview?language=English");
         await AssertPdfAsync(dietPreview, "inline", "Performance-Diet-diet-plan-en.pdf");
-        var dietArabic = await _client.GetAsync($"/api/diet-plans/{diet.Id}/pdf/download?language=Arabic");
+        var dietArabic = await _client.GetAsync($"/api/v1/diet-plans/{diet.Id}/pdf/download?language=Arabic");
         await AssertPdfAsync(dietArabic, "attachment", "Performance-Diet-diet-plan-ar.pdf");
-        var workoutPreview = await _client.GetAsync($"/api/workout-plans/{workout.Id}/pdf/preview?language=English");
+        var workoutPreview = await _client.GetAsync($"/api/v1/workout-plans/{workout.Id}/pdf/preview?language=English");
         await AssertPdfAsync(workoutPreview, "inline", "Strength-Builder-workout-plan-en.pdf");
-        var workoutArabic = await _client.GetAsync($"/api/workout-plans/{workout.Id}/pdf/download?language=Arabic");
+        var workoutArabic = await _client.GetAsync($"/api/v1/workout-plans/{workout.Id}/pdf/download?language=Arabic");
         await AssertPdfAsync(workoutArabic, "attachment", "Strength-Builder-workout-plan-ar.pdf");
         Assert.Equal(serverPdfFilesBefore, Directory.GetFiles(AppContext.BaseDirectory, "*.pdf", SearchOption.AllDirectories));
 
@@ -75,7 +75,7 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
     [Fact]
     public async Task Pdf_endpoints_reject_anonymous_access() =>
         Assert.Equal(HttpStatusCode.Unauthorized,
-            (await _client.GetAsync($"/api/diet-plans/{Guid.NewGuid()}/pdf/preview")).StatusCode);
+            (await _client.GetAsync($"/api/v1/diet-plans/{Guid.NewGuid()}/pdf/preview")).StatusCode);
 
     private static async Task AssertPdfAsync(HttpResponseMessage response, string disposition, string fileName)
     {
@@ -91,7 +91,7 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
 
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync("/api/auth/login",
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/login",
             new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
         response.EnsureSuccessStatusCode();
         var login = await response.Content.ReadFromJsonAsync<LoginResult>();

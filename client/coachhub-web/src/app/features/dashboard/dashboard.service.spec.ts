@@ -22,7 +22,7 @@ describe('DashboardService', () => {
     service.overview('2026-07-15', '2026-08-13').subscribe();
 
     const request = http.expectOne((candidate) =>
-      candidate.url === '/api/reporting/overview' &&
+      candidate.url === '/api/v1/reporting/overview' &&
       candidate.params.get('from') === '2026-07-15' &&
       candidate.params.get('to') === '2026-08-13');
     expect(request.request.method).toBe('GET');

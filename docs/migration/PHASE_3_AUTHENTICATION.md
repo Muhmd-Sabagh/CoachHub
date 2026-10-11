@@ -1,5 +1,10 @@
 # Phase 3 authentication and authorization
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D1: the `Staff` role and claim-based permissions are replaced by Administrator / Coach / Client roles with coach tenancy (P1).
+> - §2: email-only login, client-side-only logout and no refresh tokens are replaced by username-or-email login and server-side sessions (P1, P2).
+
 ## Decision
 
 CoachHub uses ASP.NET Core Identity with GUID identifiers and SQL Server stores. A custom password implementation was rejected because Identity provides proven password hashing, lockout, normalization, role management, and extensibility.

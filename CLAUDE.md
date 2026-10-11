@@ -69,7 +69,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - No EF or ASP.NET references.
 - **Application**
   - Concrete `*Service` classes, `I*Repository` ports, and record DTOs.
-  - Throw `ValidationException` (field-keyed), `NotFoundException`, or `ConflictException`. `GlobalExceptionHandler` maps them to 400/404/409.
+  - Throw `ValidationException` (field-keyed), `ForbiddenException`, `NotFoundException`, or `ConflictException`. `GlobalExceptionHandler` maps them to 400/403/404/409.
 - **Infrastructure**
   - One `CoachHubDbContext`, with no `DbSet` properties: use `Set<T>()`.
   - Every entity gets an `IEntityTypeConfiguration<T>` in its module folder; these are auto-discovered.
@@ -77,6 +77,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Migrations live in `Persistence/Migrations`.
 - **API**
   - Thin controllers with policy authorization.
+  - Routes are versioned: `[Route(ApiRoutes.V1 + "/resource")]` (`src/CoachHub.API/Common/Routing/ApiRoutes.cs`). `ApiRouteVersioningTests` fails any route outside `api/v1/`. Only `/health` is unversioned.
   - Every async call accepts and forwards `CancellationToken`.
 - **DI is explicit.** Register services in `src/CoachHub.Application/DependencyInjection.cs` and repositories/adapters in `src/CoachHub.Infrastructure/DependencyInjection.cs`.
 - **Lists** use `PagedRequest`/`PagedResult<T>` with server-side filtering, sorting and paging. Search is explicit, not as-you-type.
@@ -131,7 +132,10 @@ Treat these as planned rework, not conventions to preserve.
 ## Testing
 
 - xUnit. Domain and Application tests are pure unit tests.
-- Integration tests use `CoachHubApiFactory` (`WebApplicationFactory` with EF InMemory and bootstrap admin `admin@coachhub.test`). InMemory does not prove SQL Server behavior such as filtered indexes, raw migration SQL, cascades, or global query filters. Cover tenant-isolation rules with explicit tests.
+- Integration tests come in two flavours:
+  - `CoachHubApiFactory`: `WebApplicationFactory` with EF InMemory and bootstrap admin `admin@coachhub.test`. Fast, but it does not prove SQL Server behaviour such as filtered indexes, raw migration SQL, cascades or global query filters.
+  - `CoachHubSqlApiFactory` / `SqlServerTestDatabase` (`tests/CoachHub.IntegrationTests/Persistence`): a migrated, uniquely named SQL Server database per fixture, dropped afterwards. It uses `COACHHUB_TEST_SQL` when set (CI sets it to a service container), otherwise the local SQL Server. **Tenant-isolation, query-filter and constraint tests must use this.**
+- `SqlServerMigrationTests` fails when the EF model has changes with no migration. Always add a migration with model changes.
 - Every behavior change ships with tests. When adding entities, update `tests/CoachHub.IntegrationTests/Persistence/CoachHubDbContextTests.cs`.
 - Angular: service specs next to services (`*.service.spec.ts`).
 

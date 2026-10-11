@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using System.Net.Mime;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Pdf;
@@ -11,25 +12,25 @@ namespace CoachHub.API.Pdf;
 [Authorize(Policy = AuthPermissions.ManagePlans)]
 public sealed class PlanPdfController(PlanPdfService service) : ControllerBase
 {
-    [HttpGet("api/diet-plans/{id:guid}/pdf/preview")]
+    [HttpGet(ApiRoutes.V1 + "/diet-plans/{id:guid}/pdf/preview")]
     public async Task<IActionResult> PreviewDiet(
         Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English,
         CancellationToken cancellationToken = default) =>
         Inline(await service.DietAsync(id, language, cancellationToken));
 
-    [HttpGet("api/diet-plans/{id:guid}/pdf/download")]
+    [HttpGet(ApiRoutes.V1 + "/diet-plans/{id:guid}/pdf/download")]
     public async Task<IActionResult> DownloadDiet(
         Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English,
         CancellationToken cancellationToken = default) =>
         Download(await service.DietAsync(id, language, cancellationToken));
 
-    [HttpGet("api/workout-plans/{id:guid}/pdf/preview")]
+    [HttpGet(ApiRoutes.V1 + "/workout-plans/{id:guid}/pdf/preview")]
     public async Task<IActionResult> PreviewWorkout(
         Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English,
         CancellationToken cancellationToken = default) =>
         Inline(await service.WorkoutAsync(id, language, cancellationToken));
 
-    [HttpGet("api/workout-plans/{id:guid}/pdf/download")]
+    [HttpGet(ApiRoutes.V1 + "/workout-plans/{id:guid}/pdf/download")]
     public async Task<IActionResult> DownloadWorkout(
         Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English,
         CancellationToken cancellationToken = default) =>

@@ -28,7 +28,7 @@ describe('AuditService', () => {
     }).subscribe();
 
     const request = http.expectOne((candidate) =>
-      candidate.url === '/api/audit-entries' && candidate.params.get('pageNumber') === '2');
+      candidate.url === '/api/v1/audit-entries' && candidate.params.get('pageNumber') === '2');
     expect(request.request.method).toBe('GET');
     expect(request.request.params.get('searchTerm')).toBe('Coach');
     expect(request.request.params.get('entityType')).toBe('Client');

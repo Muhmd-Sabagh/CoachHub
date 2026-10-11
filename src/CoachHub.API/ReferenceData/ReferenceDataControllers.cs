@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.ReferenceData;
@@ -59,22 +60,22 @@ public abstract class ReferenceDataController<TEntity, TInput, TResponse>(
     }
 }
 
-[Route("api/reference-data/packages")]
+[Route(ApiRoutes.V1 + "/reference-data/packages")]
 public sealed class PackagesController(PackageService service)
     : ReferenceDataController<Package, PackageInput, PackageResponse>(service);
 
-[Route("api/reference-data/currencies")]
+[Route(ApiRoutes.V1 + "/reference-data/currencies")]
 public sealed class CurrenciesController(CurrencyService service)
     : ReferenceDataController<Currency, CurrencyInput, CurrencyResponse>(service);
 
-[Route("api/reference-data/payment-accounts")]
+[Route(ApiRoutes.V1 + "/reference-data/payment-accounts")]
 public sealed class PaymentAccountsController(PaymentAccountService service)
     : ReferenceDataController<PaymentAccount, PaymentAccountInput, PaymentAccountResponse>(service);
 
-[Route("api/reference-data/food-categories")]
+[Route(ApiRoutes.V1 + "/reference-data/food-categories")]
 public sealed class FoodCategoriesController(FoodCategoryService service)
     : ReferenceDataController<FoodCategory, BilingualReferenceInput, BilingualReferenceResponse>(service);
 
-[Route("api/reference-data/exercise-categories")]
+[Route(ApiRoutes.V1 + "/reference-data/exercise-categories")]
 public sealed class ExerciseCategoriesController(ExerciseCategoryService service)
     : ReferenceDataController<ExerciseCategory, BilingualReferenceInput, BilingualReferenceResponse>(service);

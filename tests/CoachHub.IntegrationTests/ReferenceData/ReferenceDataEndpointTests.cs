@@ -23,13 +23,13 @@ public sealed class ReferenceDataEndpointTests : IClassFixture<CoachHubApiFactor
     {
         await AuthenticateAsync();
 
-        var settings = await _client.GetFromJsonAsync<SettingsResponse>("/api/settings");
+        var settings = await _client.GetFromJsonAsync<SettingsResponse>("/api/v1/settings");
         Assert.NotNull(settings);
         Assert.Equal("CoachHub", settings.ProductName);
         Assert.Equal("CoachHub Development Coach", settings.CoachName);
 
         var create = await _client.PostAsJsonAsync(
-            "/api/reference-data/packages",
+            "/api/v1/reference-data/packages",
             new PackageInput("Starter", null, "Entry package", true));
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var created = await create.Content.ReadFromJsonAsync<PackageResponse>();
@@ -37,13 +37,13 @@ public sealed class ReferenceDataEndpointTests : IClassFixture<CoachHubApiFactor
         Assert.Null(created.NameAr);
 
         var page = await _client.GetFromJsonAsync<PagedResult<PackageResponse>>(
-            "/api/reference-data/packages?searchTerm=Starter&isActive=true&pageNumber=1&pageSize=10");
+            "/api/v1/reference-data/packages?searchTerm=Starter&isActive=true&pageNumber=1&pageSize=10");
         Assert.NotNull(page);
         Assert.Single(page.Items);
         Assert.Equal(1, page.TotalCount);
 
         var update = await _client.PutAsJsonAsync(
-            $"/api/reference-data/packages/{created.Id}",
+            $"/api/v1/reference-data/packages/{created.Id}",
             new PackageInput("Starter", "البداية", "Entry package", false));
         update.EnsureSuccessStatusCode();
         var updated = await update.Content.ReadFromJsonAsync<PackageResponse>();
@@ -51,24 +51,24 @@ public sealed class ReferenceDataEndpointTests : IClassFixture<CoachHubApiFactor
         Assert.False(updated.IsActive);
         Assert.Equal("البداية", updated.NameAr);
 
-        var delete = await _client.DeleteAsync($"/api/reference-data/packages/{created.Id}");
+        var delete = await _client.DeleteAsync($"/api/v1/reference-data/packages/{created.Id}");
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
         Assert.Equal(
             HttpStatusCode.NotFound,
-            (await _client.GetAsync($"/api/reference-data/packages/{created.Id}")).StatusCode);
+            (await _client.GetAsync($"/api/v1/reference-data/packages/{created.Id}")).StatusCode);
     }
 
     [Fact]
     public async Task Reference_data_rejects_anonymous_access()
     {
-        var response = await _client.GetAsync("/api/reference-data/currencies");
+        var response = await _client.GetAsync("/api/v1/reference-data/currencies");
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     private async Task AuthenticateAsync()
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             new
             {
                 email = CoachHubApiFactory.AdminEmail,

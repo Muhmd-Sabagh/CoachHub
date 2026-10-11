@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.Media;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace CoachHub.API.Assessments;
 [ApiController]
 [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 [EnableRateLimiting("client-forms")]
-[Route("api/client-forms")]
+[Route(ApiRoutes.V1 + "/client-forms")]
 public sealed class ClientFormsController(FormSubmissionService service, MediaService mediaService) : ControllerBase
 {
     [HttpPost("access/validate")]

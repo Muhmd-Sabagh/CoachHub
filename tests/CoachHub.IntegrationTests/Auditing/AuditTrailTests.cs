@@ -67,10 +67,10 @@ public sealed class AuditTrailTests
         using var anonymous = factory.CreateClient(new() { AllowAutoRedirect = false });
         Assert.Equal(
             HttpStatusCode.Unauthorized,
-            (await anonymous.GetAsync("/api/audit-entries")).StatusCode);
+            (await anonymous.GetAsync("/api/v1/audit-entries")).StatusCode);
 
         using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
-        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new
         {
             email = CoachHubApiFactory.AdminEmail,
             password = CoachHubApiFactory.AdminPassword
@@ -83,14 +83,14 @@ public sealed class AuditTrailTests
 
         var packageName = "Audit " + Guid.NewGuid().ToString("N");
         var createResponse = await client.PostAsJsonAsync(
-            "/api/reference-data/packages",
+            "/api/v1/reference-data/packages",
             new PackageInput(packageName, null, null, true));
         createResponse.EnsureSuccessStatusCode();
         var package = await createResponse.Content.ReadFromJsonAsync<PackageResponse>();
         Assert.NotNull(package);
 
         var page = await client.GetFromJsonAsync<PagedResult<AuditRecord>>(
-            $"/api/audit-entries?entityType=Package&entityId={package.Id}&pageNumber=1&pageSize=10");
+            $"/api/v1/audit-entries?entityType=Package&entityId={package.Id}&pageNumber=1&pageSize=10");
 
         Assert.NotNull(page);
         var entry = Assert.Single(page.Items);
@@ -104,7 +104,7 @@ public sealed class AuditTrailTests
     public void Http_actor_accessor_classifies_public_clients_without_storing_access_codes()
     {
         var context = new DefaultHttpContext();
-        context.Request.Path = "/api/client-forms/submissions";
+        context.Request.Path = "/api/v1/client-forms/submissions";
         var accessor = new HttpAuditActorAccessor(new HttpContextAccessor { HttpContext = context });
 
         var actor = accessor.Current;

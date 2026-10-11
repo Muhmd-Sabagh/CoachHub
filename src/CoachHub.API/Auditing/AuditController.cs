@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auditing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Models;
@@ -8,7 +9,7 @@ namespace CoachHub.API.Auditing;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ViewAudit)]
-[Route("api/audit-entries")]
+[Route(ApiRoutes.V1 + "/audit-entries")]
 public sealed class AuditController(AuditQueryService service) : ControllerBase
 {
     [HttpGet]

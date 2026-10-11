@@ -1,5 +1,9 @@
 # Phase 20C - operational reporting
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D6: the "commercial activity, not revenue" framing is replaced by revenue reporting per currency (P15).
+
 ## Scope decision
 
 Phase 20C promotes read-only management reporting from the optional backlog. The dashboard consumes query data from existing modules, as directed by the business documentation, without introducing a separate reporting domain, warehouse, background job, or cached aggregate.

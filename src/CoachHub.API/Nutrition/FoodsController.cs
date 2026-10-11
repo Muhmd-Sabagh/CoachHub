@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
@@ -9,7 +10,7 @@ namespace CoachHub.API.Nutrition;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManageCatalog)]
-[Route("api/nutrition/foods")]
+[Route(ApiRoutes.V1 + "/nutrition/foods")]
 public sealed class FoodsController(
     FoodService foodService,
     LegacyFoodImportService importService) : ControllerBase

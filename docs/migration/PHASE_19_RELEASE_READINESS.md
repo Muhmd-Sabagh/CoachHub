@@ -1,5 +1,10 @@
 # Phase 19 ? testing, security hardening, and release readiness
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - D5 and D1: the anonymous surface shrinks to authentication endpoints, and "every other action requires Administrator" is replaced by role and tenant authorization (P1, P2, P5).
+> - P0 (product): CI moved from Windows to Ubuntu with a SQL Server service container, and routes moved under `/api/v1`.
+
 ## Scope
 
 Phase 19 converts the migration checklist into repeatable security and release gates. It does not deploy CoachHub and does not invent an external media vendor.

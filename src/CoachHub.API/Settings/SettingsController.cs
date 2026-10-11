@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ namespace CoachHub.API.Settings;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManageSettings)]
-[Route("api/settings")]
+[Route(ApiRoutes.V1 + "/settings")]
 public sealed class SettingsController(IOptions<CoachHubOptions> options) : ControllerBase
 {
     [HttpGet]

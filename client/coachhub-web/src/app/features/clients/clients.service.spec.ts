@@ -27,7 +27,7 @@ describe('ClientsService renewals', () => {
     }).subscribe();
 
     const request = http.expectOne(
-      '/api/clients/client-1/subscriptions/subscription-1/renewals',
+      '/api/v1/clients/client-1/subscriptions/subscription-1/renewals',
     );
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({

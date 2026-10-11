@@ -1,3 +1,4 @@
+using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.SavedPlans;
@@ -8,7 +9,7 @@ namespace CoachHub.API.SavedPlans;
 
 [ApiController]
 [Authorize(Policy = AuthPermissions.ManagePlans)]
-[Route("api/saved-plans")]
+[Route(ApiRoutes.V1 + "/saved-plans")]
 public sealed class SavedPlansController(SavedPlanQueryService service) : ControllerBase
 {
     [HttpGet]

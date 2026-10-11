@@ -29,13 +29,13 @@ describe('PlansService', () => {
     };
 
     service.save('Workout', 'plan-1', input).subscribe();
-    const save = http.expectOne('/api/workout-plans/plan-1');
+    const save = http.expectOne('/api/v1/workout-plans/plan-1');
     expect(save.request.method).toBe('PUT');
     expect(save.request.body.days.map((day: { order: number }) => day.order)).toEqual([0, 1]);
     save.flush({ id: 'plan-1', ...input });
 
     service.get('Workout', 'plan-1').subscribe();
-    const reload = http.expectOne('/api/workout-plans/plan-1');
+    const reload = http.expectOne('/api/v1/workout-plans/plan-1');
     expect(reload.request.method).toBe('GET');
     reload.flush({ id: 'plan-1', ...input });
   });
@@ -43,14 +43,14 @@ describe('PlansService', () => {
   it('uses protected blob endpoints for both PDF preview and download', () => {
     service.pdf('Diet', 'diet-1', 'preview', 'Arabic').subscribe();
     const preview = http.expectOne(request =>
-      request.url === '/api/diet-plans/diet-1/pdf/preview' &&
+      request.url === '/api/v1/diet-plans/diet-1/pdf/preview' &&
       request.params.get('language') === 'Arabic');
     expect(preview.request.responseType).toBe('blob');
     preview.flush(new Blob(['preview'], { type: 'application/pdf' }));
 
     service.pdf('Diet', 'diet-1', 'download', 'English').subscribe();
     const download = http.expectOne(request =>
-      request.url === '/api/diet-plans/diet-1/pdf/download' &&
+      request.url === '/api/v1/diet-plans/diet-1/pdf/download' &&
       request.params.get('language') === 'English');
     expect(download.request.responseType).toBe('blob');
     download.flush(new Blob(['download'], { type: 'application/pdf' }));
