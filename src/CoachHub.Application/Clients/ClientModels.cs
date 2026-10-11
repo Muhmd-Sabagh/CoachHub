@@ -2,11 +2,15 @@ using CoachHub.Domain.Clients;
 
 namespace CoachHub.Application.Clients;
 
+/// <param name="CoachId">Required when an administrator creates the client; ignored for coaches.</param>
 public sealed record ClientCreateInput(
     string Name,
     string? Phone,
     string? Email,
-    DateOnly? JoinDate);
+    DateOnly? JoinDate,
+    Guid? CoachId = null);
+
+public sealed record ClientTransferInput(Guid CoachId);
 
 public sealed record ClientUpdateInput(
     string Name,
@@ -18,6 +22,7 @@ public sealed record ClientUpdateInput(
 
 public sealed record ClientResponse(
     Guid Id,
+    Guid CoachId,
     string ClientCode,
     string FormCode,
     string Name,

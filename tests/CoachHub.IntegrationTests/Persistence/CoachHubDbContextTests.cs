@@ -15,6 +15,7 @@ public sealed class CoachHubDbContextTests
         var entityTypes = context.Model.GetEntityTypes().Select(type => type.ClrType).ToArray();
 
         Assert.Contains(typeof(User), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Coaches.Coach), entityTypes);
         Assert.Contains(typeof(Role), entityTypes);
         Assert.Contains(typeof(UserRole), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Auditing.AuditEntry), entityTypes);
@@ -79,6 +80,26 @@ public sealed class CoachHubDbContextTests
         using var context = provider.GetRequiredService<CoachHubDbContext>();
 
         Assert.Equal("Microsoft.EntityFrameworkCore.SqlServer", context.Database.ProviderName);
+    }
+
+    [Fact]
+    public void Every_coach_owned_entity_has_a_tenant_filter_and_a_coach_foreign_key()
+    {
+        using var context = CreateContext();
+        var owned = context.Model.GetEntityTypes()
+            .Where(type => typeof(CoachHub.Domain.Common.ITenantOwned).IsAssignableFrom(type.ClrType) ||
+                           typeof(CoachHub.Domain.Common.IOptionalTenantOwned).IsAssignableFrom(type.ClrType))
+            .ToArray();
+
+        Assert.Equal(15, owned.Length);
+        Assert.All(owned, type =>
+        {
+            Assert.NotEmpty(type.GetDeclaredQueryFilters());
+            Assert.Contains(type.GetForeignKeys(), key =>
+                key.PrincipalEntityType.ClrType == typeof(CoachHub.Domain.Coaches.Coach) &&
+                key.Properties.Single().Name == "CoachId" &&
+                key.DeleteBehavior == Microsoft.EntityFrameworkCore.DeleteBehavior.Restrict);
+        });
     }
 
     private static CoachHubDbContext CreateContext()

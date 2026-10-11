@@ -7,7 +7,7 @@ public sealed class ReferenceDataTests
     [Fact]
     public void Package_requires_english_but_allows_missing_arabic_name()
     {
-        var package = Package.Create("  Online Coaching  ", null, " Monthly support ");
+        var package = Package.Create(Guid.NewGuid(), "  Online Coaching  ", null, " Monthly support ");
 
         Assert.Equal("Online Coaching", package.NameEn);
         Assert.Null(package.NameAr);

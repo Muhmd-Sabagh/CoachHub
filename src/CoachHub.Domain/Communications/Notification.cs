@@ -5,9 +5,11 @@ namespace CoachHub.Domain.Communications;
 public enum NotificationChannel { Email, WhatsApp }
 public enum NotificationStatus { Pending, Processing, Sent, Failed, Cancelled }
 
-public sealed class Notification : Entity
+public sealed class Notification : Entity, IOptionalTenantOwned
 {
     private Notification() { }
+    /// <summary>The coach that scheduled the message, or null for platform messages such as password resets.</summary>
+    public Guid? CoachId { get; private set; }
     public Guid? ClientId { get; private set; }
     public NotificationChannel Channel { get; private set; }
     public string Recipient { get; private set; } = string.Empty;
@@ -19,13 +21,13 @@ public sealed class Notification : Entity
     public DateTimeOffset? SentAt { get; private set; }
     public string? LastError { get; private set; }
 
-    public static Notification Schedule(Guid? clientId, NotificationChannel channel, string recipient,
+    public static Notification Schedule(Guid? coachId, Guid? clientId, NotificationChannel channel, string recipient,
         string subject, string body, DateTimeOffset scheduledAt)
     {
         recipient = Required(recipient, 320, nameof(recipient));
         subject = Required(subject, 200, nameof(subject));
         body = Required(body, 10_000, nameof(body));
-        return new() { ClientId = clientId, Channel = channel, Recipient = recipient,
+        return new() { CoachId = TenantKey.Optional(coachId), ClientId = clientId, Channel = channel, Recipient = recipient,
             Subject = subject, Body = body, ScheduledAt = scheduledAt, Status = NotificationStatus.Pending };
     }
 

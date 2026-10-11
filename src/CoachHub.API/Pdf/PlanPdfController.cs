@@ -9,7 +9,7 @@ using Microsoft.Net.Http.Headers;
 namespace CoachHub.API.Pdf;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManagePlans)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 public sealed class PlanPdfController(PlanPdfService service) : ControllerBase
 {
     [HttpGet(ApiRoutes.V1 + "/diet-plans/{id:guid}/pdf/preview")]

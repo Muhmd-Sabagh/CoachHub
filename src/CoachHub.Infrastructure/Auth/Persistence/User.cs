@@ -10,5 +10,9 @@ public sealed class User : IdentityUser<Guid>
 
     public DateTimeOffset? LastLoginAt { get; set; }
 
+    /// <summary>Set for Coach accounts: the coach (tenant) this login belongs to.</summary>
+    public Guid? CoachId { get; set; }
+
+    /// <summary>Set for Client accounts: the client this login belongs to.</summary>
     public Guid? ClientId { get; set; }
 }

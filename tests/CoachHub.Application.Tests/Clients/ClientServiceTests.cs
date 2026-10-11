@@ -11,7 +11,8 @@ public sealed class ClientServiceTests
     {
         var repository = new FakeRepository();
         var generator = new FakeGenerator();
-        var service = new ClientService(repository, generator, TimeProvider.System);
+        var service = new ClientService(
+            repository, generator, TestTenancy.CoachOwnership(), new FakeCoachRepository(), TimeProvider.System);
 
         var result = await service.CreateAsync(
             new ClientCreateInput("Client", null, null, new DateOnly(2026, 1, 1)),
@@ -21,6 +22,7 @@ public sealed class ClientServiceTests
         Assert.Equal("CCCCCCCCCC", result.FormCode);
         Assert.Equal(2, repository.ClientCodeChecks);
         Assert.NotEqual(result.ClientCode, result.FormCode);
+        Assert.Equal(TestTenancy.CoachId, result.CoachId);
     }
 
     private sealed class FakeGenerator : IClientCodeGenerator
@@ -40,6 +42,8 @@ public sealed class ClientServiceTests
         public Task AddAsync(Client client, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteAsync(Client client, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<bool> HasProtectedHistoryAsync(Client client, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task TransferAsync(Client client, Guid toCoachId, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Subscription?>(null);
         public Task AddSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddRenewalAsync(SubscriptionRenewal renewal, CancellationToken cancellationToken) => Task.CompletedTask;

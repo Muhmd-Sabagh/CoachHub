@@ -2,7 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 
-export interface Account { id: string; email: string; displayName: string; isActive: boolean; clientId?: string; roles: string[]; permissions: string[]; }
+/** Every account has exactly one role. Coach accounts are created on the Coaches page. */
+export interface Account { id: string; email: string; userName: string; displayName: string; isActive: boolean; role: string; coachId?: string | null; clientId?: string | null; }
 export interface Invoice { id: string; clientId: string; number: string; total: number; paid: number; balance: number; status: string; issuedAt: string; payments: unknown[]; }
 export interface Notification { id: string; channel: string; recipient: string; subject: string; scheduledAt: string; status: string; attemptCount: number; lastError?: string; }
 

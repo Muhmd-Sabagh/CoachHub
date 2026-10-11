@@ -23,4 +23,4 @@ Phase 1 does not define a DbContext or feature tables. Phase 2 will add one fres
 
 ## Configuration
 
-CoachHubOptions is bound from the CoachHub configuration section and validated at startup. Secrets and production connection strings must be supplied outside committed settings files.
+Options are bound from configuration and validated at startup. Secrets and production connection strings must be supplied outside committed settings files. (The former `CoachHubOptions.CoachName` setting was removed in P1: the coach name now comes from the signed-in coach's tenant record.)

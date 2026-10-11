@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CoachHub.API.Assessments;
 
-[ApiController, Authorize(Roles = AuthRoles.Administrator), Route(ApiRoutes.V1 + "/assessment-submissions")]
+[ApiController, Authorize(Policy = AuthPolicies.CoachOrAdmin), Route(ApiRoutes.V1 + "/assessment-submissions")]
 public sealed class AssessmentSubmissionsController(AssessmentAdminQueryService service) : ControllerBase
 {
     [HttpGet] public Task<PagedResult<AssessmentSubmissionSummary>> List([FromQuery] AssessmentSubmissionQuery query, CancellationToken token) => service.ListSubmissionsAsync(query, token);

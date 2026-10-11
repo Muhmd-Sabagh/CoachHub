@@ -1,5 +1,9 @@
 # Phase 2 persistence baseline
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D7, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
+>
+> - P1: the legacy migration history was squashed into one `ProductBaseline` migration that includes coach tenancy; global tenant query filters now apply to every coach-owned entity.
+
 ## Scope
 
 This change establishes only the non-feature persistence skeleton requested by the migration plan:

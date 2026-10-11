@@ -1,8 +1,11 @@
 using CoachHub.Application.Auditing;
+using CoachHub.Application.Common.Exceptions;
+using CoachHub.Application.Common.Tenancy;
 using CoachHub.Domain.Auditing;
 using CoachHub.Domain.Common;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Billing;
+using CoachHub.Domain.Coaches;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Infrastructure.Auth.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -13,7 +16,8 @@ namespace CoachHub.Infrastructure.Persistence;
 
 public sealed class CoachHubDbContext(
     DbContextOptions<CoachHubDbContext> options,
-    IAuditActorAccessor? auditActorAccessor = null)
+    IAuditActorAccessor? auditActorAccessor = null,
+    ICurrentUser? currentUser = null)
     : IdentityDbContext<
         User,
         Role,
@@ -24,8 +28,16 @@ public sealed class CoachHubDbContext(
         IdentityRoleClaim<Guid>,
         IdentityUserToken<Guid>>(options)
 {
+    // Read by the tenant query filters on every query; see TenantModel. A context without a
+    // current user (design time, background work, tests) is unrestricted.
+    internal bool TenantUnrestricted => currentUser is null || currentUser.Scope == TenantScope.Unrestricted;
+    internal bool TenantClientScoped => currentUser?.Scope == TenantScope.Client;
+    internal Guid TenantCoachId => currentUser?.CoachId ?? Guid.Empty;
+    internal Guid TenantClientId => currentUser?.ClientId ?? Guid.Empty;
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
+        EnforceTenantOwnership();
         CaptureAuditEntries();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
@@ -34,6 +46,7 @@ public sealed class CoachHubDbContext(
         bool acceptAllChangesOnSuccess,
         CancellationToken cancellationToken = default)
     {
+        EnforceTenantOwnership();
         CaptureAuditEntries();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
@@ -52,6 +65,8 @@ public sealed class CoachHubDbContext(
             builder.Property(user => user.DisplayName).HasMaxLength(200).IsRequired();
             builder.HasIndex(user => user.ClientId).IsUnique().HasFilter("[ClientId] IS NOT NULL");
             builder.HasOne<Client>().WithOne().HasForeignKey<User>(user => user.ClientId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasIndex(user => user.CoachId).IsUnique().HasFilter("[CoachId] IS NOT NULL");
+            builder.HasOne<Coach>().WithOne().HasForeignKey<User>(user => user.CoachId).OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<Role>().ToTable("Roles");
         modelBuilder.Entity<UserRole>().ToTable("UserRoles");
@@ -59,6 +74,36 @@ public sealed class CoachHubDbContext(
         modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("UserLogins");
         modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("RoleClaims");
         modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("UserTokens");
+        TenantModel.Apply(modelBuilder, this);
+    }
+
+    /// <summary>
+    /// Defense in depth behind the query filters: a coach or client may only write rows of
+    /// their own coach, and anonymous callers may not write coach-owned rows at all.
+    /// </summary>
+    private void EnforceTenantOwnership()
+    {
+        if (TenantUnrestricted) return;
+        ChangeTracker.DetectChanges();
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted)) continue;
+            Guid? owner = entry.Entity switch
+            {
+                ITenantOwned owned => owned.CoachId,
+                IOptionalTenantOwned owned => owned.CoachId,
+                _ => Guid.Empty
+            };
+            if (owner == Guid.Empty) continue;
+            var original = entry.State == EntityState.Modified &&
+                entry.Metadata.FindProperty(nameof(ITenantOwned.CoachId)) is not null
+                    ? entry.Property(nameof(ITenantOwned.CoachId)).OriginalValue as Guid?
+                    : owner;
+            if (TenantCoachId == Guid.Empty || owner != TenantCoachId || original != TenantCoachId)
+            {
+                throw new ForbiddenException("The record belongs to another coach.");
+            }
+        }
     }
 
     private void CaptureAuditEntries()

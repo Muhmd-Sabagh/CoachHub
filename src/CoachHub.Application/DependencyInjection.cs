@@ -3,6 +3,7 @@ using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Billing;
+using CoachHub.Application.Coaches;
 using CoachHub.Application.Communications;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
@@ -24,6 +25,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<AuditQueryService>();
+        services.AddScoped<CoachOwnership>();
         services.AddScoped<LoginCommandHandler>();
         services.AddScoped<BillingService>();
         services.AddScoped<NotificationService>();

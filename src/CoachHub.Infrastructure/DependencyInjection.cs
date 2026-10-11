@@ -3,6 +3,7 @@ using CoachHub.Application.Assessments;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Billing;
+using CoachHub.Application.Coaches;
 using CoachHub.Application.Communications;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
@@ -21,6 +22,7 @@ using CoachHub.Infrastructure.Assessments.Importing;
 using CoachHub.Infrastructure.Auth;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Billing;
+using CoachHub.Infrastructure.Coaches;
 using CoachHub.Infrastructure.Communications;
 using CoachHub.Infrastructure.Clients;
 using CoachHub.Infrastructure.DietPlanning;
@@ -86,6 +88,8 @@ public static class DependencyInjection
 
         services.AddScoped<IIdentityGateway, IdentityGateway>();
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<ICoachRepository, CoachRepository>();
+        services.AddScoped<ICoachAdministrationService, CoachAdministrationService>();
         services.AddScoped<IBillingRepository, BillingRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IPlanDeliveryRepository, PlanDeliveryRepository>();

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.WorkoutPlanning;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManagePlans)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/workout-plans")]
 public sealed class WorkoutPlansController(WorkoutPlanService service) : ControllerBase
 {

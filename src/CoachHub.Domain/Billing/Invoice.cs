@@ -5,9 +5,11 @@ namespace CoachHub.Domain.Billing;
 public enum InvoiceStatus { Draft, Issued, PartiallyPaid, Paid, Voided, Refunded }
 public enum PaymentStatus { Pending, Settled, Failed, Refunded, PartiallyRefunded }
 
-public sealed class Invoice : Entity
+public sealed class Invoice : Entity, ITenantOwned
 {
     private Invoice() { }
+    /// <summary>The coach who issued the invoice. Never changes (D7).</summary>
+    public Guid CoachId { get; private set; }
     public Guid ClientId { get; private set; }
     public Guid? SubscriptionId { get; private set; }
     public string Number { get; private set; } = string.Empty;
@@ -20,14 +22,14 @@ public sealed class Invoice : Entity
     public IReadOnlyCollection<Payment> Payments => _payments;
     private readonly List<Payment> _payments = [];
 
-    public static Invoice Create(Guid clientId, Guid? subscriptionId, string number, Guid currencyId,
+    public static Invoice Create(Guid coachId, Guid clientId, Guid? subscriptionId, string number, Guid currencyId,
         decimal total, DateTimeOffset issuedAt, DateTimeOffset? dueAt)
     {
         if (clientId == Guid.Empty || currencyId == Guid.Empty) throw new ArgumentException("Client and currency are required.");
         number = Required(number, 50, nameof(number));
         if (total <= 0 || total > 1_000_000m) throw new ArgumentOutOfRangeException(nameof(total));
         if (dueAt < issuedAt) throw new ArgumentException("Due date cannot precede issue date.", nameof(dueAt));
-        return new() { ClientId = clientId, SubscriptionId = subscriptionId, Number = number,
+        return new() { CoachId = TenantKey.Required(coachId), ClientId = clientId, SubscriptionId = subscriptionId, Number = number,
             CurrencyId = currencyId, Total = total, IssuedAt = issuedAt, DueAt = dueAt, Status = InvoiceStatus.Issued };
     }
 

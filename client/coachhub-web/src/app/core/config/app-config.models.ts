@@ -1,1 +1,1 @@
-export interface CoachHubSettings { productName: string; coachName: string; }
+export interface CoachHubSettings { productName: string; coachName: string | null; }

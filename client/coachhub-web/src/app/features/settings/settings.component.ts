@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
 import { AppConfigService } from '../../core/config/app-config.service';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -9,6 +10,8 @@ interface Resource {
   key: ReferenceKey;
   label: string;
   kind: 'bilingual' | 'package' | 'currency' | 'payment';
+  /** Coach-owned data belongs to the signed-in coach; platform data is Admin-managed (D7). */
+  owner: 'coach' | 'platform';
 }
 @Component({
   selector: 'app-settings',
@@ -17,11 +20,11 @@ interface Resource {
 })
 export class SettingsComponent implements OnInit {
   readonly resources: Resource[] = [
-    { key: 'packages', label: 'Packages', kind: 'package' },
-    { key: 'currencies', label: 'Currencies', kind: 'currency' },
-    { key: 'payment-accounts', label: 'Payment accounts', kind: 'payment' },
-    { key: 'food-categories', label: 'Food categories', kind: 'bilingual' },
-    { key: 'exercise-categories', label: 'Exercise categories', kind: 'bilingual' },
+    { key: 'packages', label: 'Packages', kind: 'package', owner: 'coach' },
+    { key: 'currencies', label: 'Currencies', kind: 'currency', owner: 'platform' },
+    { key: 'payment-accounts', label: 'Payment accounts', kind: 'payment', owner: 'coach' },
+    { key: 'food-categories', label: 'Food categories', kind: 'bilingual', owner: 'platform' },
+    { key: 'exercise-categories', label: 'Exercise categories', kind: 'bilingual', owner: 'platform' },
   ];
   resource = this.resources[0];
   page: PagedResult<ReferenceRecord> = emptyPage();
@@ -37,7 +40,15 @@ export class SettingsComponent implements OnInit {
   constructor(
     readonly config: AppConfigService,
     private readonly data: ReferenceDataService,
+    private readonly auth: AuthService,
   ) {}
+  /** Coaches create their own packages and accounts; administrators create platform data. */
+  get canCreate(): boolean {
+    return this.resource.owner === 'platform' ? this.auth.isAdmin() : this.auth.isCoach();
+  }
+  get canModify(): boolean {
+    return this.resource.owner === 'platform' ? this.auth.isAdmin() : this.auth.isCoach() || this.auth.isAdmin();
+  }
   ngOnInit(): void {
     this.load();
   }

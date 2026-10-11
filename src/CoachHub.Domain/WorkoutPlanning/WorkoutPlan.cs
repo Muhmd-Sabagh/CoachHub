@@ -2,17 +2,18 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.WorkoutPlanning;
 
-public sealed class WorkoutPlan : Entity
+public sealed class WorkoutPlan : Entity, ITenantOwned
 {
     private WorkoutPlan() { }
+    public Guid CoachId { get; private set; }
     public string NameEn { get; private set; } = string.Empty;
     public string? NameAr { get; private set; }
     public Guid? ClientId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public static WorkoutPlan Create(string nameEn, string? nameAr, Guid? clientId, DateTimeOffset createdAt)
+    public static WorkoutPlan Create(Guid coachId, string nameEn, string? nameAr, Guid? clientId, DateTimeOffset createdAt)
     {
-        var plan = new WorkoutPlan { CreatedAt = createdAt };
+        var plan = new WorkoutPlan { CoachId = TenantKey.Required(coachId), CreatedAt = createdAt };
         plan.Update(nameEn, nameAr, clientId);
         return plan;
     }

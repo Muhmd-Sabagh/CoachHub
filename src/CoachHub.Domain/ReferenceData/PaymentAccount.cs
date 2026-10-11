@@ -1,15 +1,19 @@
+using CoachHub.Domain.Common;
+
 namespace CoachHub.Domain.ReferenceData;
 
-public sealed class PaymentAccount : ActiveReferenceEntity
+public sealed class PaymentAccount : ActiveReferenceEntity, ITenantOwned
 {
     private PaymentAccount() { }
+
+    public Guid CoachId { get; private set; }
 
     public string Name { get; private set; } = string.Empty;
     public string? Details { get; private set; }
 
-    public static PaymentAccount Create(string name, string? details, bool isActive = true)
+    public static PaymentAccount Create(Guid coachId, string name, string? details, bool isActive = true)
     {
-        var item = new PaymentAccount();
+        var item = new PaymentAccount { CoachId = TenantKey.Required(coachId) };
         item.Update(name, details, isActive);
         return item;
     }

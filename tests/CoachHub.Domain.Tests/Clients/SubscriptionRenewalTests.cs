@@ -66,6 +66,7 @@ public sealed class SubscriptionRenewalTests
         Subscription.Create(
             Guid.NewGuid(),
             Guid.NewGuid(),
+            Guid.NewGuid(),
             startDate,
             1,
             100,

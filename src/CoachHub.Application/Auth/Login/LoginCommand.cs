@@ -1,3 +1,4 @@
 namespace CoachHub.Application.Auth.Login;
 
-public sealed record LoginCommand(string Email, string Password);
+/// <summary>Login with an email address or a user name (§2).</summary>
+public sealed record LoginCommand(string Login, string Password);

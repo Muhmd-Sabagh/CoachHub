@@ -17,5 +17,6 @@ public interface IBillingRepository
     Task AddInvoiceAsync(Invoice invoice, CancellationToken token);
     Task AddPaymentAsync(Payment payment, CancellationToken token);
     Task SaveAsync(CancellationToken token);
-    Task<int> NextInvoiceSequenceAsync(int year, CancellationToken token);
+    /// <summary>Invoice numbers are sequential per coach and year (D7).</summary>
+    Task<int> NextInvoiceSequenceAsync(Guid coachId, int year, CancellationToken token);
 }

@@ -3,7 +3,8 @@ using CoachHub.Domain.Assessments;
 
 namespace CoachHub.Application.Assessments;
 
-public sealed record CreateFormInput(string Name, AssessmentFormType FormType);
+/// <param name="CoachId">Required when an administrator creates the form; ignored for coaches.</param>
+public sealed record CreateFormInput(string Name, AssessmentFormType FormType, Guid? CoachId = null);
 public sealed record SectionInput(string Title, int Order);
 public sealed record OptionInput(string Value, string Label, int Order);
 public sealed record QuestionInput(

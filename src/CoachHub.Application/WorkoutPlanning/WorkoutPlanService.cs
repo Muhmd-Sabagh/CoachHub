@@ -1,18 +1,21 @@
+using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Domain.WorkoutPlanning;
 
 namespace CoachHub.Application.WorkoutPlanning;
 
-public sealed class WorkoutPlanService(IWorkoutPlanRepository repository, TimeProvider timeProvider)
+public sealed class WorkoutPlanService(IWorkoutPlanRepository repository, CoachOwnership ownership, TimeProvider timeProvider)
 {
     public async Task<WorkoutPlanResponse> GetAsync(Guid id, CancellationToken cancellationToken) =>
         await MapAsync(await RequiredAsync(id, false, cancellationToken), cancellationToken);
 
-    public async Task<WorkoutPlanResponse> CreateAsync(WorkoutPlanInput input, CancellationToken cancellationToken)
+    public async Task<WorkoutPlanResponse> CreateAsync(WorkoutPlanInput input, CancellationToken cancellationToken) =>
+        await CreateForCoachAsync(await ResolveCoachAsync(input.ClientId, input.CoachId, cancellationToken), input, cancellationToken);
+
+    private async Task<WorkoutPlanResponse> CreateForCoachAsync(Guid coachId, WorkoutPlanInput input, CancellationToken cancellationToken)
     {
-        await ValidateClientAsync(input.ClientId, cancellationToken);
         WorkoutPlan? plan = null;
-        TryDomain(() => plan = WorkoutPlan.Create(input.NameEn, input.NameAr, input.ClientId, timeProvider.GetUtcNow()));
+        TryDomain(() => plan = WorkoutPlan.Create(coachId, input.NameEn, input.NameAr, input.ClientId, timeProvider.GetUtcNow()));
         var aggregate = Build(plan!, input);
         await ValidateExercisesAsync(aggregate, cancellationToken);
         await repository.AddAsync(aggregate, cancellationToken);
@@ -22,8 +25,8 @@ public sealed class WorkoutPlanService(IWorkoutPlanRepository repository, TimePr
     public async Task<WorkoutPlanResponse> UpdateAsync(
         Guid id, WorkoutPlanInput input, CancellationToken cancellationToken)
     {
-        await ValidateClientAsync(input.ClientId, cancellationToken);
         var existing = await RequiredAsync(id, true, cancellationToken);
+        await ValidateClientAsync(existing.Plan.CoachId, input.ClientId, cancellationToken);
         TryDomain(() => existing.Plan.Update(input.NameEn, input.NameAr, input.ClientId));
         var aggregate = Build(existing.Plan, input);
         await ValidateExercisesAsync(aggregate, cancellationToken);
@@ -35,6 +38,7 @@ public sealed class WorkoutPlanService(IWorkoutPlanRepository repository, TimePr
         Guid id, CopyWorkoutPlanInput input, CancellationToken cancellationToken)
     {
         var source = await RequiredAsync(id, false, cancellationToken);
+        await ValidateClientAsync(source.Plan.CoachId, input.ClientId, cancellationToken);
         var copyInput = new WorkoutPlanInput(input.NameEn, input.NameAr, input.ClientId,
             source.Notes.Select(x => new WorkoutPlanNoteInput(Guid.NewGuid(), x.Text, x.Order, x.IsActive)).ToArray(),
             source.Days.OrderBy(x => x.Order).Select(day => new WorkoutDayInput(
@@ -42,14 +46,14 @@ public sealed class WorkoutPlanService(IWorkoutPlanRepository repository, TimePr
                 source.Exercises.Where(x => x.WorkoutDayId == day.Id).OrderBy(x => x.Order).Select(x =>
                     new WorkoutExerciseInput(Guid.NewGuid(), x.ExerciseId, x.Order, x.Sets,
                         x.Repetitions, x.Rest, x.Tempo, x.RpeRir, x.Notes)).ToArray())).ToArray());
-        return await CreateAsync(copyInput, cancellationToken);
+        return await CreateForCoachAsync(source.Plan.CoachId, copyInput, cancellationToken);
     }
 
     public async Task<WorkoutPlanResponse> AssignAsync(
         Guid id, Guid? clientId, CancellationToken cancellationToken)
     {
-        await ValidateClientAsync(clientId, cancellationToken);
         var aggregate = await RequiredAsync(id, true, cancellationToken);
+        await ValidateClientAsync(aggregate.Plan.CoachId, clientId, cancellationToken);
         TryDomain(() => aggregate.Plan.Assign(clientId));
         await repository.SaveChangesAsync(cancellationToken);
         return await MapAsync(aggregate, cancellationToken);
@@ -115,17 +119,34 @@ public sealed class WorkoutPlanService(IWorkoutPlanRepository repository, TimePr
         if (ids.Any(x => !exercises.ContainsKey(x))) throw Validation("exerciseIds", "One or more exercises do not exist.");
     }
 
-    private async Task ValidateClientAsync(Guid? clientId, CancellationToken cancellationToken)
+    /// <summary>A client-assigned plan belongs to the client's coach; a template to the creating coach.</summary>
+    private async Task<Guid> ResolveCoachAsync(Guid? clientId, Guid? requestedCoachId, CancellationToken cancellationToken)
     {
-        if (clientId.HasValue && !await repository.ClientExistsAsync(clientId.Value, cancellationToken))
-            throw Validation("clientId", "The selected client does not exist.");
+        if (clientId is { } id)
+        {
+            var clientCoachId = await repository.FindClientCoachIdAsync(id, cancellationToken)
+                ?? throw Validation("clientId", "The selected client does not exist.");
+            if (requestedCoachId.HasValue && requestedCoachId.Value != clientCoachId)
+                throw Validation("coachId", "The client belongs to another coach.");
+            return clientCoachId;
+        }
+        return await ownership.ForNewRecordAsync(requestedCoachId, cancellationToken);
+    }
+
+    private async Task ValidateClientAsync(Guid planCoachId, Guid? clientId, CancellationToken cancellationToken)
+    {
+        if (clientId is not { } id) return;
+        var clientCoachId = await repository.FindClientCoachIdAsync(id, cancellationToken)
+            ?? throw Validation("clientId", "The selected client does not exist.");
+        if (clientCoachId != planCoachId)
+            throw Validation("clientId", "The client belongs to another coach.");
     }
 
     private async Task<WorkoutPlanResponse> MapAsync(WorkoutPlanAggregate aggregate, CancellationToken cancellationToken)
     {
         var catalog = await repository.FindExercisesAsync(
             aggregate.Exercises.Select(x => x.ExerciseId).Distinct().ToArray(), cancellationToken);
-        return new(aggregate.Plan.Id, aggregate.Plan.NameEn, aggregate.Plan.NameAr,
+        return new(aggregate.Plan.Id, aggregate.Plan.CoachId, aggregate.Plan.NameEn, aggregate.Plan.NameAr,
             aggregate.Plan.ClientId, aggregate.Plan.CreatedAt,
             aggregate.Notes.OrderBy(x => x.Order).Select(x => new WorkoutPlanNoteResponse(
                 x.Id, x.Text, x.Order, x.IsActive)).ToArray(),

@@ -18,11 +18,13 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
 {
     private readonly CoachHubApiFactory _factory;
     private readonly HttpClient _client;
+    private readonly HttpClient _admin;
 
     public DynamicAssessmentEndpointTests(CoachHubApiFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _admin = factory.CreateAdminClient();
     }
 
     [Fact]
@@ -131,7 +133,7 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
 
         Assert.Equal(
             HttpStatusCode.Conflict,
-            (await _client.DeleteAsync($"/api/v1/media/{media.Id}")).StatusCode);
+            (await _admin.DeleteAsync($"/api/v1/media/{media.Id}")).StatusCode);
     }
 
     [Fact]
@@ -144,14 +146,16 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
         Assert.DoesNotContain("BADFORM001", await response.Content.ReadAsStringAsync());
     }
 
+    private System.Net.Http.Headers.AuthenticationHeaderValue? _coachAuthorization;
+
+    /// <summary>
+    /// Signs in as this test's coach (created on first use): tenant data is created in that
+    /// coach's workspace, isolated from every other test.
+    /// </summary>
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync(
-            "/api/v1/auth/login",
-            new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
-        response.EnsureSuccessStatusCode();
-        var login = await response.Content.ReadFromJsonAsync<LoginResult>();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login!.AccessToken);
+        _coachAuthorization ??= (await _factory.CreateCoachClientAsync()).DefaultRequestHeaders.Authorization;
+        _client.DefaultRequestHeaders.Authorization = _coachAuthorization;
     }
 
     private async Task<ClientResponse> CreateClientAsync() => await PostAsync<ClientResponse>(

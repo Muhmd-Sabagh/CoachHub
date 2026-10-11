@@ -2,10 +2,11 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Clients;
 
-public sealed class SubscriptionRenewal : Entity
+public sealed class SubscriptionRenewal : Entity, ITenantOwned
 {
     private SubscriptionRenewal() { }
 
+    public Guid CoachId { get; private set; }
     public Guid SubscriptionId { get; private set; }
     public int SequenceNumber { get; private set; }
     public DateOnly PreviousEndDate { get; private set; }
@@ -17,6 +18,7 @@ public sealed class SubscriptionRenewal : Entity
     public DateTimeOffset RecordedAt { get; private set; }
 
     internal static SubscriptionRenewal Create(
+        Guid coachId,
         Guid subscriptionId,
         int sequenceNumber,
         DateOnly previousEndDate,
@@ -39,6 +41,7 @@ public sealed class SubscriptionRenewal : Entity
 
         return new SubscriptionRenewal
         {
+            CoachId = TenantKey.Required(coachId),
             SubscriptionId = subscriptionId,
             SequenceNumber = sequenceNumber,
             PreviousEndDate = previousEndDate,

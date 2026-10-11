@@ -18,10 +18,10 @@ public sealed class FormVersionTests
     {
         var clientId = Guid.NewGuid();
         var initial = FormSubmission.Create(
-            clientId, Guid.NewGuid(), Guid.NewGuid(), AssessmentFormType.InitialAssessment,
+            Guid.NewGuid(), clientId, Guid.NewGuid(), Guid.NewGuid(), AssessmentFormType.InitialAssessment,
             SubmissionSource.CoachHubSystem, DateTimeOffset.UtcNow);
         var update = FormSubmission.Create(
-            clientId, Guid.NewGuid(), Guid.NewGuid(), AssessmentFormType.UpdateAssessment,
+            Guid.NewGuid(), clientId, Guid.NewGuid(), Guid.NewGuid(), AssessmentFormType.UpdateAssessment,
             SubmissionSource.CoachHubSystem, DateTimeOffset.UtcNow);
         Assert.Equal(clientId, initial.InitialClientId);
         Assert.Null(update.InitialClientId);

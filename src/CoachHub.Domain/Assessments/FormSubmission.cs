@@ -2,9 +2,10 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Assessments;
 
-public sealed class FormSubmission : Entity
+public sealed class FormSubmission : Entity, ITenantOwned
 {
     private FormSubmission() { }
+    public Guid CoachId { get; private set; }
     public Guid ClientId { get; private set; }
     public Guid FormDefinitionId { get; private set; }
     public Guid FormVersionId { get; private set; }
@@ -16,7 +17,7 @@ public sealed class FormSubmission : Entity
     public string? ExternalSubmissionId { get; private set; }
 
     public static FormSubmission Create(
-        Guid clientId, Guid definitionId, Guid versionId, AssessmentFormType formType,
+        Guid coachId, Guid clientId, Guid definitionId, Guid versionId, AssessmentFormType formType,
         SubmissionSource source, DateTimeOffset submittedAt,
         string? importFingerprint = null, string? externalSubmissionId = null)
     {
@@ -24,7 +25,7 @@ public sealed class FormSubmission : Entity
             throw new ArgumentException("Client, definition, and version are required.");
         return new FormSubmission
         {
-            ClientId = clientId, FormDefinitionId = definitionId, FormVersionId = versionId,
+            CoachId = TenantKey.Required(coachId), ClientId = clientId, FormDefinitionId = definitionId, FormVersionId = versionId,
             FormType = formType,
             InitialClientId = formType == AssessmentFormType.InitialAssessment ? clientId : null,
             Source = source, SubmittedAt = submittedAt,

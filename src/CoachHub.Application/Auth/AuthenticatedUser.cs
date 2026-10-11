@@ -5,5 +5,5 @@ public sealed record AuthenticatedUser(
     string Email,
     string DisplayName,
     IReadOnlyList<string> Roles,
-    IReadOnlyList<string> Permissions,
+    Guid? CoachId,
     Guid? ClientId);

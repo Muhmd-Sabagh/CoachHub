@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachHub.API.SavedPlans;
 
 [ApiController]
-[Authorize(Policy = AuthPermissions.ManagePlans)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/saved-plans")]
 public sealed class SavedPlansController(SavedPlanQueryService service) : ControllerBase
 {

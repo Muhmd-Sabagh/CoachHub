@@ -5,7 +5,8 @@ public sealed record DietPlanInput(
     string? NameAr,
     Guid? ClientId,
     IReadOnlyCollection<DietPlanNoteInput> Notes,
-    IReadOnlyCollection<DietPlanVersionInput> Versions);
+    IReadOnlyCollection<DietPlanVersionInput> Versions,
+    Guid? CoachId = null);
 
 public sealed record DietPlanNoteInput(Guid Id, string Text, int Order, bool IsActive);
 public sealed record DietPlanVersionInput(
@@ -41,7 +42,7 @@ public sealed record NutritionTotals(
 }
 
 public sealed record DietPlanResponse(
-    Guid Id, string NameEn, string? NameAr, Guid? ClientId, DateTimeOffset CreatedAt,
+    Guid Id, Guid CoachId, string NameEn, string? NameAr, Guid? ClientId, DateTimeOffset CreatedAt,
     IReadOnlyList<DietPlanNoteResponse> Notes,
     IReadOnlyList<DietPlanVersionResponse> Versions,
     NutritionTotals Totals);

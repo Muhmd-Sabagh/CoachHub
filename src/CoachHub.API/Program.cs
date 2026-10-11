@@ -2,21 +2,15 @@ using CoachHub.API.Common.Routing;
 using CoachHub.API.Auditing;
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Errors;
-using CoachHub.API.Settings;
 using CoachHub.Application;
 using CoachHub.Application.Auditing;
+using CoachHub.Application.Common.Tenancy;
 using CoachHub.Infrastructure;
 using CoachHub.Infrastructure.Auth;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services
-    .AddOptions<CoachHubOptions>()
-    .BindConfiguration(CoachHubOptions.SectionName)
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(
@@ -25,6 +19,7 @@ builder.Services.AddInfrastructure(
 builder.Services.AddCoachHubAuthentication(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditActorAccessor, HttpAuditActorAccessor>();
+builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddControllers();
 builder.Services.AddRateLimiter(options =>
 {

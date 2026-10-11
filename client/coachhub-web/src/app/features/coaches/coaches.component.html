@@ -1,0 +1,56 @@
+<section class="dashboard-hero">
+  <div>
+    <p class="eyebrow">Platform administration</p>
+    <h1>Coaches</h1>
+    <p>Each coach runs an independent workspace with their own clients, plans, packages and revenue.</p>
+  </div>
+  <div class="hero-accent"><span>CO</span></div>
+</section>
+@if (error) { <p class="form-error">{{ error }}</p> }
+@if (message) { <p class="success-message">{{ message }}</p> }
+
+<section class="card workbench">
+  <div class="section-heading"><h2>Add coach</h2><span>Creates the workspace and its login</span></div>
+  <form class="form-grid" (ngSubmit)="create()">
+    <label><span>Display name *</span><input name="displayName" [(ngModel)]="editor.displayName" required maxlength="200" /></label>
+    <label><span>Email *</span><input type="email" name="email" [(ngModel)]="editor.email" required /></label>
+    <label><span>User name</span><input name="userName" [(ngModel)]="editor.userName" placeholder="Defaults to the email" /></label>
+    <label><span>Password</span><input type="password" name="password" [(ngModel)]="editor.password" autocomplete="new-password" placeholder="Leave empty to send a reset later" /></label>
+    <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving">Add coach</button></div>
+  </form>
+</section>
+
+<section class="card workbench">
+  <div class="section-heading toolbar">
+    <h2>All coaches</h2>
+    <form class="filter-row" (ngSubmit)="load(1)">
+      <label><span>Search</span><input name="search" [(ngModel)]="search" placeholder="Coach name" /></label>
+      <button class="button button-secondary" type="submit">Search</button>
+    </form>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Coach</th><th>Login</th><th>Clients</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        @for (coach of page.items; track coach.id) {
+          <tr>
+            <td><strong>{{ coach.displayName }}</strong></td>
+            <td>{{ coach.userName || coach.email || '—' }}</td>
+            <td>{{ coach.clientCount }}</td>
+            <td>{{ coach.isActive ? 'Active' : 'Inactive' }}</td>
+            <td><button class="link-button" type="button" (click)="toggle(coach)">{{ coach.isActive ? 'Deactivate' : 'Activate' }}</button></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5">{{ loading ? 'Loading…' : 'No coaches yet.' }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (page.totalPages > 1) {
+    <div class="toolbar">
+      <button class="button button-secondary" type="button" [disabled]="page.pageNumber <= 1" (click)="load(page.pageNumber - 1)">Previous</button>
+      <span>Page {{ page.pageNumber }} of {{ page.totalPages }}</span>
+      <button class="button button-secondary" type="button" [disabled]="page.pageNumber >= page.totalPages" (click)="load(page.pageNumber + 1)">Next</button>
+    </div>
+  }
+</section>

@@ -17,7 +17,7 @@ public sealed class LoginCommandHandler(
         }
 
         var user = await identityGateway.AuthenticateAsync(
-            command.Email.Trim(),
+            command.Login.Trim(),
             command.Password,
             cancellationToken);
 
@@ -35,7 +35,7 @@ public sealed class LoginCommandHandler(
             user.Email,
             user.DisplayName,
             user.Roles,
-            user.Permissions,
+            user.CoachId,
             user.ClientId);
     }
 
@@ -43,9 +43,9 @@ public sealed class LoginCommandHandler(
     {
         var errors = new Dictionary<string, string[]>();
 
-        if (string.IsNullOrWhiteSpace(command.Email))
+        if (string.IsNullOrWhiteSpace(command.Login))
         {
-            errors["email"] = ["Email is required."];
+            errors["login"] = ["Email or user name is required."];
         }
 
         if (string.IsNullOrWhiteSpace(command.Password))

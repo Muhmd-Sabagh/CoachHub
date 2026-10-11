@@ -12,7 +12,7 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
 {
     public void Configure(EntityTypeBuilder<Invoice> b)
     {
-        b.ToTable("Invoices"); b.HasKey(x => x.Id); b.Property(x => x.Number).HasMaxLength(50).IsRequired(); b.HasIndex(x => x.Number).IsUnique();
+        b.ToTable("Invoices"); b.HasKey(x => x.Id); b.Property(x => x.Number).HasMaxLength(50).IsRequired(); b.HasIndex(x => new { x.CoachId, x.Number }).IsUnique();
         b.Property(x => x.Total).HasPrecision(18, 2); b.Property(x => x.Paid).HasPrecision(18, 2); b.Property(x => x.Status).HasConversion<string>().HasMaxLength(30);
         b.HasIndex(x => new { x.ClientId, x.IssuedAt }); b.HasOne<Client>().WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<Subscription>().WithMany().HasForeignKey(x => x.SubscriptionId).OnDelete(DeleteBehavior.Restrict);
@@ -48,5 +48,6 @@ public sealed class BillingRepository(CoachHubDbContext db) : IBillingRepository
     public async Task AddInvoiceAsync(Invoice invoice, CancellationToken token) { db.Add(invoice); await db.SaveChangesAsync(token); }
     public async Task AddPaymentAsync(Payment payment, CancellationToken token) { db.Add(payment); await db.SaveChangesAsync(token); }
     public Task SaveAsync(CancellationToken token) => db.SaveChangesAsync(token);
-    public async Task<int> NextInvoiceSequenceAsync(int year, CancellationToken token) => await db.Set<Invoice>().CountAsync(x => x.IssuedAt.Year == year, token) + 1;
+    public async Task<int> NextInvoiceSequenceAsync(Guid coachId, int year, CancellationToken token) =>
+        await db.Set<Invoice>().IgnoreQueryFilters().CountAsync(x => x.CoachId == coachId && x.IssuedAt.Year == year, token) + 1;
 }

@@ -7,7 +7,7 @@ public sealed class WorkoutPlanTests
     [Fact]
     public void Workout_entities_preserve_flexible_prescription_text_and_optional_arabic()
     {
-        var plan = WorkoutPlan.Create("  Strength ", null, null, DateTimeOffset.UtcNow);
+        var plan = WorkoutPlan.Create(Guid.NewGuid(), "  Strength ", null, null, DateTimeOffset.UtcNow);
         var day = WorkoutDay.Create(Guid.NewGuid(), plan.Id, " Push ", " دفع ", "Upper", null, 0);
         var exercise = WorkoutExercise.Create(Guid.NewGuid(), day.Id, Guid.NewGuid(), 0,
             " 3-4 ", "8-12", "90-120s", "2-0-1-0", "RPE 8", " controlled ");

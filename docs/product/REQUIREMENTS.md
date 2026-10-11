@@ -6,7 +6,7 @@
 
 ## Precedence
 
-1. **Decisions D1–D6** (this section) win over everything else, including the requirement text they refine.
+1. **Decisions D1–D7** (this section) win over everything else, including the requirement text they refine.
 2. **Requirements §1–§63** (below) define the target product.
 3. **`docs/migration/PHASE_*.md`, `docs/architecture`, `docs/deployment`** describe how the current system was built. Where they conflict with 1 or 2, they are historical context, not constraints. Update or annotate them when the affected area is reworked.
 
@@ -74,6 +74,14 @@ Clients authenticate with their own account. Check-ins and assessments are submi
 ### D6 — Report revenue
 
 Admin and coach dashboards report **revenue** (§48), replacing the earlier "commercial activity, not revenue" framing. Revenue figures stay separated by currency and must define recognition clearly (e.g. settled payments minus refunds in the period).
+
+### D7 — Coaches are independent businesses
+
+Decided 2026-10-12, during P1. Each coach runs their own business on the platform.
+
+- **Coach-owned commercial records.** Packages, payment accounts, subscriptions, renewals, invoices, payments and refunds belong to the coach who sold them. That ownership never changes, and revenue is reported per coach. The Admin sees totals across coaches.
+- **Client transfer (§56).** The client record, plans assigned to the client, form submissions and delivered plans move to the new coach. The client's past subscriptions, invoices and payments stay in the previous coach's books, and the new coach starts a new subscription.
+- **Platform catalogs** (currencies, food and exercise categories, platform foods and exercises) are shared and Admin-managed.
 
 ---
 

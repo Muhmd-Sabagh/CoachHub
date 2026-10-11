@@ -13,21 +13,27 @@ namespace CoachHub.IntegrationTests.Pdf;
 
 public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
 {
+    private readonly CoachHubApiFactory _factory;
     private readonly HttpClient _client;
-    public PlanPdfEndpointTests(CoachHubApiFactory factory) =>
+    private readonly HttpClient _admin;
+    public PlanPdfEndpointTests(CoachHubApiFactory factory)
+    {
+        _factory = factory;
         _client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _admin = factory.CreateAdminClient();
+    }
 
     [Fact]
     public async Task Preview_and_download_generate_english_and_arabic_pdfs_without_server_files()
     {
         await AuthenticateAsync();
-        var foodCategory = await PostAsync<BilingualReferenceResponse>("/api/v1/reference-data/food-categories",
+        var foodCategory = await AdminPostAsync<BilingualReferenceResponse>("/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("PDF food " + Guid.NewGuid().ToString("N"), null));
-        var food = await PostAsync<FoodResponse>("/api/v1/nutrition/foods",
+        var food = await AdminPostAsync<FoodResponse>("/api/v1/nutrition/foods",
             new FoodInput("Oats", "شوفان", foodCategory.Id, "g", 389, 16.9m, 66.3m, 6.9m, null));
-        var exerciseCategory = await PostAsync<BilingualReferenceResponse>("/api/v1/reference-data/exercise-categories",
+        var exerciseCategory = await AdminPostAsync<BilingualReferenceResponse>("/api/v1/reference-data/exercise-categories",
             new BilingualReferenceInput("PDF exercise " + Guid.NewGuid().ToString("N"), null));
-        var press = await PostAsync<ExerciseResponse>("/api/v1/training/exercises",
+        var press = await AdminPostAsync<ExerciseResponse>("/api/v1/training/exercises",
             new ExerciseInput("Bench Press", "ضغط الصدر", exerciseCategory.Id, null, "https://youtu.be/example", true));
 
         var mealId = Guid.NewGuid();
@@ -89,18 +95,28 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
         Assert.Equal("%PDF", System.Text.Encoding.ASCII.GetString(bytes, 0, 4));
     }
 
+    private System.Net.Http.Headers.AuthenticationHeaderValue? _coachAuthorization;
+
+    /// <summary>
+    /// Signs in as this test's coach (created on first use): tenant data is created in that
+    /// coach's workspace, isolated from every other test.
+    /// </summary>
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/login",
-            new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
-        response.EnsureSuccessStatusCode();
-        var login = await response.Content.ReadFromJsonAsync<LoginResult>();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login!.AccessToken);
+        _coachAuthorization ??= (await _factory.CreateCoachClientAsync()).DefaultRequestHeaders.Authorization;
+        _client.DefaultRequestHeaders.Authorization = _coachAuthorization;
     }
 
     private async Task<T> PostAsync<T>(string uri, object input)
     {
         var response = await _client.PostAsJsonAsync(uri, input); response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<T>())!;
+    }
+
+    /// <summary>Platform catalog setup (foods, exercises, categories) is administrator work.</summary>
+    private async Task<T> AdminPostAsync<T>(string uri, object input)
+    {
+        var response = await _admin.PostAsJsonAsync(uri, input); response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<T>())!;
     }
 }

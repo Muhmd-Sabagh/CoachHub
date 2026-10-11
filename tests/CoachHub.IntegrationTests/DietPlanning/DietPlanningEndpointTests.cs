@@ -12,20 +12,26 @@ namespace CoachHub.IntegrationTests.DietPlanning;
 
 public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory>
 {
+    private readonly CoachHubApiFactory _factory;
     private readonly HttpClient _client;
-    public DietPlanningEndpointTests(CoachHubApiFactory factory) =>
+    private readonly HttpClient _admin;
+    public DietPlanningEndpointTests(CoachHubApiFactory factory)
+    {
+        _factory = factory;
         _client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _admin = factory.CreateAdminClient();
+    }
 
     [Fact]
     public async Task Administrator_can_create_reorder_assign_copy_and_calculate_complete_plan()
     {
         await AuthenticateAsync();
-        var category = await PostAsync<BilingualReferenceResponse>(
+        var category = await AdminPostAsync<BilingualReferenceResponse>(
             "/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("Diet planning " + Guid.NewGuid().ToString("N"), null));
-        var oats = await PostAsync<FoodResponse>("/api/v1/nutrition/foods",
+        var oats = await AdminPostAsync<FoodResponse>("/api/v1/nutrition/foods",
             new FoodInput("Oats", "شوفان", category.Id, "gram", 100, 10, 20, 5, null));
-        var eggs = await PostAsync<FoodResponse>("/api/v1/nutrition/foods",
+        var eggs = await AdminPostAsync<FoodResponse>("/api/v1/nutrition/foods",
             new FoodInput("Eggs", null, category.Id, "gram", 200, 20, 5, 10, null));
         var client = await PostAsync<ClientResponse>("/api/v1/clients",
             new ClientCreateInput("Plan client", null, null, null));
@@ -103,19 +109,29 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
         Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/v1/diet-plans/{copy.Id}")).StatusCode);
     }
 
+    private System.Net.Http.Headers.AuthenticationHeaderValue? _coachAuthorization;
+
+    /// <summary>
+    /// Signs in as this test's coach (created on first use): tenant data is created in that
+    /// coach's workspace, isolated from every other test.
+    /// </summary>
     private async Task AuthenticateAsync()
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/login",
-            new { email = CoachHubApiFactory.AdminEmail, password = CoachHubApiFactory.AdminPassword });
-        response.EnsureSuccessStatusCode();
-        var login = await response.Content.ReadFromJsonAsync<LoginResult>();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login!.AccessToken);
+        _coachAuthorization ??= (await _factory.CreateCoachClientAsync()).DefaultRequestHeaders.Authorization;
+        _client.DefaultRequestHeaders.Authorization = _coachAuthorization;
     }
 
     private async Task<T> PostAsync<T>(string uri, object input)
     {
         var response = await _client.PostAsJsonAsync(uri, input);
         response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<T>())!;
+    }
+
+    /// <summary>Platform catalog setup (foods, exercises, categories) is administrator work.</summary>
+    private async Task<T> AdminPostAsync<T>(string uri, object input)
+    {
+        var response = await _admin.PostAsJsonAsync(uri, input); response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<T>())!;
     }
 }

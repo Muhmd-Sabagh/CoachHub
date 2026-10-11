@@ -15,8 +15,10 @@ public sealed class AssessmentImportService(
     public async Task<ImportProfileResponse> CreateProfileAsync(
         SaveImportProfileInput input, CancellationToken cancellationToken)
     {
+        var definition = await formRepository.FindDefinitionAsync(input.FormDefinitionId, cancellationToken)
+            ?? throw Validation("formDefinitionId", "The selected form does not exist.");
         var profile = FormImportProfile.Create(
-            input.FormDefinitionId, input.Name, input.SheetName,
+            definition.CoachId, input.FormDefinitionId, input.Name, input.SheetName,
             input.FormCodeHeader, input.TimestampHeader, input.ExternalIdHeader);
         var mappings = await ValidateAndCreateMappingsAsync(profile, input.Mappings, cancellationToken);
         await repository.AddProfileAsync(profile, mappings, cancellationToken);
@@ -80,7 +82,7 @@ public sealed class AssessmentImportService(
                     continue;
                 }
                 var client = await repository.FindClientByFormCodeAsync(formCode, cancellationToken);
-                if (client is null || !client.IsActive)
+                if (client is null || !client.IsActive || client.CoachId != configured.Profile.CoachId)
                 {
                     unknownClient++;
                     diagnostics.Add(new(row.RowNumber, ImportRowStatus.UnknownClientOrCode,
@@ -126,7 +128,7 @@ public sealed class AssessmentImportService(
                 }
 
                 var submission = FormSubmission.Create(
-                    client.Id, graph.Definition.Id, graph.Version.Id, graph.Definition.FormType,
+                    client.CoachId, client.Id, graph.Definition.Id, graph.Version.Id, graph.Definition.FormType,
                     SubmissionSource.GoogleFormsExcelImport, submittedAt, fingerprint, externalId);
                 var entities = answers.Select(answer => FormAnswer.Create(
                     submission.Id, answer.Question, answer.Json, null, answer.ExternalMediaUrl)).ToArray();

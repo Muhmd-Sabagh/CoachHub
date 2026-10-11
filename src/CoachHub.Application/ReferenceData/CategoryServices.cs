@@ -8,7 +8,7 @@ public sealed class FoodCategoryService(IReferenceRepository<FoodCategory> repos
     protected override string ResourceName => "Food category";
     protected override void Validate(BilingualReferenceInput input) => ValidateNames(input);
     protected override string UniquenessKey(BilingualReferenceInput input) => input.NameEn;
-    protected override FoodCategory Create(BilingualReferenceInput input) =>
+    protected override FoodCategory Create(BilingualReferenceInput input, Guid? ownerCoachId) =>
         FoodCategory.Create(input.NameEn, input.NameAr, input.IsActive);
     protected override void Update(FoodCategory entity, BilingualReferenceInput input) =>
         entity.Update(input.NameEn, input.NameAr, input.IsActive);
@@ -36,7 +36,7 @@ public sealed class ExerciseCategoryService(IReferenceRepository<ExerciseCategor
         ThrowValidation(errors);
     }
     protected override string UniquenessKey(BilingualReferenceInput input) => input.NameEn;
-    protected override ExerciseCategory Create(BilingualReferenceInput input) =>
+    protected override ExerciseCategory Create(BilingualReferenceInput input, Guid? ownerCoachId) =>
         ExerciseCategory.Create(input.NameEn, input.NameAr, input.IsActive);
     protected override void Update(ExerciseCategory entity, BilingualReferenceInput input) =>
         entity.Update(input.NameEn, input.NameAr, input.IsActive);

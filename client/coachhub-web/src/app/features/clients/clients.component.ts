@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
+import { Coach, CoachesService } from '../coaches/coaches.service';
 import { ReferenceDataService, ReferenceRecord } from '../settings/reference-data.service';
 import { Client, ClientDetail, ClientsService, Subscription } from './clients.service';
 @Component({ selector: 'app-clients', templateUrl: './clients.component.html', standalone: false })
@@ -26,6 +28,9 @@ export class ClientsComponent implements OnInit {
   packages: ReferenceRecord[] = [];
   currencies: ReferenceRecord[] = [];
   accounts: ReferenceRecord[] = [];
+  coaches: Coach[] = [];
+  transferCoachId = '';
+  readonly isAdmin: boolean;
   editor = this.emptyClient();
   subscription = this.emptySubscription();
   renewal = this.emptyRenewal();
@@ -34,7 +39,10 @@ export class ClientsComponent implements OnInit {
     route: ActivatedRoute,
     private readonly data: ClientsService,
     private readonly refs: ReferenceDataService,
+    private readonly coachDirectory: CoachesService,
+    auth: AuthService,
   ) {
+    this.isAdmin = auth.isAdmin();
     this.subscriptionsWorkspace = route.snapshot.data['workspace'] === 'subscriptions';
     this.search = route.snapshot.queryParamMap.get('search') ?? '';
     this.appliedSearch = this.search;
@@ -49,7 +57,29 @@ export class ClientsComponent implements OnInit {
       this.currencies = x.currencies.items;
       this.accounts = x.accounts.items;
     });
+    if (this.isAdmin) {
+      this.coachDirectory.list({ pageSize: 100, isActive: true }).subscribe((p) => (this.coaches = p.items));
+    }
     this.load();
+  }
+  coachName(id: string | undefined): string {
+    return this.coaches.find((coach) => coach.id === id)?.displayName ?? '—';
+  }
+  transfer(): void {
+    if (!this.detail || !this.transferCoachId) return;
+    const id = this.detail.client.id;
+    this.saving = true;
+    this.data
+      .transfer(id, this.transferCoachId)
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: () => {
+          this.transferCoachId = '';
+          this.data.get(id).subscribe((d) => (this.detail = d));
+          this.load();
+        },
+        error: (e) => (this.error = apiErrorMessage(e)),
+      });
   }
   applySearch(): void {
     this.appliedSearch = this.search.trim();
@@ -90,6 +120,7 @@ export class ClientsComponent implements OnInit {
       dietStatus: c.dietStatus,
       workoutStatus: c.workoutStatus,
       isActive: c.isActive,
+      coachId: c.coachId,
     };
     this.editorOpen = true;
   }
@@ -99,6 +130,7 @@ export class ClientsComponent implements OnInit {
       phone: this.editor.phone || null,
       email: this.editor.email || null,
       joinDate: this.editor.joinDate || null,
+      coachId: this.isAdmin ? this.editor.coachId || null : null,
     };
     const update = {
       name: this.editor.name,
@@ -229,6 +261,7 @@ export class ClientsComponent implements OnInit {
       dietStatus: 'NotStarted',
       workoutStatus: 'NotStarted',
       isActive: true,
+      coachId: '',
     };
   }
   private emptyRenewal() {

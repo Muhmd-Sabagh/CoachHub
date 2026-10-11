@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import {
@@ -27,11 +28,15 @@ export class CatalogComponent implements OnInit {
   editingId: string | null = null;
   error = '';
   editor = this.emptyEditor();
+  /** The food and exercise catalogs are platform data: coaches read them, administrators edit them. */
+  readonly canEdit: boolean;
   constructor(
     route: ActivatedRoute,
     private readonly data: CatalogService,
     private readonly references: ReferenceDataService,
+    auth: AuthService,
   ) {
+    this.canEdit = auth.isAdmin();
     this.kind = route.snapshot.data['kind'] as CatalogKind;
     this.title = this.kind === 'foods' ? 'Foods' : 'Exercises';
     this.categoryKey = this.kind === 'foods' ? 'food-categories' : 'exercise-categories';

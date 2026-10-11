@@ -72,7 +72,7 @@ public sealed class FoodServiceTests
     {
         public Task<PagedResult<FoodCategory>> ListAsync(ReferenceListQuery query, CancellationToken cancellationToken) => Task.FromResult(new PagedResult<FoodCategory>([], 1, 20, 0));
         public Task<FoodCategory?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(category);
-        public Task<bool> KeyExistsAsync(string key, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task<bool> KeyExistsAsync(string key, Guid? excludingId, Guid? coachId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task AddAsync(FoodCategory entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteAsync(FoodCategory entity, CancellationToken cancellationToken) => Task.CompletedTask;

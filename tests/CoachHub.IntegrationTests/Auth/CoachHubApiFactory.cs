@@ -2,6 +2,7 @@ using CoachHub.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,8 +37,10 @@ public sealed class CoachHubApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<CoachHubDbContext>();
             services.RemoveAll<DbContextOptions<CoachHubDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<CoachHubDbContext>>();
-            services.AddDbContext<CoachHubDbContext>(options =>
-                options.UseInMemoryDatabase(_databaseName));
+            // InMemory has no transactions; services that open one (coach creation) still run here.
+            services.AddDbContext<CoachHubDbContext>(options => options
+                .UseInMemoryDatabase(_databaseName)
+                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
         });
     }
 }

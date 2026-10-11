@@ -25,7 +25,9 @@
       ><button class="button button-primary">Search</button
       ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
     </form>
-    <button class="button button-primary" type="button" (click)="create()">Add {{ title }}</button>
+    @if (canEdit) {
+      <button class="button button-primary" type="button" (click)="create()">Add {{ title }}</button>
+    }
   </div>
   @if (error) {
     <p class="form-error">{{ error }}</p>
@@ -79,8 +81,10 @@
             }
             <td><app-status-badge [value]="item.isActive ? 'Active' : 'Inactive'" /></td>
             <td class="actions">
-              <button class="link-button" (click)="edit(item)">Edit</button
-              ><button class="link-button danger" (click)="remove(item)">Delete</button>
+              @if (canEdit) {
+                <button class="link-button" (click)="edit(item)">Edit</button
+                ><button class="link-button danger" (click)="remove(item)">Delete</button>
+              }
             </td>
           </tr>
         }

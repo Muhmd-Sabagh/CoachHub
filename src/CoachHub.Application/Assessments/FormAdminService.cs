@@ -1,14 +1,16 @@
+using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Domain.Assessments;
 
 namespace CoachHub.Application.Assessments;
 
-public sealed class FormAdminService(IFormRepository repository, TimeProvider timeProvider)
+public sealed class FormAdminService(IFormRepository repository, CoachOwnership ownership, TimeProvider timeProvider)
 {
     public async Task<FormVersionResponse> CreateAsync(CreateFormInput input, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(input.Name)) throw Validation("name", "A form name is required.");
-        var definition = FormDefinition.Create(input.Name, input.FormType);
+        var coachId = await ownership.ForNewRecordAsync(input.CoachId, cancellationToken);
+        var definition = FormDefinition.Create(coachId, input.Name, input.FormType);
         var draft = FormVersion.CreateDraft(definition.Id, 1);
         await repository.AddFormAsync(definition, draft, cancellationToken);
         return Map(new(definition, draft, [], [], []));
