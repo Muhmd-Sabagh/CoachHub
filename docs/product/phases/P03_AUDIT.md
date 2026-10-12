@@ -1,6 +1,6 @@
 # P3 — Audit v2
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P3 · **Branch:** `phase/p03-audit` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P3 · **Branch:** `phase/p03-audit` · **Status:** Merged (PR #5).
 **Covers:** D2, §58.
 
 ## Purpose

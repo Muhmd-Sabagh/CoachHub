@@ -15,6 +15,7 @@ using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Reporting;
 using CoachHub.Application.SavedPlans;
+using CoachHub.Application.Settings;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,9 @@ public static class DependencyInjection
         services.AddScoped<CoachOwnership>();
         services.AddScoped<LoginCommandHandler>();
         services.AddScoped<SessionService>();
+        services.AddScoped<ITenantResolver, TenantResolver>();
+        services.AddScoped<BrandingService>();
+        services.AddScoped<SettingsService>();
         services.AddScoped<BillingService>();
         services.AddScoped<NotificationService>();
         services.AddScoped<PlanDeliveryService>();

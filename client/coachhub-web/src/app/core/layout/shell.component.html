@@ -1,7 +1,7 @@
 <div class="app-shell" [class.sidebar-open]="sidebarOpen">
   <button class="sidebar-backdrop" type="button" aria-label="Close navigation" (click)="closeSidebar()"></button>
   <aside class="sidebar">
-    <div class="sidebar-brand"><div class="brand-mark">CH</div><div><strong>{{ config.settings().productName }}</strong><span>{{ config.settings().coachName }}</span></div></div>
+    <div class="sidebar-brand">@if (branding.brand().logoUrl; as logo) { <img class="brand-logo" [src]="logo" [alt]="branding.brand().brandName" /> } @else { <div class="brand-mark">{{ initials(branding.brand().brandName) }}</div> }<div><strong>{{ branding.brand().brandName }}</strong><span>{{ config.settings().coachName }}</span></div></div>
     <p class="menu-caption">{{ 'shell.menu' | translate }}</p>
     <nav class="sidebar-nav">
       @for (item of navItems; track item.route) {

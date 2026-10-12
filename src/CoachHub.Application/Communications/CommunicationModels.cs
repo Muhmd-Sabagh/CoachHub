@@ -8,9 +8,20 @@ public sealed record NotificationResponse(Guid Id, Guid? ClientId, NotificationC
 public interface INotificationRepository
 {
     Task<IReadOnlyList<Notification>> ListAsync(CancellationToken token);
-    Task<IReadOnlyList<Notification>> DueAsync(DateTimeOffset now, int take, CancellationToken token);
+    /// <summary>
+    /// Due notifications. Coach workspace messages are only returned on <paramref name="coachChannels"/>,
+    /// so a disabled channel waits instead of failing; platform messages always go.
+    /// </summary>
+    Task<IReadOnlyList<Notification>> DueAsync(
+        DateTimeOffset now, int take, IReadOnlyCollection<NotificationChannel> coachChannels, CancellationToken token);
     Task<Notification?> FindAsync(Guid id, CancellationToken token);
     Task AddAsync(Notification notification, CancellationToken token);
     Task SaveAsync(CancellationToken token);
 }
-public interface INotificationSender { NotificationChannel Channel { get; } Task SendAsync(string recipient, string subject, string body, CancellationToken token); }
+public interface INotificationSender { NotificationChannel Channel { get; } Task SendAsync(OutgoingMessage message, CancellationToken token); }
+
+/// <summary>A message ready to send, with the brand it goes out under (D1, §63).</summary>
+public sealed record OutgoingMessage(string Recipient, string Subject, string Body, MessageBranding Branding);
+
+/// <summary>The sender's brand: display name, accent color, and the email header and footer text.</summary>
+public sealed record MessageBranding(string BrandName, string SenderName, string PrimaryColor, string? EmailHeader, string? EmailFooter);

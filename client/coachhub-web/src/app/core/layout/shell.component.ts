@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
+import { BrandingService, brandInitials } from '../branding/branding.service';
 import { AppConfigService } from '../config/app-config.service';
 import { I18nService } from '../i18n/i18n.service';
 import { ThemeService } from '../theme/theme.service';
@@ -22,12 +23,14 @@ export class ShellComponent implements OnInit {
     { route: '/plans', label: 'nav.plans', icon: 'PL', roles: staff },
     { route: '/operations', label: 'nav.operations', icon: 'OP', roles: staff },
     { route: '/audit', label: 'nav.audit', icon: 'AU', roles: staff },
-    { route: '/settings', label: 'nav.settings', icon: 'ST', roles: staff }
+    { route: '/settings', label: 'nav.settings', icon: 'ST', roles: staff },
+    { route: '/workspace', label: 'nav.workspace', icon: 'BR', roles: staff }
   ];
   get navItems(): NavItem[] {
     return this.allNavItems.filter(item => item.roles.some(role => this.auth.hasRole(role)));
   }
-  constructor(readonly auth: AuthService, readonly config: AppConfigService, readonly i18n: I18nService, readonly theme: ThemeService) {}
+  constructor(readonly auth: AuthService, readonly config: AppConfigService, readonly i18n: I18nService, readonly theme: ThemeService, readonly branding: BrandingService) {}
+  readonly initials = brandInitials;
   ngOnInit(): void { this.config.load().subscribe(); }
   closeSidebar(): void { this.sidebarOpen = false; }
 }

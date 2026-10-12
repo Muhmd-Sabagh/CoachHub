@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using CoachHub.API.Settings;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.ReferenceData;
 using CoachHub.IntegrationTests.Auth;
@@ -16,7 +15,7 @@ public sealed class ReferenceDataEndpointTests(CoachHubApiFactory factory) : ICl
         var coachId = await factory.CreateCoachAsync(coachName);
         var client = factory.CreateCoachClient(coachId);
 
-        var settings = await client.GetFromJsonAsync<SettingsResponse>("/api/v1/settings");
+        var settings = await client.GetFromJsonAsync<CoachHub.Application.Settings.WorkspaceSettingsResponse>("/api/v1/settings");
         Assert.NotNull(settings);
         Assert.Equal("CoachHub", settings.ProductName);
         Assert.Equal(coachName, settings.CoachName);

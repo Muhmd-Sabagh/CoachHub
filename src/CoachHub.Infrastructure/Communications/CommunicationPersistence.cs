@@ -19,7 +19,7 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
 public sealed class NotificationRepository(CoachHubDbContext db) : INotificationRepository
 {
     public async Task<IReadOnlyList<Notification>> ListAsync(CancellationToken token) => await db.Set<Notification>().AsNoTracking().OrderByDescending(x => x.ScheduledAt).Take(200).ToArrayAsync(token);
-    public async Task<IReadOnlyList<Notification>> DueAsync(DateTimeOffset now, int take, CancellationToken token) => await db.Set<Notification>().Where(x => (x.Status == NotificationStatus.Pending || x.Status == NotificationStatus.Failed) && x.AttemptCount < 5 && x.ScheduledAt <= now).OrderBy(x => x.ScheduledAt).Take(take).ToArrayAsync(token);
+    public async Task<IReadOnlyList<Notification>> DueAsync(DateTimeOffset now, int take, IReadOnlyCollection<NotificationChannel> coachChannels, CancellationToken token) => await db.Set<Notification>().Where(x => (x.Status == NotificationStatus.Pending || x.Status == NotificationStatus.Failed) && x.AttemptCount < 5 && x.ScheduledAt <= now && (x.CoachId == null || coachChannels.Contains(x.Channel))).OrderBy(x => x.ScheduledAt).Take(take).ToArrayAsync(token);
     public Task<Notification?> FindAsync(Guid id, CancellationToken token) => db.Set<Notification>().SingleOrDefaultAsync(x => x.Id == id, token);
     public async Task AddAsync(Notification item, CancellationToken token) { db.Add(item); await db.SaveChangesAsync(token); }
     public Task SaveAsync(CancellationToken token) => db.SaveChangesAsync(token);

@@ -1,6 +1,7 @@
 using System.Reflection;
 using CoachHub.API.Assessments;
 using CoachHub.API.Auth;
+using CoachHub.API.Settings;
 using CoachHub.Application.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,9 @@ public sealed class ControllerAuthorizationTests
     [
         $"{nameof(AuthController)}.{nameof(AuthController.Login)}",
         $"{nameof(AuthController)}.{nameof(AuthController.Refresh)}",
+        // D5 "authentication endpoints": the login page is branded before sign-in (P4).
+        $"{nameof(BrandingController)}.{nameof(BrandingController.Public)}",
+        $"{nameof(BrandingController)}.{nameof(BrandingController.Asset)}",
         $"{nameof(AuthController)}.{nameof(AuthController.RequestReset)}",
         $"{nameof(AuthController)}.{nameof(AuthController.Reset)}",
         $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.Validate)}",
@@ -73,6 +77,13 @@ public sealed class ControllerAuthorizationTests
         }
 
         Assert.True(offending.Count == 0, "Use AuthPolicies role policies: " + string.Join("; ", offending));
+    }
+
+    [Fact]
+    public void Public_branding_has_its_own_rate_limit_policy()
+    {
+        foreach (var action in new[] { nameof(BrandingController.Public), nameof(BrandingController.Asset) })
+            Assert.Equal("branding", typeof(BrandingController).GetMethod(action)!.GetCustomAttribute<EnableRateLimitingAttribute>()!.PolicyName);
     }
 
     [Fact]
