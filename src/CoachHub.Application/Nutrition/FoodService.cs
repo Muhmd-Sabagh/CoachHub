@@ -1,5 +1,7 @@
+using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
+using CoachHub.Application.Common.Tenancy;
 using CoachHub.Application.Media;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Domain.Nutrition;
@@ -7,10 +9,16 @@ using CoachHub.Domain.ReferenceData;
 
 namespace CoachHub.Application.Nutrition;
 
+/// <summary>
+/// The food catalog (§5): platform foods managed by administrators, plus each coach's custom foods.
+/// Searches cover both; the query filter hides other coaches' custom foods.
+/// </summary>
 public sealed class FoodService(
     IFoodRepository repository,
     IReferenceRepository<FoodCategory> categories,
-    IMediaRepository mediaRepository)
+    IMediaRepository mediaRepository,
+    CoachOwnership ownership,
+    ICurrentUser currentUser)
 {
     public async Task<PagedResult<FoodResponse>> ListAsync(
         FoodQuery query,
@@ -29,9 +37,12 @@ public sealed class FoodService(
 
     public async Task<FoodResponse> CreateAsync(FoodInput input, CancellationToken cancellationToken)
     {
-        Validate(input);
-        await ValidateReferencesAsync(input, cancellationToken);
-        var food = Create(input);
+        // An administrator creates platform foods unless they name a coach; a coach creates their own.
+        Guid? owner = currentUser.IsAdministrator && input.CoachId is null
+            ? null
+            : await ownership.ForNewRecordAsync(input.CoachId, cancellationToken);
+        await ValidateReferencesAsync(input, owner, cancellationToken);
+        var food = DomainValidation.Run(() => FoodItem.Create(owner, Values(input), UnitValues(input)), "food");
         await repository.AddAsync(food, cancellationToken);
         return Map(food);
     }
@@ -41,144 +52,98 @@ public sealed class FoodService(
         FoodInput input,
         CancellationToken cancellationToken)
     {
-        Validate(input);
-        await ValidateReferencesAsync(input, cancellationToken);
-        var food = await FindRequiredAsync(id, cancellationToken);
-        food.Update(
-            input.NameEn,
-            input.NameAr,
-            input.FoodCategoryId,
-            input.MeasurementUnit,
-            input.CaloriesPer100,
-            input.ProteinPer100,
-            input.CarbohydratesPer100,
-            input.FatPer100,
-            input.MediaId,
-            input.IsActive);
+        var food = await FindWritableAsync(id, cancellationToken);
+        await ValidateReferencesAsync(input, food.CoachId, cancellationToken);
+        DomainValidation.Run(() => food.Update(Values(input), UnitValues(input)), "food");
         await repository.SaveChangesAsync(cancellationToken);
         return Map(food);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        var food = await FindRequiredAsync(id, cancellationToken);
+        var food = await FindWritableAsync(id, cancellationToken);
         await repository.DeleteAsync(food, cancellationToken);
     }
 
-    internal static void Validate(FoodInput input)
-    {
-        var errors = new Dictionary<string, string[]>();
-        Required(errors, "nameEn", input.NameEn, 255);
-        Optional(errors, "nameAr", input.NameAr, 255);
-        Required(errors, "measurementUnit", input.MeasurementUnit, 50);
-        if (input.FoodCategoryId == Guid.Empty)
-        {
-            errors["foodCategoryId"] = ["A food category is required."];
-        }
-        Macro(errors, "caloriesPer100", input.CaloriesPer100, FoodItem.MaximumCaloriesPer100);
-        Macro(errors, "proteinPer100", input.ProteinPer100, FoodItem.MaximumProteinPer100);
-        Macro(
-            errors,
-            "carbohydratesPer100",
-            input.CarbohydratesPer100,
-            FoodItem.MaximumCarbohydratesPer100);
-        Macro(errors, "fatPer100", input.FatPer100, FoodItem.MaximumFatPer100);
-
-        if (errors.Count > 0)
-        {
-            throw new ValidationException(errors);
-        }
-    }
-
-    internal static FoodItem Create(FoodInput input) => FoodItem.Create(
+    internal static FoodValues Values(FoodInput input) => new(
         input.NameEn,
         input.NameAr,
         input.FoodCategoryId,
-        input.MeasurementUnit,
+        input.BaseUnit,
+        input.ServingSize ?? DefaultServing(input.BaseUnit),
         input.CaloriesPer100,
         input.ProteinPer100,
         input.CarbohydratesPer100,
         input.FatPer100,
+        input.FiberPer100,
+        input.SugarPer100,
+        input.SodiumMgPer100,
+        input.PieceNameEn,
+        input.PieceNameAr,
         input.MediaId,
         input.IsActive);
 
+    /// <summary>One piece, or 100 g / 100 ml, when no serving size is given.</summary>
+    internal static decimal DefaultServing(FoodBaseUnit unit) => unit == FoodBaseUnit.Piece ? 1m : 100m;
+
+    private static IReadOnlyCollection<FoodUnitValues> UnitValues(FoodInput input) =>
+        (input.Units ?? []).Select(unit => new FoodUnitValues(unit.Id, unit.NameEn, unit.NameAr, unit.BaseQuantity)).ToArray();
+
     internal static FoodResponse Map(FoodItem food) => new(
         food.Id,
+        food.CoachId,
+        !food.IsPlatform,
         food.NameEn,
         food.NameAr,
         food.FoodCategoryId,
-        food.MeasurementUnit,
+        food.BaseUnit,
+        food.BaseUnitLabel,
+        food.PieceNameEn,
+        food.PieceNameAr,
+        food.ServingSize,
         food.CaloriesPer100,
         food.ProteinPer100,
         food.CarbohydratesPer100,
         food.FatPer100,
+        food.FiberPer100,
+        food.SugarPer100,
+        food.SodiumMgPer100,
+        food.Units.OrderBy(unit => unit.Order)
+            .Select(unit => new FoodUnitResponse(unit.Id, unit.NameEn, unit.NameAr, unit.BaseQuantity)).ToArray(),
         food.MediaId,
         food.IsActive);
 
-    private async Task ValidateReferencesAsync(FoodInput input, CancellationToken cancellationToken)
+    private async Task ValidateReferencesAsync(FoodInput input, Guid? owner, CancellationToken cancellationToken)
     {
-        if (await categories.FindAsync(input.FoodCategoryId, cancellationToken) is null)
-        {
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                ["foodCategoryId"] = ["The selected food category does not exist."]
-            });
-        }
+        if (input.FoodCategoryId == Guid.Empty || await categories.FindAsync(input.FoodCategoryId, cancellationToken) is null)
+            throw Validation("foodCategoryId", "The selected food category does not exist.");
 
         if (input.MediaId.HasValue)
         {
             var media = await mediaRepository.FindAsync(input.MediaId.Value, cancellationToken);
-            if (!MediaService.IsPlatformImage(media))
-            {
-                throw new ValidationException(new Dictionary<string, string[]>
-                {
-                    ["mediaId"] = ["The selected media must be an existing platform image."]
-                });
-            }
+            // Platform foods show platform images only; a custom food may also use its coach's library.
+            var allowed = MediaService.IsPlatformImage(media) ||
+                (owner is { } coachId && MediaService.IsCoachLibraryImage(media, coachId));
+            if (!allowed)
+                throw Validation("mediaId", owner is null
+                    ? "The selected media must be an existing platform image."
+                    : "The selected media must be a platform image or an image in the coach's library.");
         }
+    }
+
+    /// <summary>A visible food the caller may change: administrators any, a coach only their own.</summary>
+    private async Task<FoodItem> FindWritableAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var food = await FindRequiredAsync(id, cancellationToken);
+        if (!currentUser.IsAdministrator && food.CoachId != currentUser.CoachId)
+            throw new ForbiddenException("Platform foods are managed by administrators. Create a custom food instead.");
+        return food;
     }
 
     private async Task<FoodItem> FindRequiredAsync(Guid id, CancellationToken cancellationToken) =>
         await repository.FindAsync(id, cancellationToken)
         ?? throw new NotFoundException("Food item", id);
 
-    private static void Required(
-        Dictionary<string, string[]> errors,
-        string field,
-        string? value,
-        int maximumLength)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            errors[field] = ["A value is required."];
-        }
-        else if (value.Trim().Length > maximumLength)
-        {
-            errors[field] = [$"The value cannot exceed {maximumLength} characters."];
-        }
-    }
-
-    private static void Optional(
-        Dictionary<string, string[]> errors,
-        string field,
-        string? value,
-        int maximumLength)
-    {
-        if (!string.IsNullOrWhiteSpace(value) && value.Trim().Length > maximumLength)
-        {
-            errors[field] = [$"The value cannot exceed {maximumLength} characters."];
-        }
-    }
-
-    private static void Macro(
-        Dictionary<string, string[]> errors,
-        string field,
-        decimal value,
-        decimal maximum)
-    {
-        if (value < 0 || value > maximum)
-        {
-            errors[field] = [$"The value must be between 0 and {maximum}."];
-        }
-    }
+    private static ValidationException Validation(string field, string message) =>
+        new(new Dictionary<string, string[]> { [field] = [message] });
 }

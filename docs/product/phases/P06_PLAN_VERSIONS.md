@@ -1,6 +1,6 @@
 # P6 — Plan versioning and program dates
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P6 · **Branch:** `phase/p06-plan-versions` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P6 · **Branch:** `phase/p06-plan-versions` · **Status:** Merged (PR #8).
 **Covers:** D4, §4 (plan start and end dates), §12 (edit, duplicate, multiple diets with dates), §59.
 
 ## Purpose

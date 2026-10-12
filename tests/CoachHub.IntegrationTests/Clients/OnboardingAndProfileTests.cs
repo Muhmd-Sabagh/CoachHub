@@ -12,6 +12,7 @@ using CoachHub.Domain.Communications;
 using CoachHub.Domain.Settings;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Persistence;
+using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 using CoachHub.IntegrationTests.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -96,7 +97,7 @@ public sealed partial class OnboardingAndProfileTests(CoachHubSqlApiFactory fact
         var category = await (await admin.PostAsJsonAsync("/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("Profile foods " + Guid.NewGuid().ToString("N")[..6], null))).Content.ReadFromJsonAsync<BilingualReferenceResponse>();
         var oats = await (await admin.PostAsJsonAsync("/api/v1/nutrition/foods",
-            new FoodInput("Oats " + Guid.NewGuid().ToString("N")[..6], null, category!.Id, "gram", 380, 13, 60, 7, null))).Content.ReadFromJsonAsync<FoodResponse>();
+            new FoodInput("Oats " + Guid.NewGuid().ToString("N")[..6], null, category!.Id, FoodBaseUnit.Gram, 380, 13, 60, 7, null))).Content.ReadFromJsonAsync<FoodResponse>();
         var coach = await factory.CreateCoachClientAsync();
         var otherCoach = await factory.CreateCoachClientAsync();
         var client = await CreateClientAsync(coach);

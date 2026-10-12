@@ -9,6 +9,7 @@ using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.SavedPlans;
 using CoachHub.Application.WorkoutPlanning;
+using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 
 namespace CoachHub.IntegrationTests.SavedPlans;
@@ -33,7 +34,7 @@ public sealed class SavedPlanQueryEndpointTests : IClassFixture<CoachHubApiFacto
         var category = await AdminPostAsync<BilingualReferenceResponse>("/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("Query foods " + Guid.NewGuid().ToString("N"), null));
         var food = await AdminPostAsync<FoodResponse>("/api/v1/nutrition/foods",
-            new FoodInput("Query food", null, category.Id, "gram", 100, 10, 20, 5, null));
+            new FoodInput("Query food", null, category.Id, FoodBaseUnit.Gram, 100, 10, 20, 5, null));
 
         var mealId = Guid.NewGuid();
         var diet = await PostAsync<DietPlanResponse>("/api/v1/diet-plans", new DietPlanInput(

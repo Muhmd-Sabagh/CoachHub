@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<ClientService>();
         services.AddScoped<SubscriptionService>();
         services.AddScoped<DietPlanService>();
+        services.AddScoped<NutritionTargetService>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<MediaService>();
         services.AddScoped<PlanPdfService>();

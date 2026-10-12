@@ -15,6 +15,13 @@ public interface IOptionalTenantOwned
     Guid? CoachId { get; }
 }
 
+/// <summary>
+/// A catalog entry (foods; exercises from P9): platform entries (no coach) are visible to every
+/// signed-in user, a coach's own entries to that coach and their clients. Only administrators
+/// write platform entries; a coach writes only their own.
+/// </summary>
+public interface ICatalogEntry : IOptionalTenantOwned;
+
 public static class TenantKey
 {
     public static Guid Required(Guid coachId) =>

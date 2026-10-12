@@ -6,6 +6,7 @@ using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.SavedPlans;
 using CoachHub.Application.WorkoutPlanning;
+using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 using CoachHub.IntegrationTests.Persistence;
 
@@ -25,7 +26,7 @@ public sealed class SavedPlanSqlQueryTests(CoachHubSqlApiFactory factory) : ICla
         var category = await ReadAsync<BilingualReferenceResponse>(await admin.PostAsJsonAsync("/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("Saved plans " + Guid.NewGuid().ToString("N"), null)));
         var food = await ReadAsync<FoodResponse>(await admin.PostAsJsonAsync("/api/v1/nutrition/foods",
-            new FoodInput("Saved food " + Guid.NewGuid().ToString("N")[..6], null, category.Id, "gram", 100, 10, 20, 5, null)));
+            new FoodInput("Saved food " + Guid.NewGuid().ToString("N")[..6], null, category.Id, FoodBaseUnit.Gram, 100, 10, 20, 5, null)));
         var client = await ReadAsync<ClientResponse>(await coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput("Listed client", null, null, null)));
         var diet = await ReadAsync<DietPlanResponse>(await coach.PostAsJsonAsync("/api/v1/diet-plans", new DietPlanInput(
             "Alpha Diet", "حمية", client.Id, [],

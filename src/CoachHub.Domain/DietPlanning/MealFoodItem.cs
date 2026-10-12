@@ -8,13 +8,17 @@ public sealed class MealFoodItem : Entity, IPlanRevisionContent
     public Guid RevisionId { get; private set; }
     public Guid MealId { get; private set; }
     public Guid FoodItemId { get; private set; }
+    /// <summary>The unit the quantity is in: one of the food's named units, or null for its base unit.</summary>
+    public Guid? FoodUnitId { get; private set; }
     public decimal Quantity { get; private set; }
     public int Order { get; private set; }
     public string? Notes { get; private set; }
 
     public static MealFoodItem Create(
-        Guid id, Guid revisionId, Guid mealId, Guid foodItemId, decimal quantity, int order, string? notes) => new()
+        Guid id, Guid revisionId, Guid mealId, Guid foodItemId, decimal quantity, int order, string? notes,
+        Guid? foodUnitId = null) => new()
     {
+        FoodUnitId = foodUnitId == Guid.Empty ? throw new ArgumentException("Unit identifier cannot be empty.", nameof(foodUnitId)) : foodUnitId,
         Id = DietPlanText.RequiredId(id, nameof(id)),
         RevisionId = DietPlanText.RequiredId(revisionId, nameof(revisionId)),
         MealId = DietPlanText.RequiredId(mealId, nameof(mealId)),

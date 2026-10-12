@@ -13,6 +13,7 @@ using CoachHub.Domain.Auth;
 using CoachHub.Domain.Media;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Persistence;
+using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 using CoachHub.IntegrationTests.Me;
 using CoachHub.IntegrationTests.Persistence;
@@ -98,9 +99,9 @@ public sealed class MediaOwnershipTests(CoachHubSqlApiFactory factory) : IClassF
             .Content.ReadFromJsonAsync<BilingualReferenceResponse>();
 
         var leaked = await admin.Http.PostAsJsonAsync("/api/v1/nutrition/foods",
-            new FoodInput("Leak", null, category!.Id, "gram", 100, 1, 1, 1, clientPhoto.Id));
+            new FoodInput("Leak", null, category!.Id, FoodBaseUnit.Gram, 100, 1, 1, 1, clientPhoto.Id));
         var allowed = await admin.Http.PostAsJsonAsync("/api/v1/nutrition/foods",
-            new FoodInput("Rice " + Guid.NewGuid().ToString("N")[..6], null, category.Id, "gram", 100, 1, 1, 1, platformImage.Id));
+            new FoodInput("Rice " + Guid.NewGuid().ToString("N")[..6], null, category.Id, FoodBaseUnit.Gram, 100, 1, 1, 1, platformImage.Id));
 
         Assert.Equal(HttpStatusCode.BadRequest, leaked.StatusCode);
         Assert.Equal(HttpStatusCode.Created, allowed.StatusCode);

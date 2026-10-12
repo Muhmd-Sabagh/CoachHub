@@ -90,7 +90,8 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - A coach-owned entity implements `ITenantOwned` (or `IOptionalTenantOwned`) from `Domain/Common/TenantOwnership.cs` and takes `coachId` in its `Create` factory. `TenantModel` then adds its `Coach` foreign key and global query filter automatically; never filter by coach by hand.
   - `ICurrentUser.Scope` (Application) drives the filters: Administrator and system work are `Unrestricted`, a coach sees their tenant, a client sees only their own rows, anonymous callers see nothing. `CoachHubDbContext` also rejects cross-tenant writes on save.
   - New records: use `CoachOwnership.ForNewRecordAsync` (coach = self; Administrator must name an active coach). Records derived from another record take that record's `CoachId`, and references must stay within one coach (`CoachOwnership.EnsureSameCoach`).
-  - Use `IgnoreQueryFilters()` only for deliberate cross-tenant reads (global uniqueness checks, transfer, identity lookups) and comment why.
+  - Use `IgnoreQueryFilters()` only for deliberate cross-tenant reads (global uniqueness checks, transfer, identity lookups) and comment why. It lifts the filters of the **whole query**, so only use it in a standalone query, never on a join or subquery of a query that reads tenant data (P7 fixed a leak caused by this).
+  - Catalog entries (`ICatalogEntry`, P7): platform rows (no coach) are visible to every signed-in user; a coach's rows to that coach and their clients.
   - Commercial records keep the selling coach forever; coaching records follow the client on transfer (D7).
   - Tenant-isolation tests run on SQL Server (`CoachHubSqlApiFactory`); see `tests/CoachHub.IntegrationTests/Tenancy`.
 - **Ownership (§62):** every endpoint verifies the caller may access the specific client's data, files and photos, not only that they hold a permission.
@@ -124,9 +125,9 @@ Treat these as planned rework, not conventions to preserve.
 ## Security invariants (keep)
 
 - `tests/CoachHub.IntegrationTests/Security/ControllerAuthorizationTests.cs` pins the anonymous API surface (every anonymous action must be rate-limited) and requires every `[Authorize]` to use an `AuthPolicies` role policy: `AdminOnly`, `CoachOrAdmin`, `ClientOnly` or `AnyRole` (self-service).
-- Platform catalogs (foods, exercises, currencies, categories) and `/media` writes are `AdminOnly`; coaches read them.
+- Platform catalogs (foods, exercises, currencies, categories) and `/media` writes are `AdminOnly`; coaches read them. Coaches also write their own custom foods (P7, ownership checked in `FoodService`).
 - Branding (P4): brands are read across tenants on purpose (public data); writes pass the save guard. Subdomains and custom domains are Administrator-only. Brand images are coach-library or platform media.
-- Settings (P4): calculations read coach defaults from `SettingsService.CoachAsync`, never constants.
+- Settings (P4): calculations read coach defaults from `SettingsService.CoachAsync`, never constants. The nutrition engine (P7) is `EnergyCalculator` with one `IMacroStrategy` per macro mode.
 - Enums cross the API as names: every public enum carries `[JsonConverter(typeof(JsonStringEnumConverter<T>))]` (guarded by `EnumContractTests`). A `[Flags]` set is exposed as a list of names instead.
 - Media has an owner (P2, `MediaOwner`): platform media is visible to every signed-in user, a coach's library to the coach and their clients, client media to the client and their coach. Catalog entries may reference platform images only.
 - Sessions (P2): access tokens last 15 minutes; the refresh token is a rotating, hashed, HttpOnly `SameSite=Strict` cookie scoped to `/api/v1/auth`. Self-service endpoints act on the account in the token, never on an ID from the request. When an account loses access, end its sessions with `SessionService.RevokeAllAsync`.

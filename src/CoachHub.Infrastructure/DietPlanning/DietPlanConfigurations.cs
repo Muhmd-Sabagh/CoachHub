@@ -26,6 +26,11 @@ public sealed class DietPlanRevisionConfiguration : IEntityTypeConfiguration<Die
     {
         builder.ToTable("DietPlanRevisions");
         PlanRevisionMapping.Configure(builder);
+        builder.Property(x => x.TargetCalories).HasPrecision(8, 2);
+        builder.Property(x => x.TargetProtein).HasPrecision(7, 2);
+        builder.Property(x => x.TargetCarbohydrates).HasPrecision(7, 2);
+        builder.Property(x => x.TargetFat).HasPrecision(7, 2);
+        builder.Ignore(x => x.Targets);
         builder.HasOne<DietPlan>().WithMany().HasForeignKey(x => x.PlanId).OnDelete(DeleteBehavior.Cascade);
     }
 }
@@ -47,6 +52,7 @@ public sealed class MealConfiguration : IEntityTypeConfiguration<Meal>
     public void Configure(EntityTypeBuilder<Meal> builder)
     {
         builder.ToTable("DietPlanMeals"); builder.HasKey(x => x.Id);
+        builder.Property(x => x.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(x => x.NameEn).HasMaxLength(200).IsRequired();
         builder.Property(x => x.NameAr).HasMaxLength(200); builder.Property(x => x.Notes).HasMaxLength(2000);
         builder.HasIndex(x => new { x.DietPlanVariantId, x.Order }).IsUnique();
@@ -66,6 +72,7 @@ public sealed class MealFoodItemConfiguration : IEntityTypeConfiguration<MealFoo
         builder.HasIndex(x => x.RevisionId);
         builder.HasOne<Meal>().WithMany().HasForeignKey(x => x.MealId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<FoodItem>().WithMany().HasForeignKey(x => x.FoodItemId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<FoodUnit>().WithMany().HasForeignKey(x => x.FoodUnitId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 

@@ -3,6 +3,7 @@ import { Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { PagedResult } from '../../shared/models/paged-result';
 import { queryParams } from '../../shared/services/query-params';
+import { DietTargets } from './nutrition-math';
 
 export interface SavedPlan {
   id: string;
@@ -44,6 +45,38 @@ export interface PlanVersion {
   isReadOnly: boolean;
 }
 
+export type ActivityLevel =
+  'Sedentary' | 'LightlyActive' | 'ModeratelyActive' | 'VeryActive' | 'ExtraActive';
+export type MacroMode = 'GramsPerKg' | 'Percentages' | 'FixedGrams';
+
+export interface MacroPreferences {
+  mode: MacroMode;
+  proteinGramsPerKg?: number | null;
+  fatGramsPerKg?: number | null;
+  proteinPercent?: number | null;
+  carbohydratePercent?: number | null;
+  fatPercent?: number | null;
+  proteinGrams?: number | null;
+  fatGrams?: number | null;
+}
+
+/** Calorie and macro targets with the coefficients used (§14, §15). */
+export interface EnergyTargets {
+  weightKg: number;
+  age: number;
+  activityLevel: ActivityLevel;
+  activityFactor: number;
+  goal: 'LoseWeight' | 'Maintain' | 'GainWeight';
+  adjustmentPercent: number;
+  basalMetabolicRate: number;
+  maintenanceCalories: number;
+  goalCalories: number;
+  macros: MacroPreferences;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+}
+
 /** The editor's working copy: plan fields plus the content of one version. */
 export interface PlanEditorInput {
   nameEn: string;
@@ -53,6 +86,7 @@ export interface PlanEditorInput {
   endDate?: string | null;
   status: VersionStatus;
   baseVersionNumber?: number | null;
+  targets?: DietTargets | null;
   notes: any[];
   variants?: any[];
   days?: any[];
@@ -66,6 +100,7 @@ export function toEditorInput(plan: any): PlanEditorInput {
     startDate: plan.revision?.startDate ?? null,
     endDate: plan.revision?.endDate ?? null,
     status: plan.revision?.status === 'Draft' ? 'Draft' : 'Active',
+    targets: plan.targets ? { ...plan.targets } : undefined,
     baseVersionNumber: plan.currentVersionNumber ?? plan.revision?.versionNumber ?? null,
   };
 }
@@ -115,7 +150,16 @@ export class PlansService {
     );
   }
   calculate(input: object) {
-    return this.http.post<any>(`${environment.apiBaseUrl}/nutrition-calculator/energy`, input);
+    return this.http.post<EnergyTargets>(
+      `${environment.apiBaseUrl}/nutrition-calculator/energy`,
+      input,
+    );
+  }
+  /** The client's calorie and macro targets from their profile and the coach's settings (§14, §15). */
+  clientTargets(clientId: string) {
+    return this.http.get<EnergyTargets>(
+      `${environment.apiBaseUrl}/clients/${clientId}/nutrition-targets`,
+    );
   }
   pdf(
     type: PlanType,

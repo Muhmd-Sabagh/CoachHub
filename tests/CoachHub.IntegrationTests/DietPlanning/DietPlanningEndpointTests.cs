@@ -4,8 +4,10 @@ using System.Net.Http.Json;
 using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
+using CoachHub.Domain.Settings;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 
 namespace CoachHub.IntegrationTests.DietPlanning;
@@ -30,9 +32,9 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
             "/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("Diet planning " + Guid.NewGuid().ToString("N"), null));
         var oats = await AdminPostAsync<FoodResponse>("/api/v1/nutrition/foods",
-            new FoodInput("Oats", "شوفان", category.Id, "gram", 100, 10, 20, 5, null));
+            new FoodInput("Oats", "شوفان", category.Id, FoodBaseUnit.Gram, 100, 10, 20, 5, null));
         var eggs = await AdminPostAsync<FoodResponse>("/api/v1/nutrition/foods",
-            new FoodInput("Eggs", null, category.Id, "gram", 200, 20, 5, 10, null));
+            new FoodInput("Eggs", null, category.Id, FoodBaseUnit.Gram, 200, 20, 5, 10, null));
         var client = await PostAsync<ClientResponse>("/api/v1/clients",
             new ClientCreateInput("Plan client", null, null, null));
 
@@ -101,9 +103,11 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
         Assert.Equal(created.Totals, copy.Totals);
 
         var calculator = await PostAsync<EnergyCalculatorResponse>("/api/v1/nutrition-calculator/energy",
-            new EnergyCalculatorInput(30, BiologicalSex.Male, 80, 180, 1.55m, EnergyGoal.LoseWeight));
+            new EnergyCalculatorInput(30, BiologicalSex.Male, 80, 180, ActivityLevel.ModeratelyActive, EnergyGoal.LoseWeight));
         Assert.Equal(1780m, calculator.BasalMetabolicRate);
-        Assert.Equal(2259m, calculator.GoalCalories);
+        // The coach's default 20% deficit, not the legacy fixed 500 kcal.
+        Assert.Equal(2207.2m, calculator.GoalCalories);
+        Assert.Equal((1.55m, -20m), (calculator.ActivityFactor, calculator.AdjustmentPercent));
 
         Assert.Equal(HttpStatusCode.NoContent, (await _client.DeleteAsync($"/api/v1/diet-plans/{copy.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/v1/diet-plans/{copy.Id}")).StatusCode);

@@ -784,6 +784,38 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
+                    b.Property<decimal?>("MacroCarbohydratePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal?>("MacroFatGrams")
+                        .HasPrecision(6, 1)
+                        .HasColumnType("decimal(6,1)");
+
+                    b.Property<decimal?>("MacroFatGramsPerKg")
+                        .HasPrecision(4, 2)
+                        .HasColumnType("decimal(4,2)");
+
+                    b.Property<decimal?>("MacroFatPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("MacroMode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("MacroProteinGrams")
+                        .HasPrecision(6, 1)
+                        .HasColumnType("decimal(6,1)");
+
+                    b.Property<decimal?>("MacroProteinGramsPerKg")
+                        .HasPrecision(4, 2)
+                        .HasColumnType("decimal(4,2)");
+
+                    b.Property<decimal?>("MacroProteinPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("PreferredFoodsNote")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
@@ -1111,6 +1143,28 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<decimal?>("TargetCalories")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal?>("TargetCarbohydrates")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.Property<decimal?>("TargetFat")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.Property<int?>("TargetMealCount")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("TargetProtein")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.Property<int?>("TargetSnackCount")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -1282,6 +1336,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("RevisionId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("RevisionId");
@@ -1299,6 +1358,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FoodItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("FoodUnitId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("MealId")
@@ -1321,6 +1383,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FoodItemId");
+
+                    b.HasIndex("FoodUnitId");
 
                     b.HasIndex("RevisionId");
 
@@ -1386,6 +1450,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("BaseUnit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<decimal>("CaloriesPer100")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -1394,7 +1463,14 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<Guid?>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("FatPer100")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("FiberPer100")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -1403,11 +1479,6 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
-
-                    b.Property<string>("MeasurementUnit")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<Guid?>("MediaId")
                         .HasColumnType("uniqueidentifier");
@@ -1421,11 +1492,33 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("PieceNameAr")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PieceNameEn")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<decimal>("ProteinPer100")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("ServingSize")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SodiumMgPer100")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SugarPer100")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
 
                     b.HasIndex("MediaId");
 
@@ -1433,7 +1526,42 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("FoodCategoryId", "IsActive");
 
-                    b.ToTable("FoodItems", (string)null);
+                    b.ToTable("FoodItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_FoodItems_PieceName", "[BaseUnit] <> 'Piece' OR [PieceNameEn] IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Nutrition.FoodUnit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("BaseQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<Guid>("FoodItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodItemId", "Order");
+
+                    b.ToTable("FoodUnits", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Nutrition.LegacyFoodImportRecord", b =>
@@ -2814,6 +2942,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CoachHub.Domain.Nutrition.FoodUnit", null)
+                        .WithMany()
+                        .HasForeignKey("FoodUnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("CoachHub.Domain.DietPlanning.Meal", null)
                         .WithMany()
                         .HasForeignKey("MealId")
@@ -2841,6 +2974,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoachHub.Domain.Nutrition.FoodItem", b =>
                 {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("CoachHub.Domain.ReferenceData.FoodCategory", null)
                         .WithMany()
                         .HasForeignKey("FoodCategoryId")
@@ -2851,6 +2989,15 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("MediaId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Nutrition.FoodUnit", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Nutrition.FoodItem", null)
+                        .WithMany("Units")
+                        .HasForeignKey("FoodItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Nutrition.LegacyFoodImportRecord", b =>
@@ -3105,6 +3252,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoachHub.Domain.Clients.Subscription", b =>
                 {
                     b.Navigation("Renewals");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Nutrition.FoodItem", b =>
+                {
+                    b.Navigation("Units");
                 });
 #pragma warning restore 612, 618
         }

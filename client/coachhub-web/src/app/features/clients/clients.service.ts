@@ -1,3 +1,4 @@
+import { MacroPreferences } from '../plans/plans.service';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
@@ -35,6 +36,8 @@ export interface ClientProfileFields {
   trainingPreferences: string | null; foodPreferences: string | null; preferredFoodsNote: string | null; dislikedFoodsNote: string | null;
   dietaryRestrictions: string[]; dietaryNotes: string | null; preferredMealCount: number | null; bedtime: string | null; wakeTime: string | null;
   lifestyleNotes: string | null;
+  /** The client's macro mode and parameters (§15); null uses the coach's defaults. */
+  macros: MacroPreferences | null;
 }
 export interface ClientProfile extends ClientProfileFields {
   clientId: string; isSaved: boolean; age: number | null;

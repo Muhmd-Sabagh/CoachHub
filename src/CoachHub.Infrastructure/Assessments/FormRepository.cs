@@ -21,23 +21,48 @@ public sealed class FormRepository(CoachHubDbContext dbContext) : IFormRepositor
         return new(items, query.PageNumber, query.PageSize, total);
     }
 
+    // Tenant isolation: IgnoreQueryFilters lifts the filters of the WHOLE query, not just one join, so the
+    // submission queries below stay fully filtered. A transferred client's submissions may reference the
+    // previous coach's form (D7); those names are read in separate queries, only for definitions that
+    // visible submissions reference.
     public async Task<CoachHub.Application.Common.Models.PagedResult<AssessmentSubmissionSummary>> ListSubmissionsAsync(AssessmentSubmissionQuery query, CancellationToken token)
     {
-        var source = from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id join definition in dbContext.Set<FormDefinition>().IgnoreQueryFilters().AsNoTracking() on submission.FormDefinitionId equals definition.Id select new { submission, client, definition };
+        var source = from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id select new { submission, client };
         if (query.ClientId.HasValue) source = source.Where(x => x.submission.ClientId == query.ClientId);
         if (query.FormType.HasValue) source = source.Where(x => x.submission.FormType == query.FormType);
-        if (query.SearchTerm is not null) source = source.Where(x => x.client.Name.Contains(query.SearchTerm) || x.client.ClientCode.Contains(query.SearchTerm) || x.definition.Name.Contains(query.SearchTerm));
+        if (query.SearchTerm is not null)
+        {
+            var referenced = await source.Select(x => x.submission.FormDefinitionId).Distinct().ToArrayAsync(token);
+            var matchingForms = await dbContext.Set<FormDefinition>().IgnoreQueryFilters().AsNoTracking()
+                .Where(x => referenced.Contains(x.Id) && x.Name.Contains(query.SearchTerm)).Select(x => x.Id).ToArrayAsync(token);
+            source = source.Where(x => x.client.Name.Contains(query.SearchTerm) || x.client.ClientCode.Contains(query.SearchTerm) || matchingForms.Contains(x.submission.FormDefinitionId));
+        }
         var total = await source.LongCountAsync(token);
-        var items = await source.OrderByDescending(x => x.submission.SubmittedAt).Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize).Select(x => new AssessmentSubmissionSummary(x.submission.Id, x.client.Id, x.client.Name, x.client.ClientCode, x.definition.Id, x.definition.Name, x.submission.FormType, x.submission.Source, x.submission.SubmittedAt, dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == x.submission.Id))).ToArrayAsync(token);
+        var rows = await source.OrderByDescending(x => x.submission.SubmittedAt).Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize)
+            .Select(x => new { x.submission.Id, ClientId = x.client.Id, x.client.Name, x.client.ClientCode, x.submission.FormDefinitionId, x.submission.FormType, x.submission.Source, x.submission.SubmittedAt, Answers = dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == x.submission.Id) })
+            .ToArrayAsync(token);
+        var names = await DefinitionNamesAsync(rows.Select(x => x.FormDefinitionId), token);
+        var items = rows.Select(x => new AssessmentSubmissionSummary(x.Id, x.ClientId, x.Name, x.ClientCode, x.FormDefinitionId, names.GetValueOrDefault(x.FormDefinitionId, string.Empty), x.FormType, x.Source, x.SubmittedAt, x.Answers)).ToArray();
         return new(items, query.PageNumber, query.PageSize, total);
     }
 
     public async Task<AssessmentSubmissionDetail?> GetSubmissionAsync(Guid id, CancellationToken token)
     {
-        var summary = await (from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id join definition in dbContext.Set<FormDefinition>().IgnoreQueryFilters().AsNoTracking() on submission.FormDefinitionId equals definition.Id where submission.Id == id select new AssessmentSubmissionSummary(submission.Id, client.Id, client.Name, client.ClientCode, definition.Id, definition.Name, submission.FormType, submission.Source, submission.SubmittedAt, dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == submission.Id))).SingleOrDefaultAsync(token);
-        if (summary is null) return null;
+        var row = await (from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id where submission.Id == id
+            select new { submission.Id, ClientId = client.Id, client.Name, client.ClientCode, submission.FormDefinitionId, submission.FormType, submission.Source, submission.SubmittedAt, Answers = dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == submission.Id) }).SingleOrDefaultAsync(token);
+        if (row is null) return null;
+        var names = await DefinitionNamesAsync([row.FormDefinitionId], token);
+        var summary = new AssessmentSubmissionSummary(row.Id, row.ClientId, row.Name, row.ClientCode, row.FormDefinitionId, names.GetValueOrDefault(row.FormDefinitionId, string.Empty), row.FormType, row.Source, row.SubmittedAt, row.Answers);
         var answers = await dbContext.Set<FormAnswer>().AsNoTracking().Where(x => x.FormSubmissionId == id).OrderBy(x => x.QuestionTextSnapshot).Select(x => new AssessmentAnswerResponse(x.Id, x.QuestionStableKey, x.QuestionTextSnapshot, x.QuestionTypeSnapshot, x.ValueJson, x.MediaId, x.ExternalMediaUrl)).ToArrayAsync(token);
         return new(summary, answers);
+    }
+
+    /// <summary>Names of forms referenced by submissions the caller can already see, whoever owns the form.</summary>
+    private async Task<Dictionary<Guid, string>> DefinitionNamesAsync(IEnumerable<Guid> definitionIds, CancellationToken token)
+    {
+        var ids = definitionIds.Distinct().ToArray();
+        return await dbContext.Set<FormDefinition>().IgnoreQueryFilters().AsNoTracking()
+            .Where(x => ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.Name, token);
     }
     public async Task AddFormAsync(FormDefinition definition, FormVersion draft, CancellationToken token)
     {

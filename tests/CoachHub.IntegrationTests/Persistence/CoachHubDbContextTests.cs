@@ -48,6 +48,7 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormAnswer), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlan), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanRevision), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Nutrition.FoodUnit), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanVariant), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.WorkoutPlanning.WorkoutPlanRevision), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.Meal), entityTypes);
@@ -97,9 +98,11 @@ public sealed class CoachHubDbContextTests
                            typeof(CoachHub.Domain.Common.IOptionalTenantOwned).IsAssignableFrom(type.ClrType))
             .ToArray();
 
-        // 15 coach-owned business types (P1), MediaAsset (P2), AuditEntry (P3), and Brand and
-        // CoachSettings (P4). MediaAsset, AuditEntry and Brand also admit platform rows.
-        Assert.Equal(19, owned.Length);
+        // 15 coach-owned business types (P1), MediaAsset (P2), AuditEntry (P3), Brand and
+        // CoachSettings (P4), and FoodItem (P7, a catalog entry). MediaAsset, AuditEntry, Brand and
+        // FoodItem also admit platform rows.
+        Assert.Equal(20, owned.Length);
+        Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Nutrition.FoodItem));
         Assert.All(owned, type =>
         {
             Assert.NotEmpty(type.GetDeclaredQueryFilters());

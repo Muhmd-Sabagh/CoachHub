@@ -1170,6 +1170,51 @@ textarea:focus {
   border: 1px solid var(--gray-200);
   border-radius: 10px;
 }
+/* §4, §6: diet targets and live totals in the plan editor. */
+.targets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+}
+.targets legend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 0 4px;
+  font-weight: 600;
+}
+.targets small {
+  grid-column: 1 / -1;
+  color: var(--gray-500);
+}
+.plan-summary {
+  margin: 8px 0 0;
+  color: var(--gray-600);
+}
+.plan-summary .over {
+  color: var(--error);
+}
+.meal-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.meal-heading small,
+.row-kcal {
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+.dark .targets {
+  border-color: #344054;
+}
+.dark .plan-summary {
+  color: var(--gray-300);
+}
 /* D4: plan version history and read-only archived versions. */
 .plain-fieldset {
   min-width: 0;

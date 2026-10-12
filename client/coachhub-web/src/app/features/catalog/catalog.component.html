@@ -22,11 +22,24 @@
           <option value="true">Active</option>
           <option value="false">Inactive</option>
         </select></label
-      ><button class="button button-primary">Search</button
+      >
+      @if (kind === 'foods') {
+        <label
+          ><span>Catalog</span
+          ><select name="scope" [(ngModel)]="scope">
+            <option value="">Platform and custom</option>
+            <option value="Platform">Platform</option>
+            <option value="Custom">My custom foods</option>
+          </select></label
+        >
+      }
+      <button class="button button-primary">Search</button
       ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
     </form>
-    @if (canEdit) {
-      <button class="button button-primary" type="button" (click)="create()">Add {{ title }}</button>
+    @if (canCreate) {
+      <button class="button button-primary" type="button" (click)="create()">
+        {{ kind === 'foods' && !isAdmin ? 'Add custom food' : 'Add ' + title }}
+      </button>
     }
   </div>
   @if (error) {
@@ -39,7 +52,7 @@
           <th>Name</th>
           <th>Category</th>
           @if (kind === 'foods') {
-            <th>Nutrition / 100</th>
+            <th>Nutrition / 100 base units</th>
           } @else {
             <th>Video</th>
           }
@@ -57,16 +70,28 @@
           <tr>
             <td>
               <strong>{{ item.nameEn }}</strong
-              ><small>{{ item.nameAr || '—' }}</small>
+              ><small
+                >{{ item.nameAr || '—' }}
+                @if (item.isCustom) {
+                  · Custom
+                }
+              </small>
             </td>
             <td>{{ categoryName(item.foodCategoryId || item.exerciseCategoryId) }}</td>
             @if (kind === 'foods') {
               <td>
-                <span class="metric">{{ item.caloriesPer100 }} kcal</span
+                <span class="metric"
+                  >{{ item.caloriesPer100 }} kcal / 100 {{ item.baseUnitLabel }}</span
                 ><small
                   >P {{ item.proteinPer100 }} · C {{ item.carbohydratesPer100 }} · F
-                  {{ item.fatPer100 }}</small
-                >
+                  {{ item.fatPer100 }}
+                  @if (item.fiberPer100 !== null && item.fiberPer100 !== undefined) {
+                    · Fiber {{ item.fiberPer100 }}
+                  }
+                  @if (item.units?.length) {
+                    · {{ item.units!.length }} unit(s)
+                  }
+                </small>
               </td>
             } @else {
               <td>
@@ -81,7 +106,7 @@
             }
             <td><app-status-badge [value]="item.isActive ? 'Active' : 'Inactive'" /></td>
             <td class="actions">
-              @if (canEdit) {
+              @if (canEdit(item)) {
                 <button class="link-button" (click)="edit(item)">Edit</button
                 ><button class="link-button danger" (click)="remove(item)">Delete</button>
               }
@@ -131,20 +156,131 @@
         >
         @if (kind === 'foods') {
           <label
-            ><span>Measurement unit *</span
-            ><input name="unit" [(ngModel)]="editor.measurementUnit" required /></label
+            ><span>Measured per *</span
+            ><select name="baseUnit" [(ngModel)]="editor.baseUnit">
+              <option value="Gram">Grams (g)</option>
+              <option value="Milliliter">Millilitres (ml)</option>
+              <option value="Piece">Pieces (slice, egg, scoop…)</option>
+            </select></label
+          >
+          @if (editor.baseUnit === 'Piece') {
+            <label
+              ><span>Piece name *</span
+              ><input
+                name="pieceEn"
+                [(ngModel)]="editor.pieceNameEn"
+                placeholder="slice"
+                required /></label
+            ><label
+              ><span>Piece name (Arabic)</span
+              ><input name="pieceAr" [(ngModel)]="editor.pieceNameAr" dir="rtl"
+            /></label>
+          }
+          <label
+            ><span
+              >Serving size ({{
+                editor.baseUnit === 'Piece' ? 'pieces' : editor.baseUnit === 'Gram' ? 'g' : 'ml'
+              }})</span
+            ><input
+              type="number"
+              name="serving"
+              [(ngModel)]="editor.servingSize"
+              min="0.01"
+              step="any" /></label
           ><label
-            ><span>Calories / 100</span
-            ><input type="number" name="calories" [(ngModel)]="editor.calories" min="0" /></label
+            ><span>Calories / {{ per100() }}</span
+            ><input
+              type="number"
+              name="calories"
+              [(ngModel)]="editor.calories"
+              min="0"
+              step="any" /></label
           ><label
-            ><span>Protein / 100</span
-            ><input type="number" name="protein" [(ngModel)]="editor.protein" min="0" /></label
+            ><span>Protein g / {{ per100() }}</span
+            ><input
+              type="number"
+              name="protein"
+              [(ngModel)]="editor.protein"
+              min="0"
+              step="any" /></label
           ><label
-            ><span>Carbohydrates / 100</span
-            ><input type="number" name="carbs" [(ngModel)]="editor.carbs" min="0" /></label
+            ><span>Carbohydrates g / {{ per100() }}</span
+            ><input
+              type="number"
+              name="carbs"
+              [(ngModel)]="editor.carbs"
+              min="0"
+              step="any" /></label
           ><label
-            ><span>Fat / 100</span><input type="number" name="fat" [(ngModel)]="editor.fat" min="0"
+            ><span>Fat g / {{ per100() }}</span
+            ><input type="number" name="fat" [(ngModel)]="editor.fat" min="0" step="any" /></label
+          ><label
+            ><span>Fiber g / {{ per100() }}</span
+            ><input
+              type="number"
+              name="fiber"
+              [(ngModel)]="editor.fiber"
+              min="0"
+              step="any"
+              placeholder="Not recorded" /></label
+          ><label
+            ><span>Sugar g / {{ per100() }}</span
+            ><input
+              type="number"
+              name="sugar"
+              [(ngModel)]="editor.sugar"
+              min="0"
+              step="any"
+              placeholder="Not recorded" /></label
+          ><label
+            ><span>Sodium mg / {{ per100() }}</span
+            ><input
+              type="number"
+              name="sodium"
+              [(ngModel)]="editor.sodium"
+              min="0"
+              step="any"
+              placeholder="Not recorded"
           /></label>
+          <div class="span-2">
+            <div class="toolbar">
+              <strong>Household units</strong
+              ><button class="link-button" type="button" (click)="addUnit()">Add unit</button>
+            </div>
+            @for (u of editor.units; track $index; let ui = $index) {
+              <div class="nested-row">
+                <input
+                  [name]="'unitEn' + ui"
+                  [(ngModel)]="u.nameEn"
+                  placeholder="cup"
+                  aria-label="Unit name"
+                  required
+                /><input
+                  [name]="'unitAr' + ui"
+                  [(ngModel)]="u.nameAr"
+                  dir="rtl"
+                  placeholder="كوب"
+                  aria-label="Unit name (Arabic)"
+                /><input
+                  type="number"
+                  [name]="'unitQty' + ui"
+                  [(ngModel)]="u.baseQuantity"
+                  min="0.001"
+                  step="any"
+                  aria-label="Base units per unit"
+                /><small>{{
+                  editor.baseUnit === 'Piece'
+                    ? editor.pieceNameEn || 'pieces'
+                    : editor.baseUnit === 'Gram'
+                      ? 'g'
+                      : 'ml'
+                }}</small
+                ><button class="link-button danger" type="button" (click)="removeUnit(ui)">
+                  Remove
+                </button>
+              </div>
+            }
+          </div>
         } @else {
           <label
             ><span>YouTube URL</span

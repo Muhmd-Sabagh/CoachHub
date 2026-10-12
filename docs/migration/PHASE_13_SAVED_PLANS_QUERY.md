@@ -1,5 +1,9 @@
 # Phase 13 — Saved Plans Query Model
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).**
+>
+> - P6/P7: summaries show each plan's current version, totals apply food units, and the query was rewritten to translate on SQL Server (it had only been tested on EF InMemory). See [P06_PLAN_VERSIONS.md](../product/phases/P06_PLAN_VERSIONS.md) and [P07_NUTRITION_ENGINE.md](../product/phases/P07_NUTRITION_ENGINE.md).
+
 ## Outcome
 
 Phase 13 provides one administrator-only, server-paged query for lightweight diet and workout plan summaries. Filtering, aggregation, sorting, counting, and page selection execute in the persistence query instead of loading complete plans or the food catalog into API or Angular memory.

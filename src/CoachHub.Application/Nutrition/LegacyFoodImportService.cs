@@ -34,18 +34,8 @@ public sealed class LegacyFoodImportService(
 
             var category = await repository.GetOrCreateCategoryAsync(
                 row.CategoryName ?? "Uncategorized", cancellationToken);
-            var input = new FoodInput(
-                row.Name,
-                row.NameAr,
-                category.Id,
-                row.Unit,
-                row.CaloriesPer100Units,
-                row.ProteinPer100Units,
-                row.CarbsPer100Units,
-                row.FatPer100Units,
-                row.MediaId,
-                true);
-            var food = FoodService.Create(input);
+            // Imported foods are platform foods (no coach).
+            var food = FoodItem.Create(null, Values(row, category.Id));
             var record = LegacyFoodImportRecord.Create(row.LegacyId, food.Id, DateTimeOffset.UtcNow);
             await repository.AddImportedAsync(food, record, cancellationToken);
 
@@ -74,21 +64,11 @@ public sealed class LegacyFoodImportService(
 
         try
         {
-            FoodService.Validate(new FoodInput(
-                row.Name,
-                null,
-                Guid.NewGuid(),
-                row.Unit,
-                row.CaloriesPer100Units,
-                row.ProteinPer100Units,
-                row.CarbsPer100Units,
-                row.FatPer100Units,
-                row.MediaId,
-                true));
+            FoodItem.Create(null, Values(row, Guid.NewGuid()));
         }
-        catch (Common.Exceptions.ValidationException exception)
+        catch (ArgumentException exception)
         {
-            errors.AddRange(exception.Errors.SelectMany(pair => pair.Value));
+            errors.Add(exception.Message);
         }
 
         if (row.MediaId.HasValue)
@@ -101,5 +81,14 @@ public sealed class LegacyFoodImportService(
         }
 
         return errors;
+    }
+
+    /// <summary>Legacy values are per 100 of the stated unit; counted units become pieces (D3).</summary>
+    private static FoodValues Values(LegacyFoodImportRow row, Guid categoryId)
+    {
+        var (unit, pieceEn, pieceAr) = LegacyFoodUnits.Map(row.Unit);
+        return new FoodValues(row.Name, row.NameAr, categoryId, unit, FoodService.DefaultServing(unit),
+            row.CaloriesPer100Units, row.ProteinPer100Units, row.CarbsPer100Units, row.FatPer100Units,
+            PieceNameEn: pieceEn, PieceNameAr: pieceAr, MediaId: row.MediaId);
     }
 }
