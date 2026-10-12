@@ -2,7 +2,7 @@
 
 > **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
 >
-> - D5: matching imported rows by form code depends on the retired code-based access; import scope is revisited in P5.
+> - D5 (P5): form codes are gone, so imported rows are matched by **client code**; the profile setting is now `ClientCodeHeader`. See [P05_CLIENT_PROFILE.md](../product/phases/P05_CLIENT_PROFILE.md).
 
 ## Outcome
 

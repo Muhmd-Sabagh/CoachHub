@@ -1,6 +1,6 @@
 # P4 — Settings, branding and white-label base
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P4 · **Branch:** `phase/p04-settings` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P4 · **Branch:** `phase/p04-settings` · **Status:** Merged (PR #6).
 **Covers:** D1 (per-coach branding), §49, §63.
 
 ## Purpose
@@ -106,7 +106,7 @@
 ## Known limitations (tracked for later phases)
 - **Host resolution is stored, not served.** DNS, TLS certificates and routing of coach hosts are deployment work, outside the application.
 - **Preferred language.** The default language and units are returned by `GET /settings`, but the UI does not yet convert units. Unit conversion lands with the measurement screens (P5, P11).
-- **Enum serialization (pre-existing).** The API writes enums as numbers. Some older Angular screens compare enum fields to strings (for example `status === 'Draft'` in assessments). Those comparisons look broken and should be verified separately.
+- **Enum serialization (pre-existing, fixed in P5).** The API writes enums as numbers. Some older Angular screens compare enum fields to strings (for example `status === 'Draft'` in assessments). Those comparisons look broken and should be verified separately.
 - **Email sender address.** Only the display name is branded. The sending address stays the configured `Communications:FromEmail`, because a per-coach address needs domain verification (SPF/DKIM).
 
 ## Verification

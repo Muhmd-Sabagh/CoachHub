@@ -8,7 +8,7 @@ import { isHexColor } from '../../core/theme/theme.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { Coach, CoachesService } from '../coaches/coaches.service';
 import {
-  BrandImage, BrandInput, BrandRecord, CoachDefaults, PlatformSettings, Scope, WorkspaceService, weightTotal,
+  BrandImage, BrandInput, BrandRecord, CoachDefaults, MacroMode, PlatformSettings, ReplacementRule, Scope, WorkspaceService, weightTotal,
 } from './workspace.service';
 
 /**
@@ -21,8 +21,15 @@ export class WorkspaceComponent implements OnInit {
   readonly images: { kind: BrandImage; label: string }[] = [
     { kind: 'Logo', label: 'Logo' }, { kind: 'Favicon', label: 'Favicon' }, { kind: 'DefaultAvatar', label: 'Default profile image' },
   ];
-  readonly macroModes = ['Protein and fat in g/kg', 'Percentages of calories', 'Fixed grams'];
-  readonly replacementRules = ['Match calories', 'Match the dominant macro'];
+  readonly macroModes: { value: MacroMode; label: string }[] = [
+    { value: 'GramsPerKg', label: 'Protein and fat in g/kg' },
+    { value: 'Percentages', label: 'Percentages of calories' },
+    { value: 'FixedGrams', label: 'Fixed grams' },
+  ];
+  readonly replacementRules: { value: ReplacementRule; label: string }[] = [
+    { value: 'Calories', label: 'Match calories' },
+    { value: 'DominantMacro', label: 'Match the dominant macro' },
+  ];
   coaches: Coach[] = [];
   /** '' is the platform for administrators; otherwise a coach ID. Coaches always edit their own. */
   target = '';

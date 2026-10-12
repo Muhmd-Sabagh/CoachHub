@@ -1,6 +1,8 @@
+using System.Text.Json.Serialization;
 namespace CoachHub.Application.Common.Tenancy;
 
 /// <summary>How much coach-owned (tenant) data the current caller may see.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<TenantScope>))]
 public enum TenantScope
 {
     /// <summary>No tenant restriction: platform administrators and background/system work.</summary>

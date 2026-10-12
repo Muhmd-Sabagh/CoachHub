@@ -82,7 +82,9 @@ public static class DependencyInjection
             })
             .AddRoles<Role>()
             .AddEntityFrameworkStores<CoachHubDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddTokenProvider<InvitationTokenProvider>(InvitationTokenProviderOptions.ProviderName);
+        services.Configure<InvitationTokenProviderOptions>(_ => { });
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<AuthExperienceOptions>(configuration.GetSection(AuthExperienceOptions.SectionName));
@@ -125,6 +127,7 @@ public static class DependencyInjection
         services.AddScoped<IExerciseRepository, ExerciseRepository>();
         services.AddScoped<IWorkoutPlanRepository, WorkoutPlanRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
+        services.AddScoped<IClientAccounts, ClientAccounts>();
         services.AddScoped<IReportingRepository, ReportingRepository>();
         services.AddScoped<IAdvancedReportingRepository, AdvancedReportingRepository>();
         services.AddScoped<IDietPlanRepository, DietPlanRepository>();

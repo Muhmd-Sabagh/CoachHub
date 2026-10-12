@@ -30,9 +30,9 @@ public sealed class HttpCurrentUser(IHttpContextAccessor httpContextAccessor) : 
             if (IsAuthenticated && Principal!.IsInRole(AuthRoles.Client) && CoachId.HasValue && ClientId.HasValue)
                 return TenantScope.Client;
 
-            // The legacy code-based client forms authenticate by client and form code. They read
-            // across coaches and scope themselves to the matched client. Retired in P5 (D5).
-            if (!IsAuthenticated && context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/client-forms"))
+            // The anonymous authentication surface (sign-in, refresh, password reset) is trusted
+            // system work: it writes sessions and account mail for whichever account it serves.
+            if (!IsAuthenticated && context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/auth"))
                 return TenantScope.Unrestricted;
 
             return TenantScope.None;

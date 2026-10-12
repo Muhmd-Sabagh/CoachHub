@@ -1,8 +1,10 @@
+using System.Text.Json.Serialization;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Settings;
 
 /// <summary>Measurement units shown to users (§49). Values are always stored metric.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<UnitSystem>))]
 public enum UnitSystem
 {
     Metric,

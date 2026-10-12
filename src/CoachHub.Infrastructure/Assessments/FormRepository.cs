@@ -91,9 +91,8 @@ public sealed class FormRepository(CoachHubDbContext dbContext) : IFormRepositor
         dbContext.Add(version); dbContext.AddRange(sections); dbContext.AddRange(questions);
         dbContext.AddRange(options); await dbContext.SaveChangesAsync(token);
     }
-    public Task<Client?> FindClientByCodesAsync(string clientCode, string formCode, CancellationToken token) =>
-        dbContext.Set<Client>().SingleOrDefaultAsync(client =>
-            client.ClientCode == clientCode && client.FormCode == formCode, token);
+    public Task<Client?> FindClientAsync(Guid clientId, CancellationToken token) =>
+        dbContext.Set<Client>().SingleOrDefaultAsync(client => client.Id == clientId, token);
     public Task<bool> HasInitialSubmissionAsync(Guid clientId, CancellationToken token) =>
         dbContext.Set<FormSubmission>().AnyAsync(submission => submission.InitialClientId == clientId, token);
 

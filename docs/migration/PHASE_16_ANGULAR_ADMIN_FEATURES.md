@@ -1,5 +1,9 @@
 # Phase 16 — Angular Administrative Features
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** Where this conflicts with the product requirements or decisions D1–D7, the requirements win.
+>
+> - D5 (P5): form-code regeneration and the public `/assessment` page are removed. Clients use the `/app` client area; coaches get a client profile page with the §40 tabs. See [P05_CLIENT_PROFILE.md](../product/phases/P05_CLIENT_PROFILE.md).
+
 Phase 16 replaces the Angular feature placeholders with API-backed administrator workbenches using the TailAdmin adaptation contract.
 
 ## Delivered workflows

@@ -43,6 +43,15 @@ public sealed class ExerciseCategoryConfiguration : IEntityTypeConfiguration<Exe
     }
 }
 
+public sealed class EquipmentConfiguration : IEntityTypeConfiguration<Equipment>
+{
+    public void Configure(EntityTypeBuilder<Equipment> builder)
+    {
+        builder.ToTable("Equipment");
+        PackageConfiguration.ConfigureBilingual(builder);
+    }
+}
+
 public sealed class CurrencyConfiguration : IEntityTypeConfiguration<Currency>
 {
     public void Configure(EntityTypeBuilder<Currency> builder)

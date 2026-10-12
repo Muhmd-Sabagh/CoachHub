@@ -23,13 +23,11 @@ public sealed record FormVersionResponse(
     Guid VersionId, int VersionNumber, FormVersionStatus Status,
     IReadOnlyList<SectionResponse> Sections,
     IReadOnlyList<QuestionResponse> Questions);
-public sealed record FormAccessInput(string ClientCode, string FormCode);
 public sealed record EligibleForm(Guid Id, string Name, AssessmentFormType FormType);
-public sealed record FormAccessResponse(Guid ClientId, string ClientName, IReadOnlyList<EligibleForm> EligibleForms);
+/// <summary>The forms a signed-in client can fill in (D5).</summary>
+public sealed record MyFormsResponse(string ClientName, IReadOnlyList<EligibleForm> EligibleForms);
 public sealed record AnswerInput(Guid QuestionId, JsonElement Value, Guid? MediaId);
-public sealed record SubmitFormInput(
-    string ClientCode, string FormCode, Guid FormDefinitionId,
-    IReadOnlyList<AnswerInput> Answers);
+public sealed record MyFormSubmissionInput(IReadOnlyList<AnswerInput> Answers);
 public sealed record SubmissionResponse(Guid SubmissionId, DateTimeOffset SubmittedAt);
 
 public sealed record FormGraph(

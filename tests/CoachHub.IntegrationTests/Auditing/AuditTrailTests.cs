@@ -103,15 +103,15 @@ public sealed class AuditTrailTests
     }
 
     [Fact]
-    public void Http_actor_accessor_records_the_real_role_and_classifies_public_clients_without_access_codes()
+    public void Http_actor_accessor_records_the_real_role_and_anonymous_work_as_system()
     {
         var context = new DefaultHttpContext();
-        context.Request.Path = "/api/v1/client-forms/submissions";
+        context.Request.Path = "/api/v1/auth/password-reset/complete";
         var accessor = new HttpAuditActorAccessor(new HttpContextAccessor { HttpContext = context });
 
         var actor = accessor.Current;
 
-        Assert.Equal(AuditActorKind.PublicClient, actor.Kind);
+        Assert.Equal(AuditActorKind.System, actor.Kind);
         Assert.Null(actor.UserId);
         Assert.Null(actor.DisplayName);
 

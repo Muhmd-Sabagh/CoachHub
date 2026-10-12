@@ -14,15 +14,20 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', loadComponent: () => import('./features/auth/password-recovery.component').then(m => m.PasswordRecoveryComponent) },
   { path: 'reset-password', loadComponent: () => import('./features/auth/password-recovery.component').then(m => m.PasswordRecoveryComponent) },
-  { path: 'portal', canActivate: [roleGuard('Client')], loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
-  { path: 'portal/account', canActivate: [roleGuard('Client')], data: { outsideShell: true }, loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
+  // The client area (§53 mobile first): its own shell with a bottom navigation.
   {
-    path: 'assessment',
-    loadComponent: () =>
-      import('./features/public-assessment/client-assessment.component').then(
-        (module) => module.ClientAssessmentComponent,
-      ),
+    path: 'app',
+    canActivate: [roleGuard('Client')],
+    loadComponent: () => import('./features/client-area/client-shell.component').then(m => m.ClientShellComponent),
+    children: [
+      { path: '', pathMatch: 'full', loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
+      { path: 'forms', loadComponent: () => import('./features/client-area/my-forms.component').then(m => m.MyFormsComponent) },
+      { path: 'forms/:id', loadComponent: () => import('./features/client-area/my-form.component').then(m => m.MyFormComponent) },
+      { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
+    ],
   },
+  { path: 'portal', redirectTo: 'app' },
+  { path: 'portal/account', redirectTo: 'app/account' },
   {
     path: '',
     component: ShellComponent,
@@ -30,6 +35,7 @@ const routes: Routes = [
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'clients', component: ClientsComponent },
+      { path: 'clients/:id', loadComponent: () => import('./features/client-profile/client-profile.component').then(m => m.ClientProfileComponent) },
       { path: 'subscriptions', component: ClientsComponent, data: { workspace: 'subscriptions' } },
       { path: 'assessments', component: AssessmentsComponent },
       { path: 'nutrition', component: CatalogComponent, data: { kind: 'foods' } },

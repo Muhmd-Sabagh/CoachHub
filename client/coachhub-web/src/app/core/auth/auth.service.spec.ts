@@ -48,7 +48,7 @@ describe('AuthService and authInterceptor', () => {
   it.each([
     [['Administrator'], '/dashboard', true, false],
     [['Coach'], '/dashboard', false, true],
-    [['Client'], '/portal', false, false],
+    [['Client'], '/app', false, false],
   ])('routes %j to their landing page', (roles, landing, isAdmin, isCoach) => {
     setup();
     service.login({ login: 'user', password: 'Password!123' }).subscribe();

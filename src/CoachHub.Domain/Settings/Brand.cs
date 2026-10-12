@@ -1,9 +1,11 @@
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Settings;
 
 /// <summary>The brand images an Administrator or coach can set (§63).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<BrandImage>))]
 public enum BrandImage
 {
     Logo,

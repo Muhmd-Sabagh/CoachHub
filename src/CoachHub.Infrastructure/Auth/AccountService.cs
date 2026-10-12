@@ -88,10 +88,23 @@ public sealed class AccountService(UserManager<User> users, RoleManager<Role> ro
         token.ThrowIfCancellationRequested();
         var user = await users.FindByEmailAsync(input.Email.Trim());
         if (user is null || !user.IsActive) throw Validation("token", "The reset request is invalid or expired.");
+        if (await IsInvitationAsync(user, input.Token))
+        {
+            // A client choosing their first password from the coach's invitation (onboarding).
+            AccountRules.Ensure(await users.AddPasswordAsync(user, input.NewPassword));
+            AccountRules.Ensure(await users.UpdateSecurityStampAsync(user)); // The invitation link is used up.
+            return;
+        }
         AccountRules.Ensure(await users.ResetPasswordAsync(user, input.Token, input.NewPassword));
         // Whoever knew the old password may hold a session; a reset signs every device out.
         await sessions.RevokeAllAsync(user.Id, null, SessionEndReason.PasswordReset, token);
     }
+
+    /// <summary>An invitation only sets a first password; once one exists, the link no longer works.</summary>
+    private async Task<bool> IsInvitationAsync(User user, string token) =>
+        !await users.HasPasswordAsync(user) &&
+        await users.VerifyUserTokenAsync(user, Clients.InvitationTokenProviderOptions.ProviderName,
+            Clients.InvitationTokenProviderOptions.Purpose, token);
 
     private async Task<string> ValidateAsync(CreateAccountInput input, CancellationToken token)
     {

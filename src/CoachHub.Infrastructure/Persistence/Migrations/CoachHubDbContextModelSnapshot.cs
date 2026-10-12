@@ -138,15 +138,15 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ClientCodeHeader")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<Guid>("CoachId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ExternalIdHeader")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("FormCodeHeader")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -647,11 +647,6 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("FormCode")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -667,6 +662,13 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("StatusOverride")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateOnly?>("StatusOverrideUntil")
+                        .HasColumnType("date");
+
                     b.Property<string>("WorkoutStatus")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -679,12 +681,151 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CoachId");
 
-                    b.HasIndex("FormCode")
-                        .IsUnique();
-
                     b.HasIndex("JoinDate");
 
                     b.ToTable("Clients", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Clients.ClientEquipment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EquipmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.HasIndex("ClientProfileId", "EquipmentId")
+                        .IsUnique();
+
+                    b.ToTable("ClientEquipment", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Clients.ClientFoodPreference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FoodItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodItemId");
+
+                    b.HasIndex("ClientProfileId", "FoodItemId")
+                        .IsUnique();
+
+                    b.ToTable("ClientFoodPreferences", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Clients.ClientProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActivityLevel")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int?>("AverageDailySteps")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly?>("Bedtime")
+                        .HasColumnType("time");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DietaryNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("DietaryRestrictions")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DislikedFoodsNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("FoodPreferences")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Goal")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal?>("HeightCm")
+                        .HasPrecision(5, 1)
+                        .HasColumnType("decimal(5,1)");
+
+                    b.Property<string>("LifestyleNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("PreferredFoodsNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int?>("PreferredMealCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Sex")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<decimal?>("StartingBodyFatPercent")
+                        .HasPrecision(4, 1)
+                        .HasColumnType("decimal(4,1)");
+
+                    b.Property<decimal?>("StartingWeightKg")
+                        .HasPrecision(5, 1)
+                        .HasColumnType("decimal(5,1)");
+
+                    b.Property<int?>("TrainingDaysPerWeek")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TrainingLocation")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TrainingPreferences")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<TimeOnly?>("WakeTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique();
+
+                    b.ToTable("ClientProfiles", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Clients.Subscription", b =>
@@ -840,6 +981,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("CoachId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsAccountMessage")
+                        .HasColumnType("bit");
 
                     b.Property<string>("LastError")
                         .HasMaxLength(1000)
@@ -1336,6 +1480,32 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Currencies", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.ReferenceData.Equipment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NameEn")
+                        .IsUnique();
+
+                    b.ToTable("Equipment", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.ReferenceData.ExerciseCategory", b =>
@@ -2306,6 +2476,45 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.Clients.ClientEquipment", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.ClientProfile", null)
+                        .WithMany("Equipment")
+                        .HasForeignKey("ClientProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.ReferenceData.Equipment", null)
+                        .WithMany()
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Clients.ClientFoodPreference", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.ClientProfile", null)
+                        .WithMany("Foods")
+                        .HasForeignKey("ClientProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Nutrition.FoodItem", null)
+                        .WithMany()
+                        .HasForeignKey("FoodItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Clients.ClientProfile", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithOne()
+                        .HasForeignKey("CoachHub.Domain.Clients.ClientProfile", "ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Clients.Subscription", b =>
                 {
                     b.HasOne("CoachHub.Domain.Clients.Client", null)
@@ -2735,6 +2944,13 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoachHub.Domain.Clients.Client", b =>
                 {
                     b.Navigation("Subscriptions");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Clients.ClientProfile", b =>
+                {
+                    b.Navigation("Equipment");
+
+                    b.Navigation("Foods");
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Clients.Subscription", b =>

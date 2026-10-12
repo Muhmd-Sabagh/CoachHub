@@ -41,7 +41,7 @@
       <thead>
         <tr>
           <th>Client</th>
-          <th>Codes</th>
+          <th>Status</th>
           <th>Subscription</th>
           <th>Plan workflow</th>
           <th class="actions">Actions</th>
@@ -56,12 +56,11 @@
         @for (c of page.items; track c.id) {
           <tr>
             <td>
-              <strong>{{ c.name }}</strong
+              <a [routerLink]="['/clients', c.id]"><strong>{{ c.name }}</strong></a
               ><small>{{ c.phone || c.email || 'No contact details' }}</small>
             </td>
             <td>
-              <code>{{ c.clientCode }}</code
-              ><small>Form {{ c.formCode }}</small>
+              <app-status-badge [value]="c.status" /><small><code>{{ c.clientCode }}</code></small>
             </td>
             <td>
               <app-status-badge [value]="c.subscriptionStatus" /><small
@@ -117,6 +116,10 @@
         ><label
           ><span>Email</span><input type="email" name="email" [(ngModel)]="editor.email"
         /></label>
+        @if (!editingId) {
+          <label class="checkbox-row span-2"><input type="checkbox" name="invite" [(ngModel)]="editor.invite" [disabled]="!editor.email" />
+            <span>Invite the client to sign in (emails a link to choose a password)</span></label>
+        }
         @if (editingId) {
           <label
             ><span>Diet status</span
@@ -160,8 +163,8 @@
           <span>Client code</span><strong>{{ detail.client.clientCode }}</strong>
         </div>
         <div>
-          <span>Form code</span><strong>{{ detail.client.formCode }}</strong
-          ><button class="link-button" (click)="regenerate()">Regenerate</button>
+          <span>Status</span><app-status-badge [value]="detail.client.status" />
+          <a class="link-button" [routerLink]="['/clients', detail.client.id]">Open client profile</a>
         </div>
         <div>
           <span>Joined</span><strong>{{ detail.client.joinDate }}</strong>

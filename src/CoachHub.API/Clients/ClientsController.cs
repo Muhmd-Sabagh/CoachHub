@@ -12,6 +12,7 @@ namespace CoachHub.API.Clients;
 [Route(ApiRoutes.V1 + "/clients")]
 public sealed class ClientsController(
     ClientService clientService,
+    ClientProfileService profileService,
     SubscriptionService subscriptionService) : ControllerBase
 {
     [HttpGet]
@@ -40,11 +41,29 @@ public sealed class ClientsController(
         CancellationToken cancellationToken) =>
         clientService.UpdateAsync(id, input, cancellationToken);
 
-    [HttpPost("{id:guid}/form-code/regenerate")]
-    public async Task<FormCodeResponse> RegenerateFormCode(
-        Guid id,
-        CancellationToken cancellationToken) =>
-        new(await clientService.RegenerateFormCodeAsync(id, cancellationToken));
+    /// <summary>The structured profile (§3), entered at onboarding and editable later.</summary>
+    [HttpGet("{id:guid}/profile")]
+    public Task<ClientProfileResponse> Profile(Guid id, CancellationToken cancellationToken) =>
+        profileService.GetAsync(id, cancellationToken);
+
+    [HttpPut("{id:guid}/profile")]
+    public Task<ClientProfileResponse> UpdateProfile(Guid id, ClientProfileInput input, CancellationToken cancellationToken) =>
+        profileService.UpdateAsync(id, input, cancellationToken);
+
+    /// <summary>Creates the client's login if needed and emails a set-password invitation (again).</summary>
+    [HttpPost("{id:guid}/invite")]
+    public Task<ClientAccountResponse> Invite(Guid id, CancellationToken cancellationToken) =>
+        clientService.InviteAsync(id, cancellationToken);
+
+    /// <summary>Sets the client's status by hand (§39).</summary>
+    [HttpPut("{id:guid}/status")]
+    public Task<ClientResponse> SetStatus(Guid id, ClientStatusInput input, CancellationToken cancellationToken) =>
+        clientService.SetStatusAsync(id, input, cancellationToken);
+
+    /// <summary>Returns the client to their computed status.</summary>
+    [HttpDelete("{id:guid}/status")]
+    public Task<ClientResponse> ClearStatus(Guid id, CancellationToken cancellationToken) =>
+        clientService.SetStatusAsync(id, null, cancellationToken);
 
     /// <summary>Moves the client to another coach (§56, D7).</summary>
     [HttpPost("{id:guid}/transfer")]
@@ -98,5 +117,3 @@ public sealed class ClientsController(
         return NoContent();
     }
 }
-
-public sealed record FormCodeResponse(string FormCode);

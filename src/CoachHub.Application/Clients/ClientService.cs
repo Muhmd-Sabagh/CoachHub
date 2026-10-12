@@ -13,6 +13,7 @@ public sealed class ClientService(
     CoachOwnership ownership,
     ICoachRepository coaches,
     MediaService media,
+    IClientAccounts accounts,
     TimeProvider timeProvider)
 {
     public async Task<PagedResult<ClientResponse>> ListAsync(
@@ -37,26 +38,29 @@ public sealed class ClientService(
             client.Subscriptions
                 .OrderByDescending(subscription => subscription.StartDate)
                 .Select(subscription => SubscriptionService.Map(subscription, today))
-                .ToArray());
+                .ToArray(),
+            await accounts.GetAsync(client.Id, cancellationToken));
     }
 
+    /// <summary>Creates a client (§3); with <see cref="ClientCreateInput.Invite"/>, also their login and invitation.</summary>
     public async Task<ClientResponse> CreateAsync(
         ClientCreateInput input,
         CancellationToken cancellationToken)
     {
         Validate(input.Name, input.Phone, input.Email);
+        if (input.Invite && string.IsNullOrWhiteSpace(input.Email))
+            throw Validation("email", "An email address is needed to invite the client.");
         var coachId = await ownership.ForNewRecordAsync(input.CoachId, cancellationToken);
-        var clientCode = await UniqueCodeAsync(true, cancellationToken);
-        var formCode = await UniqueCodeAsync(false, cancellationToken);
+        var clientCode = await UniqueClientCodeAsync(cancellationToken);
         var client = Client.Create(
             coachId,
             clientCode,
-            formCode,
             input.Name,
             input.Phone,
             input.Email,
             input.JoinDate ?? Today());
         await repository.AddAsync(client, cancellationToken);
+        if (input.Invite) await accounts.InviteAsync(client, cancellationToken);
         return Map(client, Today());
     }
 
@@ -75,18 +79,29 @@ public sealed class ClientService(
             input.WorkoutStatus,
             input.IsActive);
         await repository.SaveChangesAsync(cancellationToken);
+        // Deactivating a client also disables their login and signs them out everywhere (§2).
+        await accounts.SyncAsync(client, cancellationToken);
         return Map(client, Today());
     }
 
-    public async Task<string> RegenerateFormCodeAsync(
-        Guid id,
-        CancellationToken cancellationToken)
+    /// <summary>Creates the client's login if needed and (re)sends the set-password invitation.</summary>
+    public async Task<ClientAccountResponse> InviteAsync(Guid id, CancellationToken cancellationToken)
     {
         var client = await FindRequiredAsync(id, cancellationToken);
-        var formCode = await UniqueCodeAsync(false, cancellationToken);
-        client.RegenerateFormCode(formCode);
+        if (!client.IsActive) throw new ConflictException("Activate the client before inviting them.");
+        if (string.IsNullOrWhiteSpace(client.Email))
+            throw Validation("email", "Add the client's email address before inviting them.");
+        return await accounts.InviteAsync(client, cancellationToken);
+    }
+
+    /// <summary>Sets the client's status by hand (§39); <c>null</c> input clears the override.</summary>
+    public async Task<ClientResponse> SetStatusAsync(Guid id, ClientStatusInput? input, CancellationToken cancellationToken)
+    {
+        var client = await FindRequiredAsync(id, cancellationToken);
+        if (input is null) client.ClearStatusOverride();
+        else DomainValidation.Run(() => client.OverrideStatus(input.Status, input.Until, Today()), "status");
         await repository.SaveChangesAsync(cancellationToken);
-        return formCode;
+        return Map(client, Today());
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
@@ -120,7 +135,6 @@ public sealed class ClientService(
         client.Id,
         client.CoachId,
         client.ClientCode,
-        client.FormCode,
         client.Name,
         client.Phone,
         client.Email,
@@ -129,21 +143,19 @@ public sealed class ClientService(
         client.DietStatus,
         client.WorkoutStatus,
         client.IsActive,
-        client.Subscriptions.Count);
+        client.Subscriptions.Count,
+        client.GetStatus(today),
+        client.StatusOverride,
+        client.StatusOverrideUntil);
 
-    private async Task<string> UniqueCodeAsync(bool clientCode, CancellationToken cancellationToken)
+    private async Task<string> UniqueClientCodeAsync(CancellationToken cancellationToken)
     {
         for (var attempt = 0; attempt < 20; attempt++)
         {
-            var code = clientCode
-                ? codeGenerator.GenerateClientCode()
-                : codeGenerator.GenerateFormCode();
-            var exists = clientCode
-                ? await repository.ClientCodeExistsAsync(code, cancellationToken)
-                : await repository.FormCodeExistsAsync(code, cancellationToken);
-            if (!exists) return code;
+            var code = codeGenerator.GenerateClientCode();
+            if (!await repository.ClientCodeExistsAsync(code, cancellationToken)) return code;
         }
-        throw new ConflictException("Unable to allocate a unique client access code.");
+        throw new ConflictException("Unable to allocate a unique client code.");
     }
 
     private async Task<Client> FindRequiredAsync(Guid id, CancellationToken cancellationToken) =>
@@ -151,6 +163,9 @@ public sealed class ClientService(
         ?? throw new NotFoundException("Client", id);
 
     private DateOnly Today() => DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
+
+    private static ValidationException Validation(string field, string message) =>
+        new(new Dictionary<string, string[]> { [field] = [message] });
 
     private static void Validate(string name, string? phone, string? email)
     {

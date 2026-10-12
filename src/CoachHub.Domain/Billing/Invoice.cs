@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Billing;
 
+[JsonConverter(typeof(JsonStringEnumConverter<InvoiceStatus>))]
 public enum InvoiceStatus { Draft, Issued, PartiallyPaid, Paid, Voided, Refunded }
+[JsonConverter(typeof(JsonStringEnumConverter<PaymentStatus>))]
 public enum PaymentStatus { Pending, Settled, Failed, Refunded, PartiallyRefunded }
 
 public sealed class Invoice : Entity, ITenantOwned

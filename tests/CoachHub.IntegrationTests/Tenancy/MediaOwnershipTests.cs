@@ -114,9 +114,9 @@ public sealed class MediaOwnershipTests(CoachHubSqlApiFactory factory) : IClassF
         var account = await factory.CreateSignedInAccountAsync(AuthRoles.Client, client.CoachId, client.Id);
         var avatar = await UploadAvatarAsync(account.Http);
         var form = await PublishPhotoFormAsync(coach);
-        var upload = await UploadFormMediaAsync(client);
-        var submitted = await SubmitPhotoAsync(client, form, upload.Id);
-        Assert.Equal(HttpStatusCode.OK, submitted.StatusCode);
+        var upload = await UploadFormMediaAsync(account.Http);
+        var submitted = await SubmitPhotoAsync(account.Http, form, upload.Id);
+        Assert.Equal(HttpStatusCode.Created, submitted.StatusCode);
 
         var deleted = await coach.DeleteAsync($"/api/v1/clients/{client.Id}");
 
@@ -136,9 +136,11 @@ public sealed class MediaOwnershipTests(CoachHubSqlApiFactory factory) : IClassF
         var owner = await CreateClientAsync(coach);
         var other = await CreateClientAsync(coach);
         var form = await PublishPhotoFormAsync(coach);
-        var ownersUpload = await UploadFormMediaAsync(owner);
+        var ownerAccount = await factory.CreateSignedInAccountAsync(AuthRoles.Client, owner.CoachId, owner.Id);
+        var otherAccount = await factory.CreateSignedInAccountAsync(AuthRoles.Client, other.CoachId, other.Id);
+        var ownersUpload = await UploadFormMediaAsync(ownerAccount.Http);
 
-        var borrowed = await SubmitPhotoAsync(other, form, ownersUpload.Id);
+        var borrowed = await SubmitPhotoAsync(otherAccount.Http, form, ownersUpload.Id);
 
         Assert.Equal(HttpStatusCode.BadRequest, borrowed.StatusCode);
     }
@@ -192,28 +194,18 @@ public sealed class MediaOwnershipTests(CoachHubSqlApiFactory factory) : IClassF
         return new PhotoForm(form.DefinitionId, question.Id);
     }
 
-    /// <summary>The legacy anonymous upload by client and form code (retired in P5).</summary>
-    private async Task<MediaMetadata> UploadFormMediaAsync(ClientResponse client)
+    /// <summary>A signed-in client uploads a photo for a form answer (D5).</summary>
+    private static async Task<MediaMetadata> UploadFormMediaAsync(HttpClient client)
     {
-        using var anonymous = factory.CreateClient();
         var file = new ByteArrayContent(MeEndpointTests.Png);
         file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
-        var form = new MultipartFormDataContent
-        {
-            { new StringContent(client.ClientCode), "clientCode" },
-            { new StringContent(client.FormCode), "formCode" },
-            { file, "file", "front.png" }
-        };
-        return await ReadAsync<MediaMetadata>(await anonymous.PostAsync("/api/v1/client-forms/media", form));
+        var form = new MultipartFormDataContent { { file, "file", "front.png" } };
+        return await ReadAsync<MediaMetadata>(await client.PostAsync("/api/v1/me/forms/media", form));
     }
 
-    private async Task<HttpResponseMessage> SubmitPhotoAsync(ClientResponse client, PhotoForm form, Guid mediaId)
-    {
-        using var anonymous = factory.CreateClient();
-        return await anonymous.PostAsJsonAsync("/api/v1/client-forms/submissions", new SubmitFormInput(
-            client.ClientCode, client.FormCode, form.DefinitionId,
+    private static Task<HttpResponseMessage> SubmitPhotoAsync(HttpClient client, PhotoForm form, Guid mediaId) =>
+        client.PostAsJsonAsync($"/api/v1/me/forms/{form.DefinitionId}/submissions", new MyFormSubmissionInput(
             [new AnswerInput(form.QuestionId, JsonSerializer.SerializeToElement<object?>(null), mediaId)]));
-    }
 
     private static async Task<T> ReadAsync<T>(HttpResponseMessage response)
     {

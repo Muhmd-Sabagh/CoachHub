@@ -11,11 +11,10 @@ public sealed class FormSubmissionService(
     IMediaRepository mediaRepository,
     TimeProvider timeProvider)
 {
-    public async Task<FormAccessResponse> ValidateAccessAsync(
-        FormAccessInput input,
-        CancellationToken cancellationToken)
+    /// <summary>The forms a signed-in client may fill in now (D5): their coach's published, active forms.</summary>
+    public async Task<MyFormsResponse> ListForClientAsync(Guid clientId, CancellationToken cancellationToken)
     {
-        var client = await FindClientAsync(input, cancellationToken);
+        var client = await ActiveClientAsync(clientId, cancellationToken);
         var definitions = await repository.ListPublishedDefinitionsAsync(client.CoachId, cancellationToken);
         var hasInitial = await repository.HasInitialSubmissionAsync(client.Id, cancellationToken);
         var eligible = definitions
@@ -23,37 +22,46 @@ public sealed class FormSubmissionService(
             .Where(definition => definition.FormType != AssessmentFormType.InitialAssessment || !hasInitial)
             .Select(definition => new EligibleForm(definition.Id, definition.Name, definition.FormType))
             .ToArray();
-        return new(client.Id, client.Name, eligible);
+        return new(client.Name, eligible);
     }
 
-    public async Task<FormVersionResponse> GetPublishedAsync(
-        FormAccessInput input,
+    public async Task<FormVersionResponse> GetForClientAsync(
+        Guid clientId,
         Guid definitionId,
         CancellationToken cancellationToken)
     {
-        var access = await ValidateAccessAsync(input, cancellationToken);
-        if (access.EligibleForms.All(form => form.Id != definitionId))
-            throw new ConflictException("The client is not eligible for this form.");
+        var forms = await ListForClientAsync(clientId, cancellationToken);
+        if (forms.EligibleForms.All(form => form.Id != definitionId))
+            throw new NotFoundException("Form", definitionId);
         var graph = await repository.FindLatestPublishedAsync(definitionId, cancellationToken)
             ?? throw new NotFoundException("Published form", definitionId);
         return Map(graph);
     }
 
-    public async Task<SubmissionResponse> SubmitAsync(
-        SubmitFormInput input,
+    /// <summary>The owner of a file a client uploads for a form answer: the client themself.</summary>
+    public async Task<MediaOwner> UploadOwnerAsync(Guid clientId, Guid? userId, CancellationToken cancellationToken)
+    {
+        var client = await ActiveClientAsync(clientId, cancellationToken);
+        return MediaOwner.OfClient(client.CoachId, client.Id, userId);
+    }
+
+    public async Task<SubmissionResponse> SubmitForClientAsync(
+        Guid clientId,
+        Guid definitionId,
+        MyFormSubmissionInput input,
         CancellationToken cancellationToken)
     {
-        var client = await FindClientAsync(new(input.ClientCode, input.FormCode), cancellationToken);
-        var graph = await repository.FindLatestPublishedAsync(input.FormDefinitionId, cancellationToken)
-            ?? throw new NotFoundException("Published form", input.FormDefinitionId);
+        var client = await ActiveClientAsync(clientId, cancellationToken);
+        var graph = await repository.FindLatestPublishedAsync(definitionId, cancellationToken)
+            ?? throw new NotFoundException("Published form", definitionId);
         if (graph.Definition.CoachId != client.CoachId)
-            throw new NotFoundException("Published form", input.FormDefinitionId);
+            throw new NotFoundException("Published form", definitionId);
         if (graph.Definition.IsArchived) throw new ConflictException("This form is archived.");
         if (graph.Definition.FormType == AssessmentFormType.InitialAssessment &&
             await repository.HasInitialSubmissionAsync(client.Id, cancellationToken))
             throw new ConflictException("The client has already submitted an initial assessment.");
 
-        var answerMap = input.Answers.GroupBy(answer => answer.QuestionId).ToArray();
+        var answerMap = (input.Answers ?? []).GroupBy(answer => answer.QuestionId).ToArray();
         if (answerMap.Any(group => group.Count() > 1) ||
             answerMap.Any(group => graph.Questions.All(question => question.Id != group.Key)))
             throw Validation("answers", "Answers must reference each published question at most once.");
@@ -147,28 +155,12 @@ public sealed class FormSubmissionService(
             : value.GetRawText();
     }
 
-    /// <summary>
-    /// Validates the legacy client and form codes for an upload and returns the owner of the file:
-    /// the matched client. Retired with the code-based forms in P5 (D5).
-    /// </summary>
-    public async Task<MediaOwner> ResolveUploadOwnerAsync(
-        FormAccessInput input,
-        CancellationToken cancellationToken)
+    /// <summary>The caller's own client record (tenant-filtered); a deactivated client may not submit.</summary>
+    private async Task<CoachHub.Domain.Clients.Client> ActiveClientAsync(Guid clientId, CancellationToken cancellationToken)
     {
-        var client = await FindClientAsync(input, cancellationToken);
-        return MediaOwner.OfClient(client.CoachId, client.Id, uploadedByUserId: null);
-    }
-
-    private async Task<CoachHub.Domain.Clients.Client> FindClientAsync(
-        FormAccessInput input,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(input.ClientCode) || string.IsNullOrWhiteSpace(input.FormCode))
-            throw Validation("codes", "Client code and form code are required.");
-        var client = await repository.FindClientByCodesAsync(
-            input.ClientCode.Trim().ToUpperInvariant(), input.FormCode.Trim().ToUpperInvariant(), cancellationToken);
-        if (client is null || !client.IsActive)
-            throw new NotFoundException("Client access", "invalid");
+        var client = await repository.FindClientAsync(clientId, cancellationToken)
+            ?? throw new ForbiddenException("The account is not linked to a client.");
+        if (!client.IsActive) throw new ForbiddenException("The client account is inactive.");
         return client;
     }
 

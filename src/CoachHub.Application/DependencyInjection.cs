@@ -55,6 +55,8 @@ public static class DependencyInjection
         services.AddScoped<PaymentAccountService>();
         services.AddScoped<FoodCategoryService>();
         services.AddScoped<ExerciseCategoryService>();
+        services.AddScoped<EquipmentService>();
+        services.AddScoped<ClientProfileService>();
         services.AddScoped<SavedPlanQueryService>();
         services.AddScoped<ExerciseService>();
         services.AddScoped<LegacyExerciseImportService>();

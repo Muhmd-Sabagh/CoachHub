@@ -1,7 +1,9 @@
+using System.Text.Json.Serialization;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Auditing;
 
+[JsonConverter(typeof(JsonStringEnumConverter<AuditOperation>))]
 public enum AuditOperation
 {
     Create,
@@ -10,6 +12,7 @@ public enum AuditOperation
 }
 
 /// <summary>The real role of whoever performed the operation (D2).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<AuditActorKind>))]
 public enum AuditActorKind
 {
     Administrator,

@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.PlanDelivery;
 
+[JsonConverter(typeof(JsonStringEnumConverter<DeliveredPlanType>))]
 public enum DeliveredPlanType { Diet, Workout }
+[JsonConverter(typeof(JsonStringEnumConverter<DeliveryChannel>))]
 public enum DeliveryChannel { Download, Email, WhatsApp }
 
 public sealed class DeliveredPlan : Entity, ITenantOwned

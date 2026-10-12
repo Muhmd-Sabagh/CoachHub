@@ -1,0 +1,122 @@
+<a class="link-button" routerLink="/clients">← Clients</a>
+<section class="dashboard-hero">
+  <div>
+    <p class="eyebrow">Client profile</p>
+    <h1>{{ detail?.client?.name || 'Client' }}</h1>
+    @if (detail; as d) {
+      <p><span class="status-badge" [class.success]="d.client.status === 'OnTrack'">{{ d.client.status }}</span>
+        @if (d.client.statusOverride) { <small class="muted"> set by hand{{ d.client.statusOverrideUntil ? ' until ' + d.client.statusOverrideUntil : '' }}</small> }
+        @if (profile?.age) { · {{ profile?.age }} years } · Code <code>{{ d.client.clientCode }}</code></p>
+    }
+  </div>
+</section>
+@if (error) { <p class="form-error" role="alert">{{ error }}</p> }
+@if (message) { <p class="success-message" role="status">{{ message }}</p> }
+
+<nav class="resource-tabs" role="tablist" aria-label="Client sections">
+  @for (item of tabs; track item.id) {
+    <button type="button" role="tab" [class.active]="tab === item.id" [attr.aria-selected]="tab === item.id" (click)="open(item.id)">{{ item.label }}</button>
+  }
+</nav>
+
+@switch (tab) {
+  @case ('overview') {
+    @if (detail; as d) {
+      <section class="card workbench">
+        <div class="section-heading"><h2>Contact</h2></div>
+        <div class="detail-grid">
+          <div><span>Email</span><strong>{{ d.client.email || '—' }}</strong></div>
+          <div><span>Phone</span><strong>{{ d.client.phone || '—' }}</strong></div>
+          <div><span>Joined</span><strong>{{ d.client.joinDate }}</strong></div>
+          <div><span>Subscription</span><strong>{{ d.client.subscriptionStatus }}</strong></div>
+        </div>
+      </section>
+      <section class="card workbench">
+        <div class="section-heading"><h2>Sign-in</h2><span>{{ d.account.state }}</span></div>
+        @switch (d.account.state) {
+          @case ('None') { <p>The client has no login yet.</p> }
+          @case ('Invited') { <p>Invited — waiting for the client to choose a password.</p> }
+          @case ('Active') { <p>Signed in{{ d.account.lastLoginAt ? ' last on ' + (d.account.lastLoginAt | date: 'medium') : '' }}.</p> }
+          @case ('Disabled') { <p>The login is disabled because the client is inactive.</p> }
+        }
+        @if (d.account.state === 'None' || d.account.state === 'Invited') {
+          <button class="button button-primary" type="button" (click)="invite()" [disabled]="saving || !d.client.email || !d.client.isActive">
+            {{ d.account.state === 'None' ? 'Invite to sign in' : 'Send the invitation again' }}</button>
+          @if (!d.client.email) { <p class="muted">Add an email address on the Clients page first.</p> }
+        }
+      </section>
+      <section class="card workbench">
+        <div class="section-heading"><h2>Status</h2><span>Computed unless set by hand (§39)</span></div>
+        <form class="filter-row" (ngSubmit)="setStatus()">
+          <label><span>Set status</span><select name="status" [(ngModel)]="statusChoice">@for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }</select></label>
+          <label><span>Until (optional)</span><input type="date" name="until" [(ngModel)]="statusUntil" /></label>
+          <button class="button button-secondary" type="submit" [disabled]="saving">Set</button>
+          @if (d.client.statusOverride) { <button class="link-button" type="button" (click)="clearStatus()" [disabled]="saving">Back to automatic</button> }
+        </form>
+      </section>
+    }
+  }
+  @case ('profile') {
+    @if (form; as f) {
+      <section class="card workbench">
+        <div class="section-heading"><h2>Onboarding profile</h2><span>{{ profile?.isSaved ? 'Saved' : 'Not filled in yet' }}</span></div>
+        <form class="form-grid" (ngSubmit)="saveProfile()">
+          <label><span>Date of birth</span><input type="date" name="dob" [(ngModel)]="f.dateOfBirth" /></label>
+          <label><span>Sex</span><select name="sex" [(ngModel)]="f.sex"><option [ngValue]="null">—</option><option value="Female">Female</option><option value="Male">Male</option></select></label>
+          <label><span>Height (cm)</span><input type="number" inputmode="decimal" name="height" [(ngModel)]="f.heightCm" min="50" max="260" /></label>
+          <label><span>Starting weight (kg)</span><input type="number" inputmode="decimal" name="weight" [(ngModel)]="f.startingWeightKg" min="20" max="400" step="0.1" /></label>
+          <label><span>Body fat (%)</span><input type="number" inputmode="decimal" name="bodyFat" [(ngModel)]="f.startingBodyFatPercent" min="2" max="70" step="0.1" /></label>
+          <label><span>Goal</span><select name="goal" [(ngModel)]="f.goal"><option [ngValue]="null">—</option>@for (g of goals; track g) { <option [value]="g">{{ g }}</option> }</select></label>
+          <label><span>Activity level</span><select name="activity" [(ngModel)]="f.activityLevel"><option [ngValue]="null">—</option>@for (a of activityLevels; track a) { <option [value]="a">{{ a }}</option> }</select></label>
+          <label><span>Training days / week</span><input type="number" name="days" [(ngModel)]="f.trainingDaysPerWeek" min="0" max="7" /></label>
+          <label><span>Average daily steps</span><input type="number" name="steps" [(ngModel)]="f.averageDailySteps" min="0" max="100000" step="500" /></label>
+          <label><span>Training location</span><select name="location" [(ngModel)]="f.trainingLocation"><option [ngValue]="null">—</option>@for (l of locations; track l) { <option [value]="l">{{ l }}</option> }</select></label>
+          <label class="span-2"><span>Training preferences</span><textarea name="trainingPrefs" rows="2" [(ngModel)]="f.trainingPreferences" maxlength="2000"></textarea></label>
+          <fieldset class="span-2"><legend>Available equipment</legend>
+            <div class="choice-grid">@for (item of equipment; track item.id) {
+              <label class="checkbox-row"><input type="checkbox" [checked]="chosenEquipment.has(item.id)" (change)="toggleEquipment(item.id, $any($event.target).checked)" /> {{ item.nameEn }}</label>
+            } @empty { <span class="muted">No equipment in the catalog yet.</span> }</div>
+          </fieldset>
+          <label class="span-2"><span>Food preferences</span><textarea name="foodPrefs" rows="2" [(ngModel)]="f.foodPreferences" maxlength="2000"></textarea></label>
+          <fieldset class="span-2"><legend>Preferred and disliked foods</legend>
+            <div class="filter-row"><input name="foodSearch" [(ngModel)]="foodSearch" placeholder="Search the food catalog" (keydown.enter)="$event.preventDefault(); searchFoods()" />
+              <button class="button button-secondary" type="button" (click)="searchFoods()">Search</button></div>
+            @for (food of foodResults; track food.id) {
+              <div class="filter-row"><span>{{ food.nameEn }}</span>
+                <button class="link-button" type="button" (click)="addFood(food, 'preferred')">Preferred</button>
+                <button class="link-button danger" type="button" (click)="addFood(food, 'disliked')">Disliked</button></div>
+            }
+            <p><strong>Preferred:</strong> @for (food of preferred; track food.id) { <button class="chip" type="button" (click)="removeFood(food)">{{ food.nameEn }} ×</button> } @empty { — }</p>
+            <p><strong>Disliked:</strong> @for (food of disliked; track food.id) { <button class="chip" type="button" (click)="removeFood(food)">{{ food.nameEn }} ×</button> } @empty { — }</p>
+            <label><span>Other preferred foods</span><input name="preferredNote" [(ngModel)]="f.preferredFoodsNote" maxlength="2000" /></label>
+            <label><span>Other disliked foods</span><input name="dislikedNote" [(ngModel)]="f.dislikedFoodsNote" maxlength="2000" /></label>
+          </fieldset>
+          <fieldset class="span-2"><legend>Dietary restrictions</legend>
+            <div class="choice-grid">@for (r of restrictions; track r) {
+              <label class="checkbox-row"><input type="checkbox" [checked]="f.dietaryRestrictions.includes(r)" (change)="toggleRestriction(r, $any($event.target).checked)" /> {{ r }}</label>
+            }</div>
+            <label><span>Notes</span><input name="dietNotes" [(ngModel)]="f.dietaryNotes" maxlength="2000" /></label>
+          </fieldset>
+          <label><span>Preferred meals / day</span><input type="number" name="meals" [(ngModel)]="f.preferredMealCount" min="1" max="10" /></label>
+          <label><span>Bedtime</span><input type="time" name="bedtime" [(ngModel)]="f.bedtime" /></label>
+          <label><span>Wake time</span><input type="time" name="wake" [(ngModel)]="f.wakeTime" /></label>
+          <label class="span-2"><span>Lifestyle</span><textarea name="lifestyle" rows="3" [(ngModel)]="f.lifestyleNotes" maxlength="2000"></textarea></label>
+          <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving">Save profile</button></div>
+        </form>
+      </section>
+    }
+  }
+  @case ('checkins') {
+    <section class="card workbench">
+      <div class="section-heading"><h2>Assessments and check-ins</h2><a routerLink="/assessments">Review in Assessments</a></div>
+      <ul class="session-list">
+        @for (item of submissions; track item.id) {
+          <li><div><strong>{{ item.formName }}</strong><small class="muted">{{ item.submittedAt | date: 'medium' }} · {{ item.answerCount }} answers</small></div></li>
+        } @empty { <li class="muted">Nothing submitted yet.</li> }
+      </ul>
+    </section>
+  }
+  @default {
+    <section class="card workbench"><p class="muted">This section arrives with roadmap phase {{ arrivesIn(tab) }}.</p></section>
+  }
+}

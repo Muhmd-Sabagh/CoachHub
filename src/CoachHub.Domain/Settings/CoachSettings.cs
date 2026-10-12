@@ -1,8 +1,10 @@
+using System.Text.Json.Serialization;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Settings;
 
 /// <summary>Activity levels; each coach sets the multiplier for each (§14, §49).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ActivityLevel>))]
 public enum ActivityLevel
 {
     Sedentary,
@@ -13,6 +15,7 @@ public enum ActivityLevel
 }
 
 /// <summary>How macronutrient targets are derived (§15).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<MacroMode>))]
 public enum MacroMode
 {
     /// <summary>Mode 1: protein and fat in g/kg of body weight; carbohydrates fill the rest.</summary>
@@ -26,6 +29,7 @@ public enum MacroMode
 }
 
 /// <summary>How an equivalent replacement quantity is matched (§7).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<FoodReplacementRule>))]
 public enum FoodReplacementRule
 {
     Calories,

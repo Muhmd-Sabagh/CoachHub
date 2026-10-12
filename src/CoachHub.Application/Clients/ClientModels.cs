@@ -1,14 +1,32 @@
+using System.Text.Json.Serialization;
 using CoachHub.Domain.Clients;
 
 namespace CoachHub.Application.Clients;
 
 /// <param name="CoachId">Required when an administrator creates the client; ignored for coaches.</param>
+/// <param name="Invite">Creates the client's login and emails a set-password invitation; needs an email.</param>
 public sealed record ClientCreateInput(
     string Name,
     string? Phone,
     string? Email,
     DateOnly? JoinDate,
-    Guid? CoachId = null);
+    Guid? CoachId = null,
+    bool Invite = false);
+
+/// <summary>A manual status (§39), until the end of <paramref name="Until"/> or until cleared.</summary>
+public sealed record ClientStatusInput(ClientStatus Status, DateOnly? Until);
+
+/// <summary>The client's login: none yet, invited (no password set), active, or disabled.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ClientAccountState>))]
+public enum ClientAccountState
+{
+    None,
+    Invited,
+    Active,
+    Disabled
+}
+
+public sealed record ClientAccountResponse(ClientAccountState State, string? Email, DateTimeOffset? LastLoginAt);
 
 public sealed record ClientTransferInput(Guid CoachId);
 
@@ -24,7 +42,6 @@ public sealed record ClientResponse(
     Guid Id,
     Guid CoachId,
     string ClientCode,
-    string FormCode,
     string Name,
     string? Phone,
     string? Email,
@@ -33,11 +50,30 @@ public sealed record ClientResponse(
     PlanWorkflowStatus DietStatus,
     PlanWorkflowStatus WorkoutStatus,
     bool IsActive,
-    int SubscriptionCount);
+    int SubscriptionCount,
+    ClientStatus Status,
+    ClientStatus? StatusOverride,
+    DateOnly? StatusOverrideUntil);
 
 public sealed record ClientDetailResponse(
     ClientResponse Client,
-    IReadOnlyList<SubscriptionResponse> Subscriptions);
+    IReadOnlyList<SubscriptionResponse> Subscriptions,
+    ClientAccountResponse Account);
+
+/// <summary>
+/// The client's login account (onboarding, §2). Creating it never sets a password: the client
+/// chooses one from the emailed invitation.
+/// </summary>
+public interface IClientAccounts
+{
+    Task<ClientAccountResponse> GetAsync(Guid clientId, CancellationToken cancellationToken);
+
+    /// <summary>Creates the login when missing and emails a set-password invitation (again).</summary>
+    Task<ClientAccountResponse> InviteAsync(Client client, CancellationToken cancellationToken);
+
+    /// <summary>Keeps the login in step with the client: name, email, and active state (ending sessions when deactivated).</summary>
+    Task SyncAsync(Client client, CancellationToken cancellationToken);
+}
 
 public sealed record ClientQuery
 {
@@ -47,6 +83,7 @@ public sealed record ClientQuery
     public SubscriptionStatus? SubscriptionStatus { get; init; }
     public PlanWorkflowStatus? DietStatus { get; init; }
     public PlanWorkflowStatus? WorkoutStatus { get; init; }
+    public ClientStatus? Status { get; init; }
     public bool? IsActive { get; init; }
     public DateOnly? JoinDateFrom { get; init; }
     public DateOnly? JoinDateTo { get; init; }

@@ -19,7 +19,7 @@ public sealed class AssessmentImportService(
             ?? throw Validation("formDefinitionId", "The selected form does not exist.");
         var profile = FormImportProfile.Create(
             definition.CoachId, input.FormDefinitionId, input.Name, input.SheetName,
-            input.FormCodeHeader, input.TimestampHeader, input.ExternalIdHeader);
+            input.ClientCodeHeader, input.TimestampHeader, input.ExternalIdHeader);
         var mappings = await ValidateAndCreateMappingsAsync(profile, input.Mappings, cancellationToken);
         await repository.AddProfileAsync(profile, mappings, cancellationToken);
         return Map(profile, mappings);
@@ -32,7 +32,7 @@ public sealed class AssessmentImportService(
             ?? throw new NotFoundException("Assessment import profile", id);
         if (existing.Profile.FormDefinitionId != input.FormDefinitionId)
             throw Validation("formDefinitionId", "An import profile cannot be moved to another form.");
-        existing.Profile.Update(input.Name, input.SheetName, input.FormCodeHeader,
+        existing.Profile.Update(input.Name, input.SheetName, input.ClientCodeHeader,
             input.TimestampHeader, input.ExternalIdHeader);
         var mappings = await ValidateAndCreateMappingsAsync(existing.Profile, input.Mappings, cancellationToken);
         await repository.ReplaceProfileAsync(existing.Profile, mappings, cancellationToken);
@@ -52,7 +52,7 @@ public sealed class AssessmentImportService(
         var diagnostics = new List<ImportDiagnostic>();
         var reserved = new[]
         {
-            configured.Profile.FormCodeHeader,
+            configured.Profile.ClientCodeHeader,
             configured.Profile.TimestampHeader,
             configured.Profile.ExternalIdHeader
         }.Where(value => value is not null).Select(value => NormalizeHeader(value!)).ToHashSet();
@@ -73,20 +73,20 @@ public sealed class AssessmentImportService(
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                var formCode = Cell(row, configured.Profile.FormCodeHeader)?.Trim().ToUpperInvariant();
-                if (string.IsNullOrWhiteSpace(formCode))
+                var clientCode = Cell(row, configured.Profile.ClientCodeHeader)?.Trim().ToUpperInvariant();
+                if (string.IsNullOrWhiteSpace(clientCode))
                 {
                     unknownClient++;
                     diagnostics.Add(new(row.RowNumber, ImportRowStatus.UnknownClientOrCode,
-                        "The form code is missing or unknown."));
+                        "The client code is missing or unknown."));
                     continue;
                 }
-                var client = await repository.FindClientByFormCodeAsync(formCode, cancellationToken);
+                var client = await repository.FindClientByClientCodeAsync(clientCode, cancellationToken);
                 if (client is null || !client.IsActive || client.CoachId != configured.Profile.CoachId)
                 {
                     unknownClient++;
                     diagnostics.Add(new(row.RowNumber, ImportRowStatus.UnknownClientOrCode,
-                        "The form code is missing or unknown."));
+                        "The client code is missing or unknown."));
                     continue;
                 }
                 if (!TryTimestamp(Cell(row, configured.Profile.TimestampHeader), out var submittedAt))
@@ -163,7 +163,7 @@ public sealed class AssessmentImportService(
             throw Validation("mappings", "External column keys must be unique.");
         if (inputs.Select(item => item.QuestionStableKey).Distinct().Count() != inputs.Count)
             throw Validation("mappings", "Each question may be mapped only once.");
-        var reserved = new[] { profile.FormCodeHeader, profile.TimestampHeader, profile.ExternalIdHeader }
+        var reserved = new[] { profile.ClientCodeHeader, profile.TimestampHeader, profile.ExternalIdHeader }
             .Where(value => value is not null).Select(value => NormalizeHeader(value!)).ToArray();
         if (reserved.Distinct().Count() != reserved.Length || inputs.Any(item => reserved.Contains(NormalizeHeader(item.Header))))
             throw Validation("headers", "Reserved and question headers must be distinct.");
@@ -270,7 +270,7 @@ public sealed class AssessmentImportService(
     private static ImportProfileResponse Map(
         FormImportProfile profile, IReadOnlyList<FormImportColumnMapping> mappings) =>
         new(profile.Id, profile.FormDefinitionId, profile.Name, profile.SheetName,
-            profile.FormCodeHeader, profile.TimestampHeader, profile.ExternalIdHeader,
+            profile.ClientCodeHeader, profile.TimestampHeader, profile.ExternalIdHeader,
             mappings.Select(item => new ImportColumnMappingResponse(
                 item.Id, item.ExternalColumnKey, item.Header, item.QuestionStableKey)).ToArray());
     private static ValidationException Validation(string field, string message) =>

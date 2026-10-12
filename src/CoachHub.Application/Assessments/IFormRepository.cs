@@ -23,7 +23,8 @@ public interface IFormRepository
     Task AddDraftGraphAsync(FormVersion version, IReadOnlyList<FormSection> sections,
         IReadOnlyList<FormQuestion> questions, IReadOnlyList<QuestionOption> options,
         CancellationToken cancellationToken);
-    Task<Client?> FindClientByCodesAsync(string clientCode, string formCode, CancellationToken cancellationToken);
+    /// <summary>Tenant-filtered: a client reaches only their own record.</summary>
+    Task<Client?> FindClientAsync(Guid clientId, CancellationToken cancellationToken);
     Task<bool> HasInitialSubmissionAsync(Guid clientId, CancellationToken cancellationToken);
     Task SubmitAsync(FormSubmission submission, IReadOnlyList<FormAnswer> answers, CancellationToken cancellationToken);
 }
