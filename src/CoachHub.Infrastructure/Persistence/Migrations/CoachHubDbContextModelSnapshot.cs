@@ -388,6 +388,15 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ActorUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ChangesJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("EntityId")
                         .HasColumnType("uniqueidentifier");
 
@@ -409,6 +418,10 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasIndex("OccurredAt");
 
                     b.HasIndex("ActorKind", "ActorUserId");
+
+                    b.HasIndex("ClientId", "OccurredAt");
+
+                    b.HasIndex("CoachId", "OccurredAt");
 
                     b.HasIndex("EntityType", "EntityId");
 
@@ -2002,6 +2015,14 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasForeignKey("FormQuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Auditing.AuditEntry", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Auth.UserSession", b =>

@@ -26,16 +26,16 @@ public sealed class UserSession : Entity
     private UserSession() { }
 
     public Guid UserId { get; private set; }
-    public string TokenHash { get; private set; } = string.Empty;
-    public string? PreviousTokenHash { get; private set; }
-    public DateTimeOffset? RotatedAt { get; private set; }
+    [AuditIgnore] public string TokenHash { get; private set; } = string.Empty;
+    [AuditIgnore] public string? PreviousTokenHash { get; private set; }
+    [AuditIgnore] public DateTimeOffset? RotatedAt { get; private set; }
     public string? UserAgent { get; private set; }
     public string? IpAddress { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
-    public DateTimeOffset LastSeenAt { get; private set; }
+    [AuditIgnore] public DateTimeOffset LastSeenAt { get; private set; }
 
     /// <summary>When the session expires without further use. Never later than <see cref="AbsoluteExpiresAt"/>.</summary>
-    public DateTimeOffset ExpiresAt { get; private set; }
+    [AuditIgnore] public DateTimeOffset ExpiresAt { get; private set; }
 
     /// <summary>The hard limit: the session ends then even if it is used every day.</summary>
     public DateTimeOffset AbsoluteExpiresAt { get; private set; }

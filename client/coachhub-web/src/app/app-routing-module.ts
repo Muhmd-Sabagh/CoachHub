@@ -39,7 +39,6 @@ const routes: Routes = [
       { path: 'operations', loadComponent: () => import('./features/operations/operations.component').then(m => m.OperationsComponent) },
       {
         path: 'audit',
-        canActivate: [roleGuard('Administrator')],
         loadComponent: () =>
           import('./features/auditing/audit.component').then((module) => module.AuditComponent),
       },

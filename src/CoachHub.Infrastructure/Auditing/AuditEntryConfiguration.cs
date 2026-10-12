@@ -18,5 +18,11 @@ public sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntr
         builder.HasIndex(entry => entry.OccurredAt);
         builder.HasIndex(entry => new { entry.EntityType, entry.EntityId });
         builder.HasIndex(entry => new { entry.ActorKind, entry.ActorUserId });
+        builder.Property(entry => entry.ChangesJson).HasColumnType("nvarchar(max)");
+
+        // The coach foreign key and the tenant filter come from TenantModel. ClientId has no
+        // foreign key on purpose: the trail must outlive a deleted client.
+        builder.HasIndex(entry => new { entry.CoachId, entry.OccurredAt });
+        builder.HasIndex(entry => new { entry.ClientId, entry.OccurredAt });
     }
 }

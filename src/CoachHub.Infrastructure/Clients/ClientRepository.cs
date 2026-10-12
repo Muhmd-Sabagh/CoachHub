@@ -1,6 +1,7 @@
 using CoachHub.Application.Clients;
 using CoachHub.Application.Common.Models;
 using CoachHub.Domain.Assessments;
+using CoachHub.Domain.Auditing;
 using CoachHub.Domain.Billing;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.DietPlanning;
@@ -145,21 +146,34 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
 
         // Coaching records follow the client. Commercial records (subscriptions, renewals,
         // invoices, payments, refunds) stay with the coach who sold them (D7).
-        await dbContext.Set<DietPlan>().IgnoreQueryFilters()
+        var dietPlans = await dbContext.Set<DietPlan>().IgnoreQueryFilters()
             .Where(plan => plan.ClientId == client.Id && plan.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(plan => plan.CoachId, toCoachId), cancellationToken);
-        await dbContext.Set<WorkoutPlan>().IgnoreQueryFilters()
+        var workoutPlans = await dbContext.Set<WorkoutPlan>().IgnoreQueryFilters()
             .Where(plan => plan.ClientId == client.Id && plan.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(plan => plan.CoachId, toCoachId), cancellationToken);
-        await dbContext.Set<FormSubmission>().IgnoreQueryFilters()
+        var submissions = await dbContext.Set<FormSubmission>().IgnoreQueryFilters()
             .Where(submission => submission.ClientId == client.Id && submission.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(submission => submission.CoachId, toCoachId), cancellationToken);
-        await dbContext.Set<DeliveredPlan>().IgnoreQueryFilters()
+        var deliveries = await dbContext.Set<DeliveredPlan>().IgnoreQueryFilters()
             .Where(delivery => delivery.ClientId == client.Id && delivery.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(delivery => delivery.CoachId, toCoachId), cancellationToken);
-        await dbContext.Set<MediaAsset>().IgnoreQueryFilters()
+        var media = await dbContext.Set<MediaAsset>().IgnoreQueryFilters()
             .Where(asset => asset.ClientId == client.Id && asset.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(asset => asset.CoachId, (Guid?)toCoachId), cancellationToken);
+
+        // The bulk moves bypass change tracking, so the transfer is recorded explicitly (§56, D2).
+        dbContext.RecordAudit("ClientTransfer", client.Id, AuditOperation.Update, toCoachId, client.Id,
+            new Dictionary<string, (object? From, object? To)>
+            {
+                ["CoachId"] = (fromCoachId, toCoachId),
+                ["DietPlansMoved"] = (null, dietPlans),
+                ["WorkoutPlansMoved"] = (null, workoutPlans),
+                ["FormSubmissionsMoved"] = (null, submissions),
+                ["DeliveredPlansMoved"] = (null, deliveries),
+                ["MediaMoved"] = (null, media)
+            });
+        await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
     public Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken) =>

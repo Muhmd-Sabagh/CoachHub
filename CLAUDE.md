@@ -100,11 +100,10 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Do not add anonymous endpoints.
   - The only approved anonymous surface is authentication: login, session refresh and password reset.
   - When retiring `/api/client-forms`, update `ControllerAuthorizationTests`.
-- **Audit (D2)**
-  - Capture the real actor role and the affected client.
-  - Store previous values for changed fields.
-  - Never store password hashes, security stamps, tokens or secrets.
-  - Audit data is sensitive: tenant-isolate it and restrict access to it.
+- **Audit (D2)** — implemented in P3; see `docs/product/phases/P03_AUDIT.md`.
+  - `CoachHubDbContext` captures every tracked change automatically (`Infrastructure/Auditing/AuditCapture.cs`): real actor role, coach, affected client, and previous/new values. Do not write audit rows by hand except for operations that bypass change tracking (`ExecuteUpdate`/`ExecuteDelete`): record those with `CoachHubDbContext.RecordAudit`.
+  - Mark secrets and pure bookkeeping fields `[AuditIgnore]` (`Domain/Common`). Never let password hashes, tokens, access codes or one-time links reach the trail.
+  - Coaches read their own tenant's trail; administrators read all; clients never.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
@@ -116,8 +115,7 @@ The codebase implements phases 0–21 of the legacy migration as a single-coach 
 - string-based workout prescriptions;
 - `DietPlanVersion` currently means *variant tabs*, not history, and `PUT` replaces plan content in place;
 - no client tracking, analytics, chat, calendars or branding;
-- settings come from appsettings, not the database;
-- the audit trail is metadata only.
+- settings come from appsettings, not the database.
 
 Treat these as planned rework, not conventions to preserve.
 

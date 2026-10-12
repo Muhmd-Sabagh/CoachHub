@@ -1,4 +1,5 @@
 using CoachHub.Application.Auditing;
+using CoachHub.Infrastructure.Auditing;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Tenancy;
 using CoachHub.Domain.Auditing;
@@ -94,6 +95,7 @@ public sealed class CoachHubDbContext(
         foreach (var entry in ChangeTracker.Entries())
         {
             if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted)) continue;
+            if (entry.Entity is AuditEntry) continue; // Written by the system on the caller's behalf.
             Guid? owner = entry.Entity switch
             {
                 ITenantOwned owned => owned.CoachId,
@@ -138,58 +140,38 @@ public sealed class CoachHubDbContext(
             throw new InvalidOperationException("Refund transactions are append-only.");
         if (ChangeTracker.Entries<DeliveredPlan>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Delivered plan snapshots are append-only.");
-        var trackedAuditEntries = ChangeTracker.Entries<AuditEntry>().ToArray();
-        if (trackedAuditEntries.Any(entry =>
+        if (ChangeTracker.Entries<AuditEntry>().Any(entry =>
                 entry.State is EntityState.Modified or EntityState.Deleted))
         {
             throw new InvalidOperationException(
                 "Audit entries are append-only and cannot be modified or deleted.");
         }
-        if (trackedAuditEntries.Any(entry => entry.State == EntityState.Added))
-        {
-            return;
-        }
 
-        var actor = auditActorAccessor?.Current ?? new AuditActor(AuditActorKind.System);
-        var occurredAt = DateTimeOffset.UtcNow;
-        var entries = ChangeTracker.Entries()
-            .Where(entry => entry.Entity is not AuditEntry && entry.State is
-                EntityState.Added or EntityState.Modified or EntityState.Deleted)
-            .Select(entry => AuditEntry.Create(
-                entry.Metadata.ClrType.Name,
-                EntityId(entry),
-                Operation(entry.State),
-                actor.Kind,
-                actor.UserId,
-                actor.DisplayName,
-                occurredAt))
-            .ToArray();
-
-        if (entries.Length > 0)
+        var entries = AuditCapture.Capture(
+            ChangeTracker,
+            AuditActor,
+            TenantSignedIn ? TenantCoachId : null,
+            TenantClientScoped ? TenantClientId : null,
+            DateTimeOffset.UtcNow);
+        if (entries.Count > 0)
         {
             Set<AuditEntry>().AddRange(entries);
         }
     }
 
-    private static Guid? EntityId(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
-    {
-        if (entry.Entity is Entity entity)
-        {
-            return entity.Id;
-        }
+    private AuditActor AuditActor => auditActorAccessor?.Current ?? new AuditActor(AuditActorKind.System);
 
-        var key = entry.Metadata.FindPrimaryKey();
-        return key?.Properties.Count == 1 &&
-            entry.Property(key.Properties[0].Name).CurrentValue is Guid id
-                ? id
-                : null;
-    }
-
-    private static AuditOperation Operation(EntityState state) => state switch
-    {
-        EntityState.Added => AuditOperation.Create,
-        EntityState.Modified => AuditOperation.Update,
-        EntityState.Deleted => AuditOperation.Delete,
-        _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
-    };
+    /// <summary>
+    /// Records an operation that bypasses change tracking (bulk updates), with the current actor.
+    /// Saved with the next <see cref="SaveChangesAsync(CancellationToken)"/>.
+    /// </summary>
+    internal void RecordAudit(
+        string entityType,
+        Guid? entityId,
+        AuditOperation operation,
+        Guid? coachId,
+        Guid? clientId,
+        IReadOnlyDictionary<string, (object? From, object? To)> changes) =>
+        Set<AuditEntry>().Add(AuditCapture.Record(
+            AuditActor, entityType, entityId, operation, coachId, clientId, changes, DateTimeOffset.UtcNow));
 }

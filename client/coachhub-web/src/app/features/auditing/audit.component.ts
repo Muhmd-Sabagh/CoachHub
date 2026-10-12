@@ -16,7 +16,9 @@ export class AuditComponent implements OnInit {
   page: PagedResult<AuditRecord> = emptyPage();
   search = '';
   entityType = '';
+  clientId = '';
   operation = '';
+  expanded: string | null = null;
   actorKind = '';
   occurredFrom = '';
   occurredTo = '';
@@ -39,6 +41,7 @@ export class AuditComponent implements OnInit {
   reset(): void {
     this.search = '';
     this.entityType = '';
+    this.clientId = '';
     this.operation = '';
     this.actorKind = '';
     this.occurredFrom = '';
@@ -70,14 +73,34 @@ export class AuditComponent implements OnInit {
       (record.actorKind === 'PublicClient' ? 'Public client' : record.actorKind);
   }
 
+  toggle(record: AuditRecord): void {
+    this.expanded = this.expanded === record.id ? null : record.id;
+  }
+
+  /** Shows only this client's history (§58: the affected client). */
+  showClient(clientId: string): void {
+    this.clientId = clientId;
+    this.applySearch();
+  }
+
+  value(value: unknown): string { return formatAuditValue(value); }
+
   private filters() {
     return {
       searchTerm: this.search.trim() || undefined,
       entityType: this.entityType || undefined,
+      clientId: this.clientId.trim() || undefined,
       operation: this.operation || undefined,
       actorKind: this.actorKind || undefined,
       occurredFrom: this.occurredFrom || undefined,
       occurredTo: this.occurredTo || undefined,
     };
   }
+}
+
+/** A readable audit value: "—" for none, text as is, other JSON compactly. */
+export function formatAuditValue(value: unknown): string {
+  if (value === undefined || value === null) return '—';
+  if (typeof value === 'string') return value === '' ? '""' : value;
+  return JSON.stringify(value);
 }

@@ -4,15 +4,23 @@ import { environment } from '../../../environments/environment';
 import { PagedResult } from '../../shared/models/paged-result';
 import { queryParams } from '../../shared/services/query-params';
 
+export type AuditActorKind = 'Administrator' | 'Coach' | 'Client' | 'PublicClient' | 'System';
+
+/** One changed property (D2): the previous value and the new one, as JSON values. */
+export interface AuditChange { property: string; from?: unknown; to?: unknown; }
+
 export interface AuditRecord {
   id: string;
   entityType: string;
   entityId?: string | null;
   operation: 'Create' | 'Update' | 'Delete';
-  actorKind: 'Administrator' | 'PublicClient' | 'System';
+  actorKind: AuditActorKind;
   actorUserId?: string | null;
   actorDisplayName?: string | null;
   occurredAt: string;
+  coachId?: string | null;
+  clientId?: string | null;
+  changes: AuditChange[];
 }
 
 export interface AuditQuery {
@@ -20,6 +28,7 @@ export interface AuditQuery {
   pageSize: number;
   searchTerm?: string;
   entityType?: string;
+  clientId?: string;
   operation?: string;
   actorKind?: string;
   occurredFrom?: string;
