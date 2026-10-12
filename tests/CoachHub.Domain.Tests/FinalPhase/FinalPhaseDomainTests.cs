@@ -24,7 +24,7 @@ public sealed class FinalPhaseDomainTests
     [Fact]
     public void Notification_records_attempt_and_failure_without_losing_schedule()
     {
-        var item = Notification.Schedule(null, null, NotificationChannel.Email, "client@example.com", "Reminder", "Body", DateTimeOffset.UtcNow);
+        var item = Notification.Schedule(null, null, NotificationChannel.Email, "client@example.com", "Reminder", "Body", DateTimeOffset.UtcNow, isAccountMessage: false);
         item.Start(); item.MarkFailed("Provider unavailable");
         Assert.Equal(NotificationStatus.Failed, item.Status); Assert.Equal(1, item.AttemptCount);
     }

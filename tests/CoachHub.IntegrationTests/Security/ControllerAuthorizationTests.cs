@@ -1,5 +1,4 @@
 using System.Reflection;
-using CoachHub.API.Assessments;
 using CoachHub.API.Auth;
 using CoachHub.API.Settings;
 using CoachHub.Application.Auth;
@@ -20,11 +19,8 @@ public sealed class ControllerAuthorizationTests
         $"{nameof(BrandingController)}.{nameof(BrandingController.Public)}",
         $"{nameof(BrandingController)}.{nameof(BrandingController.Asset)}",
         $"{nameof(AuthController)}.{nameof(AuthController.RequestReset)}",
-        $"{nameof(AuthController)}.{nameof(AuthController.Reset)}",
-        $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.Validate)}",
-        $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.Questions)}",
-        $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.Submit)}",
-        $"{nameof(ClientFormsController)}.{nameof(ClientFormsController.UploadMedia)}"
+        $"{nameof(AuthController)}.{nameof(AuthController.Reset)}"
+        // D5 (P5): the code-based client forms are retired; clients submit signed in.
     ];
 
     [Fact]
@@ -95,18 +91,14 @@ public sealed class ControllerAuthorizationTests
     }
 
     [Fact]
-    public void Authentication_and_client_form_public_surfaces_use_separate_limit_policies()
+    public void Authentication_uses_its_own_limit_policy_and_no_code_based_surface_remains()
     {
         var login = typeof(AuthController).GetMethod(nameof(AuthController.Login))!;
-        var validate = typeof(ClientFormsController).GetMethod(nameof(ClientFormsController.Validate))!;
 
-        Assert.Equal(
-            "authentication",
-            login.GetCustomAttribute<EnableRateLimitingAttribute>()!.PolicyName);
-        Assert.Equal(
-            "client-forms",
-            typeof(ClientFormsController).GetCustomAttribute<EnableRateLimitingAttribute>()!.PolicyName);
-        Assert.NotNull(validate);
+        Assert.Equal("authentication", login.GetCustomAttribute<EnableRateLimitingAttribute>()!.PolicyName);
+        Assert.DoesNotContain(typeof(Program).Assembly.GetTypes(), type => type.Name == "ClientFormsController");
+        Assert.Equal(AuthPolicies.ClientOnly,
+            typeof(CoachHub.API.Me.MyFormsController).GetCustomAttribute<AuthorizeAttribute>()!.Policy);
     }
 
     private static IEnumerable<Type> ApiControllers() => typeof(Program).Assembly

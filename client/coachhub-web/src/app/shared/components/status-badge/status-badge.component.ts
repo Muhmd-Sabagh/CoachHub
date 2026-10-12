@@ -8,6 +8,6 @@ import { Component, Input } from '@angular/core';
 export class StatusBadgeComponent {
   @Input() value = '';
   get isPositive(): boolean {
-    return ['Active', 'Published', 'OnPlan'].includes(this.value);
+    return ['Active', 'Published', 'OnPlan', 'OnTrack'].includes(this.value);
   }
 }

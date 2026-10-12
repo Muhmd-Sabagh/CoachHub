@@ -1,8 +1,10 @@
+using System.Text.Json.Serialization;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.WorkoutPlanning;
 
 namespace CoachHub.Application.Pdf;
 
+[JsonConverter(typeof(JsonStringEnumConverter<PlanPdfLanguage>))]
 public enum PlanPdfLanguage { English, Arabic }
 public sealed record PdfClientInfo(string Name, string ClientCode);
 public sealed record GeneratedPlanPdf(byte[] Content, string FileName);

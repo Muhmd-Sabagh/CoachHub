@@ -99,7 +99,8 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 - **Client access (D5):**
   - Do not add anonymous endpoints.
   - The only approved anonymous surface is authentication: login, session refresh, password reset, and the login page's branding (`/branding/public` and `/branding/assets/{id}`, which serves brand images only).
-  - When retiring `/api/client-forms`, update `ControllerAuthorizationTests`.
+  - The code-based public forms are retired (P5). Clients submit at `/api/v1/me/forms` (ClientOnly); the client always comes from the token.
+  - Client logins come from invitations: a 7-day set-password link through the password-reset page. Deactivating a client disables the login and ends its sessions.
 - **Audit (D2)** — implemented in P3; see `docs/product/phases/P03_AUDIT.md`.
   - `CoachHubDbContext` captures every tracked change automatically (`Infrastructure/Auditing/AuditCapture.cs`): real actor role, coach, affected client, and previous/new values. Do not write audit rows by hand except for operations that bypass change tracking (`ExecuteUpdate`/`ExecuteDelete`): record those with `CoachHubDbContext.RecordAudit`.
   - Mark secrets and pure bookkeeping fields `[AuditIgnore]` (`Domain/Common`). Never let password hashes, tokens, access codes or one-time links reach the trail.
@@ -111,7 +112,6 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 The codebase implements phases 0–21 of the legacy migration as a single-coach back office. Known gaps against REQUIREMENTS.md:
 
-- thin `Client` profile;
 - string-based workout prescriptions;
 - `DietPlanVersion` currently means *variant tabs*, not history, and `PUT` replaces plan content in place;
 - no client tracking, analytics, chat or calendars.
@@ -123,7 +123,8 @@ Treat these as planned rework, not conventions to preserve.
 - `tests/CoachHub.IntegrationTests/Security/ControllerAuthorizationTests.cs` pins the anonymous API surface (every anonymous action must be rate-limited) and requires every `[Authorize]` to use an `AuthPolicies` role policy: `AdminOnly`, `CoachOrAdmin`, `ClientOnly` or `AnyRole` (self-service).
 - Platform catalogs (foods, exercises, currencies, categories) and `/media` writes are `AdminOnly`; coaches read them.
 - Branding (P4): brands are read across tenants on purpose (public data); writes pass the save guard. Subdomains and custom domains are Administrator-only. Brand images are coach-library or platform media.
-- Settings (P4): calculations read coach defaults from `SettingsService.CoachAsync`, never constants. Enums are serialized as numbers by the API.
+- Settings (P4): calculations read coach defaults from `SettingsService.CoachAsync`, never constants.
+- Enums cross the API as names: every public enum carries `[JsonConverter(typeof(JsonStringEnumConverter<T>))]` (guarded by `EnumContractTests`). A `[Flags]` set is exposed as a list of names instead.
 - Media has an owner (P2, `MediaOwner`): platform media is visible to every signed-in user, a coach's library to the coach and their clients, client media to the client and their coach. Catalog entries may reference platform images only.
 - Sessions (P2): access tokens last 15 minutes; the refresh token is a rotating, hashed, HttpOnly `SameSite=Strict` cookie scoped to `/api/v1/auth`. Self-service endpoints act on the account in the token, never on an ID from the request. When an account loses access, end its sessions with `SessionService.RevokeAllAsync`.
 - Append-only rows: `SubscriptionRenewal`, `Refund`, `DeliveredPlan` and `AuditEntry` cannot be modified or deleted (enforced in `CoachHubDbContext`).

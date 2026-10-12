@@ -98,6 +98,10 @@ public sealed class PaymentAccountsController(PaymentAccountService service)
 public sealed class FoodCategoriesController(FoodCategoryService service)
     : PlatformReferenceDataController<FoodCategory, BilingualReferenceInput, BilingualReferenceResponse>(service);
 
+[Route(ApiRoutes.V1 + "/reference-data/equipment")]
+public sealed class EquipmentController(EquipmentService service)
+    : PlatformReferenceDataController<Equipment, BilingualReferenceInput, BilingualReferenceResponse>(service);
+
 [Route(ApiRoutes.V1 + "/reference-data/exercise-categories")]
 public sealed class ExerciseCategoriesController(ExerciseCategoryService service)
     : PlatformReferenceDataController<ExerciseCategory, BilingualReferenceInput, BilingualReferenceResponse>(service);

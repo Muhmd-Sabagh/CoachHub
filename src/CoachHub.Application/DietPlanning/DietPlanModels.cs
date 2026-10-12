@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 namespace CoachHub.Application.DietPlanning;
 
 public sealed record DietPlanInput(
@@ -66,7 +67,9 @@ public sealed record DietReplacementOptionResponse(
     string ReplacementNameEn, string? ReplacementNameAr,
     decimal? Quantity, int Order, string? Notes, NutritionTotals Totals);
 
+[JsonConverter(typeof(JsonStringEnumConverter<BiologicalSex>))]
 public enum BiologicalSex { Male, Female }
+[JsonConverter(typeof(JsonStringEnumConverter<EnergyGoal>))]
 public enum EnergyGoal { LoseWeight, Maintain, GainWeight }
 public sealed record EnergyCalculatorInput(
     int Age, BiologicalSex Sex, decimal WeightKg, decimal HeightCm,

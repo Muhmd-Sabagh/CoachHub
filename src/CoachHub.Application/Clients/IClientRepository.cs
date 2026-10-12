@@ -5,10 +5,12 @@ namespace CoachHub.Application.Clients;
 
 public interface IClientRepository
 {
+    /// <summary>The client's profile with its equipment and food choices; null until first saved.</summary>
+    Task<ClientProfile?> FindProfileAsync(Guid clientId, CancellationToken cancellationToken);
+    Task AddProfileAsync(ClientProfile profile, CancellationToken cancellationToken);
     Task<PagedResult<Client>> ListAsync(ClientQuery query, DateOnly today, CancellationToken cancellationToken);
     Task<Client?> FindAsync(Guid id, CancellationToken cancellationToken);
     Task<bool> ClientCodeExistsAsync(string code, CancellationToken cancellationToken);
-    Task<bool> FormCodeExistsAsync(string code, CancellationToken cancellationToken);
     Task AddAsync(Client client, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken);
 

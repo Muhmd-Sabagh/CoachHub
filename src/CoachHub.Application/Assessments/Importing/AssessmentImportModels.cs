@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using CoachHub.Domain.Assessments;
 using CoachHub.Domain.Clients;
 
@@ -7,15 +8,16 @@ public sealed record ImportColumnMappingInput(
     string ExternalColumnKey, string Header, Guid QuestionStableKey);
 public sealed record SaveImportProfileInput(
     Guid FormDefinitionId, string Name, string SheetName,
-    string FormCodeHeader, string TimestampHeader, string? ExternalIdHeader,
+    string ClientCodeHeader, string TimestampHeader, string? ExternalIdHeader,
     IReadOnlyList<ImportColumnMappingInput> Mappings);
 public sealed record ImportColumnMappingResponse(
     Guid Id, string ExternalColumnKey, string Header, Guid QuestionStableKey);
 public sealed record ImportProfileResponse(
     Guid Id, Guid FormDefinitionId, string Name, string SheetName,
-    string FormCodeHeader, string TimestampHeader, string? ExternalIdHeader,
+    string ClientCodeHeader, string TimestampHeader, string? ExternalIdHeader,
     IReadOnlyList<ImportColumnMappingResponse> Mappings);
 
+[JsonConverter(typeof(JsonStringEnumConverter<ImportRowStatus>))]
 public enum ImportRowStatus
 {
     Imported,
@@ -46,7 +48,7 @@ public interface IFormImportRepository
     Task<ImportProfileGraph?> FindProfileAsync(Guid id, CancellationToken cancellationToken);
     Task AddProfileAsync(FormImportProfile profile, IReadOnlyList<FormImportColumnMapping> mappings, CancellationToken cancellationToken);
     Task ReplaceProfileAsync(FormImportProfile profile, IReadOnlyList<FormImportColumnMapping> mappings, CancellationToken cancellationToken);
-    Task<Client?> FindClientByFormCodeAsync(string formCode, CancellationToken cancellationToken);
+    Task<Client?> FindClientByClientCodeAsync(string clientCode, CancellationToken cancellationToken);
     Task<bool> ImportFingerprintExistsAsync(string fingerprint, CancellationToken cancellationToken);
     Task<bool> TrySubmitAsync(FormSubmission submission, IReadOnlyList<FormAnswer> answers, CancellationToken cancellationToken);
 }

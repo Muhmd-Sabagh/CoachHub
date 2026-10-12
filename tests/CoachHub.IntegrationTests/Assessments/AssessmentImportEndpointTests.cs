@@ -64,7 +64,7 @@ public sealed class AssessmentImportEndpointTests : IClassFixture<CoachHubApiFac
 
         var valid = new[]
         {
-            client.FormCode, "45824.5", "response-1", "short", "long notes", "82.5",
+            client.ClientCode, "45824.5", "response-1", "short", "long notes", "82.5",
             "2025-01-02", "لا", "Alpha", "Alpha, Beta",
             "https://drive.google.com/open?id=assessment-photo", "ignored"
         };

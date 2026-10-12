@@ -77,7 +77,7 @@ export class AuthService {
   accessToken(): string | null { return this.isSessionValid(this.session()) ? this.session()?.accessToken ?? null : null; }
 
   landingRoute(): string {
-    if (this.hasRole('Client')) return '/portal';
+    if (this.hasRole('Client')) return '/app';
     if (this.isAdmin() || this.isCoach()) return '/dashboard';
     return '/login';
   }

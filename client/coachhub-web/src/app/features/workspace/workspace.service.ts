@@ -30,22 +30,25 @@ export type BrandInput = Pick<BrandRecord, 'brandName' | 'primaryColor' | 'secon
 export interface ActivityFactors { sedentary: number; lightlyActive: number; moderatelyActive: number; veryActive: number; extraActive: number; }
 export interface AdherenceWeights { nutrition: number; workout: number; checkIn: number; steps: number; water: number; sleep: number; }
 
-/** Enum values follow the API's order: macro mode 0–2, replacement rule 0–1, units 0–1. */
+export type MacroMode = 'GramsPerKg' | 'Percentages' | 'FixedGrams';
+export type ReplacementRule = 'Calories' | 'DominantMacro';
+export type UnitSystem = 'Metric' | 'Imperial';
+
 export interface CoachDefaults {
   activityFactors: ActivityFactors;
   deficitPercent: number;
   surplusPercent: number;
   proteinGramsPerKg: number;
   fatGramsPerKg: number;
-  defaultMacroMode: number;
+  defaultMacroMode: MacroMode;
   adherenceWeights: AdherenceWeights;
-  replacementRule: number;
+  replacementRule: ReplacementRule;
   isSaved?: boolean;
 }
 
 export interface PlatformSettings {
   defaultLanguage: 'en' | 'ar';
-  units: number;
+  units: UnitSystem;
   emailNotificationsEnabled: boolean;
   whatsAppNotificationsEnabled: boolean;
   emailSenderName: string | null;

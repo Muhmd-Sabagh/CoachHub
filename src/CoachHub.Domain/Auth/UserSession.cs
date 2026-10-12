@@ -1,8 +1,10 @@
+using System.Text.Json.Serialization;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Auth;
 
 /// <summary>Why a session stopped being usable.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<SessionEndReason>))]
 public enum SessionEndReason
 {
     SignedOut,

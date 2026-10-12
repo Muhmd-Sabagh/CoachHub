@@ -6,7 +6,7 @@ import { PagedResult } from '../../shared/models/paged-result';
 import { queryParams } from '../../shared/services/query-params';
 
 export type ReferenceKey =
-  'packages' | 'currencies' | 'payment-accounts' | 'food-categories' | 'exercise-categories';
+  'packages' | 'currencies' | 'payment-accounts' | 'food-categories' | 'exercise-categories' | 'equipment';
 export interface ReferenceRecord {
   id: string;
   nameEn?: string;

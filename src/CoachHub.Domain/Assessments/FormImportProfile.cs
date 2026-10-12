@@ -9,26 +9,26 @@ public sealed class FormImportProfile : Entity, ITenantOwned
     public Guid FormDefinitionId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string SheetName { get; private set; } = string.Empty;
-    public string FormCodeHeader { get; private set; } = string.Empty;
+    public string ClientCodeHeader { get; private set; } = string.Empty;
     public string TimestampHeader { get; private set; } = string.Empty;
     public string? ExternalIdHeader { get; private set; }
 
     public static FormImportProfile Create(
         Guid coachId, Guid definitionId, string name, string sheetName,
-        string formCodeHeader, string timestampHeader, string? externalIdHeader)
+        string clientCodeHeader, string timestampHeader, string? externalIdHeader)
     {
         if (definitionId == Guid.Empty) throw new ArgumentException("Form is required.", nameof(definitionId));
         return new FormImportProfile { CoachId = TenantKey.Required(coachId), FormDefinitionId = definitionId }.Update(
-            name, sheetName, formCodeHeader, timestampHeader, externalIdHeader);
+            name, sheetName, clientCodeHeader, timestampHeader, externalIdHeader);
     }
 
     public FormImportProfile Update(
-        string name, string sheetName, string formCodeHeader,
+        string name, string sheetName, string clientCodeHeader,
         string timestampHeader, string? externalIdHeader)
     {
         Name = Required(name, 200, nameof(name));
         SheetName = Required(sheetName, 200, nameof(sheetName));
-        FormCodeHeader = Required(formCodeHeader, 500, nameof(formCodeHeader));
+        ClientCodeHeader = Required(clientCodeHeader, 500, nameof(clientCodeHeader));
         TimestampHeader = Required(timestampHeader, 500, nameof(timestampHeader));
         ExternalIdHeader = Optional(externalIdHeader, 500, nameof(externalIdHeader));
         return this;

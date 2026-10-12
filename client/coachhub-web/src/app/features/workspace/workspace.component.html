@@ -76,9 +76,9 @@
       <label><span>Protein (g/kg)</span><input type="number" step="0.1" min="0" max="5" name="protein" [(ngModel)]="d.proteinGramsPerKg" /></label>
       <label><span>Fat (g/kg)</span><input type="number" step="0.1" min="0" max="3" name="fat" [(ngModel)]="d.fatGramsPerKg" /></label>
       <label><span>Default macro method</span>
-        <select name="macroMode" [(ngModel)]="d.defaultMacroMode">@for (mode of macroModes; track $index) { <option [ngValue]="$index">{{ mode }}</option> }</select></label>
+        <select name="macroMode" [(ngModel)]="d.defaultMacroMode">@for (mode of macroModes; track mode.value) { <option [value]="mode.value">{{ mode.label }}</option> }</select></label>
       <label><span>Food replacement rule</span>
-        <select name="replacementRule" [(ngModel)]="d.replacementRule">@for (rule of replacementRules; track $index) { <option [ngValue]="$index">{{ rule }}</option> }</select></label>
+        <select name="replacementRule" [(ngModel)]="d.replacementRule">@for (rule of replacementRules; track rule.value) { <option [value]="rule.value">{{ rule.label }}</option> }</select></label>
       <fieldset class="span-2">
         <legend>Adherence weights (%) — total {{ weightsTotal }} of 100</legend>
         <div class="form-grid">
@@ -100,7 +100,7 @@
     <div class="section-heading"><h2>Platform settings</h2></div>
     <form class="form-grid" (ngSubmit)="savePlatform()">
       <label><span>Default language</span><select name="language" [(ngModel)]="p.defaultLanguage"><option value="en">English</option><option value="ar">العربية</option></select></label>
-      <label><span>Units</span><select name="units" [(ngModel)]="p.units"><option [ngValue]="0">Metric</option><option [ngValue]="1">Imperial</option></select></label>
+      <label><span>Units</span><select name="units" [(ngModel)]="p.units"><option value="Metric">Metric</option><option value="Imperial">Imperial</option></select></label>
       <label><span>Email sender name</span><input name="sender" [(ngModel)]="p.emailSenderName" maxlength="100" placeholder="Defaults to the brand name" /></label>
       <label><span><input type="checkbox" name="email" [(ngModel)]="p.emailNotificationsEnabled" /> Coach email notifications</span></label>
       <label><span><input type="checkbox" name="whatsapp" [(ngModel)]="p.whatsAppNotificationsEnabled" /> Coach WhatsApp notifications</span></label>

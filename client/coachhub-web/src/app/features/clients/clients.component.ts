@@ -121,6 +121,7 @@ export class ClientsComponent implements OnInit {
       workoutStatus: c.workoutStatus,
       isActive: c.isActive,
       coachId: c.coachId,
+      invite: false,
     };
     this.editorOpen = true;
   }
@@ -131,6 +132,7 @@ export class ClientsComponent implements OnInit {
       email: this.editor.email || null,
       joinDate: this.editor.joinDate || null,
       coachId: this.isAdmin ? this.editor.coachId || null : null,
+      invite: this.editor.invite && !!this.editor.email,
     };
     const update = {
       name: this.editor.name,
@@ -160,12 +162,6 @@ export class ClientsComponent implements OnInit {
       },
       error: (e) => (this.error = apiErrorMessage(e)),
     });
-  }
-  regenerate(): void {
-    if (this.detail && confirm('Regenerate this client form code?'))
-      this.data.regenerate(this.detail.client.id).subscribe((x) => {
-        if (this.detail) this.detail.client.formCode = x.formCode;
-      });
   }
   addSubscription(): void {
     this.editingSubscriptionId = null;
@@ -262,6 +258,7 @@ export class ClientsComponent implements OnInit {
       workoutStatus: 'NotStarted',
       isActive: true,
       coachId: '',
+      invite: true,
     };
   }
   private emptyRenewal() {

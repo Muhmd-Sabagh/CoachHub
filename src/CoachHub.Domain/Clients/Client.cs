@@ -11,8 +11,6 @@ public sealed class Client : Entity, ITenantOwned
 
     public Guid CoachId { get; private set; }
     public string ClientCode { get; private set; } = string.Empty;
-    // An access code for the legacy anonymous forms: a credential, never audited.
-    [AuditIgnore] public string FormCode { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public string? Phone { get; private set; }
     public string? Email { get; private set; }
@@ -20,12 +18,17 @@ public sealed class Client : Entity, ITenantOwned
     public PlanWorkflowStatus DietStatus { get; private set; }
     public PlanWorkflowStatus WorkoutStatus { get; private set; }
     public bool IsActive { get; private set; } = true;
+
+    /// <summary>A status the coach set by hand (§39), in force until <see cref="StatusOverrideUntil"/>.</summary>
+    public ClientStatus? StatusOverride { get; private set; }
+
+    /// <summary>The last day the override applies; null keeps it until the coach clears it.</summary>
+    public DateOnly? StatusOverrideUntil { get; private set; }
     public IReadOnlyCollection<Subscription> Subscriptions => _subscriptions;
 
     public static Client Create(
         Guid coachId,
         string clientCode,
-        string formCode,
         string name,
         string? phone,
         string? email,
@@ -35,7 +38,6 @@ public sealed class Client : Entity, ITenantOwned
         {
             CoachId = TenantKey.Required(coachId),
             ClientCode = Code(clientCode, 8, 50, nameof(clientCode)),
-            FormCode = Code(formCode, 10, 50, nameof(formCode)),
             JoinDate = joinDate,
             DietStatus = PlanWorkflowStatus.NotStarted,
             WorkoutStatus = PlanWorkflowStatus.NotStarted,
@@ -77,8 +79,36 @@ public sealed class Client : Entity, ITenantOwned
         if (WorkoutStatus is PlanWorkflowStatus.OnPlan or PlanWorkflowStatus.WaitingForPlan)
             WorkoutStatus = PlanWorkflowStatus.ReviewRequired;
     }
-    public void RegenerateFormCode(string formCode) =>
-        FormCode = Code(formCode, 10, 50, nameof(formCode));
+    /// <summary>
+    /// The client's status (§39). A coach's override wins while it lasts; otherwise, in order:
+    /// Inactive, SubscriptionExpired, NeedsReview (a plan awaits review), OnTrack. CheckInOverdue
+    /// is derived from check-in due dates once they exist (P12).
+    /// </summary>
+    public ClientStatus GetStatus(DateOnly today)
+    {
+        if (StatusOverride is { } manual && (StatusOverrideUntil is null || StatusOverrideUntil >= today)) return manual;
+        if (!IsActive) return ClientStatus.Inactive;
+        if (GetSubscriptionStatus(today) == SubscriptionStatus.Expired) return ClientStatus.SubscriptionExpired;
+        if (DietStatus == PlanWorkflowStatus.ReviewRequired || WorkoutStatus == PlanWorkflowStatus.ReviewRequired)
+            return ClientStatus.NeedsReview;
+        return ClientStatus.OnTrack;
+    }
+
+    /// <summary>Sets the status by hand (§39), optionally until a date at most a year away.</summary>
+    public void OverrideStatus(ClientStatus status, DateOnly? until, DateOnly today)
+    {
+        if (!Enum.IsDefined(status)) throw new ArgumentException("Unknown status.", nameof(status));
+        if (until is { } last && (last < today || last > today.AddYears(1)))
+            throw new ArgumentException("The override must end between today and one year from now.", nameof(until));
+        StatusOverride = status;
+        StatusOverrideUntil = until;
+    }
+
+    public void ClearStatusOverride()
+    {
+        StatusOverride = null;
+        StatusOverrideUntil = null;
+    }
 
     /// <summary>
     /// Moves the client to another coach. Commercial history stays with the coach who sold it (D7).

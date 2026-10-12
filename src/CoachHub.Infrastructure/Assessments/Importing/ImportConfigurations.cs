@@ -12,7 +12,7 @@ public sealed class FormImportProfileConfiguration : IEntityTypeConfiguration<Fo
         builder.HasKey(item => item.Id);
         builder.Property(item => item.Name).HasMaxLength(200).IsRequired();
         builder.Property(item => item.SheetName).HasMaxLength(200).IsRequired();
-        builder.Property(item => item.FormCodeHeader).HasMaxLength(500).IsRequired();
+        builder.Property(item => item.ClientCodeHeader).HasMaxLength(500).IsRequired();
         builder.Property(item => item.TimestampHeader).HasMaxLength(500).IsRequired();
         builder.Property(item => item.ExternalIdHeader).HasMaxLength(500);
         builder.HasIndex(item => new { item.FormDefinitionId, item.Name }).IsUnique();

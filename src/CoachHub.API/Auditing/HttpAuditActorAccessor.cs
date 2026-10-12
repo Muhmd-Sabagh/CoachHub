@@ -27,12 +27,6 @@ public sealed class HttpAuditActorAccessor(IHttpContextAccessor httpContextAcces
                 if (kind is { } role) return new AuditActor(role, userId, user.Identity.Name);
             }
 
-            // Only the route is known; the client and form codes are credentials and never recorded.
-            if (context?.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/client-forms") == true)
-            {
-                return new AuditActor(AuditActorKind.PublicClient);
-            }
-
             return new AuditActor(AuditActorKind.System);
         }
     }

@@ -29,8 +29,8 @@ public sealed class FormImportRepository(CoachHubDbContext dbContext) : IFormImp
             .Where(item => item.FormImportProfileId == profile.Id).ToArrayAsync(token);
         dbContext.RemoveRange(existing); dbContext.AddRange(mappings); await dbContext.SaveChangesAsync(token);
     }
-    public Task<Client?> FindClientByFormCodeAsync(string formCode, CancellationToken token) =>
-        dbContext.Set<Client>().SingleOrDefaultAsync(item => item.FormCode == formCode, token);
+    public Task<Client?> FindClientByClientCodeAsync(string clientCode, CancellationToken token) =>
+        dbContext.Set<Client>().SingleOrDefaultAsync(item => item.ClientCode == clientCode, token);
     public Task<bool> ImportFingerprintExistsAsync(string fingerprint, CancellationToken token) =>
         dbContext.Set<FormSubmission>().AnyAsync(item => item.ImportFingerprint == fingerprint, token);
 

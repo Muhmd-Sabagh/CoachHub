@@ -29,7 +29,6 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
             clients = clients.Where(client =>
                 client.Name.Contains(query.SearchTerm) ||
                 client.ClientCode.Contains(query.SearchTerm) ||
-                client.FormCode.Contains(query.SearchTerm) ||
                 (client.Phone != null && client.Phone.Contains(query.SearchTerm)) ||
                 (client.Email != null && client.Email.Contains(query.SearchTerm)));
         }
@@ -43,6 +42,7 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
             clients = clients.Where(client => client.JoinDate >= query.JoinDateFrom.Value);
         if (query.JoinDateTo.HasValue)
             clients = clients.Where(client => client.JoinDate <= query.JoinDateTo.Value);
+        if (query.Status is { } status) clients = WithStatus(clients, status, today);
         if (query.SubscriptionStatus.HasValue)
         {
             clients = query.SubscriptionStatus.Value switch
@@ -82,11 +82,56 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
             .Include(client => client.Subscriptions)
                 .ThenInclude(subscription => subscription.Renewals)
             .SingleOrDefaultAsync(client => client.Id == id, cancellationToken);
-    // Client and form codes are unique across all coaches, so these checks ignore tenant filters.
+    // Client codes are unique across all coaches, so this check ignores tenant filters.
     public Task<bool> ClientCodeExistsAsync(string code, CancellationToken cancellationToken) =>
         dbContext.Set<Client>().IgnoreQueryFilters().AnyAsync(client => client.ClientCode == code, cancellationToken);
-    public Task<bool> FormCodeExistsAsync(string code, CancellationToken cancellationToken) =>
-        dbContext.Set<Client>().IgnoreQueryFilters().AnyAsync(client => client.FormCode == code, cancellationToken);
+
+    /// <summary>Reached only after the caller found the client through the tenant filter.</summary>
+    public Task<ClientProfile?> FindProfileAsync(Guid clientId, CancellationToken cancellationToken) =>
+        dbContext.Set<ClientProfile>()
+            .Include(profile => profile.Equipment)
+            .Include(profile => profile.Foods)
+            .SingleOrDefaultAsync(profile => profile.ClientId == clientId, cancellationToken);
+
+    public async Task AddProfileAsync(ClientProfile profile, CancellationToken cancellationToken)
+    {
+        dbContext.Set<ClientProfile>().Add(profile);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// The computed status (§39) in SQL, matching <see cref="Client.GetStatus"/>: a manual
+    /// override while it lasts, otherwise Inactive, SubscriptionExpired, NeedsReview or OnTrack.
+    /// </summary>
+    private static IQueryable<Client> WithStatus(IQueryable<Client> clients, ClientStatus status, DateOnly today) => status switch
+    {
+        ClientStatus.Inactive => clients.Where(client =>
+            (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
+                ? client.StatusOverride == status
+                : !client.IsActive),
+        ClientStatus.SubscriptionExpired => clients.Where(client =>
+            (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
+                ? client.StatusOverride == status
+                : client.IsActive && client.Subscriptions.Any() &&
+                  !client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)),
+        ClientStatus.NeedsReview => clients.Where(client =>
+            (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
+                ? client.StatusOverride == status
+                : client.IsActive &&
+                  (!client.Subscriptions.Any() ||
+                   client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)) &&
+                  (client.DietStatus == PlanWorkflowStatus.ReviewRequired || client.WorkoutStatus == PlanWorkflowStatus.ReviewRequired)),
+        ClientStatus.OnTrack => clients.Where(client =>
+            (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
+                ? client.StatusOverride == status
+                : client.IsActive &&
+                  (!client.Subscriptions.Any() ||
+                   client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)) &&
+                  client.DietStatus != PlanWorkflowStatus.ReviewRequired && client.WorkoutStatus != PlanWorkflowStatus.ReviewRequired),
+        // Only a manual override yields CheckInOverdue until check-in due dates exist (P12).
+        _ => clients.Where(client =>
+            client.StatusOverride == status && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
+    };
     public async Task AddAsync(Client client, CancellationToken cancellationToken)
     {
         dbContext.Set<Client>().Add(client);

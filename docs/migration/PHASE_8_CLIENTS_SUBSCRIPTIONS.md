@@ -4,6 +4,7 @@
 >
 > - D1/D7 (P1): every client belongs to a coach; subscriptions and renewals belong to the coach who sold them. Administrators can transfer a client to another coach; commercial history stays with the selling coach.
 > - P1: a client with invoices, renewals, or another coach's subscriptions cannot be deleted.
+> - D5, D3, §39 (P5): the form code and its regeneration are removed. Clients get a typed onboarding profile, a login by invitation, and a computed status (OnTrack, NeedsReview, Inactive, SubscriptionExpired, CheckInOverdue) with a manual override. See [P05_CLIENT_PROFILE.md](../product/phases/P05_CLIENT_PROFILE.md).
 
 ## Delivered scope
 

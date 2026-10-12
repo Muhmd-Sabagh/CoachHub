@@ -30,15 +30,25 @@ public sealed class NotificationService(
         return await AddAsync(coachId, input, token);
     }
 
-    /// <summary>Platform messages, such as account security emails, that no coach owns.</summary>
+    /// <summary>Platform account mail no coach owns, such as a password reset.</summary>
     public Task<NotificationResponse> SchedulePlatformAsync(NotificationInput input, CancellationToken token) =>
-        AddAsync(null, input, token);
+        AddAsync(null, input, accountMessage: true, token);
 
-    private async Task<NotificationResponse> AddAsync(Guid? coachId, NotificationInput input, CancellationToken token)
+    /// <summary>
+    /// Account mail in a coach's workspace, such as a client invitation: it belongs to the coach
+    /// but is never blocked by the platform's notification switches.
+    /// </summary>
+    public Task<NotificationResponse> ScheduleAccountMessageAsync(Guid coachId, NotificationInput input, CancellationToken token) =>
+        AddAsync(coachId, input, accountMessage: true, token);
+
+    private Task<NotificationResponse> AddAsync(Guid? coachId, NotificationInput input, CancellationToken token) =>
+        AddAsync(coachId, input, accountMessage: false, token);
+
+    private async Task<NotificationResponse> AddAsync(Guid? coachId, NotificationInput input, bool accountMessage, CancellationToken token)
     {
-        if (coachId is not null && !EnabledForCoaches(await settings.PlatformAsync(token)).Contains(input.Channel))
+        if (coachId is not null && !accountMessage && !EnabledForCoaches(await settings.PlatformAsync(token)).Contains(input.Channel))
             throw new ConflictException($"{input.Channel} notifications are turned off in the platform settings.");
-        var item = Notification.Schedule(coachId, input.ClientId, input.Channel, input.Recipient, input.Subject, input.Body, input.ScheduledAt ?? timeProvider.GetUtcNow());
+        var item = Notification.Schedule(coachId, input.ClientId, input.Channel, input.Recipient, input.Subject, input.Body, input.ScheduledAt ?? timeProvider.GetUtcNow(), accountMessage);
         await repository.AddAsync(item, token); return Map(item);
     }
     public async Task CancelAsync(Guid id, CancellationToken token) { var item = await repository.FindAsync(id, token) ?? throw new NotFoundException("Notification", id); item.Cancel(); await repository.SaveAsync(token); }

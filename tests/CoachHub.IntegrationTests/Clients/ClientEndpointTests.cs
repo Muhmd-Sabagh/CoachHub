@@ -44,18 +44,12 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
         var client = await create.Content.ReadFromJsonAsync<ClientResponse>();
         Assert.NotNull(client);
         Assert.Equal(8, client.ClientCode.Length);
-        Assert.Equal(10, client.FormCode.Length);
         Assert.Equal(SubscriptionStatus.Inactive, client.SubscriptionStatus);
         Assert.Equal(client.Email, client.Email!.ToLowerInvariant());
 
-        var originalFormCode = client.FormCode;
-        var rotate = await _client.PostAsync(
-            $"/api/v1/clients/{client.Id}/form-code/regenerate",
-            null);
-        rotate.EnsureSuccessStatusCode();
-        var rotated = await rotate.Content.ReadFromJsonAsync<FormCodeResponse>();
-        Assert.NotNull(rotated);
-        Assert.NotEqual(originalFormCode, rotated.FormCode);
+        Assert.Equal(ClientStatus.OnTrack, client.Status);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await _client.PostAsync($"/api/v1/clients/{client.Id}/form-code/regenerate", null)).StatusCode);
 
         var subscriptionCreate = await _client.PostAsJsonAsync(
             $"/api/v1/clients/{client.Id}/subscriptions",

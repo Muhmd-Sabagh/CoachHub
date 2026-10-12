@@ -20,7 +20,9 @@ builder.Services.AddCoachHubAuthentication(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditActorAccessor, HttpAuditActorAccessor>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
-builder.Services.AddControllers();
+// Enums travel as names (each enum also declares this itself, so tests and clients agree).
+builder.Services.AddControllers().AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -54,15 +56,6 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
-    options.AddPolicy("client-forms", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 30,
-                Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
-            }));
 });
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
@@ -92,8 +85,7 @@ app.Use(async (context, next) =>
         context.Response.Headers.Append("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
 
         if (context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/auth") ||
-            context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/me") ||
-            context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/client-forms"))
+            context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/me"))
         {
             context.Response.Headers.CacheControl = "no-store, no-cache, max-age=0";
             context.Response.Headers.Pragma = "no-cache";

@@ -2,8 +2,8 @@
 
 > **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
 >
-> - D5: anonymous access by client code and form code is retired; clients submit while logged in (P5).
-> - D1: form definitions become coach-owned (P5).
+> - D5 (P5): anonymous access by client code and form code is retired. Signed-in clients list, open and submit their coach's forms at `/api/v1/me/forms`; existing submissions stay readable. See [P05_CLIENT_PROFILE.md](../product/phases/P05_CLIENT_PROFILE.md).
+> - D1: form definitions are coach-owned (since P1).
 
 ## Outcome
 

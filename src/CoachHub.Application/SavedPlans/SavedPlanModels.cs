@@ -1,7 +1,9 @@
+using System.Text.Json.Serialization;
 using CoachHub.Application.Common.Models;
 
 namespace CoachHub.Application.SavedPlans;
 
+[JsonConverter(typeof(JsonStringEnumConverter<SavedPlanType>))]
 public enum SavedPlanType { Diet, Workout }
 
 public sealed record SavedPlanQuery

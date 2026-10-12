@@ -51,14 +51,13 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
             $"/api/v1/assessment-forms/{initial.DefinitionId}/publish");
         Assert.Equal(FormVersionStatus.Published, published.Status);
 
-        _client.DefaultRequestHeaders.Authorization = null;
-        var accessInput = new FormAccessInput(client.ClientCode, client.FormCode);
-        var access = await PostAsync<FormAccessResponse>("/api/v1/client-forms/access/validate", accessInput);
-        Assert.Contains(access.EligibleForms, form => form.Id == initial.DefinitionId);
-        var clientForm = await PostAsync<FormVersionResponse>(
-            $"/api/v1/client-forms/{initial.DefinitionId}/questions", accessInput);
-        Assert.Equal(8, clientForm.Questions.Count);
-        var media = await UploadMediaAsync(client.ClientCode, client.FormCode);
+        // D5: the client fills the form signed in; no codes.
+        var portal = _factory.CreateClientPortalClient(client.CoachId, client.Id);
+        var access = await portal.GetFromJsonAsync<MyFormsResponse>("/api/v1/me/forms");
+        Assert.Contains(access!.EligibleForms, form => form.Id == initial.DefinitionId);
+        var clientForm = await portal.GetFromJsonAsync<FormVersionResponse>($"/api/v1/me/forms/{initial.DefinitionId}");
+        Assert.Equal(8, clientForm!.Questions.Count);
+        var media = await UploadMediaAsync(portal);
         var answers = new[]
         {
             Answer(questions[0].Id, "text"),
@@ -70,17 +69,17 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
             Answer(questions[6].Id, new[] { "a", "b" }),
             new AnswerInput(questions[7].Id, JsonSerializer.SerializeToElement<object?>(null), media.Id)
         };
-        var submitted = await PostAsync<SubmissionResponse>(
-            "/api/v1/client-forms/submissions",
-            new SubmitFormInput(client.ClientCode, client.FormCode, initial.DefinitionId, answers));
+        var submittedResponse = await portal.PostAsJsonAsync(
+            $"/api/v1/me/forms/{initial.DefinitionId}/submissions", new MyFormSubmissionInput(answers));
+        Assert.Equal(HttpStatusCode.Created, submittedResponse.StatusCode);
+        var submitted = (await submittedResponse.Content.ReadFromJsonAsync<SubmissionResponse>())!;
         Assert.NotEqual(Guid.Empty, submitted.SubmissionId);
 
-        var duplicate = await _client.PostAsJsonAsync(
-            "/api/v1/client-forms/submissions",
-            new SubmitFormInput(client.ClientCode, client.FormCode, initial.DefinitionId, answers));
+        var duplicate = await portal.PostAsJsonAsync(
+            $"/api/v1/me/forms/{initial.DefinitionId}/submissions", new MyFormSubmissionInput(answers));
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
-        access = await PostAsync<FormAccessResponse>("/api/v1/client-forms/access/validate", accessInput);
-        Assert.DoesNotContain(access.EligibleForms, form => form.Id == initial.DefinitionId);
+        access = await portal.GetFromJsonAsync<MyFormsResponse>("/api/v1/me/forms");
+        Assert.DoesNotContain(access!.EligibleForms, form => form.Id == initial.DefinitionId);
 
         await AuthenticateAsync();
         var draft = await PostEmptyAsync<FormVersionResponse>(
@@ -108,12 +107,9 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
         var updateQuestion = await AddQuestionAsync(
             update.DefinitionId, null, "Progress okay?", QuestionType.Boolean, true, 0);
         await PostEmptyAsync<FormVersionResponse>($"/api/v1/assessment-forms/{update.DefinitionId}/publish");
-        _client.DefaultRequestHeaders.Authorization = null;
-        var updateInput = new SubmitFormInput(
-            client.ClientCode, client.FormCode, update.DefinitionId,
-            [Answer(updateQuestion.Id, true)]);
-        (await _client.PostAsJsonAsync("/api/v1/client-forms/submissions", updateInput)).EnsureSuccessStatusCode();
-        (await _client.PostAsJsonAsync("/api/v1/client-forms/submissions", updateInput)).EnsureSuccessStatusCode();
+        var updateInput = new MyFormSubmissionInput([Answer(updateQuestion.Id, true)]);
+        (await portal.PostAsJsonAsync($"/api/v1/me/forms/{update.DefinitionId}/submissions", updateInput)).EnsureSuccessStatusCode();
+        (await portal.PostAsJsonAsync($"/api/v1/me/forms/{update.DefinitionId}/submissions", updateInput)).EnsureSuccessStatusCode();
 
         await AuthenticateAsync();
         var detail = await _client.GetFromJsonAsync<ClientDetailResponse>($"/api/v1/clients/{client.Id}");
@@ -137,13 +133,30 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
     }
 
     [Fact]
-    public async Task Invalid_codes_do_not_expose_forms()
+    public async Task Forms_need_a_signed_in_client_and_the_retired_code_routes_are_gone()
     {
-        var response = await _client.PostAsJsonAsync(
-            "/api/v1/client-forms/access/validate",
-            new FormAccessInput("BADCODE1", "BADFORM001"));
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.DoesNotContain("BADFORM001", await response.Content.ReadAsStringAsync());
+        using var anonymous = _factory.CreateClient();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync("/api/v1/me/forms")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await anonymous.PostAsJsonAsync("/api/v1/client-forms/access/validate",
+            new { clientCode = "BADCODE1", formCode = "BADFORM001" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await _admin.GetAsync("/api/v1/me/forms")).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_client_cannot_open_or_submit_another_coachs_form()
+    {
+        await AuthenticateAsync();
+        var form = await CreateFormAsync("Private " + Guid.NewGuid(), AssessmentFormType.UpdateAssessment);
+        var question = await AddQuestionAsync(form.DefinitionId, null, "Okay?", QuestionType.Boolean, true, 0);
+        await PostEmptyAsync<FormVersionResponse>($"/api/v1/assessment-forms/{form.DefinitionId}/publish");
+        var otherCoach = await _factory.CreateCoachClientAsync();
+        var otherClient = await (await otherCoach.PostAsJsonAsync("/api/v1/clients",
+            new ClientCreateInput("Other coach client", null, null, null))).Content.ReadFromJsonAsync<ClientResponse>();
+        var portal = _factory.CreateClientPortalClient(otherClient!.CoachId, otherClient.Id);
+
+        Assert.Equal(HttpStatusCode.NotFound, (await portal.GetAsync($"/api/v1/me/forms/{form.DefinitionId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await portal.PostAsJsonAsync($"/api/v1/me/forms/{form.DefinitionId}/submissions",
+            new MyFormSubmissionInput([Answer(question.Id, true)]))).StatusCode);
     }
 
     private System.Net.Http.Headers.AuthenticationHeaderValue? _coachAuthorization;
@@ -170,16 +183,13 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
     private static AnswerInput Answer<T>(Guid questionId, T value) =>
         new(questionId, JsonSerializer.SerializeToElement(value), null);
 
-    private async Task<CoachHub.Application.Media.MediaMetadata> UploadMediaAsync(
-        string clientCode, string formCode)
+    private static async Task<CoachHub.Application.Media.MediaMetadata> UploadMediaAsync(HttpClient portal)
     {
         using var form = new MultipartFormDataContent();
-        form.Add(new StringContent(clientCode), "clientCode");
-        form.Add(new StringContent(formCode), "formCode");
         using var bytes = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
         bytes.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         form.Add(bytes, "file", "assessment.png");
-        var response = await _client.PostAsync("/api/v1/client-forms/media", form);
+        var response = await portal.PostAsync("/api/v1/me/forms/media", form);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<CoachHub.Application.Media.MediaMetadata>())!;
     }

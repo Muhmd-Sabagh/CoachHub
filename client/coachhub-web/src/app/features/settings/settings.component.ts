@@ -25,6 +25,7 @@ export class SettingsComponent implements OnInit {
     { key: 'payment-accounts', label: 'Payment accounts', kind: 'payment', owner: 'coach' },
     { key: 'food-categories', label: 'Food categories', kind: 'bilingual', owner: 'platform' },
     { key: 'exercise-categories', label: 'Exercise categories', kind: 'bilingual', owner: 'platform' },
+    { key: 'equipment', label: 'Equipment', kind: 'bilingual', owner: 'platform' },
   ];
   resource = this.resources[0];
   page: PagedResult<ReferenceRecord> = emptyPage();

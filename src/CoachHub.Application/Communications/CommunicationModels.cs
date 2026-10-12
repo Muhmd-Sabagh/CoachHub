@@ -10,7 +10,7 @@ public interface INotificationRepository
     Task<IReadOnlyList<Notification>> ListAsync(CancellationToken token);
     /// <summary>
     /// Due notifications. Coach workspace messages are only returned on <paramref name="coachChannels"/>,
-    /// so a disabled channel waits instead of failing; platform messages always go.
+    /// so a disabled channel waits instead of failing; platform and account messages always go.
     /// </summary>
     Task<IReadOnlyList<Notification>> DueAsync(
         DateTimeOffset now, int take, IReadOnlyCollection<NotificationChannel> coachChannels, CancellationToken token);

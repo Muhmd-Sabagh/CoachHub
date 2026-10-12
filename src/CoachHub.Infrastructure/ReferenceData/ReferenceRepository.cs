@@ -65,6 +65,12 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
                 item => item.NameEn.ToUpper() == normalized && (!excludingId.HasValue || item.Id != excludingId.Value),
                 cancellationToken);
         }
+        if (typeof(TEntity) == typeof(Equipment))
+        {
+            return dbContext.Set<Equipment>().AnyAsync(
+                item => item.NameEn.ToUpper() == normalized && (!excludingId.HasValue || item.Id != excludingId.Value),
+                cancellationToken);
+        }
         if (typeof(TEntity) == typeof(Currency))
         {
             return dbContext.Set<Currency>().AnyAsync(
@@ -153,6 +159,12 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
             return (IQueryable<TEntity>)(object)typed.Where(item =>
                 item.NameEn.Contains(term) || (item.NameAr != null && item.NameAr.Contains(term)));
         }
+        if (typeof(TEntity) == typeof(Equipment))
+        {
+            var typed = (IQueryable<Equipment>)(object)source;
+            return (IQueryable<TEntity>)(object)typed.Where(item =>
+                item.NameEn.Contains(term) || (item.NameAr != null && item.NameAr.Contains(term)));
+        }
         if (typeof(TEntity) == typeof(Currency))
         {
             var typed = (IQueryable<Currency>)(object)source;
@@ -211,6 +223,12 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
         if (typeof(TEntity) == typeof(ExerciseCategory))
         {
             var typed = (IQueryable<ExerciseCategory>)(object)source;
+            var sorted = descending ? typed.OrderByDescending(item => item.NameEn) : typed.OrderBy(item => item.NameEn);
+            return (IQueryable<TEntity>)(object)sorted.ThenBy(item => item.Id);
+        }
+        if (typeof(TEntity) == typeof(Equipment))
+        {
+            var typed = (IQueryable<Equipment>)(object)source;
             var sorted = descending ? typed.OrderByDescending(item => item.NameEn) : typed.OrderBy(item => item.NameEn);
             return (IQueryable<TEntity>)(object)sorted.ThenBy(item => item.Id);
         }

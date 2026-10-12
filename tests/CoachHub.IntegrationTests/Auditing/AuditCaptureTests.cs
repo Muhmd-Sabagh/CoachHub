@@ -66,15 +66,15 @@ public sealed class AuditCaptureTests
         db.Add(user);
         db.Add(UserSession.Create(Guid.NewGuid(), "REFRESH-HASH", "Agent", null,
             DateTimeOffset.UtcNow, TimeSpan.FromDays(1), TimeSpan.FromDays(2)));
-        var client = Client.Create(CoachId, "CLIENTCD", "FORMCODE01", "Audited client", null, null, DateOnly.FromDateTime(DateTime.UtcNow));
+        var client = Client.Create(CoachId, "CLIENTCD", "Audited client", null, null, DateOnly.FromDateTime(DateTime.UtcNow));
         db.Add(client);
         db.Add(Notification.Schedule(CoachId, client.Id, NotificationChannel.Email, "a@b.test", "Reset",
-            "Reset link: https://example.test/reset?token=ONE-TIME-TOKEN", DateTimeOffset.UtcNow));
+            "Reset link: https://example.test/reset?token=ONE-TIME-TOKEN", DateTimeOffset.UtcNow, isAccountMessage: true));
         await db.SaveChangesAsync();
 
         var trail = string.Join("\n", await db.Set<AuditEntry>().Select(entry => entry.ChangesJson).ToArrayAsync());
         Assert.Contains("Audited client", trail);
-        foreach (var secret in new[] { "HASHED-PASSWORD", "STAMP-VALUE", "CONCURRENCY", "REFRESH-HASH", "FORMCODE01", "ONE-TIME-TOKEN" })
+        foreach (var secret in new[] { "HASHED-PASSWORD", "STAMP-VALUE", "CONCURRENCY", "REFRESH-HASH", "ONE-TIME-TOKEN" })
             Assert.DoesNotContain(secret, trail);
     }
 

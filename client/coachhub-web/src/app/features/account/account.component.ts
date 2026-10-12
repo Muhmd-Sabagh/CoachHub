@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -36,17 +36,13 @@ export class AccountComponent implements OnInit, OnDestroy {
   error = '';
   message = '';
   readonly backLink: string;
-  /** Clients open this page outside the staff shell, so it brings its own page padding. */
-  readonly outsideShell: boolean;
 
   constructor(
     private readonly account: AccountService,
     private readonly auth: AuthService,
     private readonly i18n: I18nService,
-    route: ActivatedRoute,
   ) {
     this.backLink = auth.landingRoute();
-    this.outsideShell = route.snapshot.data['outsideShell'] === true;
   }
 
   ngOnInit(): void {
