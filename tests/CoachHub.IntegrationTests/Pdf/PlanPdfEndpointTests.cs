@@ -7,6 +7,7 @@ using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
+using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 
 namespace CoachHub.IntegrationTests.Pdf;
@@ -30,7 +31,7 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
         var foodCategory = await AdminPostAsync<BilingualReferenceResponse>("/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("PDF food " + Guid.NewGuid().ToString("N"), null));
         var food = await AdminPostAsync<FoodResponse>("/api/v1/nutrition/foods",
-            new FoodInput("Oats", "شوفان", foodCategory.Id, "g", 389, 16.9m, 66.3m, 6.9m, null));
+            new FoodInput("Oats", "شوفان", foodCategory.Id, FoodBaseUnit.Gram, 389, 16.9m, 66.3m, 6.9m, null));
         var exerciseCategory = await AdminPostAsync<BilingualReferenceResponse>("/api/v1/reference-data/exercise-categories",
             new BilingualReferenceInput("PDF exercise " + Guid.NewGuid().ToString("N"), null));
         var press = await AdminPostAsync<ExerciseResponse>("/api/v1/training/exercises",

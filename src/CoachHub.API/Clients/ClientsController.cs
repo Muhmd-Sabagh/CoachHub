@@ -1,6 +1,7 @@
 using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Clients;
+using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,8 @@ namespace CoachHub.API.Clients;
 public sealed class ClientsController(
     ClientService clientService,
     ClientProfileService profileService,
-    SubscriptionService subscriptionService) : ControllerBase
+    SubscriptionService subscriptionService,
+    NutritionTargetService nutritionTargets) : ControllerBase
 {
     [HttpGet]
     public Task<PagedResult<ClientResponse>> List(
@@ -42,6 +44,11 @@ public sealed class ClientsController(
         clientService.UpdateAsync(id, input, cancellationToken);
 
     /// <summary>The structured profile (§3), entered at onboarding and editable later.</summary>
+    /// <summary>Calorie and macro targets from the client's profile and macro settings (§14, §15).</summary>
+    [HttpGet("{id:guid}/nutrition-targets")]
+    public Task<EnergyCalculatorResponse> NutritionTargets(Guid id, CancellationToken cancellationToken) =>
+        nutritionTargets.ForClientAsync(id, cancellationToken);
+
     [HttpGet("{id:guid}/profile")]
     public Task<ClientProfileResponse> Profile(Guid id, CancellationToken cancellationToken) =>
         profileService.GetAsync(id, cancellationToken);

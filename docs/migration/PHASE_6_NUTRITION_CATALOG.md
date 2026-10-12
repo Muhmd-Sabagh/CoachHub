@@ -1,5 +1,9 @@
 # Phase 6 nutrition catalog
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** Where this conflicts with the product requirements or decisions D1–D7, the requirements win.
+>
+> - §5, D3 (P7): the free-text measurement unit is replaced by a typed base unit (gram, millilitre or piece) with serving size, fiber, sugar, sodium and household units. Coaches keep custom foods next to the platform catalog, which stays administrator-managed. See [P07_NUTRITION_ENGINE.md](../product/phases/P07_NUTRITION_ENGINE.md).
+
 ## Delivered scope
 
 Administrator-only food APIs are available at `api/nutrition/foods` for create, read, update, delete, and server-side listing. List queries accept page number, page size, search term, category ID, active state, sort field, and sort direction. The UI must issue the query explicitly, consistent with the Search-button convention.

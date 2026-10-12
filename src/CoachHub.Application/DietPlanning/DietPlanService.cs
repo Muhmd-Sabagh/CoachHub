@@ -39,9 +39,10 @@ public sealed class DietPlanService(
         {
             plan = DietPlan.Create(coachId, input.NameEn, input.NameAr, input.ClientId, now);
             revision = DietPlanRevision.Create(plan.Id, 1, input.Status, input.StartDate, input.EndDate, currentUser.UserId, now);
+            revision.SetTargets(input.Targets ?? DietTargets.None);
         });
         var aggregate = Build(plan!, revision!, input);
-        await ValidateReferencesAsync(aggregate, cancellationToken);
+        await ValidateReferencesAsync(aggregate, new HashSet<Guid>(), cancellationToken);
         await repository.AddAsync(aggregate, cancellationToken);
         return await MapAsync(aggregate, cancellationToken);
     }
@@ -57,9 +58,10 @@ public sealed class DietPlanService(
         {
             existing.Plan.Update(input.NameEn, input.NameAr, input.ClientId);
             existing.Revision.Update(input.Status, input.StartDate, input.EndDate, timeProvider.GetUtcNow());
+            existing.Revision.SetTargets(input.Targets ?? DietTargets.None);
         });
         var aggregate = Build(existing.Plan, existing.Revision, input);
-        await ValidateReferencesAsync(aggregate, cancellationToken);
+        await ValidateReferencesAsync(aggregate, FoodIds(existing), cancellationToken);
         await repository.ReplaceContentAsync(aggregate, cancellationToken);
         return await MapAsync(aggregate, cancellationToken);
     }
@@ -82,10 +84,11 @@ public sealed class DietPlanService(
             existing.Plan.Update(input.NameEn, input.NameAr, input.ClientId);
             next = DietPlanRevision.Create(existing.Plan.Id, existing.Revision.VersionNumber + 1,
                 input.Status, input.StartDate, input.EndDate, currentUser.UserId, now);
+            next.SetTargets(input.Targets ?? DietTargets.None);
         });
-        existing.Revision.Archive(now);
         var aggregate = Build(existing.Plan, next!, WithNewIdentifiers(input));
-        await ValidateReferencesAsync(aggregate, cancellationToken);
+        await ValidateReferencesAsync(aggregate, FoodIds(existing), cancellationToken);
+        existing.Revision.Archive(now);
         await repository.AddRevisionAsync(aggregate, cancellationToken);
         return await MapAsync(aggregate, cancellationToken);
     }
@@ -139,9 +142,9 @@ public sealed class DietPlanService(
             var variants = input.Variants.Select(x => DietPlanVariant.Create(
                 x.Id, revisionId, x.NameEn, x.NameAr, x.Order, x.IsActiveForPdf, x.Notes)).ToArray();
             var meals = input.Variants.SelectMany(variant => variant.Meals.Select(x => Meal.Create(
-                x.Id, revisionId, variant.Id, x.NameEn, x.NameAr, x.Order, x.Notes))).ToArray();
+                x.Id, revisionId, variant.Id, x.NameEn, x.NameAr, x.Order, x.Notes, x.Type))).ToArray();
             var foods = input.Variants.SelectMany(v => v.Meals.SelectMany(meal => meal.FoodItems.Select(x =>
-                MealFoodItem.Create(x.Id, revisionId, meal.Id, x.FoodItemId, x.Quantity, x.Order, x.Notes)))).ToArray();
+                MealFoodItem.Create(x.Id, revisionId, meal.Id, x.FoodItemId, x.Quantity, x.Order, x.Notes, x.FoodUnitId)))).ToArray();
             var groups = input.Variants.SelectMany(variant => variant.ReplacementGroups.Select(x =>
                 DietReplacementGroup.Create(x.Id, revisionId, variant.Id, x.TargetMealId, x.TargetMealFoodItemId, x.Title, x.Order))).ToArray();
             var options = input.Variants.SelectMany(v => v.ReplacementGroups.SelectMany(group => group.Options.Select(x =>
@@ -164,14 +167,16 @@ public sealed class DietPlanService(
             source.Meals.Where(x => x.DietPlanVariantId == variant.Id).Select(meal => new MealInput(
                 meal.Id, meal.NameEn, meal.NameAr, meal.Order, meal.Notes,
                 source.FoodItems.Where(x => x.MealId == meal.Id).Select(item =>
-                    new MealFoodItemInput(item.Id, item.FoodItemId, item.Quantity, item.Order, item.Notes)).ToArray())).ToArray(),
+                    new MealFoodItemInput(item.Id, item.FoodItemId, item.Quantity, item.Order, item.Notes, item.FoodUnitId)).ToArray(),
+                meal.Type)).ToArray(),
             source.ReplacementGroups.Where(x => x.DietPlanVariantId == variant.Id).Select(group =>
                 new DietReplacementGroupInput(group.Id, group.TargetMealId, group.TargetMealFoodItemId, group.Title, group.Order,
                     source.ReplacementOptions.Where(x => x.DietReplacementGroupId == group.Id).Select(option =>
                         new DietReplacementOptionInput(option.Id, option.ReplacementFoodItemId, option.ReplacementMealId,
                             option.Quantity, option.Order, option.Notes)).ToArray())).ToArray())).ToArray(),
         null, source.Revision.StartDate, source.Revision.EndDate,
-        source.Revision.IsArchived ? PlanRevisionStatus.Active : source.Revision.Status);
+        source.Revision.IsArchived ? PlanRevisionStatus.Active : source.Revision.Status,
+        Targets: source.Revision.Targets);
 
     /// <summary>
     /// The same content under fresh identifiers, with internal references (alternative targets,
@@ -261,15 +266,30 @@ public sealed class DietPlanService(
             errors[key] = ["Orders must be non-negative and unique within their parent."];
     }
 
-    private async Task ValidateReferencesAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken)
+    /// <summary>
+    /// Every food must be one the caller can see (platform or the coach's own), except foods the version
+    /// already used: a transferred client's plan may keep the previous coach's custom foods (D7).
+    /// Units must belong to their food.
+    /// </summary>
+    private async Task ValidateReferencesAsync(
+        DietPlanAggregate aggregate, IReadOnlySet<Guid> alreadyUsed, CancellationToken cancellationToken)
     {
-        var ids = aggregate.FoodItems.Select(x => x.FoodItemId)
-            .Concat(aggregate.ReplacementOptions.Where(x => x.ReplacementFoodItemId.HasValue)
-                .Select(x => x.ReplacementFoodItemId!.Value)).Distinct().ToArray();
-        var foods = await repository.FindFoodsAsync(ids, cancellationToken);
-        var missing = ids.Where(x => !foods.ContainsKey(x)).ToArray();
-        if (missing.Length > 0) throw Validation("foodItemIds", "One or more food items do not exist.");
+        var ids = FoodIds(aggregate).ToArray();
+        var visible = await repository.FindFoodsAsync(ids, cancellationToken);
+        var kept = ids.Where(id => !visible.ContainsKey(id) && alreadyUsed.Contains(id)).ToArray();
+        var foods = kept.Length == 0
+            ? visible
+            : visible.Concat(await repository.FindReferencedFoodsAsync(kept, cancellationToken))
+                .ToDictionary(pair => pair.Key, pair => pair.Value);
+        if (ids.Any(id => !foods.ContainsKey(id))) throw Validation("foodItemIds", "One or more food items do not exist.");
+        if (aggregate.FoodItems.Any(row => row.FoodUnitId is { } unit && foods[row.FoodItemId].FindUnit(unit) is null))
+            throw Validation("foodUnitId", "A unit does not belong to its food.");
     }
+
+    private static HashSet<Guid> FoodIds(DietPlanAggregate aggregate) =>
+        aggregate.FoodItems.Select(x => x.FoodItemId)
+            .Concat(aggregate.ReplacementOptions.Where(x => x.ReplacementFoodItemId.HasValue)
+                .Select(x => x.ReplacementFoodItemId!.Value)).ToHashSet();
 
     /// <summary>A client-assigned plan belongs to the client's coach; a template to the creating coach.</summary>
     private async Task<Guid> ResolveCoachAsync(Guid? clientId, Guid? requestedCoachId, CancellationToken cancellationToken)
@@ -299,22 +319,26 @@ public sealed class DietPlanService(
         var foodIds = aggregate.FoodItems.Select(x => x.FoodItemId)
             .Concat(aggregate.ReplacementOptions.Where(x => x.ReplacementFoodItemId.HasValue).Select(x => x.ReplacementFoodItemId!.Value))
             .Distinct().ToArray();
-        var foods = await repository.FindFoodsAsync(foodIds, cancellationToken);
+        // The plan is visible, so the foods it references are readable as part of it.
+        var foods = await repository.FindReferencedFoodsAsync(foodIds, cancellationToken);
         var authors = await repository.FindAuthorNamesAsync(Authors([aggregate.Revision]), cancellationToken);
         var mealTotals = aggregate.Meals.ToDictionary(
             meal => meal.Id,
             meal => NutritionCalculator.Round(aggregate.FoodItems.Where(x => x.MealId == meal.Id)
-                .Aggregate(NutritionTotals.Zero, (sum, row) => sum + NutritionCalculator.Calculate(foods[row.FoodItemId], row.Quantity))));
+                .Aggregate(NutritionTotals.Zero, (sum, row) => sum + NutritionCalculator.Calculate(foods[row.FoodItemId], row.Quantity, row.FoodUnitId))));
         var variants = aggregate.Variants.OrderBy(x => x.Order).Select(variant =>
         {
             var meals = aggregate.Meals.Where(x => x.DietPlanVariantId == variant.Id).OrderBy(x => x.Order).Select(meal =>
-                new MealResponse(meal.Id, meal.NameEn, meal.NameAr, meal.Order, meal.Notes,
+                new MealResponse(meal.Id, meal.NameEn, meal.NameAr, meal.Type, meal.Order, meal.Notes,
                     aggregate.FoodItems.Where(x => x.MealId == meal.Id).OrderBy(x => x.Order).Select(row =>
                     {
                         var food = foods[row.FoodItemId];
+                        var unit = food.FindUnit(row.FoodUnitId);
                         return new MealFoodItemResponse(row.Id, row.FoodItemId, food.NameEn, food.NameAr,
-                            food.MeasurementUnit, row.Quantity, row.Order, row.Notes,
-                            NutritionCalculator.Calculate(food, row.Quantity));
+                            row.FoodUnitId, unit?.NameEn ?? food.BaseUnitLabel,
+                            unit is null ? food.BaseUnitLabelAr : unit.NameAr ?? unit.NameEn,
+                            row.Quantity, row.Order, row.Notes,
+                            NutritionCalculator.Calculate(food, row.Quantity, row.FoodUnitId));
                     }).ToArray(), mealTotals[meal.Id])).ToArray();
             var groups = aggregate.ReplacementGroups.Where(x => x.DietPlanVariantId == variant.Id).OrderBy(x => x.Order).Select(group =>
                 new DietReplacementGroupResponse(group.Id, group.TargetMealId, group.TargetMealFoodItemId,
@@ -338,7 +362,7 @@ public sealed class DietPlanService(
         }).ToArray();
         return new DietPlanResponse(aggregate.Plan.Id, aggregate.Plan.CoachId, aggregate.Plan.NameEn, aggregate.Plan.NameAr,
             aggregate.Plan.ClientId, aggregate.Plan.CreatedAt,
-            PlanRevisions.Info(aggregate.Revision, authors), aggregate.CurrentVersionNumber,
+            PlanRevisions.Info(aggregate.Revision, authors), aggregate.CurrentVersionNumber, aggregate.Revision.Targets,
             aggregate.Notes.OrderBy(x => x.Order).Select(x => new DietPlanNoteResponse(x.Id, x.Text, x.Order, x.IsActive)).ToArray(),
             variants, NutritionCalculator.Round(variants.Aggregate(NutritionTotals.Zero, (sum, variant) => sum + variant.Totals)));
     }

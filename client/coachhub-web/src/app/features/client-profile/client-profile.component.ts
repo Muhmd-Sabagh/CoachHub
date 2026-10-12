@@ -9,6 +9,7 @@ import { CatalogService } from '../catalog/catalog.service';
 import {
   ClientDetail, ClientProfile, ClientProfileInput, ClientStatus, ClientsService, NamedReference, clientStatuses, dietaryRestrictions,
 } from '../clients/clients.service';
+import { EnergyTargets, MacroMode, PlansService } from '../plans/plans.service';
 import { ReferenceDataService, ReferenceRecord } from '../settings/reference-data.service';
 
 type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progress' | 'measurements' | 'photos' | 'checkins' | 'tests' | 'messages' | 'files';
@@ -49,6 +50,11 @@ export class ClientProfileComponent implements OnInit {
   saving = false;
   error = '';
   message = '';
+  /** '' means the coach's defaults (§15). */
+  macroMode: '' | MacroMode = '';
+  macro = emptyMacro();
+  targets: EnergyTargets | null = null;
+  targetsError = '';
 
   constructor(
     route: ActivatedRoute,
@@ -56,6 +62,7 @@ export class ClientProfileComponent implements OnInit {
     private readonly references: ReferenceDataService,
     private readonly catalog: CatalogService,
     private readonly assessments: AssessmentsService,
+    private readonly plans: PlansService,
   ) {
     this.id = route.snapshot.paramMap.get('id') ?? '';
   }
@@ -127,8 +134,18 @@ export class ClientProfileComponent implements OnInit {
       dislikedFoodIds: this.disliked.map(food => food.id),
       bedtime: time(this.form.bedtime), wakeTime: time(this.form.wakeTime),
       dateOfBirth: this.form.dateOfBirth || null,
+      macros: this.macroMode ? { mode: this.macroMode, ...numbers(this.macro) } : null,
     };
-    this.run(this.clients.saveProfile(this.id, input), profile => { this.showProfile(profile); return 'Profile saved.'; });
+    this.run(this.clients.saveProfile(this.id, input), profile => { this.showProfile(profile); this.calculateTargets(); return 'Profile saved.'; });
+  }
+
+  /** The client's calorie and macro targets from the saved profile and the coach's settings (§14, §15). */
+  calculateTargets(): void {
+    this.targetsError = '';
+    this.plans.clientTargets(this.id).subscribe({
+      next: targets => (this.targets = targets),
+      error: e => { this.targets = null; this.targetsError = apiErrorMessage(e); },
+    });
   }
 
   private loadDetail(): void {
@@ -147,7 +164,10 @@ export class ClientProfileComponent implements OnInit {
       dietaryNotes: profile.dietaryNotes, preferredMealCount: profile.preferredMealCount,
       bedtime: profile.bedtime?.slice(0, 5) ?? null, wakeTime: profile.wakeTime?.slice(0, 5) ?? null,
       lifestyleNotes: profile.lifestyleNotes, equipmentIds: [], preferredFoodIds: [], dislikedFoodIds: [],
+      macros: profile.macros,
     };
+    this.macroMode = profile.macros?.mode ?? '';
+    this.macro = { ...emptyMacro(), ...(profile.macros ?? {}) };
     this.chosenEquipment = new Set(profile.equipment.map(item => item.id));
     this.preferred = [...profile.preferredFoods];
     this.disliked = [...profile.dislikedFoods];
@@ -166,4 +186,18 @@ export class ClientProfileComponent implements OnInit {
 export function time(value: string | null): string | null {
   if (!value) return null;
   return value.length === 5 ? `${value}:00` : value;
+}
+
+function emptyMacro() {
+  return {
+    proteinGramsPerKg: null as number | null, fatGramsPerKg: null as number | null,
+    proteinPercent: null as number | null, carbohydratePercent: null as number | null, fatPercent: null as number | null,
+    proteinGrams: null as number | null, fatGrams: null as number | null,
+  };
+}
+
+/** Empty number inputs are "not set"; the API keeps only the chosen mode's values. */
+function numbers(values: ReturnType<typeof emptyMacro>) {
+  const clean = (value: number | null | string) => (value === null || value === '' ? null : Number(value));
+  return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, clean(value)]));
 }

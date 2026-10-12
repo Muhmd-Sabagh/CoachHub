@@ -230,7 +230,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
         foreach (var row in rows.OrderBy(x => x.Order))
         {
             BodyCell(table, PdfLanguageText.Name(row.FoodNameEn, row.FoodNameAr, language), language);
-            BodyCell(table, $"{Number(row.Quantity)} {row.MeasurementUnit}", language);
+            BodyCell(table, $"{Number(row.Quantity)} {(language == PlanPdfLanguage.Arabic ? row.UnitLabelAr : row.UnitLabel)}", language);
             BodyCell(table, Number(row.Totals.Calories), language);
             BodyCell(table, Number(row.Totals.Protein), language);
             BodyCell(table, Number(row.Totals.Carbohydrates), language);

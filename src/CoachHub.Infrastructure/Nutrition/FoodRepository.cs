@@ -1,3 +1,4 @@
+using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.Nutrition;
 using CoachHub.Domain.Nutrition;
@@ -20,7 +21,17 @@ public sealed class FoodRepository(CoachHubDbContext dbContext) : IFoodRepositor
             foods = foods.Where(food =>
                 food.NameEn.Contains(query.SearchTerm) ||
                 (food.NameAr != null && food.NameAr.Contains(query.SearchTerm)) ||
-                food.MeasurementUnit.Contains(query.SearchTerm));
+                (food.PieceNameEn != null && food.PieceNameEn.Contains(query.SearchTerm)) ||
+                (food.PieceNameAr != null && food.PieceNameAr.Contains(query.SearchTerm)));
+        }
+        // The query filter already limits custom foods to the caller's coach.
+        if (query.Scope == FoodScope.Platform)
+        {
+            foods = foods.Where(food => food.CoachId == null);
+        }
+        else if (query.Scope == FoodScope.Custom)
+        {
+            foods = foods.Where(food => food.CoachId != null);
         }
         if (query.CategoryId.HasValue)
         {
@@ -50,13 +61,29 @@ public sealed class FoodRepository(CoachHubDbContext dbContext) : IFoodRepositor
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
-        dbContext.SaveChangesAsync(cancellationToken);
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("A removed unit is still used by a plan. Keep the unit or change those plans first.");
+        }
+    }
 
     public async Task DeleteAsync(FoodItem food, CancellationToken cancellationToken)
     {
         dbContext.Set<FoodItem>().Remove(food);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("The food is used by plans or client profiles. Deactivate it instead.");
+        }
     }
 
     public Task<LegacyFoodImportRecord?> FindLegacyImportAsync(

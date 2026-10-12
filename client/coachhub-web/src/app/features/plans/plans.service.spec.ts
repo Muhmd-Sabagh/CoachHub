@@ -84,6 +84,15 @@ describe('PlansService', () => {
     ).toBe('Draft');
   });
 
+  it('reads client targets and calculates with an activity level (P7)', () => {
+    service.clientTargets('c-1').subscribe();
+    expect(http.expectOne('/api/v1/clients/c-1/nutrition-targets').request.method).toBe('GET');
+    service.calculate({ activityLevel: 'ModeratelyActive', goal: 'Maintain' }).subscribe();
+    const calc = http.expectOne('/api/v1/nutrition-calculator/energy');
+    expect(calc.request.body.activityLevel).toBe('ModeratelyActive');
+    calc.flush({});
+  });
+
   it('uses protected blob endpoints for both PDF preview and download', () => {
     service.pdf('Diet', 'diet-1', 'preview', 'Arabic').subscribe();
     const preview = http.expectOne(

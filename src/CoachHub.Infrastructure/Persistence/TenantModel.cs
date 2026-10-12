@@ -62,10 +62,29 @@ internal static class TenantModel
         {
             return MediaFilter(entity, tenant, unrestricted, clientScoped, sameCoach, ownRecord);
         }
+        if (typeof(ICatalogEntry).IsAssignableFrom(clrType))
+        {
+            return CatalogFilter(entity, tenant, unrestricted, sameCoach);
+        }
 
         var body = Expression.OrElse(
             unrestricted,
             Expression.AndAlso(sameCoach, Expression.OrElse(Expression.Not(clientScoped), ownRecord)));
+        return Expression.Lambda(body, entity);
+    }
+
+    /// <summary>
+    /// Catalog visibility (see <see cref="ICatalogEntry"/>): <c>Unrestricted || (signed in &amp;&amp; platform entry)
+    /// || CoachId == current coach</c>. A client's current coach is their coach, so clients see their
+    /// coach's custom entries too.
+    /// </summary>
+    private static LambdaExpression CatalogFilter(
+        ParameterExpression entity, Expression tenant, Expression unrestricted, Expression sameCoach)
+    {
+        var signedIn = Expression.Property(tenant, nameof(CoachHubDbContext.TenantSignedIn));
+        var noCoach = Expression.Equal(
+            Expression.Property(entity, nameof(ICatalogEntry.CoachId)), Expression.Constant(null, typeof(Guid?)));
+        var body = Expression.OrElse(unrestricted, Expression.OrElse(Expression.AndAlso(signedIn, noCoach), sameCoach));
         return Expression.Lambda(body, entity);
     }
 

@@ -14,6 +14,7 @@ using CoachHub.Domain.Common;
 using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 using CoachHub.IntegrationTests.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -230,9 +231,9 @@ public sealed class PlanVersioningTests(CoachHubSqlApiFactory factory) : IClassF
         var category = await ReadAsync<BilingualReferenceResponse>(await admin.PostAsJsonAsync("/api/v1/reference-data/food-categories",
             new BilingualReferenceInput("Versioning " + Guid.NewGuid().ToString("N"), null)));
         var oats = await ReadAsync<FoodResponse>(await admin.PostAsJsonAsync("/api/v1/nutrition/foods",
-            new FoodInput("Oats " + Guid.NewGuid().ToString("N")[..6], null, category.Id, "gram", 100, 10, 20, 5, null)));
+            new FoodInput("Oats " + Guid.NewGuid().ToString("N")[..6], null, category.Id, FoodBaseUnit.Gram, 100, 10, 20, 5, null)));
         var eggs = await ReadAsync<FoodResponse>(await admin.PostAsJsonAsync("/api/v1/nutrition/foods",
-            new FoodInput("Eggs " + Guid.NewGuid().ToString("N")[..6], null, category.Id, "gram", 200, 20, 5, 10, null)));
+            new FoodInput("Eggs " + Guid.NewGuid().ToString("N")[..6], null, category.Id, FoodBaseUnit.Gram, 200, 20, 5, 10, null)));
         return (oats, eggs);
     }
 

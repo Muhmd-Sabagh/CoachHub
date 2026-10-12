@@ -9,12 +9,17 @@ public sealed class Meal : Entity, IPlanRevisionContent
     public Guid DietPlanVariantId { get; private set; }
     public string NameEn { get; private set; } = string.Empty;
     public string? NameAr { get; private set; }
+    public MealType Type { get; private set; }
     public int Order { get; private set; }
     public string? Notes { get; private set; }
 
     public static Meal Create(
-        Guid id, Guid revisionId, Guid variantId, string nameEn, string? nameAr, int order, string? notes) => new()
+        Guid id, Guid revisionId, Guid variantId, string nameEn, string? nameAr, int order, string? notes,
+        MealType? type = null) => new()
     {
+        Type = type is { } chosen
+            ? Enum.IsDefined(chosen) ? chosen : throw new ArgumentException("Unknown meal type.", nameof(type))
+            : MealTypes.FromName(nameEn, nameAr),
         Id = DietPlanText.RequiredId(id, nameof(id)),
         RevisionId = DietPlanText.RequiredId(revisionId, nameof(revisionId)),
         DietPlanVariantId = DietPlanText.RequiredId(variantId, nameof(variantId)),

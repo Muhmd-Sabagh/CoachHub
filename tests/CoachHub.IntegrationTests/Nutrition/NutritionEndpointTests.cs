@@ -6,6 +6,7 @@ using CoachHub.Application.Common.Models;
 using CoachHub.Application.Media;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 
 namespace CoachHub.IntegrationTests.Nutrition;
@@ -32,11 +33,11 @@ public sealed class NutritionEndpointTests : IClassFixture<CoachHubApiFactory>
         var prefix = "Phase6-" + Guid.NewGuid().ToString("N");
 
         var first = await CreateFoodAsync(
-            new FoodInput(prefix + " Chicken", null, category.Id, "gram", 165, 31, 0, 3.6m, media.Id, true));
+            new FoodInput(prefix + " Chicken", null, category.Id, FoodBaseUnit.Gram, 165, 31, 0, 3.6m, media.Id, true));
         await CreateFoodAsync(
-            new FoodInput(prefix + " Turkey", "ديك رومي", category.Id, "gram", 135, 30, 0, 1, null, true));
+            new FoodInput(prefix + " Turkey", "ديك رومي", category.Id, FoodBaseUnit.Gram, 135, 30, 0, 1, null, true));
         await CreateFoodAsync(
-            new FoodInput("Unrelated " + prefix, null, category.Id, "piece", 50, 1, 5, 2, null, false));
+            new FoodInput("Unrelated " + prefix, null, category.Id, FoodBaseUnit.Piece, 50, 1, 5, 2, null, false, PieceNameEn: "piece"));
 
         var page = await _client.GetFromJsonAsync<PagedResult<FoodResponse>>(
             $"/api/v1/nutrition/foods?searchTerm={prefix}&categoryId={category.Id}&isActive=true&pageNumber=1&pageSize=1&sortBy=protein&sortDescending=true");
@@ -48,7 +49,7 @@ public sealed class NutritionEndpointTests : IClassFixture<CoachHubApiFactory>
 
         var update = await _client.PutAsJsonAsync(
             $"/api/v1/nutrition/foods/{first.Id}",
-            new FoodInput(prefix + " Chicken", "دجاج", category.Id, "gram", 165, 31, 0, 3.6m, media.Id, false));
+            new FoodInput(prefix + " Chicken", "دجاج", category.Id, FoodBaseUnit.Gram, 165, 31, 0, 3.6m, media.Id, false));
         update.EnsureSuccessStatusCode();
         Assert.False((await update.Content.ReadFromJsonAsync<FoodResponse>())!.IsActive);
 

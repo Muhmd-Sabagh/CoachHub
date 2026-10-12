@@ -19,19 +19,25 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
         // The projections below avoid "x == null ? a : b" over left-joined rows: SQL Server cannot
         // run the Concat once EF evaluates such a projection on the client. Missing rows yield NULL.
         var currentDiets = dbContext.Set<DietPlanRevision>().Where(x => x.Status != PlanRevisionStatus.Archived);
+        // Rows convert their unit to base units (P7). Foods stay tenant-filtered: IgnoreQueryFilters would
+        // lift the filters of the whole query, plans included. A transferred client's plan that still uses the
+        // previous coach's custom food therefore lists without that food (its detail view includes it).
         var dietTotals =
             from revision in currentDiets
             join row in dbContext.Set<MealFoodItem>() on revision.Id equals row.RevisionId
             join food in dbContext.Set<FoodItem>() on row.FoodItemId equals food.Id
-            group new { row, food } by revision.PlanId into groupRows
+            join unitValue in dbContext.Set<FoodUnit>() on row.FoodUnitId equals (Guid?)unitValue.Id into units
+            from unit in units.DefaultIfEmpty()
+            let amount = row.Quantity * ((decimal?)unit!.BaseQuantity ?? 1m)
+            group new { amount, food } by revision.PlanId into groupRows
             select new
             {
                 PlanId = groupRows.Key,
-                Weight = groupRows.Sum(x => x.row.Quantity),
-                Calories = groupRows.Sum(x => x.food.CaloriesPer100 * x.row.Quantity / 100m),
-                Protein = groupRows.Sum(x => x.food.ProteinPer100 * x.row.Quantity / 100m),
-                Carbohydrates = groupRows.Sum(x => x.food.CarbohydratesPer100 * x.row.Quantity / 100m),
-                Fat = groupRows.Sum(x => x.food.FatPer100 * x.row.Quantity / 100m)
+                Weight = groupRows.Sum(x => x.amount),
+                Calories = groupRows.Sum(x => x.food.CaloriesPer100 * x.amount / 100m),
+                Protein = groupRows.Sum(x => x.food.ProteinPer100 * x.amount / 100m),
+                Carbohydrates = groupRows.Sum(x => x.food.CarbohydratesPer100 * x.amount / 100m),
+                Fat = groupRows.Sum(x => x.food.FatPer100 * x.amount / 100m)
             };
 
         var dietRows =

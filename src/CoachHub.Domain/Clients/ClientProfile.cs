@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using CoachHub.Domain.Common;
+using CoachHub.Domain.Nutrition;
 using CoachHub.Domain.Settings;
 
 namespace CoachHub.Domain.Clients;
@@ -119,6 +120,22 @@ public sealed class ClientProfile : Entity
     public string? LifestyleNotes { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    // Macro calculation chosen for this client (§15); null mode means the coach's default.
+    public MacroMode? MacroMode { get; private set; }
+    public decimal? MacroProteinGramsPerKg { get; private set; }
+    public decimal? MacroFatGramsPerKg { get; private set; }
+    public decimal? MacroProteinPercent { get; private set; }
+    public decimal? MacroCarbohydratePercent { get; private set; }
+    public decimal? MacroFatPercent { get; private set; }
+    public decimal? MacroProteinGrams { get; private set; }
+    public decimal? MacroFatGrams { get; private set; }
+
+    /// <summary>The client's macro settings, or null to use the coach's defaults.</summary>
+    public MacroPreferences? Macros => MacroMode is { } mode
+        ? new(mode, MacroProteinGramsPerKg, MacroFatGramsPerKg, MacroProteinPercent, MacroCarbohydratePercent,
+            MacroFatPercent, MacroProteinGrams, MacroFatGrams)
+        : null;
+
     public IReadOnlyCollection<ClientEquipment> Equipment => _equipment;
     public IReadOnlyCollection<ClientFoodPreference> Foods => _foods;
 
@@ -182,7 +199,21 @@ public sealed class ClientProfile : Entity
             _equipment.Add(ClientEquipment.Create(Id, id));
         Sync(FoodPreferenceKind.Preferred, preferred);
         Sync(FoodPreferenceKind.Disliked, disliked);
+        SetMacros(values.Macros);
         UpdatedAt = now;
+    }
+
+    private void SetMacros(MacroPreferences? macros)
+    {
+        var normalized = macros?.Normalize();
+        MacroMode = normalized?.Mode;
+        MacroProteinGramsPerKg = normalized?.ProteinGramsPerKg;
+        MacroFatGramsPerKg = normalized?.FatGramsPerKg;
+        MacroProteinPercent = normalized?.ProteinPercent;
+        MacroCarbohydratePercent = normalized?.CarbohydratePercent;
+        MacroFatPercent = normalized?.FatPercent;
+        MacroProteinGrams = normalized?.ProteinGrams;
+        MacroFatGrams = normalized?.FatGrams;
     }
 
     private void Sync(FoodPreferenceKind kind, Guid[] foodIds)
@@ -238,4 +269,5 @@ public sealed record ClientProfileValues(
     int? PreferredMealCount,
     TimeOnly? Bedtime,
     TimeOnly? WakeTime,
-    string? LifestyleNotes);
+    string? LifestyleNotes,
+    MacroPreferences? Macros = null);

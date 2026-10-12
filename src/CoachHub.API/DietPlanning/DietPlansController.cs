@@ -71,8 +71,10 @@ public sealed class DietPlansController(DietPlanService service) : ControllerBas
 [ApiController]
 [Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/nutrition-calculator")]
-public sealed class NutritionCalculatorController : ControllerBase
+public sealed class NutritionCalculatorController(NutritionTargetService targets) : ControllerBase
 {
+    /// <summary>Calorie and macro targets (§14, §15) with the coach's coefficients.</summary>
     [HttpPost("energy")]
-    public EnergyCalculatorResponse CalculateEnergy(EnergyCalculatorInput input) => NutritionCalculator.CalculateEnergy(input);
+    public Task<EnergyCalculatorResponse> CalculateEnergy(EnergyCalculatorInput input, CancellationToken cancellationToken) =>
+        targets.CalculateAsync(input, cancellationToken);
 }

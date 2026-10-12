@@ -41,6 +41,12 @@ public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanR
         IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
         await dbContext.Set<FoodItem>().AsNoTracking().Where(x => ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
 
+    // Deliberately cross-tenant: only called for foods a visible plan already references (see the port).
+    public async Task<IReadOnlyDictionary<Guid, FoodItem>> FindReferencedFoodsAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        await dbContext.Set<FoodItem>().IgnoreQueryFilters().AsNoTracking().Where(x => ids.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+
     public Task<Guid?> FindClientCoachIdAsync(Guid clientId, CancellationToken cancellationToken) =>
         dbContext.Set<Client>().Where(x => x.Id == clientId).Select(x => (Guid?)x.CoachId)
             .SingleOrDefaultAsync(cancellationToken);

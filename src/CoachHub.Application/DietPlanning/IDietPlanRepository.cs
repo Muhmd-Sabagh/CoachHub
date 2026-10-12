@@ -23,7 +23,14 @@ public interface IDietPlanRepository
     Task<IReadOnlyList<DietPlanRevision>?> ListRevisionsAsync(Guid planId, CancellationToken cancellationToken);
     Task<IReadOnlyDictionary<Guid, string>> FindAuthorNamesAsync(
         IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken);
+    /// <summary>Foods the caller can see (platform foods and the coach's own), with their units.</summary>
     Task<IReadOnlyDictionary<Guid, FoodItem>> FindFoodsAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+    /// <summary>
+    /// Foods referenced by a plan the caller can already see, whoever owns them (after a client transfer a
+    /// plan can reference the previous coach's custom foods).
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, FoodItem>> FindReferencedFoodsAsync(
         IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
     /// <summary>The client's current coach, or null when the client is not visible.</summary>
     Task<Guid?> FindClientCoachIdAsync(Guid clientId, CancellationToken cancellationToken);

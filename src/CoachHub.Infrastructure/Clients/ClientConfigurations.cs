@@ -29,6 +29,15 @@ public sealed class ClientProfileConfiguration : IEntityTypeConfiguration<Client
         builder.Property(profile => profile.DislikedFoodsNote).HasMaxLength(ClientProfile.MaxNoteLength);
         builder.Property(profile => profile.DietaryNotes).HasMaxLength(ClientProfile.MaxNoteLength);
         builder.Property(profile => profile.LifestyleNotes).HasMaxLength(ClientProfile.MaxNoteLength);
+        builder.Property(profile => profile.MacroMode).HasConversion<string>().HasMaxLength(20);
+        builder.Property(profile => profile.MacroProteinGramsPerKg).HasPrecision(4, 2);
+        builder.Property(profile => profile.MacroFatGramsPerKg).HasPrecision(4, 2);
+        builder.Property(profile => profile.MacroProteinPercent).HasPrecision(5, 2);
+        builder.Property(profile => profile.MacroCarbohydratePercent).HasPrecision(5, 2);
+        builder.Property(profile => profile.MacroFatPercent).HasPrecision(5, 2);
+        builder.Property(profile => profile.MacroProteinGrams).HasPrecision(6, 1);
+        builder.Property(profile => profile.MacroFatGrams).HasPrecision(6, 1);
+        builder.Ignore(profile => profile.Macros);
         builder.HasMany(profile => profile.Equipment).WithOne().HasForeignKey(item => item.ClientProfileId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(profile => profile.Foods).WithOne().HasForeignKey(item => item.ClientProfileId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(profile => profile.Equipment).UsePropertyAccessMode(PropertyAccessMode.Field);

@@ -2,6 +2,7 @@ using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Domain.Clients;
+using CoachHub.Domain.Nutrition;
 using CoachHub.Domain.ReferenceData;
 using CoachHub.Domain.Settings;
 
@@ -37,7 +38,8 @@ public sealed record ClientProfileResponse(
     TimeOnly? Bedtime,
     TimeOnly? WakeTime,
     string? LifestyleNotes,
-    DateTimeOffset? UpdatedAt);
+    DateTimeOffset? UpdatedAt,
+    MacroPreferences? Macros = null);
 
 public sealed record ClientProfileInput(
     DateOnly? DateOfBirth,
@@ -62,7 +64,8 @@ public sealed record ClientProfileInput(
     int? PreferredMealCount,
     TimeOnly? Bedtime,
     TimeOnly? WakeTime,
-    string? LifestyleNotes);
+    string? LifestyleNotes,
+    MacroPreferences? Macros = null);
 
 /// <summary>The dietary restrictions a profile can carry, by name (the API exchanges names, not flags).</summary>
 public static class DietaryRestrictionNames
@@ -123,7 +126,7 @@ public sealed class ClientProfileService(
             input.Goal, input.ActivityLevel, input.TrainingDaysPerWeek, input.AverageDailySteps, input.TrainingLocation,
             input.TrainingPreferences, input.FoodPreferences, preferred, input.PreferredFoodsNote, disliked,
             input.DislikedFoodsNote, DietaryRestrictionNames.Parse(input.DietaryRestrictions), input.DietaryNotes, equipmentIds, input.PreferredMealCount,
-            input.Bedtime, input.WakeTime, input.LifestyleNotes), DateOnly.FromDateTime(now.UtcDateTime), now), "profile");
+            input.Bedtime, input.WakeTime, input.LifestyleNotes, input.Macros), DateOnly.FromDateTime(now.UtcDateTime), now), "profile");
 
         if (existing is null) await clients.AddProfileAsync(profile, cancellationToken);
         else await clients.SaveChangesAsync(cancellationToken);
@@ -170,7 +173,7 @@ public sealed class ClientProfileService(
             equipmentNames, profile.FoodPreferences, await FoodsAsync(FoodPreferenceKind.Preferred), profile.PreferredFoodsNote,
             await FoodsAsync(FoodPreferenceKind.Disliked), profile.DislikedFoodsNote, DietaryRestrictionNames.From(profile.DietaryRestrictions),
             profile.DietaryNotes, profile.PreferredMealCount, profile.Bedtime, profile.WakeTime, profile.LifestyleNotes,
-            profile.UpdatedAt);
+            profile.UpdatedAt, profile.Macros);
     }
 
     private static ValidationException Validation(string field, string message) =>

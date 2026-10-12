@@ -7,6 +7,16 @@ import { CatalogItem } from '../catalog/catalog.models';
 import { CatalogService } from '../catalog/catalog.service';
 import { Client, ClientsService } from '../clients/clients.service';
 import {
+  NutritionFood,
+  NutritionTotals,
+  difference,
+  macroCalories,
+  mealTypes,
+  rowTotals,
+  sumTotals,
+} from './nutrition-math';
+import {
+  ActivityLevel,
   CalculatorStore,
   PlanType,
   PlanVersion,
@@ -38,16 +48,24 @@ export class PlansComponent implements OnInit, OnDestroy {
   exercises: CatalogItem[] = [];
   pdfUrl: SafeResourceUrl | null = null;
   private pdfObjectUrl: string | null = null;
+  readonly mealTypes = mealTypes;
+  readonly activityLevels: { value: ActivityLevel; label: string }[] = [
+    { value: 'Sedentary', label: 'Sedentary' },
+    { value: 'LightlyActive', label: 'Lightly active' },
+    { value: 'ModeratelyActive', label: 'Moderately active' },
+    { value: 'VeryActive', label: 'Very active' },
+    { value: 'ExtraActive', label: 'Extra active' },
+  ];
+  /** Uses the coach's activity factors, deficit/surplus and g/kg defaults (§14, §49). */
   calculator = {
     age: 30,
     sex: 'Male',
     weightKg: 75,
     heightCm: 175,
-    activityFactor: 1.55,
+    activityLevel: 'ModeratelyActive' as ActivityLevel,
     goal: 'Maintain',
-    proteinGramsPerKg: 2,
-    fatCaloriesPercent: 0.25,
   };
+  targetsMessage = '';
   constructor(
     private data: PlansService,
     private clientData: ClientsService,
@@ -258,15 +276,63 @@ export class PlansComponent implements OnInit, OnDestroy {
     });
   }
   addMeal(v: any) {
-    v.meals.push(this.newMeal());
+    v.meals.push(this.newMeal('Snack'));
   }
   addFood(m: any) {
     m.foodItems.push({
       id: id(),
       foodItemId: '',
+      foodUnitId: null,
       quantity: 100,
       order: m.foodItems.length,
       notes: null,
+    });
+  }
+  /** A newly chosen food starts at one serving in its base unit (§5). */
+  foodChanged(row: any) {
+    const food = this.food(row.foodItemId);
+    row.foodUnitId = null;
+    if (food) row.quantity = food.servingSize;
+  }
+  food(foodId: string): NutritionFood | undefined {
+    return this.foods.find((x) => x.id === foodId) as NutritionFood | undefined;
+  }
+  // Live totals (§6): recomputed as quantities change; the server's totals win on save.
+  rowTotals(row: any): NutritionTotals {
+    return rowTotals(this.food(row.foodItemId), row.quantity, row.foodUnitId);
+  }
+  mealTotals(meal: any): NutritionTotals {
+    return sumTotals(meal.foodItems.map((row: any) => this.rowTotals(row)));
+  }
+  variantTotals(variant: any): NutritionTotals {
+    return sumTotals(variant.meals.map((meal: any) => this.mealTotals(meal)));
+  }
+  mealCount(variant: any, snacks: boolean): number {
+    return variant.meals.filter((meal: any) => (meal.type === 'Snack') === snacks).length;
+  }
+  difference(planned: number, target?: number | null) {
+    return difference(planned, target);
+  }
+  targetMacroCalories(): number {
+    const t = this.editor?.targets ?? {};
+    return macroCalories(t.protein ?? 0, t.carbohydrates ?? 0, t.fat ?? 0);
+  }
+  /** Fills the version's targets from the assigned client's profile and macro mode (§4, §14, §15). */
+  useClientTargets() {
+    if (!this.editor?.clientId) return;
+    this.targetsMessage = '';
+    this.data.clientTargets(this.editor.clientId).subscribe({
+      next: (x) => {
+        this.editor.targets = {
+          ...(this.editor.targets ?? {}),
+          calories: x.goalCalories,
+          protein: x.protein,
+          carbohydrates: x.carbohydrates,
+          fat: x.fat,
+        };
+        this.targetsMessage = `From the profile: TDEE ${x.maintenanceCalories} kcal, ${x.adjustmentPercent}% for the goal.`;
+      },
+      error: (e) => (this.targetsMessage = apiErrorMessage(e)),
     });
   }
   addReplacement(v: any) {
@@ -359,8 +425,16 @@ export class PlansComponent implements OnInit, OnDestroy {
         d.exercises.forEach((e: any, ei: number) => (e.order = ei));
       });
   }
-  private newMeal() {
-    return { id: id(), nameEn: 'Meal', nameAr: null, order: 0, notes: null, foodItems: [] };
+  private newMeal(type = 'Breakfast') {
+    return {
+      id: id(),
+      nameEn: type === 'Snack' ? 'Snack' : 'Meal',
+      nameAr: null,
+      type,
+      order: 0,
+      notes: null,
+      foodItems: [],
+    };
   }
   private newDiet() {
     return {
@@ -370,6 +444,7 @@ export class PlansComponent implements OnInit, OnDestroy {
       startDate: null,
       endDate: null,
       status: 'Active',
+      targets: {},
       notes: [],
       variants: [
         {

@@ -106,6 +106,11 @@ public sealed class MediaService(
         media is not null && media.IsPlatformMedia &&
         media.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>An image in the coach's own library (not a client's media), usable by that coach's custom catalog entries.</summary>
+    public static bool IsCoachLibraryImage(Domain.Media.MediaAsset? media, Guid coachId) =>
+        media is not null && media.CoachId == coachId && media.ClientId is null &&
+        media.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+
     private static void ValidateUpload(
         Stream content,
         string originalFileName,
