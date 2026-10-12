@@ -3,6 +3,8 @@
   --brand: #465fff;
   --brand-dark: #3641f5;
   --brand-soft: #ecf3ff;
+  /* Overridden at runtime by the coach's or platform's brand (D1, §63); see ThemeService. */
+  --brand-secondary: #12b76a;
   --gray-25: #fcfcfd;
   --gray-50: #f9fafb;
   --gray-100: #f2f4f7;
@@ -394,6 +396,16 @@ input:focus {
   text-decoration: none;
   gap: 10px;
   padding: 0 4px 0 8px;
+}
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.brand-logo.large {
+  width: 72px;
+  height: 72px;
 }
 .avatar {
   width: 38px;

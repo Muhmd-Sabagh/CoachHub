@@ -73,7 +73,8 @@ The complete brand, gray, success, warning, error, orange, light-blue, purple, a
 - CoachHub exposes sign-in only. Remove public sign-up, social sign-in, and account-creation prompts.
 - Forgot-password UI is deferred until a corresponding backend flow exists.
 - Include password visibility, validation messages, busy state, and accessible error summary.
-- The brand panel uses CoachHub identity and CoachName, not TailAdmin copy or logo.
+- The brand panel uses the effective brand (P4): the coach's or platform's name, logo, login headline and message, never TailAdmin copy or logo.
+- Runtime branding (D1, §63, P4): `ThemeService.applyBrand` overrides `--brand`, `--brand-dark`, `--brand-soft` and `--brand-secondary` with the coach's or platform's colors. Features must keep using these tokens; a literal brand color would ignore a coach's brand.
 
 ### Dark mode and localization
 

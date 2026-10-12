@@ -15,6 +15,7 @@ using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Reporting;
 using CoachHub.Application.SavedPlans;
+using CoachHub.Application.Settings;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
 using CoachHub.Infrastructure.Auditing;
@@ -35,6 +36,7 @@ using CoachHub.Infrastructure.Nutrition;
 using CoachHub.Infrastructure.ReferenceData;
 using CoachHub.Infrastructure.Reporting;
 using CoachHub.Infrastructure.SavedPlans;
+using CoachHub.Infrastructure.Settings;
 using CoachHub.Infrastructure.Training;
 using CoachHub.Infrastructure.WorkoutPlanning;
 using Microsoft.AspNetCore.Identity;
@@ -93,6 +95,11 @@ public static class DependencyInjection
             .PostConfigure(options => options.Validate())
             .ValidateOnStart();
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<SessionOptions>>().Value);
+
+        services.AddOptions<BrandingOptions>().Bind(configuration.GetSection(BrandingOptions.SectionName));
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<BrandingOptions>>().Value);
+        services.AddScoped<IBrandRepository, BrandRepository>();
+        services.AddScoped<ISettingsRepository, SettingsRepository>();
 
         services.AddScoped<IIdentityGateway, IdentityGateway>();
         services.AddScoped<IUserSessionRepository, UserSessionRepository>();

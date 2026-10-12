@@ -4,6 +4,7 @@
 >
 > - D7 (P1): packages and payment accounts belong to the coach who sells them and are unique per coach; currencies and food/exercise categories stay platform data that only administrators change.
 > - D1 (P1): the `CoachHub:CoachName` setting was removed; the coach name comes from the signed-in coach.
+> - §49, §63 (P4): settings live in the database. `PlatformSettings` (language, units, notification toggles, email sender) and typed `CoachSettings` (activity factors, deficit/surplus, macro defaults, adherence weights, replacement rule), plus per-coach `Brand` with a platform default. `GET /api/v1/settings` now returns the effective brand name, units and language. See [P04_SETTINGS_BRANDING.md](../product/phases/P04_SETTINGS_BRANDING.md).
 
 ## Delivered scope
 

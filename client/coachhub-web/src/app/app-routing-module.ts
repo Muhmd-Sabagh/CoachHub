@@ -43,6 +43,7 @@ const routes: Routes = [
           import('./features/auditing/audit.component').then((module) => module.AuditComponent),
       },
       { path: 'settings', component: SettingsComponent },
+      { path: 'workspace', loadComponent: () => import('./features/workspace/workspace.component').then(m => m.WorkspaceComponent) },
       { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

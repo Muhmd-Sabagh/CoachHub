@@ -1,0 +1,111 @@
+<section class="dashboard-hero">
+  <div>
+    <p class="eyebrow">White label</p>
+    <h1>Branding &amp; defaults</h1>
+    <p>{{ isAdmin ? 'The platform brand is everyone\'s default. A coach\'s brand replaces it for the coach and their clients.' : 'Your clients see your brand. Empty fields use the platform\'s.' }}</p>
+  </div>
+  @if (isAdmin) {
+    <label class="filter-row"><span>Editing</span>
+      <select name="target" [(ngModel)]="target" (ngModelChange)="load()">
+        <option value="">Platform</option>
+        @for (coach of coaches; track coach.id) { <option [value]="coach.id">{{ coach.displayName }}</option> }
+      </select>
+    </label>
+  }
+</section>
+@if (error) { <p class="form-error" role="alert">{{ error }}</p> }
+@if (message) { <p class="success-message" role="status">{{ message }}</p> }
+
+<section class="card workbench">
+  <div class="section-heading"><h2>Brand</h2><span>{{ brand?.isSaved ? 'Saved' : 'Not customised yet' }}</span></div>
+  <form class="form-grid" (ngSubmit)="saveBrand()">
+    <label><span>Brand name *</span><input name="brandName" [(ngModel)]="brandForm.brandName" required maxlength="100" /></label>
+    <label><span>Primary color</span>
+      <span class="filter-row"><input type="color" name="primaryPicker" [ngModel]="colorValue(brandForm.primaryColor, '#465fff')" (ngModelChange)="brandForm.primaryColor = $event" />
+      <input name="primaryColor" [(ngModel)]="brandForm.primaryColor" placeholder="#465fff" maxlength="7" /></span></label>
+    <label><span>Secondary color</span>
+      <span class="filter-row"><input type="color" name="secondaryPicker" [ngModel]="colorValue(brandForm.secondaryColor, '#12b76a')" (ngModelChange)="brandForm.secondaryColor = $event" />
+      <input name="secondaryColor" [(ngModel)]="brandForm.secondaryColor" placeholder="#12b76a" maxlength="7" /></span></label>
+    <label><span>Login headline</span><input name="loginHeadline" [(ngModel)]="brandForm.loginHeadline" maxlength="150" /></label>
+    <label class="span-2"><span>Login message</span><textarea name="loginMessage" [(ngModel)]="brandForm.loginMessage" maxlength="500" rows="2"></textarea></label>
+    <label class="span-2"><span>Dashboard welcome (shown to clients)</span><textarea name="dashboardWelcome" [(ngModel)]="brandForm.dashboardWelcome" maxlength="500" rows="2"></textarea></label>
+    <label><span>Email header</span><textarea name="emailHeader" [(ngModel)]="brandForm.emailHeader" maxlength="500" rows="2"></textarea></label>
+    <label><span>Email footer</span><textarea name="emailFooter" [(ngModel)]="brandForm.emailFooter" maxlength="500" rows="2"></textarea></label>
+    <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving || !brandForm.brandName.trim()">Save brand</button></div>
+  </form>
+</section>
+
+<section class="card workbench">
+  <div class="section-heading"><h2>Images</h2><span>PNG, JPEG, WebP or GIF, up to 1 MB</span></div>
+  <div class="form-grid">
+    @for (image of images; track image.kind) {
+      <div>
+        <strong>{{ image.label }}</strong>
+        <div class="filter-row">
+          @if (imageUrl(image.kind); as url) { <img class="brand-logo large" [src]="url" [alt]="image.label" /> }
+          <label class="button button-secondary">Upload<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden (change)="upload(image.kind, $event)" [disabled]="saving" /></label>
+          @if (imageUrl(image.kind)) { <button class="link-button danger" type="button" (click)="removeImage(image.kind)" [disabled]="saving">Remove</button> }
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+@if (isAdmin && isCoachScope) {
+  <section class="card workbench">
+    <div class="section-heading"><h2>Hosts</h2><span>For future coach domains (§63)</span></div>
+    <form class="form-grid" (ngSubmit)="saveHosts()">
+      <label><span>Subdomain</span><input name="subdomain" [(ngModel)]="hosts.subdomain" placeholder="coacha" maxlength="63" /></label>
+      <label><span>Custom domain</span><input name="customDomain" [(ngModel)]="hosts.customDomain" placeholder="www.coacha.com" maxlength="253" /></label>
+      <div class="form-actions"><button class="button button-secondary" type="submit" [disabled]="saving">Save hosts</button></div>
+    </form>
+  </section>
+}
+
+@if (defaults; as d) {
+  <section class="card workbench">
+    <div class="section-heading"><h2>Coaching defaults</h2><span>{{ d.isSaved ? 'Saved' : 'Using the standard defaults' }}</span></div>
+    <form class="form-grid" (ngSubmit)="saveDefaults()">
+      <label><span>Sedentary factor</span><input type="number" step="0.001" min="1" max="2.5" name="sedentary" [(ngModel)]="d.activityFactors.sedentary" /></label>
+      <label><span>Lightly active factor</span><input type="number" step="0.001" min="1" max="2.5" name="lightlyActive" [(ngModel)]="d.activityFactors.lightlyActive" /></label>
+      <label><span>Moderately active factor</span><input type="number" step="0.001" min="1" max="2.5" name="moderatelyActive" [(ngModel)]="d.activityFactors.moderatelyActive" /></label>
+      <label><span>Very active factor</span><input type="number" step="0.001" min="1" max="2.5" name="veryActive" [(ngModel)]="d.activityFactors.veryActive" /></label>
+      <label><span>Extra active factor</span><input type="number" step="0.001" min="1" max="2.5" name="extraActive" [(ngModel)]="d.activityFactors.extraActive" /></label>
+      <label><span>Deficit (%)</span><input type="number" step="0.5" min="0" max="50" name="deficit" [(ngModel)]="d.deficitPercent" /></label>
+      <label><span>Surplus (%)</span><input type="number" step="0.5" min="0" max="50" name="surplus" [(ngModel)]="d.surplusPercent" /></label>
+      <label><span>Protein (g/kg)</span><input type="number" step="0.1" min="0" max="5" name="protein" [(ngModel)]="d.proteinGramsPerKg" /></label>
+      <label><span>Fat (g/kg)</span><input type="number" step="0.1" min="0" max="3" name="fat" [(ngModel)]="d.fatGramsPerKg" /></label>
+      <label><span>Default macro method</span>
+        <select name="macroMode" [(ngModel)]="d.defaultMacroMode">@for (mode of macroModes; track $index) { <option [ngValue]="$index">{{ mode }}</option> }</select></label>
+      <label><span>Food replacement rule</span>
+        <select name="replacementRule" [(ngModel)]="d.replacementRule">@for (rule of replacementRules; track $index) { <option [ngValue]="$index">{{ rule }}</option> }</select></label>
+      <fieldset class="span-2">
+        <legend>Adherence weights (%) — total {{ weightsTotal }} of 100</legend>
+        <div class="form-grid">
+          <label><span>Nutrition</span><input type="number" min="0" max="100" name="wNutrition" [(ngModel)]="d.adherenceWeights.nutrition" /></label>
+          <label><span>Workout</span><input type="number" min="0" max="100" name="wWorkout" [(ngModel)]="d.adherenceWeights.workout" /></label>
+          <label><span>Check-in</span><input type="number" min="0" max="100" name="wCheckIn" [(ngModel)]="d.adherenceWeights.checkIn" /></label>
+          <label><span>Steps</span><input type="number" min="0" max="100" name="wSteps" [(ngModel)]="d.adherenceWeights.steps" /></label>
+          <label><span>Water</span><input type="number" min="0" max="100" name="wWater" [(ngModel)]="d.adherenceWeights.water" /></label>
+          <label><span>Sleep</span><input type="number" min="0" max="100" name="wSleep" [(ngModel)]="d.adherenceWeights.sleep" /></label>
+        </div>
+      </fieldset>
+      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving || weightsTotal !== 100">Save defaults</button></div>
+    </form>
+  </section>
+}
+
+@if (platform; as p) {
+  <section class="card workbench">
+    <div class="section-heading"><h2>Platform settings</h2></div>
+    <form class="form-grid" (ngSubmit)="savePlatform()">
+      <label><span>Default language</span><select name="language" [(ngModel)]="p.defaultLanguage"><option value="en">English</option><option value="ar">العربية</option></select></label>
+      <label><span>Units</span><select name="units" [(ngModel)]="p.units"><option [ngValue]="0">Metric</option><option [ngValue]="1">Imperial</option></select></label>
+      <label><span>Email sender name</span><input name="sender" [(ngModel)]="p.emailSenderName" maxlength="100" placeholder="Defaults to the brand name" /></label>
+      <label><span><input type="checkbox" name="email" [(ngModel)]="p.emailNotificationsEnabled" /> Coach email notifications</span></label>
+      <label><span><input type="checkbox" name="whatsapp" [(ngModel)]="p.whatsAppNotificationsEnabled" /> Coach WhatsApp notifications</span></label>
+      <p class="muted span-2">Account emails such as password resets are always sent.</p>
+      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving">Save settings</button></div>
+    </form>
+  </section>
+}

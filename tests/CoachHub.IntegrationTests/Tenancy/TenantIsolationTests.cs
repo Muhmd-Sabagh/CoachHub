@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using CoachHub.API.Settings;
 using CoachHub.Application.Clients;
 using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Models;
@@ -136,7 +135,7 @@ public sealed class TenantIsolationTests(CoachHubSqlApiFactory factory) : IClass
         Assert.Equal(coach.Id, result!.CoachId);
         Assert.Contains("Coach", result.Roles);
 
-        var settings = await factory.CreateCoachClient(coach.Id).GetFromJsonAsync<SettingsResponse>("/api/v1/settings");
+        var settings = await factory.CreateCoachClient(coach.Id).GetFromJsonAsync<CoachHub.Application.Settings.WorkspaceSettingsResponse>("/api/v1/settings");
         Assert.Equal("Coach " + suffix, settings!.CoachName);
 
         (await admin.PutAsJsonAsync($"/api/v1/admin/coaches/{coach.Id}", new CoachUpdateInput("Coach " + suffix, false)))

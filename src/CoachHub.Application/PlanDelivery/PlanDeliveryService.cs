@@ -20,7 +20,7 @@ public sealed class PlanDeliveryService(IPlanDeliveryRepository repository, ICli
         {
             if (string.IsNullOrWhiteSpace(input.Recipient)) throw new ValidationException(new Dictionary<string, string[]> { ["recipient"] = ["A recipient is required."] });
             var channel = input.Channel == DeliveryChannel.Email ? NotificationChannel.Email : NotificationChannel.WhatsApp;
-            var notification = await notifications.ScheduleAsync(new(input.ClientId, channel, input.Recipient, $"CoachHub {input.PlanType} plan", $"Your {snapshot.Name} plan is ready in CoachHub.", null), token);
+            var notification = await notifications.ScheduleAsync(new(input.ClientId, channel, input.Recipient, $"Your {input.PlanType} plan", $"Your {snapshot.Name} plan is ready.", null), token);
             notificationId = notification.Id;
         }
         var delivery = DeliveredPlan.Create(client.CoachId, input.ClientId, input.PlanType, input.PlanId, input.VersionId, snapshot.Name, input.Language, snapshot.SnapshotJson, input.Channel, notificationId, timeProvider.GetUtcNow());

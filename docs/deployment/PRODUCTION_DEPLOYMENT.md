@@ -24,6 +24,7 @@ Use the platform secret store and ASP.NET Core double-underscore configuration k
 | Bootstrap credentials | matching bootstrap keys | Supply only during a supervised first start, then remove and rotate |
 | Media provider settings | provider-specific secret keys | Private buckets/containers only; no public anonymous object access |
 | Password reset URL | `Authentication__Experience__PasswordResetUrl` | Trusted HTTPS Angular reset route |
+| Platform domain | `Branding__PlatformDomain` | The platform's own domain (e.g. `coachhub.example`); a host `coacha.coachhub.example` then shows coach A's brand before sign-in. Optional; custom domains work without it. DNS and TLS for coach hosts are a deployment task |
 | SMTP | `Communications__FromEmail`, host/user/password keys | Required only when email delivery is enabled |
 | WhatsApp | phone-number ID/access-token keys | Required only when WhatsApp delivery is enabled |
 

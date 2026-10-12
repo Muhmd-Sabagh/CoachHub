@@ -80,7 +80,7 @@ public sealed class AccountService(UserManager<User> users, RoleManager<Role> ro
         var code = await users.GeneratePasswordResetTokenAsync(user);
         var url = $"{resetUrl}?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(code)}";
         await notifications.SchedulePlatformAsync(new(user.ClientId, NotificationChannel.Email, user.Email,
-            "CoachHub password reset", $"Use this one-time link to reset your password: {url}", null), token);
+            "Password reset", $"Use this one-time link to reset your password: {url}", null), token);
     }
 
     public async Task ResetPasswordAsync(PasswordResetInput input, CancellationToken token)

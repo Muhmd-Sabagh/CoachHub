@@ -1,16 +1,18 @@
 <main class="auth-page">
-  <section class="auth-brand-panel" aria-label="CoachHub">
-    <div class="brand-mark large">CH</div>
+  <section class="auth-brand-panel" [attr.aria-label]="branding.brand().brandName">
+    @if (branding.brand().logoUrl; as logo) { <img class="brand-logo large" [src]="logo" [alt]="branding.brand().brandName" /> }
+    @else { <div class="brand-mark large">{{ initials(branding.brand().brandName) }}</div> }
     <p class="eyebrow">{{ 'auth.eyebrow' | translate }}</p>
-    <h1>CoachHub</h1>
-    <p>{{ 'auth.subtitle' | translate }}</p>
+    <h1>{{ branding.brand().loginHeadline || branding.brand().brandName }}</h1>
+    <p>{{ branding.brand().loginMessage || ('auth.subtitle' | translate) }}</p>
     <div class="auth-orbit" aria-hidden="true"><span></span><span></span><span></span></div>
   </section>
   <section class="auth-form-panel">
     <button class="language-button" type="button" (click)="i18n.toggle()">{{ 'shell.language' | translate }}</button>
     <form class="auth-card" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="brand-mark mobile-brand">CH</div>
-      <p class="eyebrow">CoachHub</p>
+      @if (branding.brand().logoUrl; as logo) { <img class="brand-logo mobile-brand" [src]="logo" [alt]="branding.brand().brandName" /> }
+      @else { <div class="brand-mark mobile-brand">{{ initials(branding.brand().brandName) }}</div> }
+      <p class="eyebrow">{{ branding.brand().brandName }}</p>
       <h2>{{ 'auth.title' | translate }}</h2>
       <p class="muted">{{ 'auth.subtitle' | translate }}</p>
       <label><span>{{ 'auth.login' | translate }}</span><input type="text" formControlName="login" autocomplete="username" /></label>
