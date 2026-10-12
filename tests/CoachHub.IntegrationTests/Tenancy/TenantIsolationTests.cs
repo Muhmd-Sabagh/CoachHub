@@ -90,7 +90,7 @@ public sealed class TenantIsolationTests(CoachHubSqlApiFactory factory) : IClass
         var client = await CreateClientAsync(coachA, "Transferred client");
         var plan = await CreateWorkoutPlanAsync(coachA, client.Id);
         var delivered = await coachA.PostAsJsonAsync("/api/v1/plan-deliveries", new DeliveredPlanInput(
-            client.Id, DeliveredPlanType.Workout, plan.Id, plan.Id, "en", DeliveryChannel.Download, null));
+            client.Id, DeliveredPlanType.Workout, plan.Id, null, null, "en", DeliveryChannel.Download, null));
         Assert.Equal(HttpStatusCode.Created, delivered.StatusCode);
         var subscription = await SellSubscriptionAsync(coachA, admin, client.Id);
 

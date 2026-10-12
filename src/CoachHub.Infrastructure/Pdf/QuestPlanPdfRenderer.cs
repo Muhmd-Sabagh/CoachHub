@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using CoachHub.Application.Common.Models;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Pdf;
 using CoachHub.Application.WorkoutPlanning;
@@ -41,18 +42,18 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             ConfigurePage(page, language);
             page.Header().Element(container => Header(container,
                 PdfLanguageText.Name(plan.NameEn, plan.NameAr, language),
-                T(language, "Diet plan", "خطة غذائية"), client, language));
+                Kind(T(language, "Diet plan", "خطة غذائية"), plan.Revision, language), client, language));
             page.Content().PaddingVertical(12).Column(column =>
             {
                 column.Spacing(12);
                 column.Item().Element(container => DietSummary(container, plan, language));
                 ActiveNotes(column, plan.Notes.Where(x => x.IsActive).Select(x => x.Text), language);
-                var versions = plan.Versions.Where(x => x.IsActiveForPdf).OrderBy(x => x.Order).ToArray();
-                if (versions.Length == 0)
+                var variants = plan.Variants.Where(x => x.IsActiveForPdf).OrderBy(x => x.Order).ToArray();
+                if (variants.Length == 0)
                     column.Item().Element(container => Empty(container, T(language,
-                        "No versions are enabled for PDF output.", "لا توجد نسخ مفعلة للعرض في ملف PDF."), language));
-                foreach (var version in versions)
-                    column.Item().Element(container => DietVersion(container, version, language));
+                        "No variants are enabled for PDF output.", "لا توجد بدائل مفعلة للعرض في ملف PDF."), language));
+                foreach (var variant in variants)
+                    column.Item().Element(container => DietVariant(container, variant, language));
             });
             page.Footer().Element(container => Footer(container, language));
         })).GeneratePdf();
@@ -63,7 +64,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             ConfigurePage(page, language);
             page.Header().Element(container => Header(container,
                 PdfLanguageText.Name(plan.NameEn, plan.NameAr, language),
-                T(language, "Workout plan", "خطة تدريبية"), client, language));
+                Kind(T(language, "Workout plan", "خطة تدريبية"), plan.Revision, language), client, language));
             page.Content().PaddingVertical(12).Column(column =>
             {
                 column.Spacing(12);
@@ -152,7 +153,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
         });
     }
 
-    private static void DietVersion(IContainer container, DietPlanVersionResponse version, PlanPdfLanguage language)
+    private static void DietVariant(IContainer container, DietPlanVariantResponse version, PlanPdfLanguage language)
     {
         container.Column(column =>
         {
@@ -323,6 +324,17 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             });
         });
     }
+
+    /// <summary>"Diet plan · V2 · 2026-10-01 – 2026-12-31": the version and its program dates (D4, §4).</summary>
+    private static string Kind(string type, PlanRevisionInfo revision, PlanPdfLanguage language)
+    {
+        var text = $"{type}  •  {T(language, "V", "الإصدار ")}{revision.VersionNumber.ToString(CultureInfo.InvariantCulture)}";
+        if (revision.StartDate is null && revision.EndDate is null) return text;
+        return $"{text}  •  {Date(revision.StartDate)} – {Date(revision.EndDate)}";
+    }
+
+    private static string Date(DateOnly? value) =>
+        value?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "…";
 
     private static string Number(decimal value) => value.ToString("0.##", CultureInfo.InvariantCulture);
     private static string T(PlanPdfLanguage language, string english, string arabic) =>

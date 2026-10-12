@@ -3,7 +3,7 @@
 > **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
 >
 > - D3: prescriptions kept as bounded strings are replaced by structured typed fields, set grouping and block types (P9).
-> - D4: plans gain version history (P6).
+> - D4 (P6): days and notes belong to a `WorkoutPlanRevision`; plans have version history with dates and explicit save-in-place / save-as-new-version endpoints; archived versions are read-only. See [P06_PLAN_VERSIONS.md](../product/phases/P06_PLAN_VERSIONS.md).
 
 ## Outcome
 

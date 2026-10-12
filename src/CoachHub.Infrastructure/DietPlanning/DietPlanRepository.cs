@@ -9,23 +9,33 @@ namespace CoachHub.Infrastructure.DietPlanning;
 
 public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanRepository
 {
-    public async Task<DietPlanAggregate?> FindAsync(Guid id, bool tracking, CancellationToken cancellationToken)
+    public async Task<DietPlanAggregate?> FindAsync(Guid id, int? versionNumber, bool tracking, CancellationToken cancellationToken)
     {
-        IQueryable<DietPlan> plans = dbContext.Set<DietPlan>();
-        if (!tracking) plans = plans.AsNoTracking();
-        var plan = await plans.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var plan = await Query<DietPlan>(tracking).SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (plan is null) return null;
-        var versions = await Query<DietPlanVersion>(tracking).Where(x => x.DietPlanId == id).ToListAsync(cancellationToken);
-        var versionIds = versions.Select(x => x.Id).ToArray();
-        var meals = await Query<Meal>(tracking).Where(x => versionIds.Contains(x.DietPlanVersionId)).ToListAsync(cancellationToken);
-        var mealIds = meals.Select(x => x.Id).ToArray();
-        var foods = await Query<MealFoodItem>(tracking).Where(x => mealIds.Contains(x.MealId)).ToListAsync(cancellationToken);
-        var groups = await Query<DietReplacementGroup>(tracking).Where(x => versionIds.Contains(x.DietPlanVersionId)).ToListAsync(cancellationToken);
-        var groupIds = groups.Select(x => x.Id).ToArray();
-        var options = await Query<DietReplacementOption>(tracking).Where(x => groupIds.Contains(x.DietReplacementGroupId)).ToListAsync(cancellationToken);
-        var notes = await Query<DietPlanNote>(tracking).Where(x => x.DietPlanId == id).ToListAsync(cancellationToken);
-        return new(plan, notes, versions, meals, foods, groups, options);
+        var revisions = await Query<DietPlanRevision>(tracking).Where(x => x.PlanId == id).ToListAsync(cancellationToken);
+        var current = revisions.SingleOrDefault(x => !x.IsArchived);
+        var revision = versionNumber is { } number ? revisions.SingleOrDefault(x => x.VersionNumber == number) : current;
+        if (revision is null || current is null) return null;
+        var revisionId = revision.Id;
+        return new(plan, revision, current.VersionNumber,
+            await Query<DietPlanNote>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
+            await Query<DietPlanVariant>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
+            await Query<Meal>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
+            await Query<MealFoodItem>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
+            await Query<DietReplacementGroup>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
+            await Query<DietReplacementOption>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken));
     }
+
+    public async Task<IReadOnlyList<DietPlanRevision>?> ListRevisionsAsync(Guid planId, CancellationToken cancellationToken)
+    {
+        if (!await dbContext.Set<DietPlan>().AnyAsync(x => x.Id == planId, cancellationToken)) return null;
+        return await dbContext.Set<DietPlanRevision>().AsNoTracking().Where(x => x.PlanId == planId).ToListAsync(cancellationToken);
+    }
+
+    public Task<IReadOnlyDictionary<Guid, string>> FindAuthorNamesAsync(
+        IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) =>
+        PlanAuthors.FindNamesAsync(dbContext, userIds, cancellationToken);
 
     public async Task<IReadOnlyDictionary<Guid, FoodItem>> FindFoodsAsync(
         IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
@@ -38,34 +48,43 @@ public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanR
     public async Task AddAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken)
     {
         dbContext.Add(aggregate.Plan);
-        AddChildren(aggregate);
+        dbContext.Add(aggregate.Revision);
+        AddContent(aggregate);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task ReplaceChildrenAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken)
+    public async Task ReplaceContentAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken)
     {
         await using var transaction = dbContext.Database.IsRelational()
             ? await dbContext.Database.BeginTransactionAsync(cancellationToken) : null;
-        var planId = aggregate.Plan.Id;
-        var versionIds = await dbContext.Set<DietPlanVersion>().Where(x => x.DietPlanId == planId).Select(x => x.Id).ToArrayAsync(cancellationToken);
-        var mealIds = await dbContext.Set<Meal>().Where(x => versionIds.Contains(x.DietPlanVersionId)).Select(x => x.Id).ToArrayAsync(cancellationToken);
-        var groupIds = await dbContext.Set<DietReplacementGroup>().Where(x => versionIds.Contains(x.DietPlanVersionId)).Select(x => x.Id).ToArrayAsync(cancellationToken);
-        dbContext.RemoveRange(dbContext.Set<DietReplacementOption>().Where(x => groupIds.Contains(x.DietReplacementGroupId)));
-        dbContext.RemoveRange(dbContext.Set<DietReplacementGroup>().Where(x => versionIds.Contains(x.DietPlanVersionId)));
-        dbContext.RemoveRange(dbContext.Set<MealFoodItem>().Where(x => mealIds.Contains(x.MealId)));
-        dbContext.RemoveRange(dbContext.Set<Meal>().Where(x => versionIds.Contains(x.DietPlanVersionId)));
-        dbContext.RemoveRange(dbContext.Set<DietPlanNote>().Where(x => x.DietPlanId == planId));
-        dbContext.RemoveRange(dbContext.Set<DietPlanVersion>().Where(x => x.DietPlanId == planId));
+        Guid[] revisionIds = [aggregate.Revision.Id];
+        RemoveContent(revisionIds);
         await dbContext.SaveChangesAsync(cancellationToken);
         dbContext.ChangeTracker.Clear();
-        AddChildren(aggregate);
+        AddContent(aggregate);
         await dbContext.SaveChangesAsync(cancellationToken);
         if (transaction is not null) await transaction.CommitAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(DietPlanAggregate aggregate, CancellationToken cancellationToken)
+    public async Task AddRevisionAsync(DietPlanAggregate next, CancellationToken cancellationToken)
     {
-        dbContext.Remove(aggregate.Plan);
+        await using var transaction = dbContext.Database.IsRelational()
+            ? await dbContext.Database.BeginTransactionAsync(cancellationToken) : null;
+        // Archive the previous version first: only one version per plan may be current.
+        await PlanAuthors.SaveVersionAsync(dbContext, cancellationToken);
+        dbContext.Add(next.Revision);
+        AddContent(next);
+        await PlanAuthors.SaveVersionAsync(dbContext, cancellationToken);
+        if (transaction is not null) await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(Guid planId, CancellationToken cancellationToken)
+    {
+        var revisionIds = await dbContext.Set<DietPlanRevision>().Where(x => x.PlanId == planId)
+            .Select(x => x.Id).ToArrayAsync(cancellationToken);
+        RemoveContent(revisionIds);
+        dbContext.RemoveRange(dbContext.Set<DietPlanRevision>().Where(x => x.PlanId == planId));
+        dbContext.RemoveRange(dbContext.Set<DietPlan>().Where(x => x.Id == planId));
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -73,9 +92,20 @@ public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanR
 
     private IQueryable<T> Query<T>(bool tracking) where T : class =>
         tracking ? dbContext.Set<T>() : dbContext.Set<T>().AsNoTracking();
-    private void AddChildren(DietPlanAggregate aggregate)
+
+    private void RemoveContent(Guid[] revisionIds)
     {
-        dbContext.AddRange(aggregate.Notes); dbContext.AddRange(aggregate.Versions);
+        dbContext.RemoveRange(dbContext.Set<DietReplacementOption>().Where(x => revisionIds.Contains(x.RevisionId)));
+        dbContext.RemoveRange(dbContext.Set<DietReplacementGroup>().Where(x => revisionIds.Contains(x.RevisionId)));
+        dbContext.RemoveRange(dbContext.Set<MealFoodItem>().Where(x => revisionIds.Contains(x.RevisionId)));
+        dbContext.RemoveRange(dbContext.Set<Meal>().Where(x => revisionIds.Contains(x.RevisionId)));
+        dbContext.RemoveRange(dbContext.Set<DietPlanVariant>().Where(x => revisionIds.Contains(x.RevisionId)));
+        dbContext.RemoveRange(dbContext.Set<DietPlanNote>().Where(x => revisionIds.Contains(x.RevisionId)));
+    }
+
+    private void AddContent(DietPlanAggregate aggregate)
+    {
+        dbContext.AddRange(aggregate.Notes); dbContext.AddRange(aggregate.Variants);
         dbContext.AddRange(aggregate.Meals); dbContext.AddRange(aggregate.FoodItems);
         dbContext.AddRange(aggregate.ReplacementGroups); dbContext.AddRange(aggregate.ReplacementOptions);
     }

@@ -1,7 +1,10 @@
 <section class="page-heading">
   <p class="eyebrow">Programming</p>
   <h1>Saved plans</h1>
-  <p>Design, assign, copy, review, and export diet and workout plans.</p>
+  <p>
+    Design, assign, copy, review, and export diet and workout plans. Every plan keeps its version
+    history.
+  </p>
 </section>
 <section class="card workbench">
   <div class="toolbar">
@@ -44,6 +47,15 @@
             <td>
               <strong>{{ p.nameEn }}</strong
               ><small>{{ p.planType }} · {{ p.nameAr || 'English only' }}</small>
+              @if (p.versionNumber) {
+                <small
+                  >V{{ p.versionNumber }} · {{ p.versionStatus }}
+                  @if (p.startDate || p.endDate) {
+                    · {{ p.startDate ? (p.startDate | date: 'mediumDate') : '…' }} –
+                    {{ p.endDate ? (p.endDate | date: 'mediumDate') : '…' }}
+                  }
+                </small>
+              }
             </td>
             <td>
               {{ p.clientName || 'Unassigned' }}<small>{{ p.clientCode || '' }}</small>
@@ -90,267 +102,378 @@
     <section class="modal-card plan-editor">
       <header>
         <div>
-          <p class="eyebrow">{{ editingId ? 'Edit' : 'New' }} {{ editorType }} plan</p>
+          <p class="eyebrow">
+            {{ editingId ? 'Edit' : 'New' }} {{ editorType }} plan
+            @if (version) {
+              · Version {{ version.versionNumber }} · {{ version.status }}
+            }
+          </p>
           <h2>{{ editor.nameEn || 'Untitled plan' }}</h2>
         </div>
-        <button class="icon-button" (click)="editorOpen = false">×</button>
-      </header>
-      <form (ngSubmit)="save()">
-        <div class="form-grid">
-          <label
-            ><span>English name *</span
-            ><input name="planName" [(ngModel)]="editor.nameEn" required /></label
-          ><label
-            ><span>Arabic name</span
-            ><input name="planNameAr" [(ngModel)]="editor.nameAr" dir="rtl" /></label
-          ><label
-            ><span>Assign client</span
-            ><select name="clientId" [(ngModel)]="editor.clientId">
-              <option [ngValue]="null">Unassigned</option>
-              @for (c of clients; track c.id) {
-                <option [value]="c.id">{{ c.name }} · {{ c.clientCode }}</option>
-              }
-            </select></label
-          >
-          <div class="toolbar">
-            <strong>Plan notes</strong
-            ><button class="link-button" type="button" (click)="addNote()">Add note</button>
-          </div>
-        </div>
-        @for (n of editor.notes; track n.id; let ni = $index) {
-          <div class="nested-row">
-            <input [name]="'note' + ni" [(ngModel)]="n.text" placeholder="Plan note" /><label
-              class="checkbox-row"
-              ><input
-                type="checkbox"
-                [name]="'noteactive' + ni"
-                [(ngModel)]="n.isActive"
-              />PDF</label
-            ><button
-              class="link-button danger"
-              type="button"
-              (click)="removeFrom(editor.notes, ni)"
-            >
-              Remove
+        <div class="actions">
+          @if (editingId) {
+            <button class="button button-secondary" type="button" (click)="openHistory()">
+              Version history
             </button>
+          }
+          <button class="icon-button" (click)="editorOpen = false" aria-label="Close">×</button>
+        </div>
+      </header>
+      @if (readOnly && version) {
+        <p class="version-notice" role="status">
+          Version {{ version.versionNumber }} was archived on
+          {{ version.archivedAt | date: 'medium' }} and is read-only. The current version is V{{
+            currentVersionNumber
+          }}.
+        </p>
+      }
+      @if (error) {
+        <p class="form-error">{{ error }}</p>
+      }
+      @if (historyOpen) {
+        <section class="nested-card version-history" aria-label="Version history">
+          <div class="toolbar">
+            <strong>Version history</strong
+            ><button class="link-button" type="button" (click)="historyOpen = false">Close</button>
           </div>
-        }
-        @if (editorType === 'Diet') {
-          @for (v of editor.versions; track v.id; let vi = $index) {
-            <section class="builder-section">
-              <div class="toolbar">
-                <input [name]="'version' + vi" [(ngModel)]="v.nameEn" aria-label="Version name" />
-                <div class="actions">
-                  <button class="link-button" type="button" (click)="move(editor.versions, vi, -1)">
-                    ↑</button
-                  ><button class="link-button" type="button" (click)="move(editor.versions, vi, 1)">
-                    ↓</button
-                  ><button class="button button-secondary" type="button" (click)="addMeal(v)">
-                    Add meal
+          <ul>
+            @for (v of history; track v.id) {
+              <li class="nested-row">
+                <span
+                  ><strong>V{{ v.versionNumber }}</strong> · {{ v.status }}
+                  @if (v.startDate || v.endDate) {
+                    · {{ v.startDate || '…' }} – {{ v.endDate || '…' }}
+                  }
+                  <small
+                    >Created {{ v.createdAt | date: 'medium'
+                    }}{{ v.createdByName ? ' by ' + v.createdByName : '' }}</small
+                  ></span
+                ><span class="actions"
+                  ><button class="link-button" type="button" (click)="viewVersion(v)">
+                    {{ v.versionNumber === version?.versionNumber ? 'Showing' : 'View' }}</button
+                  ><button class="link-button" type="button" (click)="previewVersion(v)">
+                    PDF
+                  </button></span
+                >
+              </li>
+            }
+          </ul>
+        </section>
+      }
+      <form (ngSubmit)="save('inPlace')">
+        <fieldset class="plain-fieldset" [disabled]="readOnly">
+          <div class="form-grid">
+            <label
+              ><span>English name *</span
+              ><input name="planName" [(ngModel)]="editor.nameEn" required /></label
+            ><label
+              ><span>Arabic name</span
+              ><input name="planNameAr" [(ngModel)]="editor.nameAr" dir="rtl" /></label
+            ><label
+              ><span>Assign client</span
+              ><select name="clientId" [(ngModel)]="editor.clientId">
+                <option [ngValue]="null">Unassigned</option>
+                @for (c of clients; track c.id) {
+                  <option [value]="c.id">{{ c.name }} · {{ c.clientCode }}</option>
+                }
+              </select></label
+            ><label
+              ><span>Start date</span
+              ><input type="date" name="startDate" [(ngModel)]="editor.startDate" /></label
+            ><label
+              ><span>End date</span
+              ><input
+                type="date"
+                name="endDate"
+                [min]="editor.startDate || ''"
+                [(ngModel)]="editor.endDate" /></label
+            ><label
+              ><span>Status</span
+              ><select name="status" [(ngModel)]="editor.status">
+                <option value="Active">Active</option>
+                <option value="Draft">Draft</option>
+              </select></label
+            >
+            <div class="toolbar">
+              <strong>Plan notes</strong
+              ><button class="link-button" type="button" (click)="addNote()">Add note</button>
+            </div>
+          </div>
+          @for (n of editor.notes; track n.id; let ni = $index) {
+            <div class="nested-row">
+              <input [name]="'note' + ni" [(ngModel)]="n.text" placeholder="Plan note" /><label
+                class="checkbox-row"
+                ><input
+                  type="checkbox"
+                  [name]="'noteactive' + ni"
+                  [(ngModel)]="n.isActive"
+                />PDF</label
+              ><button
+                class="link-button danger"
+                type="button"
+                (click)="removeFrom(editor.notes, ni)"
+              >
+                Remove
+              </button>
+            </div>
+          }
+          @if (editorType === 'Diet') {
+            @for (v of editor.variants; track v.id; let vi = $index) {
+              <section class="builder-section">
+                <div class="toolbar">
+                  <input [name]="'variant' + vi" [(ngModel)]="v.nameEn" aria-label="Variant name" />
+                  <div class="actions">
+                    <button
+                      class="link-button"
+                      type="button"
+                      (click)="move(editor.variants, vi, -1)"
+                    >
+                      ↑</button
+                    ><button
+                      class="link-button"
+                      type="button"
+                      (click)="move(editor.variants, vi, 1)"
+                    >
+                      ↓</button
+                    ><button class="button button-secondary" type="button" (click)="addMeal(v)">
+                      Add meal
+                    </button>
+                  </div>
+                </div>
+                @for (m of v.meals; track m.id; let mi = $index) {
+                  <article class="nested-card">
+                    <div class="toolbar">
+                      <input
+                        [name]="'meal' + vi + '-' + mi"
+                        [(ngModel)]="m.nameEn"
+                        aria-label="Meal name"
+                      />
+                      <div class="actions">
+                        <button class="link-button" type="button" (click)="move(v.meals, mi, -1)">
+                          ↑</button
+                        ><button class="link-button" type="button" (click)="move(v.meals, mi, 1)">
+                          ↓</button
+                        ><button class="link-button" type="button" (click)="addFood(m)">
+                          Add food</button
+                        ><button
+                          class="link-button danger"
+                          type="button"
+                          (click)="removeFrom(v.meals, mi)"
+                        >
+                          Remove meal
+                        </button>
+                      </div>
+                    </div>
+                    @for (f of m.foodItems; track f.id; let fi = $index) {
+                      <div class="nested-row">
+                        <select
+                          [name]="'food' + vi + '-' + mi + '-' + fi"
+                          [(ngModel)]="f.foodItemId"
+                          required
+                        >
+                          <option value="">Select food</option>
+                          @for (x of foods; track x.id) {
+                            <option [value]="x.id">{{ x.nameEn }}</option>
+                          }</select
+                        ><input
+                          type="number"
+                          min="0.01"
+                          [name]="'qty' + vi + '-' + mi + '-' + fi"
+                          [(ngModel)]="f.quantity"
+                          aria-label="Quantity"
+                        /><button
+                          class="link-button"
+                          type="button"
+                          (click)="move(m.foodItems, fi, -1)"
+                        >
+                          ↑</button
+                        ><button
+                          class="link-button"
+                          type="button"
+                          (click)="move(m.foodItems, fi, 1)"
+                        >
+                          ↓</button
+                        ><button
+                          class="link-button danger"
+                          type="button"
+                          (click)="removeFrom(m.foodItems, fi)"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    }
+                  </article>
+                }
+                <div class="toolbar replacement-heading">
+                  <strong>Alternatives</strong
+                  ><button class="link-button" type="button" (click)="addReplacement(v)">
+                    Add alternative
                   </button>
                 </div>
-              </div>
-              @for (m of v.meals; track m.id; let mi = $index) {
-                <article class="nested-card">
-                  <div class="toolbar">
-                    <input
-                      [name]="'meal' + vi + '-' + mi"
-                      [(ngModel)]="m.nameEn"
-                      aria-label="Meal name"
-                    />
-                    <div class="actions">
-                      <button class="link-button" type="button" (click)="move(v.meals, mi, -1)">
-                        ↑</button
-                      ><button class="link-button" type="button" (click)="move(v.meals, mi, 1)">
-                        ↓</button
-                      ><button class="link-button" type="button" (click)="addFood(m)">
-                        Add food</button
-                      ><button
-                        class="link-button danger"
-                        type="button"
-                        (click)="removeFrom(v.meals, mi)"
-                      >
-                        Remove meal
-                      </button>
-                    </div>
-                  </div>
-                  @for (f of m.foodItems; track f.id; let fi = $index) {
+                @for (g of v.replacementGroups; track g.id; let gi = $index) {
+                  <article class="nested-card">
                     <div class="nested-row">
-                      <select
-                        [name]="'food' + vi + '-' + mi + '-' + fi"
-                        [(ngModel)]="f.foodItemId"
-                        required
-                      >
-                        <option value="">Select food</option>
-                        @for (x of foods; track x.id) {
-                          <option [value]="x.id">{{ x.nameEn }}</option>
+                      <input
+                        [name]="'gtitle' + vi + '-' + gi"
+                        [(ngModel)]="g.title"
+                        placeholder="Alternative title"
+                      /><select [name]="'targetmeal' + vi + '-' + gi" [(ngModel)]="g.targetMealId">
+                        <option value="">Target meal</option>
+                        @for (m of v.meals; track m.id) {
+                          <option [value]="m.id">{{ m.nameEn }}</option>
                         }</select
-                      ><input
-                        type="number"
-                        min="0.01"
-                        [name]="'qty' + vi + '-' + mi + '-' + fi"
-                        [(ngModel)]="f.quantity"
-                        aria-label="Quantity"
-                      /><button
-                        class="link-button"
-                        type="button"
-                        (click)="move(m.foodItems, fi, -1)"
-                      >
-                        ↑</button
-                      ><button class="link-button" type="button" (click)="move(m.foodItems, fi, 1)">
-                        ↓</button
+                      ><button class="link-button" type="button" (click)="addReplacementOption(g)">
+                        Add option</button
                       ><button
                         class="link-button danger"
                         type="button"
-                        (click)="removeFrom(m.foodItems, fi)"
+                        (click)="removeFrom(v.replacementGroups, gi)"
                       >
                         Remove
                       </button>
                     </div>
-                  }
-                </article>
-              }
-              <div class="toolbar replacement-heading">
-                <strong>Alternatives</strong
-                ><button class="link-button" type="button" (click)="addReplacement(v)">
-                  Add alternative
-                </button>
-              </div>
-              @for (g of v.replacementGroups; track g.id; let gi = $index) {
-                <article class="nested-card">
-                  <div class="nested-row">
-                    <input
-                      [name]="'gtitle' + vi + '-' + gi"
-                      [(ngModel)]="g.title"
-                      placeholder="Alternative title"
-                    /><select [name]="'targetmeal' + vi + '-' + gi" [(ngModel)]="g.targetMealId">
-                      <option value="">Target meal</option>
-                      @for (m of v.meals; track m.id) {
-                        <option [value]="m.id">{{ m.nameEn }}</option>
+                    @for (o of g.options; track o.id; let oi = $index) {
+                      <div class="nested-row replacement-row">
+                        <select
+                          [name]="'replacementfood' + vi + '-' + gi + '-' + oi"
+                          [(ngModel)]="o.replacementFoodItemId"
+                          (ngModelChange)="o.replacementMealId = null"
+                        >
+                          <option [ngValue]="null">Replacement food</option>
+                          @for (x of foods; track x.id) {
+                            <option [value]="x.id">{{ x.nameEn }}</option>
+                          }</select
+                        ><select
+                          [name]="'replacementmeal' + vi + '-' + gi + '-' + oi"
+                          [(ngModel)]="o.replacementMealId"
+                          (ngModelChange)="o.replacementFoodItemId = null"
+                        >
+                          <option [ngValue]="null">Or whole meal</option>
+                          @for (m of v.meals; track m.id) {
+                            <option [value]="m.id">{{ m.nameEn }}</option>
+                          }</select
+                        ><input
+                          type="number"
+                          [disabled]="!!o.replacementMealId"
+                          [name]="'replacementqty' + vi + '-' + gi + '-' + oi"
+                          [(ngModel)]="o.quantity"
+                          placeholder="Quantity"
+                        /><button
+                          class="link-button danger"
+                          type="button"
+                          (click)="removeFrom(g.options, oi)"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    }
+                  </article>
+                }
+              </section>
+            }
+            <button class="button button-secondary" type="button" (click)="addVariant()">
+              Add variant (e.g. rest day)
+            </button>
+          } @else {
+            @for (d of editor.days; track d.id; let di = $index) {
+              <section class="builder-section">
+                <div class="toolbar">
+                  <input [name]="'day' + di" [(ngModel)]="d.nameEn" aria-label="Day name" />
+                  <div class="actions">
+                    <button class="link-button" type="button" (click)="move(editor.days, di, -1)">
+                      ↑</button
+                    ><button class="link-button" type="button" (click)="move(editor.days, di, 1)">
+                      ↓</button
+                    ><button class="button button-secondary" type="button" (click)="addExercise(d)">
+                      Add exercise
+                    </button>
+                  </div>
+                </div>
+                @for (e of d.exercises; track e.id; let ei = $index) {
+                  <div class="nested-row workout-row">
+                    <select [name]="'exercise' + di + '-' + ei" [(ngModel)]="e.exerciseId" required>
+                      <option value="">Select exercise</option>
+                      @for (x of exercises; track x.id) {
+                        <option [value]="x.id">{{ x.nameEn }}</option>
                       }</select
-                    ><button class="link-button" type="button" (click)="addReplacementOption(g)">
-                      Add option</button
+                    ><input
+                      [name]="'sets' + di + '-' + ei"
+                      [(ngModel)]="e.sets"
+                      placeholder="Sets"
+                    /><input
+                      [name]="'reps' + di + '-' + ei"
+                      [(ngModel)]="e.repetitions"
+                      placeholder="Reps"
+                    /><input
+                      [name]="'rest' + di + '-' + ei"
+                      [(ngModel)]="e.rest"
+                      placeholder="Rest"
+                    /><input
+                      [name]="'tempo' + di + '-' + ei"
+                      [(ngModel)]="e.tempo"
+                      placeholder="Tempo"
+                    /><input
+                      [name]="'rpe' + di + '-' + ei"
+                      [(ngModel)]="e.rpeRir"
+                      placeholder="RPE / RIR"
+                    /><input
+                      [name]="'exerciseNotes' + di + '-' + ei"
+                      [(ngModel)]="e.notes"
+                      placeholder="Notes"
+                    /><button class="link-button" type="button" (click)="move(d.exercises, ei, -1)">
+                      ↑</button
+                    ><button class="link-button" type="button" (click)="move(d.exercises, ei, 1)">
+                      ↓</button
                     ><button
                       class="link-button danger"
                       type="button"
-                      (click)="removeFrom(v.replacementGroups, gi)"
+                      (click)="removeFrom(d.exercises, ei)"
                     >
                       Remove
                     </button>
                   </div>
-                  @for (o of g.options; track o.id; let oi = $index) {
-                    <div class="nested-row replacement-row">
-                      <select
-                        [name]="'replacementfood' + vi + '-' + gi + '-' + oi"
-                        [(ngModel)]="o.replacementFoodItemId"
-                        (ngModelChange)="o.replacementMealId = null"
-                      >
-                        <option [ngValue]="null">Replacement food</option>
-                        @for (x of foods; track x.id) {
-                          <option [value]="x.id">{{ x.nameEn }}</option>
-                        }</select
-                      ><select
-                        [name]="'replacementmeal' + vi + '-' + gi + '-' + oi"
-                        [(ngModel)]="o.replacementMealId"
-                        (ngModelChange)="o.replacementFoodItemId = null"
-                      >
-                        <option [ngValue]="null">Or whole meal</option>
-                        @for (m of v.meals; track m.id) {
-                          <option [value]="m.id">{{ m.nameEn }}</option>
-                        }</select
-                      ><input
-                        type="number"
-                        [disabled]="!!o.replacementMealId"
-                        [name]="'replacementqty' + vi + '-' + gi + '-' + oi"
-                        [(ngModel)]="o.quantity"
-                        placeholder="Quantity"
-                      /><button
-                        class="link-button danger"
-                        type="button"
-                        (click)="removeFrom(g.options, oi)"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  }
-                </article>
-              }
-            </section>
+                }
+              </section>
+            }
+            <button class="button button-secondary" type="button" (click)="addDay()">
+              Add workout day
+            </button>
           }
-          <button class="button button-secondary" type="button" (click)="addDietVersion()">
-            Add plan version
-          </button>
-        } @else {
-          @for (d of editor.days; track d.id; let di = $index) {
-            <section class="builder-section">
-              <div class="toolbar">
-                <input [name]="'day' + di" [(ngModel)]="d.nameEn" aria-label="Day name" />
-                <div class="actions">
-                  <button class="link-button" type="button" (click)="move(editor.days, di, -1)">
-                    ↑</button
-                  ><button class="link-button" type="button" (click)="move(editor.days, di, 1)">
-                    ↓</button
-                  ><button class="button button-secondary" type="button" (click)="addExercise(d)">
-                    Add exercise
-                  </button>
-                </div>
-              </div>
-              @for (e of d.exercises; track e.id; let ei = $index) {
-                <div class="nested-row workout-row">
-                  <select [name]="'exercise' + di + '-' + ei" [(ngModel)]="e.exerciseId" required>
-                    <option value="">Select exercise</option>
-                    @for (x of exercises; track x.id) {
-                      <option [value]="x.id">{{ x.nameEn }}</option>
-                    }</select
-                  ><input
-                    [name]="'sets' + di + '-' + ei"
-                    [(ngModel)]="e.sets"
-                    placeholder="Sets"
-                  /><input
-                    [name]="'reps' + di + '-' + ei"
-                    [(ngModel)]="e.repetitions"
-                    placeholder="Reps"
-                  /><input
-                    [name]="'rest' + di + '-' + ei"
-                    [(ngModel)]="e.rest"
-                    placeholder="Rest"
-                  /><input
-                    [name]="'tempo' + di + '-' + ei"
-                    [(ngModel)]="e.tempo"
-                    placeholder="Tempo"
-                  /><input
-                    [name]="'rpe' + di + '-' + ei"
-                    [(ngModel)]="e.rpeRir"
-                    placeholder="RPE / RIR"
-                  /><input
-                    [name]="'exerciseNotes' + di + '-' + ei"
-                    [(ngModel)]="e.notes"
-                    placeholder="Notes"
-                  /><button class="link-button" type="button" (click)="move(d.exercises, ei, -1)">
-                    ↑</button
-                  ><button class="link-button" type="button" (click)="move(d.exercises, ei, 1)">
-                    ↓</button
-                  ><button
-                    class="link-button danger"
-                    type="button"
-                    (click)="removeFrom(d.exercises, ei)"
-                  >
-                    Remove
-                  </button>
-                </div>
-              }
-            </section>
-          }
-          <button class="button button-secondary" type="button" (click)="addDay()">
-            Add workout day
-          </button>
-        }
+        </fieldset>
         <footer class="modal-actions">
           <button class="button button-secondary" type="button" (click)="editorOpen = false">
-            Cancel</button
-          ><button class="button button-primary" [disabled]="saving">
-            {{ saving ? 'Saving…' : 'Save plan' }}
+            Cancel
           </button>
+          @if (readOnly) {
+            <button class="button button-secondary" type="button" (click)="backToCurrent()">
+              Back to current</button
+            ><button
+              class="button button-primary"
+              type="button"
+              [disabled]="saving"
+              (click)="restoreAsNewVersion()"
+            >
+              Restore as V{{ (currentVersionNumber ?? 0) + 1 }}
+            </button>
+          } @else if (!editingId) {
+            <button class="button button-primary" [disabled]="saving">
+              {{ saving ? 'Saving…' : 'Create plan' }}
+            </button>
+          } @else {
+            <button
+              class="button button-secondary"
+              type="button"
+              [disabled]="saving"
+              [title]="
+                'Keep V' + version?.versionNumber + ' read-only and save this as the next version'
+              "
+              (click)="save('newVersion')"
+            >
+              Save as new version</button
+            ><button class="button button-primary" [disabled]="saving">
+              {{ saving ? 'Saving…' : 'Save (V' + version?.versionNumber + ')' }}
+            </button>
+          }
         </footer>
       </form>
     </section>

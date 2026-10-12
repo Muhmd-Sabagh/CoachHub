@@ -13,7 +13,8 @@ export class OperationsComponent implements OnInit {
   invoice = { clientId: '', subscriptionId: '', currencyId: '', total: 0, dueAt: '' };
   payment = { invoiceId: '', paymentAccountId: '', amount: 0, reference: '' };
   notification = { clientId: '', channel: 'Email', recipient: '', subject: '', body: '', scheduledAt: '' };
-  delivery = { clientId: '', planType: 'Diet', planId: '', versionId: '', language: 'en', channel: 'Download', recipient: '' };
+  /** D4: a delivery names the plan version sent (blank = current) and, for diets, the variant. */
+  delivery = { clientId: '', planType: 'Diet', planId: '', versionNumber: '', variantId: '', language: 'en', channel: 'Download', recipient: '' };
   constructor(private readonly data: OperationsService, private readonly auth: AuthService) {}
   ngOnInit() { this.load(); }
   /** Platform administration (accounts) is Admin-only; coaching operations are open to coaches. */
@@ -34,6 +35,14 @@ export class OperationsComponent implements OnInit {
   recordPayment() { this.run(this.data.pay(this.payment.invoiceId, { ...this.payment, paymentAccountId: this.payment.paymentAccountId || null }), 'Payment settled.'); }
   schedule() { this.run(this.data.schedule({ ...this.notification, clientId: this.notification.clientId || null, scheduledAt: this.notification.scheduledAt || null }), 'Notification scheduled.'); }
   dispatch() { this.run(this.data.dispatch(), 'Due notifications processed.'); }
-  deliver() { this.run(this.data.deliver({ ...this.delivery, recipient: this.delivery.recipient || null }), 'Immutable delivery record created.'); }
+  deliver() {
+    const d = this.delivery;
+    this.run(this.data.deliver({
+      ...d,
+      versionNumber: d.versionNumber ? Number(d.versionNumber) : null,
+      variantId: d.planType === 'Diet' ? d.variantId || null : null,
+      recipient: d.recipient || null,
+    }), 'Immutable delivery record created.');
+  }
   private run(request: Observable<unknown>, message: string) { this.error = ''; this.message = ''; request.subscribe({ next: () => { this.message = message; this.load(); }, error: e => this.error = apiErrorMessage(e) }); }
 }

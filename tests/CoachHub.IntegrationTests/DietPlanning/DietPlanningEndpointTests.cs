@@ -62,26 +62,26 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
         Assert.Equal(35m, created.Totals.Protein);
         Assert.Equal(35m, created.Totals.Carbohydrates);
         Assert.Equal(17.5m, created.Totals.Fat);
-        Assert.Equal(100m, created.Versions[0].ReplacementGroups[0].Options[0].Totals.Calories);
-        Assert.Equal(200m, created.Versions[0].ReplacementGroups[0].Options[1].Totals.Calories);
+        Assert.Equal(100m, created.Variants[0].ReplacementGroups[0].Options[0].Totals.Calories);
+        Assert.Equal(200m, created.Variants[0].ReplacementGroups[0].Options[1].Totals.Calories);
 
         var reordered = input with
         {
             ClientId = client.Id,
-            Versions = [input.Versions.Single() with
+            Variants = [input.Variants.Single() with
             {
                 Meals =
                 [
-                    input.Versions.Single().Meals.ElementAt(0) with { Order = 1 },
-                    input.Versions.Single().Meals.ElementAt(1) with { Order = 0 }
+                    input.Variants.Single().Meals.ElementAt(0) with { Order = 1 },
+                    input.Variants.Single().Meals.ElementAt(1) with { Order = 0 }
                 ]
             }]
         };
-        var updateResponse = await _client.PutAsJsonAsync($"/api/v1/diet-plans/{created.Id}", reordered);
+        var updateResponse = await _client.PutAsJsonAsync($"/api/v1/diet-plans/{created.Id}/revisions/current", reordered);
         updateResponse.EnsureSuccessStatusCode();
         var updated = (await updateResponse.Content.ReadFromJsonAsync<DietPlanResponse>())!;
         Assert.Equal(client.Id, updated.ClientId);
-        Assert.Equal(dinnerId, updated.Versions[0].Meals[0].Id);
+        Assert.Equal(dinnerId, updated.Variants[0].Meals[0].Id);
 
         var noteResponse = await _client.PutAsJsonAsync(
             $"/api/v1/diet-plans/{created.Id}/notes/{noteId}/active", new SetDietPlanNoteActiveInput(false));
@@ -96,7 +96,7 @@ public sealed class DietPlanningEndpointTests : IClassFixture<CoachHubApiFactory
         var copy = await PostAsync<DietPlanResponse>(
             $"/api/v1/diet-plans/{created.Id}/copies", new CopyDietPlanInput("Copied", null, client.Id));
         Assert.NotEqual(created.Id, copy.Id);
-        Assert.NotEqual(versionId, copy.Versions[0].Id);
+        Assert.NotEqual(versionId, copy.Variants[0].Id);
         Assert.Equal(client.Id, copy.ClientId);
         Assert.Equal(created.Totals, copy.Totals);
 

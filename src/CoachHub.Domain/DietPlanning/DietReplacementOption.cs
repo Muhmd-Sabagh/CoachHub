@@ -2,9 +2,10 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.DietPlanning;
 
-public sealed class DietReplacementOption : Entity
+public sealed class DietReplacementOption : Entity, IPlanRevisionContent
 {
     private DietReplacementOption() { }
+    public Guid RevisionId { get; private set; }
     public Guid DietReplacementGroupId { get; private set; }
     public Guid? ReplacementFoodItemId { get; private set; }
     public Guid? ReplacementMealId { get; private set; }
@@ -13,7 +14,7 @@ public sealed class DietReplacementOption : Entity
     public string? Notes { get; private set; }
 
     public static DietReplacementOption Create(
-        Guid id, Guid groupId, Guid? foodItemId, Guid? mealId,
+        Guid id, Guid revisionId, Guid groupId, Guid? foodItemId, Guid? mealId,
         decimal? quantity, int order, string? notes)
     {
         if (foodItemId.HasValue == mealId.HasValue)
@@ -27,6 +28,7 @@ public sealed class DietReplacementOption : Entity
         return new DietReplacementOption
         {
             Id = DietPlanText.RequiredId(id, nameof(id)),
+            RevisionId = DietPlanText.RequiredId(revisionId, nameof(revisionId)),
             DietReplacementGroupId = DietPlanText.RequiredId(groupId, nameof(groupId)),
             ReplacementFoodItemId = foodItemId,
             ReplacementMealId = mealId,

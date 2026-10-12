@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using CoachHub.Application.Common.Models;
+using CoachHub.Domain.Common;
 
 namespace CoachHub.Application.SavedPlans;
 
@@ -44,7 +45,8 @@ public sealed record SavedPlanSummary(
     Guid Id, SavedPlanType PlanType, string NameEn, string? NameAr,
     Guid? ClientId, string? ClientName, string? ClientCode, DateTimeOffset CreatedAt,
     decimal? TotalWeight, decimal? TotalCalories, decimal? TotalProtein,
-    decimal? TotalCarbohydrates, decimal? TotalFat, int? WorkoutDayCount);
+    decimal? TotalCarbohydrates, decimal? TotalFat, int? WorkoutDayCount,
+    int? VersionNumber = null, PlanRevisionStatus? VersionStatus = null, DateOnly? StartDate = null, DateOnly? EndDate = null);
 
 public interface ISavedPlanQueryRepository
 {

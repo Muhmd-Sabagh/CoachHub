@@ -8,11 +8,13 @@ public sealed class DietPlanTests
     public void Plan_and_nested_entities_normalize_bilingual_content_and_order()
     {
         var plan = DietPlan.Create(Guid.NewGuid(), "  Cutting plan ", null, null, DateTimeOffset.UtcNow);
-        var version = DietPlanVersion.Create(Guid.NewGuid(), plan.Id, " High carb ", " ", 1, true, null);
-        var meal = Meal.Create(Guid.NewGuid(), version.Id, " Breakfast ", " إفطار ", 0, null);
+        var revisionId = Guid.NewGuid();
+        var variant = DietPlanVariant.Create(Guid.NewGuid(), revisionId, " High carb ", " ", 1, true, null);
+        var meal = Meal.Create(Guid.NewGuid(), revisionId, variant.Id, " Breakfast ", " إفطار ", 0, null);
 
         Assert.Equal("Cutting plan", plan.NameEn);
-        Assert.Null(version.NameAr);
+        Assert.Null(variant.NameAr);
+        Assert.Equal(revisionId, meal.RevisionId);
         Assert.Equal("Breakfast", meal.NameEn);
         Assert.Equal("إفطار", meal.NameAr);
     }
@@ -21,12 +23,12 @@ public sealed class DietPlanTests
     public void Replacement_option_requires_exactly_one_structured_target()
     {
         Assert.Throws<ArgumentException>(() => DietReplacementOption.Create(
-            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100, 0, null));
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100, 0, null));
         Assert.Throws<ArgumentException>(() => DietReplacementOption.Create(
-            Guid.NewGuid(), Guid.NewGuid(), null, null, null, 0, null));
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, null, null, 0, null));
 
         var food = DietReplacementOption.Create(
-            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, 75, 0, "swap");
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, 75, 0, "swap");
         Assert.Equal(75, food.Quantity);
         Assert.Null(food.ReplacementMealId);
     }

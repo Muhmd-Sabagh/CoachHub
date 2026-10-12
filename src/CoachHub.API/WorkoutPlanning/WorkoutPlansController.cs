@@ -1,5 +1,6 @@
 using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
+using CoachHub.Application.Common.Models;
 using CoachHub.Application.WorkoutPlanning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +22,28 @@ public sealed class WorkoutPlansController(WorkoutPlanService service) : Control
         return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
     }
 
-    [HttpPut("{id:guid}")]
-    public Task<WorkoutPlanResponse> Update(Guid id, WorkoutPlanInput input, CancellationToken cancellationToken) =>
-        service.UpdateAsync(id, input, cancellationToken);
+    /// <summary>Version history, newest first (D4, §59).</summary>
+    [HttpGet("{id:guid}/revisions")]
+    public Task<IReadOnlyList<PlanRevisionInfo>> ListVersions(Guid id, CancellationToken cancellationToken) =>
+        service.ListVersionsAsync(id, cancellationToken);
+
+    /// <summary>One version; archived versions are read-only.</summary>
+    [HttpGet("{id:guid}/revisions/{versionNumber:int:min(1)}")]
+    public Task<WorkoutPlanResponse> GetVersion(Guid id, int versionNumber, CancellationToken cancellationToken) =>
+        service.GetVersionAsync(id, versionNumber, cancellationToken);
+
+    /// <summary>Save in place: updates the current version.</summary>
+    [HttpPut("{id:guid}/revisions/current")]
+    public Task<WorkoutPlanResponse> SaveInPlace(Guid id, WorkoutPlanInput input, CancellationToken cancellationToken) =>
+        service.SaveInPlaceAsync(id, input, cancellationToken);
+
+    /// <summary>Save as new version: archives the current version and adds the next one.</summary>
+    [HttpPost("{id:guid}/revisions")]
+    public async Task<ActionResult<WorkoutPlanResponse>> SaveAsNewVersion(Guid id, WorkoutPlanInput input, CancellationToken cancellationToken)
+    {
+        var saved = await service.SaveAsNewVersionAsync(id, input, cancellationToken);
+        return CreatedAtAction(nameof(GetVersion), new { id, versionNumber = saved.Revision.VersionNumber }, saved);
+    }
 
     [HttpPost("{id:guid}/copies")]
     public async Task<ActionResult<WorkoutPlanResponse>> Copy(

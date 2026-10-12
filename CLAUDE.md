@@ -95,7 +95,11 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Tenant-isolation tests run on SQL Server (`CoachHubSqlApiFactory`); see `tests/CoachHub.IntegrationTests/Tenancy`.
 - **Ownership (§62):** every endpoint verifies the caller may access the specific client's data, files and photos, not only that they hold a permission.
 - **Structured data (D3):** use typed numeric or enum fields for prescriptions (sets, rep min/max, load, RIR, RPE, tempo, rest, duration, set grouping, block type), profile data, and all tracking time-series. Free-text notes go alongside, never instead.
-- **Versioning (D4):** never overwrite a plan version when the coach chose "new version". Delivered-plan snapshots stay immutable.
+- **Versioning (D4)** — implemented in P6; see `docs/product/phases/P06_PLAN_VERSIONS.md`.
+  - Plan content (diet variants, meals, foods, alternatives, notes; workout days, exercises, notes) belongs to a version (`DietPlanRevision` / `WorkoutPlanRevision`, base `PlanRevision`). Every content row implements `IPlanRevisionContent` and carries its `RevisionId`; new content types must too.
+  - Saves are explicit: `PUT …/revisions/current` (in place) or `POST …/revisions` (new version, fresh row IDs). Never add a plain `PUT` that replaces plan content.
+  - Archived versions are read-only: `CoachHubDbContext` rejects any change to them or their rows (409). Only deleting the whole plan removes them.
+  - Deliveries record the version (and diet variant) sent; delivered-plan snapshots stay immutable.
 - **Client access (D5):**
   - Do not add anonymous endpoints.
   - The only approved anonymous surface is authentication: login, session refresh, password reset, and the login page's branding (`/branding/public` and `/branding/assets/{id}`, which serves brand images only).
@@ -113,7 +117,6 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 The codebase implements phases 0–21 of the legacy migration as a single-coach back office. Known gaps against REQUIREMENTS.md:
 
 - string-based workout prescriptions;
-- `DietPlanVersion` currently means *variant tabs*, not history, and `PUT` replaces plan content in place;
 - no client tracking, analytics, chat or calendars.
 
 Treat these as planned rework, not conventions to preserve.
@@ -127,7 +130,7 @@ Treat these as planned rework, not conventions to preserve.
 - Enums cross the API as names: every public enum carries `[JsonConverter(typeof(JsonStringEnumConverter<T>))]` (guarded by `EnumContractTests`). A `[Flags]` set is exposed as a list of names instead.
 - Media has an owner (P2, `MediaOwner`): platform media is visible to every signed-in user, a coach's library to the coach and their clients, client media to the client and their coach. Catalog entries may reference platform images only.
 - Sessions (P2): access tokens last 15 minutes; the refresh token is a rotating, hashed, HttpOnly `SameSite=Strict` cookie scoped to `/api/v1/auth`. Self-service endpoints act on the account in the token, never on an ID from the request. When an account loses access, end its sessions with `SessionService.RevokeAllAsync`.
-- Append-only rows: `SubscriptionRenewal`, `Refund`, `DeliveredPlan` and `AuditEntry` cannot be modified or deleted (enforced in `CoachHubDbContext`).
+- Append-only rows: `SubscriptionRenewal`, `Refund`, `DeliveredPlan` and `AuditEntry` cannot be modified or deleted, and archived plan versions are read-only (enforced in `CoachHubDbContext`).
 - Tracked `appsettings.json` keeps an empty JWT `SigningKey`, `BootstrapAdmin.Enabled=false` and `Media.Provider=S3`. `Verify-Release.ps1` fails otherwise.
 - FileSystem media is allowed only in Development and Testing.
 - Media is served only through authorized endpoints; there is no static file middleware.

@@ -24,36 +24,40 @@ public sealed class DeliveredPlanConfiguration : IEntityTypeConfiguration<Delive
 }
 public sealed class PlanDeliveryRepository(CoachHubDbContext db, IDietPlanRepository diets, IWorkoutPlanRepository workouts) : IPlanDeliveryRepository
 {
-    public async Task<(Guid CoachId, string Name, string SnapshotJson)?> SnapshotAsync(DeliveredPlanType type, Guid planId, Guid versionId, string language, CancellationToken token)
+    public async Task<PlanSnapshot?> SnapshotAsync(
+        DeliveredPlanType type, Guid planId, int? versionNumber, Guid? variantId, string language, CancellationToken token)
     {
+        var arabic = language.Trim().Equals("ar", StringComparison.OrdinalIgnoreCase);
         if (type == DeliveredPlanType.Diet)
         {
-            var aggregate = await diets.FindAsync(planId, false, token);
-            var version = aggregate?.Versions.SingleOrDefault(x => x.Id == versionId);
-            if (aggregate is null || version is null) return null;
-            var meals = aggregate.Meals.Where(x => x.DietPlanVersionId == versionId).ToArray();
+            var aggregate = await diets.FindAsync(planId, versionNumber, false, token);
+            var variant = aggregate?.Variants.SingleOrDefault(x => x.Id == variantId);
+            if (aggregate is null || variant is null) return null;
+            var meals = aggregate.Meals.Where(x => x.DietPlanVariantId == variant.Id).ToArray();
             var mealIds = meals.Select(x => x.Id).ToHashSet();
-            var groups = aggregate.ReplacementGroups.Where(x => x.DietPlanVersionId == versionId).ToArray();
+            var groups = aggregate.ReplacementGroups.Where(x => x.DietPlanVariantId == variant.Id).ToArray();
             var groupIds = groups.Select(x => x.Id).ToHashSet();
             var snapshot = new
             {
                 aggregate.Plan,
-                Version = version,
+                aggregate.Revision,
+                Variant = variant,
                 Notes = aggregate.Notes,
                 Meals = meals,
                 FoodItems = aggregate.FoodItems.Where(x => mealIds.Contains(x.MealId)),
                 ReplacementGroups = groups,
                 ReplacementOptions = aggregate.ReplacementOptions.Where(x => groupIds.Contains(x.DietReplacementGroupId))
             };
-            var name = language == "ar" ? aggregate.Plan.NameAr ?? aggregate.Plan.NameEn : aggregate.Plan.NameEn;
-            return (aggregate.Plan.CoachId, name, JsonSerializer.Serialize(snapshot));
+            var name = arabic ? aggregate.Plan.NameAr ?? aggregate.Plan.NameEn : aggregate.Plan.NameEn;
+            return new(aggregate.Plan.CoachId, name, aggregate.Revision.Id, aggregate.Revision.VersionNumber, JsonSerializer.Serialize(snapshot));
         }
 
-        if (versionId != planId) return null;
-        var workout = await workouts.FindAsync(planId, false, token);
+        if (variantId is not null) return null;
+        var workout = await workouts.FindAsync(planId, versionNumber, false, token);
         if (workout is null) return null;
-        var workoutName = language == "ar" ? workout.Plan.NameAr ?? workout.Plan.NameEn : workout.Plan.NameEn;
-        return (workout.Plan.CoachId, workoutName, JsonSerializer.Serialize(workout));
+        var workoutName = arabic ? workout.Plan.NameAr ?? workout.Plan.NameEn : workout.Plan.NameEn;
+        var workoutSnapshot = new { workout.Plan, workout.Revision, workout.Notes, workout.Days, workout.Exercises };
+        return new(workout.Plan.CoachId, workoutName, workout.Revision.Id, workout.Revision.VersionNumber, JsonSerializer.Serialize(workoutSnapshot));
     }
     public async Task<IReadOnlyList<DeliveredPlan>> ListAsync(Guid clientId, CancellationToken token) => await db.Set<DeliveredPlan>().AsNoTracking().Where(x => x.ClientId == clientId).OrderByDescending(x => x.DeliveredAt).ToArrayAsync(token);
     public async Task AddAsync(DeliveredPlan delivery, CancellationToken token) { db.Add(delivery); await db.SaveChangesAsync(token); }

@@ -33,6 +33,6 @@ public sealed class FinalPhaseDomainTests
     public void Delivered_plan_requires_supported_language()
     {
         Assert.Throws<ArgumentException>(() => DeliveredPlan.Create(Guid.NewGuid(), Guid.NewGuid(), DeliveredPlanType.Diet,
-            Guid.NewGuid(), Guid.NewGuid(), "Plan", "fr", "{}", DeliveryChannel.Download, null, DateTimeOffset.UtcNow));
+            Guid.NewGuid(), Guid.NewGuid(), 1, Guid.NewGuid(), "Plan", "fr", "{}", DeliveryChannel.Download, null, DateTimeOffset.UtcNow));
     }
 }
