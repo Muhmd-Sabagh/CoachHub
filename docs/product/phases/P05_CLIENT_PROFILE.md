@@ -1,6 +1,6 @@
 # P5 — Structured client profile, onboarding and retiring the public forms
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P5 · **Branch:** `phase/p05-profile` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P5 · **Branch:** `phase/p05-profile` · **Status:** Merged (PR #7).
 **Covers:** D3, D5, §2 (coach: activate/deactivate a client account), §3, §39, §40, §53.
 
 ## Purpose

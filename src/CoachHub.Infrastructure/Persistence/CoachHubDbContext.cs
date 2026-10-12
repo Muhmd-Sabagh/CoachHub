@@ -7,6 +7,8 @@ using CoachHub.Domain.Common;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Billing;
 using CoachHub.Domain.Coaches;
+using CoachHub.Domain.DietPlanning;
+using CoachHub.Domain.WorkoutPlanning;
 using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Infrastructure.Auth.Persistence;
@@ -41,17 +43,19 @@ public sealed class CoachHubDbContext(
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         EnforceTenantOwnership();
+        EnforceArchivedPlanVersionsAsync(async: false, CancellationToken.None).AsTask().GetAwaiter().GetResult();
         CaptureAuditEntries();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
-    public override Task<int> SaveChangesAsync(
+    public override async Task<int> SaveChangesAsync(
         bool acceptAllChangesOnSuccess,
         CancellationToken cancellationToken = default)
     {
         EnforceTenantOwnership();
+        await EnforceArchivedPlanVersionsAsync(async: true, cancellationToken);
         CaptureAuditEntries();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
@@ -114,6 +118,69 @@ public sealed class CoachHubDbContext(
             if (TenantClientScoped && !BelongsToCurrentClient(entry))
             {
                 throw new ForbiddenException("The record belongs to another client.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// D4: an archived plan version and its content are read-only. Nothing may add to, change or remove
+    /// them; the one exception is deleting the whole plan, which removes its history with it.
+    /// </summary>
+    private async ValueTask EnforceArchivedPlanVersionsAsync(bool async, CancellationToken cancellationToken)
+    {
+        ChangeTracker.DetectChanges();
+        var changed = ChangeTracker.Entries()
+            .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .Where(entry => entry.Entity is PlanRevision or IPlanRevisionContent)
+            .ToList();
+        if (changed.Count == 0) return;
+        var deletedPlans = ChangeTracker.Entries()
+            .Where(entry => entry.State == EntityState.Deleted && entry.Entity is DietPlan or WorkoutPlan)
+            .Select(entry => ((Entity)entry.Entity).Id)
+            .ToHashSet();
+
+        var versions = new Dictionary<Guid, (Guid PlanId, PlanRevisionStatus Status)>();
+        foreach (var entry in ChangeTracker.Entries<PlanRevision>())
+        {
+            var status = entry.State == EntityState.Added
+                ? entry.Entity.Status
+                : (PlanRevisionStatus)entry.Property(nameof(PlanRevision.Status)).OriginalValue!;
+            versions[entry.Entity.Id] = (entry.Entity.PlanId, status);
+        }
+
+        var contentVersions = changed
+            .Where(entry => entry.Entity is IPlanRevisionContent)
+            .Select(entry => (Entry: entry, RevisionIds: new[]
+            {
+                ((IPlanRevisionContent)entry.Entity).RevisionId,
+                entry.State == EntityState.Added
+                    ? ((IPlanRevisionContent)entry.Entity).RevisionId
+                    : (Guid)entry.Property(nameof(IPlanRevisionContent.RevisionId)).OriginalValue!
+            }.Distinct().ToArray()))
+            .ToList();
+        var unknown = contentVersions.SelectMany(x => x.RevisionIds).Where(id => !versions.ContainsKey(id)).Distinct().ToArray();
+        if (unknown.Length > 0)
+        {
+            var diet = Set<DietPlanRevision>().AsNoTracking().Where(x => unknown.Contains(x.Id))
+                .Select(x => new { x.Id, x.PlanId, x.Status });
+            var workout = Set<WorkoutPlanRevision>().AsNoTracking().Where(x => unknown.Contains(x.Id))
+                .Select(x => new { x.Id, x.PlanId, x.Status });
+            var found = async
+                ? (await diet.ToListAsync(cancellationToken)).Concat(await workout.ToListAsync(cancellationToken))
+                : diet.ToList().Concat(workout.ToList());
+            foreach (var version in found) versions[version.Id] = (version.PlanId, version.Status);
+        }
+
+        foreach (var entry in changed)
+        {
+            var revisionIds = entry.Entity is PlanRevision revision
+                ? [revision.Id]
+                : contentVersions.Single(x => x.Entry == entry).RevisionIds;
+            foreach (var revisionId in revisionIds)
+            {
+                if (!versions.TryGetValue(revisionId, out var version) || version.Status != PlanRevisionStatus.Archived) continue;
+                if (entry.State == EntityState.Deleted && deletedPlans.Contains(version.PlanId)) continue;
+                throw new ConflictException("Archived plan versions are read-only. Save your changes as a new version instead.");
             }
         }
     }

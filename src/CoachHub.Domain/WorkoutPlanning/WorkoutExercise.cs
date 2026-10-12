@@ -2,9 +2,10 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.WorkoutPlanning;
 
-public sealed class WorkoutExercise : Entity
+public sealed class WorkoutExercise : Entity, IPlanRevisionContent
 {
     private WorkoutExercise() { }
+    public Guid RevisionId { get; private set; }
     public Guid WorkoutDayId { get; private set; }
     public Guid ExerciseId { get; private set; }
     public int Order { get; private set; }
@@ -16,10 +17,11 @@ public sealed class WorkoutExercise : Entity
     public string? Notes { get; private set; }
 
     public static WorkoutExercise Create(
-        Guid id, Guid dayId, Guid exerciseId, int order, string? sets, string? repetitions,
+        Guid id, Guid revisionId, Guid dayId, Guid exerciseId, int order, string? sets, string? repetitions,
         string? rest, string? tempo, string? rpeRir, string? notes) => new()
     {
-        Id = WorkoutText.Id(id, nameof(id)), WorkoutDayId = WorkoutText.Id(dayId, nameof(dayId)),
+        Id = WorkoutText.Id(id, nameof(id)), RevisionId = WorkoutText.Id(revisionId, nameof(revisionId)),
+        WorkoutDayId = WorkoutText.Id(dayId, nameof(dayId)),
         ExerciseId = WorkoutText.Id(exerciseId, nameof(exerciseId)), Order = WorkoutText.Order(order, nameof(order)),
         Sets = WorkoutText.Optional(sets, 50, nameof(sets)),
         Repetitions = WorkoutText.Optional(repetitions, 50, nameof(repetitions)),

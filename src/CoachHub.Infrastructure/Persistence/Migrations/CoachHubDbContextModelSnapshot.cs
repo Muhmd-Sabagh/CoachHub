@@ -1060,14 +1060,14 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("DietPlanId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<int>("Order")
                         .HasColumnType("int");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Text")
                         .IsRequired()
@@ -1076,19 +1076,66 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DietPlanId", "Order")
+                    b.HasIndex("RevisionId", "Order")
                         .IsUnique();
 
                     b.ToTable("DietPlanNotes", (string)null);
                 });
 
-            modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlanVersion", b =>
+            modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlanRevision", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("DietPlanId")
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanId", "VersionNumber")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "PlanId" }, "IX_DietPlanRevisions_PlanId_Current")
+                        .IsUnique()
+                        .HasFilter("[Status] <> 'Archived'");
+
+                    b.ToTable("DietPlanRevisions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DietPlanRevisions_Dates", "[EndDate] IS NULL OR [StartDate] IS NULL OR [EndDate] >= [StartDate]");
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlanVariant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsActiveForPdf")
@@ -1110,12 +1157,15 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("DietPlanId", "Order")
+                    b.HasIndex("RevisionId", "Order")
                         .IsUnique();
 
-                    b.ToTable("DietPlanVersions", (string)null);
+                    b.ToTable("DietPlanVariants", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietReplacementGroup", b =>
@@ -1124,11 +1174,14 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("DietPlanVersionId")
+                    b.Property<Guid>("DietPlanVariantId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Order")
                         .HasColumnType("int");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("TargetMealFoodItemId")
                         .HasColumnType("uniqueidentifier");
@@ -1143,11 +1196,13 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RevisionId");
+
                     b.HasIndex("TargetMealFoodItemId");
 
                     b.HasIndex("TargetMealId");
 
-                    b.HasIndex("DietPlanVersionId", "Order")
+                    b.HasIndex("DietPlanVariantId", "Order")
                         .IsUnique();
 
                     b.ToTable("DietReplacementGroups", (string)null);
@@ -1179,11 +1234,16 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ReplacementMealId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ReplacementFoodItemId");
 
                     b.HasIndex("ReplacementMealId");
+
+                    b.HasIndex("RevisionId");
 
                     b.HasIndex("DietReplacementGroupId", "Order")
                         .IsUnique();
@@ -1200,7 +1260,7 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("DietPlanVersionId")
+                    b.Property<Guid>("DietPlanVariantId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("NameAr")
@@ -1219,9 +1279,14 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("DietPlanVersionId", "Order")
+                    b.HasIndex("RevisionId");
+
+                    b.HasIndex("DietPlanVariantId", "Order")
                         .IsUnique();
 
                     b.ToTable("DietPlanMeals", (string)null);
@@ -1250,9 +1315,14 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FoodItemId");
+
+                    b.HasIndex("RevisionId");
 
                     b.HasIndex("MealId", "Order")
                         .IsUnique();
@@ -1433,11 +1503,17 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<Guid?>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("RevisionNumber")
+                        .HasColumnType("int");
+
                     b.Property<string>("SnapshotJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("VersionId")
+                    b.Property<Guid?>("VariantId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -1911,16 +1987,16 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Subtitle")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid>("WorkoutPlanId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("WorkoutPlanId", "Order")
+                    b.HasIndex("RevisionId", "Order")
                         .IsUnique();
 
                     b.ToTable("WorkoutDays", (string)null);
@@ -1950,6 +2026,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("RpeRir")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -1968,6 +2047,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ExerciseId");
+
+                    b.HasIndex("RevisionId");
 
                     b.HasIndex("WorkoutDayId", "Order")
                         .IsUnique();
@@ -2020,20 +2101,70 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<Guid>("WorkoutPlanId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("WorkoutPlanId", "Order")
+                    b.HasIndex("RevisionId", "Order")
                         .IsUnique();
 
                     b.ToTable("WorkoutPlanNotes", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.WorkoutPlanRevision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanId", "VersionNumber")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "PlanId" }, "IX_WorkoutPlanRevisions_PlanId_Current")
+                        .IsUnique()
+                        .HasFilter("[Status] <> 'Archived'");
+
+                    b.ToTable("WorkoutPlanRevisions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WorkoutPlanRevisions_Dates", "[EndDate] IS NULL OR [StartDate] IS NULL OR [EndDate] >= [StartDate]");
+                        });
                 });
 
             modelBuilder.Entity("CoachHub.Infrastructure.Auth.Persistence.Role", b =>
@@ -2602,27 +2733,36 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlanNote", b =>
                 {
-                    b.HasOne("CoachHub.Domain.DietPlanning.DietPlan", null)
+                    b.HasOne("CoachHub.Domain.DietPlanning.DietPlanRevision", null)
                         .WithMany()
-                        .HasForeignKey("DietPlanId")
+                        .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlanVersion", b =>
+            modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlanRevision", b =>
                 {
                     b.HasOne("CoachHub.Domain.DietPlanning.DietPlan", null)
                         .WithMany()
-                        .HasForeignKey("DietPlanId")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietPlanVariant", b =>
+                {
+                    b.HasOne("CoachHub.Domain.DietPlanning.DietPlanRevision", null)
+                        .WithMany()
+                        .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("CoachHub.Domain.DietPlanning.DietReplacementGroup", b =>
                 {
-                    b.HasOne("CoachHub.Domain.DietPlanning.DietPlanVersion", null)
+                    b.HasOne("CoachHub.Domain.DietPlanning.DietPlanVariant", null)
                         .WithMany()
-                        .HasForeignKey("DietPlanVersionId")
+                        .HasForeignKey("DietPlanVariantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2659,9 +2799,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoachHub.Domain.DietPlanning.Meal", b =>
                 {
-                    b.HasOne("CoachHub.Domain.DietPlanning.DietPlanVersion", null)
+                    b.HasOne("CoachHub.Domain.DietPlanning.DietPlanVariant", null)
                         .WithMany()
-                        .HasForeignKey("DietPlanVersionId")
+                        .HasForeignKey("DietPlanVariantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -2817,9 +2957,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.WorkoutDay", b =>
                 {
-                    b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutPlan", null)
+                    b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutPlanRevision", null)
                         .WithMany()
-                        .HasForeignKey("WorkoutPlanId")
+                        .HasForeignKey("RevisionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -2855,9 +2995,18 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.WorkoutPlanNote", b =>
                 {
+                    b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutPlanRevision", null)
+                        .WithMany()
+                        .HasForeignKey("RevisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.WorkoutPlanRevision", b =>
+                {
                     b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutPlan", null)
                         .WithMany()
-                        .HasForeignKey("WorkoutPlanId")
+                        .HasForeignKey("PlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

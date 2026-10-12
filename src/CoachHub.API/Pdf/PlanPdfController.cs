@@ -14,27 +14,27 @@ public sealed class PlanPdfController(PlanPdfService service) : ControllerBase
 {
     [HttpGet(ApiRoutes.V1 + "/diet-plans/{id:guid}/pdf/preview")]
     public async Task<IActionResult> PreviewDiet(
-        Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English,
+        Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English, [FromQuery] int? version = null,
         CancellationToken cancellationToken = default) =>
-        Inline(await service.DietAsync(id, language, cancellationToken));
+        Inline(await service.DietAsync(id, version, language, cancellationToken));
 
     [HttpGet(ApiRoutes.V1 + "/diet-plans/{id:guid}/pdf/download")]
     public async Task<IActionResult> DownloadDiet(
-        Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English,
+        Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English, [FromQuery] int? version = null,
         CancellationToken cancellationToken = default) =>
-        Download(await service.DietAsync(id, language, cancellationToken));
+        Download(await service.DietAsync(id, version, language, cancellationToken));
 
     [HttpGet(ApiRoutes.V1 + "/workout-plans/{id:guid}/pdf/preview")]
     public async Task<IActionResult> PreviewWorkout(
-        Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English,
+        Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English, [FromQuery] int? version = null,
         CancellationToken cancellationToken = default) =>
-        Inline(await service.WorkoutAsync(id, language, cancellationToken));
+        Inline(await service.WorkoutAsync(id, version, language, cancellationToken));
 
     [HttpGet(ApiRoutes.V1 + "/workout-plans/{id:guid}/pdf/download")]
     public async Task<IActionResult> DownloadWorkout(
-        Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English,
+        Guid id, [FromQuery] PlanPdfLanguage language = PlanPdfLanguage.English, [FromQuery] int? version = null,
         CancellationToken cancellationToken = default) =>
-        Download(await service.WorkoutAsync(id, language, cancellationToken));
+        Download(await service.WorkoutAsync(id, version, language, cancellationToken));
 
     private IActionResult Inline(GeneratedPlanPdf document)
     {

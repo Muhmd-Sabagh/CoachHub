@@ -1,16 +1,28 @@
 using System.Text.Json.Serialization;
+using CoachHub.Application.Common.Models;
+using CoachHub.Domain.Common;
 namespace CoachHub.Application.DietPlanning;
 
+/// <summary>
+/// A diet plan's name and assignment plus the content of one version (D4): its program dates (§4),
+/// Draft/Active status, notes and variants. <paramref name="BaseVersionNumber"/> is the version the
+/// editor loaded; a save based on an older version is rejected with 409.
+/// </summary>
 public sealed record DietPlanInput(
     string NameEn,
     string? NameAr,
     Guid? ClientId,
     IReadOnlyCollection<DietPlanNoteInput> Notes,
-    IReadOnlyCollection<DietPlanVersionInput> Versions,
-    Guid? CoachId = null);
+    IReadOnlyCollection<DietPlanVariantInput> Variants,
+    Guid? CoachId = null,
+    DateOnly? StartDate = null,
+    DateOnly? EndDate = null,
+    PlanRevisionStatus Status = PlanRevisionStatus.Active,
+    int? BaseVersionNumber = null);
 
 public sealed record DietPlanNoteInput(Guid Id, string Text, int Order, bool IsActive);
-public sealed record DietPlanVersionInput(
+/// <summary>An ordered tab of the version (for example "Training day"), formerly "version".</summary>
+public sealed record DietPlanVariantInput(
     Guid Id, string NameEn, string? NameAr, int Order, bool IsActiveForPdf, string? Notes,
     IReadOnlyCollection<MealInput> Meals,
     IReadOnlyCollection<DietReplacementGroupInput> ReplacementGroups);
@@ -42,13 +54,15 @@ public sealed record NutritionTotals(
         left.Fat + right.Fat);
 }
 
+/// <summary>A diet plan as one of its versions: the current one, or an archived one (read-only).</summary>
 public sealed record DietPlanResponse(
     Guid Id, Guid CoachId, string NameEn, string? NameAr, Guid? ClientId, DateTimeOffset CreatedAt,
+    PlanRevisionInfo Revision, int CurrentVersionNumber,
     IReadOnlyList<DietPlanNoteResponse> Notes,
-    IReadOnlyList<DietPlanVersionResponse> Versions,
+    IReadOnlyList<DietPlanVariantResponse> Variants,
     NutritionTotals Totals);
 public sealed record DietPlanNoteResponse(Guid Id, string Text, int Order, bool IsActive);
-public sealed record DietPlanVersionResponse(
+public sealed record DietPlanVariantResponse(
     Guid Id, string NameEn, string? NameAr, int Order, bool IsActiveForPdf, string? Notes,
     IReadOnlyList<MealResponse> Meals,
     IReadOnlyList<DietReplacementGroupResponse> ReplacementGroups,

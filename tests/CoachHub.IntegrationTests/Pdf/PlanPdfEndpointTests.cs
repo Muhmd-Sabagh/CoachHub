@@ -58,13 +58,13 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
 
         var serverPdfFilesBefore = Directory.GetFiles(AppContext.BaseDirectory, "*.pdf", SearchOption.AllDirectories);
         var dietPreview = await _client.GetAsync($"/api/v1/diet-plans/{diet.Id}/pdf/preview?language=English");
-        await AssertPdfAsync(dietPreview, "inline", "Performance-Diet-diet-plan-en.pdf");
+        await AssertPdfAsync(dietPreview, "inline", "Performance-Diet-diet-plan-v1-en.pdf");
         var dietArabic = await _client.GetAsync($"/api/v1/diet-plans/{diet.Id}/pdf/download?language=Arabic");
-        await AssertPdfAsync(dietArabic, "attachment", "Performance-Diet-diet-plan-ar.pdf");
+        await AssertPdfAsync(dietArabic, "attachment", "Performance-Diet-diet-plan-v1-ar.pdf");
         var workoutPreview = await _client.GetAsync($"/api/v1/workout-plans/{workout.Id}/pdf/preview?language=English");
-        await AssertPdfAsync(workoutPreview, "inline", "Strength-Builder-workout-plan-en.pdf");
+        await AssertPdfAsync(workoutPreview, "inline", "Strength-Builder-workout-plan-v1-en.pdf");
         var workoutArabic = await _client.GetAsync($"/api/v1/workout-plans/{workout.Id}/pdf/download?language=Arabic");
-        await AssertPdfAsync(workoutArabic, "attachment", "Strength-Builder-workout-plan-ar.pdf");
+        await AssertPdfAsync(workoutArabic, "attachment", "Strength-Builder-workout-plan-v1-ar.pdf");
         Assert.Equal(serverPdfFilesBefore, Directory.GetFiles(AppContext.BaseDirectory, "*.pdf", SearchOption.AllDirectories));
 
         var qaOutput = Environment.GetEnvironmentVariable("COACHHUB_PDF_QA_OUTPUT");

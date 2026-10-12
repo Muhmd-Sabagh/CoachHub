@@ -1,6 +1,7 @@
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.SavedPlans;
 using CoachHub.Domain.Clients;
+using CoachHub.Domain.Common;
 using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.Nutrition;
 using CoachHub.Domain.WorkoutPlanning;
@@ -14,12 +15,15 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
     public async Task<PagedResult<SavedPlanSummary>> ListAsync(
         SavedPlanQuery query, CancellationToken cancellationToken)
     {
+        // Lists show each plan as its current version (D4); archived versions are history.
+        // The projections below avoid "x == null ? a : b" over left-joined rows: SQL Server cannot
+        // run the Concat once EF evaluates such a projection on the client. Missing rows yield NULL.
+        var currentDiets = dbContext.Set<DietPlanRevision>().Where(x => x.Status != PlanRevisionStatus.Archived);
         var dietTotals =
-            from version in dbContext.Set<DietPlanVersion>()
-            join meal in dbContext.Set<Meal>() on version.Id equals meal.DietPlanVersionId
-            join row in dbContext.Set<MealFoodItem>() on meal.Id equals row.MealId
+            from revision in currentDiets
+            join row in dbContext.Set<MealFoodItem>() on revision.Id equals row.RevisionId
             join food in dbContext.Set<FoodItem>() on row.FoodItemId equals food.Id
-            group new { row, food } by version.DietPlanId into groupRows
+            group new { row, food } by revision.PlanId into groupRows
             select new
             {
                 PlanId = groupRows.Key,
@@ -39,19 +43,21 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
             select new
             {
                 plan.Id, PlanType = SavedPlanType.Diet, plan.NameEn, plan.NameAr, plan.ClientId,
-                ClientName = client == null ? null : client.Name,
-                ClientCode = client == null ? null : client.ClientCode, plan.CreatedAt,
-                TotalWeight = (decimal?)(total == null ? 0m : total.Weight),
-                TotalCalories = (decimal?)(total == null ? 0m : total.Calories),
-                TotalProtein = (decimal?)(total == null ? 0m : total.Protein),
-                TotalCarbohydrates = (decimal?)(total == null ? 0m : total.Carbohydrates),
-                TotalFat = (decimal?)(total == null ? 0m : total.Fat),
+                ClientName = (string?)client!.Name,
+                ClientCode = (string?)client.ClientCode, plan.CreatedAt,
+                TotalWeight = (decimal?)((decimal?)total!.Weight ?? 0m),
+                TotalCalories = (decimal?)((decimal?)total.Calories ?? 0m),
+                TotalProtein = (decimal?)((decimal?)total.Protein ?? 0m),
+                TotalCarbohydrates = (decimal?)((decimal?)total.Carbohydrates ?? 0m),
+                TotalFat = (decimal?)((decimal?)total.Fat ?? 0m),
                 WorkoutDayCount = (int?)null
             };
 
+        var currentWorkouts = dbContext.Set<WorkoutPlanRevision>().Where(x => x.Status != PlanRevisionStatus.Archived);
         var dayCounts =
-            from day in dbContext.Set<WorkoutDay>()
-            group day by day.WorkoutPlanId into days
+            from revision in currentWorkouts
+            join day in dbContext.Set<WorkoutDay>() on revision.Id equals day.RevisionId
+            group day by revision.PlanId into days
             select new { PlanId = days.Key, Count = days.Count() };
         var workoutRows =
             from plan in dbContext.Set<WorkoutPlan>()
@@ -62,23 +68,46 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
             select new
             {
                 plan.Id, PlanType = SavedPlanType.Workout, plan.NameEn, plan.NameAr, plan.ClientId,
-                ClientName = client == null ? null : client.Name,
-                ClientCode = client == null ? null : client.ClientCode, plan.CreatedAt,
+                ClientName = (string?)client!.Name,
+                ClientCode = (string?)client.ClientCode, plan.CreatedAt,
                 TotalWeight = (decimal?)null, TotalCalories = (decimal?)null,
                 TotalProtein = (decimal?)null, TotalCarbohydrates = (decimal?)null,
-                TotalFat = (decimal?)null, WorkoutDayCount = (int?)(count == null ? 0 : count.Count)
+                TotalFat = (decimal?)null, WorkoutDayCount = (int?)((int?)count!.Count ?? 0)
             };
 
-        IQueryable<SavedPlanRow> rows = dietRows.Concat(workoutRows).Select(x => new SavedPlanRow(
-            x.Id, x.PlanType, x.NameEn, x.NameAr, x.ClientId, x.ClientName, x.ClientCode,
-            x.CreatedAt, x.TotalWeight, x.TotalCalories, x.TotalProtein,
-            x.TotalCarbohydrates, x.TotalFat, x.WorkoutDayCount));
+        // A member-init projection (not a constructor), so filters and sorts on it translate to SQL.
+        IQueryable<SavedPlanRow> rows = dietRows.Concat(workoutRows).Select(x => new SavedPlanRow
+        {
+            Id = x.Id, PlanType = x.PlanType, NameEn = x.NameEn, NameAr = x.NameAr, ClientId = x.ClientId,
+            ClientName = x.ClientName, ClientCode = x.ClientCode, CreatedAt = x.CreatedAt,
+            TotalWeight = x.TotalWeight, TotalCalories = x.TotalCalories, TotalProtein = x.TotalProtein,
+            TotalCarbohydrates = x.TotalCarbohydrates, TotalFat = x.TotalFat, WorkoutDayCount = x.WorkoutDayCount
+        });
         rows = ApplyFilters(rows, query);
         var totalCount = await rows.CountAsync(cancellationToken);
         rows = ApplySort(rows, query);
         var page = await rows.Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize)
             .AsNoTracking().ToArrayAsync(cancellationToken);
-        return new(page.Select(Map).ToArray(), query.PageNumber, query.PageSize, totalCount);
+        var versions = await CurrentVersionsAsync(page, cancellationToken);
+        return new(page.Select(row => Map(row, versions.GetValueOrDefault(row.Id))).ToArray(),
+            query.PageNumber, query.PageSize, totalCount);
+    }
+
+    /// <summary>The current version (number, status, program dates) of each listed plan.</summary>
+    private async Task<Dictionary<Guid, CurrentVersion>> CurrentVersionsAsync(
+        IReadOnlyCollection<SavedPlanRow> page, CancellationToken cancellationToken)
+    {
+        var dietIds = page.Where(x => x.PlanType == SavedPlanType.Diet).Select(x => x.Id).ToArray();
+        var workoutIds = page.Where(x => x.PlanType == SavedPlanType.Workout).Select(x => x.Id).ToArray();
+        var diets = await dbContext.Set<DietPlanRevision>().AsNoTracking()
+            .Where(x => dietIds.Contains(x.PlanId) && x.Status != PlanRevisionStatus.Archived)
+            .Select(x => new CurrentVersion(x.PlanId, x.VersionNumber, x.Status, x.StartDate, x.EndDate))
+            .ToListAsync(cancellationToken);
+        var workouts = await dbContext.Set<WorkoutPlanRevision>().AsNoTracking()
+            .Where(x => workoutIds.Contains(x.PlanId) && x.Status != PlanRevisionStatus.Archived)
+            .Select(x => new CurrentVersion(x.PlanId, x.VersionNumber, x.Status, x.StartDate, x.EndDate))
+            .ToListAsync(cancellationToken);
+        return diets.Concat(workouts).ToDictionary(x => x.PlanId);
     }
 
     private static IQueryable<SavedPlanRow> ApplyFilters(IQueryable<SavedPlanRow> rows, SavedPlanQuery query)
@@ -122,15 +151,31 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
         return ordered.ThenBy(x => x.Id);
     }
 
-    private static SavedPlanSummary Map(SavedPlanRow row) => new(
+    private static SavedPlanSummary Map(SavedPlanRow row, CurrentVersion? version) => new(
         row.Id, row.PlanType, row.NameEn, row.NameAr, row.ClientId, row.ClientName, row.ClientCode,
         row.CreatedAt, Round(row.TotalWeight), Round(row.TotalCalories), Round(row.TotalProtein),
-        Round(row.TotalCarbohydrates), Round(row.TotalFat), row.WorkoutDayCount);
+        Round(row.TotalCarbohydrates), Round(row.TotalFat), row.WorkoutDayCount,
+        version?.VersionNumber, version?.Status, version?.StartDate, version?.EndDate);
     private static decimal? Round(decimal? value) => value.HasValue ? decimal.Round(value.Value, 2) : null;
 
-    private sealed record SavedPlanRow(
-        Guid Id, SavedPlanType PlanType, string NameEn, string? NameAr, Guid? ClientId,
-        string? ClientName, string? ClientCode, DateTimeOffset CreatedAt,
-        decimal? TotalWeight, decimal? TotalCalories, decimal? TotalProtein,
-        decimal? TotalCarbohydrates, decimal? TotalFat, int? WorkoutDayCount);
+    private sealed class SavedPlanRow
+    {
+        public Guid Id { get; init; }
+        public SavedPlanType PlanType { get; init; }
+        public string NameEn { get; init; } = string.Empty;
+        public string? NameAr { get; init; }
+        public Guid? ClientId { get; init; }
+        public string? ClientName { get; init; }
+        public string? ClientCode { get; init; }
+        public DateTimeOffset CreatedAt { get; init; }
+        public decimal? TotalWeight { get; init; }
+        public decimal? TotalCalories { get; init; }
+        public decimal? TotalProtein { get; init; }
+        public decimal? TotalCarbohydrates { get; init; }
+        public decimal? TotalFat { get; init; }
+        public int? WorkoutDayCount { get; init; }
+    }
+
+    private sealed record CurrentVersion(
+        Guid PlanId, int VersionNumber, PlanRevisionStatus Status, DateOnly? StartDate, DateOnly? EndDate);
 }

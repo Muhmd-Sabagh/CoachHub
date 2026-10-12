@@ -47,7 +47,9 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormSubmission), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Assessments.FormAnswer), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlan), entityTypes);
-        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanVersion), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanRevision), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanVariant), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.WorkoutPlanning.WorkoutPlanRevision), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.Meal), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.MealFoodItem), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanNote), entityTypes);

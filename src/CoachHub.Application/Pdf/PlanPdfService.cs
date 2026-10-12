@@ -10,22 +10,27 @@ public sealed class PlanPdfService(
     IPlanPdfClientRepository clients,
     IPlanPdfRenderer renderer)
 {
+    /// <summary>The current version, or an earlier one when <paramref name="versionNumber"/> is given.</summary>
     public async Task<GeneratedPlanPdf> DietAsync(
-        Guid id, PlanPdfLanguage language, CancellationToken cancellationToken)
+        Guid id, int? versionNumber, PlanPdfLanguage language, CancellationToken cancellationToken)
     {
-        var plan = await dietPlans.GetAsync(id, cancellationToken);
+        var plan = versionNumber is { } number
+            ? await dietPlans.GetVersionAsync(id, number, cancellationToken)
+            : await dietPlans.GetAsync(id, cancellationToken);
         var client = plan.ClientId.HasValue ? await clients.FindAsync(plan.ClientId.Value, cancellationToken) : null;
         return new(renderer.RenderDiet(plan, client, language),
-            FileName(plan.NameEn, "diet-plan", language));
+            FileName(plan.NameEn, $"diet-plan-v{plan.Revision.VersionNumber}", language));
     }
 
     public async Task<GeneratedPlanPdf> WorkoutAsync(
-        Guid id, PlanPdfLanguage language, CancellationToken cancellationToken)
+        Guid id, int? versionNumber, PlanPdfLanguage language, CancellationToken cancellationToken)
     {
-        var plan = await workoutPlans.GetAsync(id, cancellationToken);
+        var plan = versionNumber is { } number
+            ? await workoutPlans.GetVersionAsync(id, number, cancellationToken)
+            : await workoutPlans.GetAsync(id, cancellationToken);
         var client = plan.ClientId.HasValue ? await clients.FindAsync(plan.ClientId.Value, cancellationToken) : null;
         return new(renderer.RenderWorkout(plan, client, language),
-            FileName(plan.NameEn, "workout-plan", language));
+            FileName(plan.NameEn, $"workout-plan-v{plan.Revision.VersionNumber}", language));
     }
 
     internal static string FileName(string planName, string kind, PlanPdfLanguage language)

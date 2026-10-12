@@ -62,7 +62,7 @@ public sealed class WorkoutPlanningEndpointTests : IClassFixture<CoachHubApiFact
                 input.Days.ElementAt(1) with { Order = 0 }
             ]
         };
-        var update = await _client.PutAsJsonAsync($"/api/v1/workout-plans/{created.Id}", reordered);
+        var update = await _client.PutAsJsonAsync($"/api/v1/workout-plans/{created.Id}/revisions/current", reordered);
         update.EnsureSuccessStatusCode();
         var updated = (await update.Content.ReadFromJsonAsync<WorkoutPlanResponse>())!;
         Assert.Equal(client.Id, updated.ClientId);

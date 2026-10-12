@@ -1170,6 +1170,41 @@ textarea:focus {
   border: 1px solid var(--gray-200);
   border-radius: 10px;
 }
+/* D4: plan version history and read-only archived versions. */
+.plain-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.plain-fieldset:disabled {
+  opacity: 0.85;
+}
+.version-notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  color: var(--gray-700);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand);
+  border-radius: 8px;
+}
+.version-history ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.version-history li {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.version-history small {
+  display: block;
+  color: var(--gray-500);
+}
+.dark .version-notice {
+  color: var(--gray-100);
+  background: #1d2939;
+}
 .calculator-results {
   margin-top: 20px;
 }

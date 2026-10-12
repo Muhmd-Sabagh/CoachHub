@@ -2,9 +2,10 @@ using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.DietPlanning;
 
-public sealed class MealFoodItem : Entity
+public sealed class MealFoodItem : Entity, IPlanRevisionContent
 {
     private MealFoodItem() { }
+    public Guid RevisionId { get; private set; }
     public Guid MealId { get; private set; }
     public Guid FoodItemId { get; private set; }
     public decimal Quantity { get; private set; }
@@ -12,9 +13,10 @@ public sealed class MealFoodItem : Entity
     public string? Notes { get; private set; }
 
     public static MealFoodItem Create(
-        Guid id, Guid mealId, Guid foodItemId, decimal quantity, int order, string? notes) => new()
+        Guid id, Guid revisionId, Guid mealId, Guid foodItemId, decimal quantity, int order, string? notes) => new()
     {
         Id = DietPlanText.RequiredId(id, nameof(id)),
+        RevisionId = DietPlanText.RequiredId(revisionId, nameof(revisionId)),
         MealId = DietPlanText.RequiredId(mealId, nameof(mealId)),
         FoodItemId = DietPlanText.RequiredId(foodItemId, nameof(foodItemId)),
         Quantity = DietPlanText.Quantity(quantity, nameof(quantity)),

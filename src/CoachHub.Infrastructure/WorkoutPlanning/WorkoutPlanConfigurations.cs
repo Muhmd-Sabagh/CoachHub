@@ -1,6 +1,7 @@
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Training;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,14 +18,24 @@ public sealed class WorkoutPlanConfiguration : IEntityTypeConfiguration<WorkoutP
     }
 }
 
+public sealed class WorkoutPlanRevisionConfiguration : IEntityTypeConfiguration<WorkoutPlanRevision>
+{
+    public void Configure(EntityTypeBuilder<WorkoutPlanRevision> builder)
+    {
+        builder.ToTable("WorkoutPlanRevisions");
+        PlanRevisionMapping.Configure(builder);
+        builder.HasOne<WorkoutPlan>().WithMany().HasForeignKey(x => x.PlanId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public sealed class WorkoutPlanNoteConfiguration : IEntityTypeConfiguration<WorkoutPlanNote>
 {
     public void Configure(EntityTypeBuilder<WorkoutPlanNote> builder)
     {
         builder.ToTable("WorkoutPlanNotes"); builder.HasKey(x => x.Id);
         builder.Property(x => x.Text).HasMaxLength(2000).IsRequired();
-        builder.HasIndex(x => new { x.WorkoutPlanId, x.Order }).IsUnique();
-        builder.HasOne<WorkoutPlan>().WithMany().HasForeignKey(x => x.WorkoutPlanId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.RevisionId, x.Order }).IsUnique();
+        builder.HasOne<WorkoutPlanRevision>().WithMany().HasForeignKey(x => x.RevisionId).OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -35,8 +46,8 @@ public sealed class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDa
         builder.ToTable("WorkoutDays"); builder.HasKey(x => x.Id);
         builder.Property(x => x.NameEn).HasMaxLength(100).IsRequired(); builder.Property(x => x.NameAr).HasMaxLength(100);
         builder.Property(x => x.Subtitle).HasMaxLength(100); builder.Property(x => x.Notes).HasMaxLength(1000);
-        builder.HasIndex(x => new { x.WorkoutPlanId, x.Order }).IsUnique();
-        builder.HasOne<WorkoutPlan>().WithMany().HasForeignKey(x => x.WorkoutPlanId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.RevisionId, x.Order }).IsUnique();
+        builder.HasOne<WorkoutPlanRevision>().WithMany().HasForeignKey(x => x.RevisionId).OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -49,6 +60,7 @@ public sealed class WorkoutExerciseConfiguration : IEntityTypeConfiguration<Work
         builder.Property(x => x.Rest).HasMaxLength(50); builder.Property(x => x.Tempo).HasMaxLength(50);
         builder.Property(x => x.RpeRir).HasMaxLength(50); builder.Property(x => x.Notes).HasMaxLength(1000);
         builder.HasIndex(x => new { x.WorkoutDayId, x.Order }).IsUnique();
+        builder.HasIndex(x => x.RevisionId);
         builder.HasOne<WorkoutDay>().WithMany().HasForeignKey(x => x.WorkoutDayId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<Exercise>().WithMany().HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Restrict);
     }
