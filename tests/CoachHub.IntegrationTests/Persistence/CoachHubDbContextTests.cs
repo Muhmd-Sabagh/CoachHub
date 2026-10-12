@@ -92,8 +92,9 @@ public sealed class CoachHubDbContextTests
                            typeof(CoachHub.Domain.Common.IOptionalTenantOwned).IsAssignableFrom(type.ClrType))
             .ToArray();
 
-        // 15 coach-owned business types (P1) plus MediaAsset (P2), which also admits platform rows.
-        Assert.Equal(16, owned.Length);
+        // 15 coach-owned business types (P1), MediaAsset (P2) and AuditEntry (P3); the last two
+        // also admit platform rows without a coach.
+        Assert.Equal(17, owned.Length);
         Assert.All(owned, type =>
         {
             Assert.NotEmpty(type.GetDeclaredQueryFilters());

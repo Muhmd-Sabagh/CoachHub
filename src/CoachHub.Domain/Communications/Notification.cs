@@ -14,7 +14,8 @@ public sealed class Notification : Entity, IOptionalTenantOwned
     public NotificationChannel Channel { get; private set; }
     public string Recipient { get; private set; } = string.Empty;
     public string Subject { get; private set; } = string.Empty;
-    public string Body { get; private set; } = string.Empty;
+    // May carry one-time links (password reset); never audited.
+    [AuditIgnore] public string Body { get; private set; } = string.Empty;
     public DateTimeOffset ScheduledAt { get; private set; }
     public NotificationStatus Status { get; private set; }
     public int AttemptCount { get; private set; }

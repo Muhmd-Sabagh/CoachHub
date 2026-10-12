@@ -9,14 +9,26 @@ public enum AuditOperation
     Delete
 }
 
+/// <summary>The real role of whoever performed the operation (D2).</summary>
 public enum AuditActorKind
 {
     Administrator,
+    Coach,
+    Client,
+
+    /// <summary>An anonymous client using the legacy code-based forms (retired in P5).</summary>
     PublicClient,
+
+    /// <summary>Background work such as the notification dispatcher.</summary>
     System
 }
 
-public sealed class AuditEntry : Entity
+/// <summary>
+/// One audited change (D2, §58): the entity, the affected coach and client, who did it with which
+/// role, the operation, the changed values, and when. Append-only. Tenant-isolated by
+/// <see cref="CoachId"/>, so a coach reads only their own tenant's trail.
+/// </summary>
+public sealed class AuditEntry : Entity, IOptionalTenantOwned
 {
     private AuditEntry() { }
 
@@ -28,6 +40,18 @@ public sealed class AuditEntry : Entity
     public string? ActorDisplayName { get; private set; }
     public DateTimeOffset OccurredAt { get; private set; }
 
+    /// <summary>The coach (tenant) whose data changed; null for platform data.</summary>
+    public Guid? CoachId { get; private set; }
+
+    /// <summary>The affected client, when the change concerns one.</summary>
+    public Guid? ClientId { get; private set; }
+
+    /// <summary>
+    /// JSON object of property → <c>{ "from": previous, "to": new }</c>: changed properties for an
+    /// update, new values for a create, previous values for a delete. Never holds secrets.
+    /// </summary>
+    public string? ChangesJson { get; private set; }
+
     public static AuditEntry Create(
         string entityType,
         Guid? entityId,
@@ -35,19 +59,25 @@ public sealed class AuditEntry : Entity
         AuditActorKind actorKind,
         Guid? actorUserId,
         string? actorDisplayName,
-        DateTimeOffset occurredAt)
+        DateTimeOffset occurredAt,
+        Guid? coachId,
+        Guid? clientId,
+        string? changesJson)
     {
         if (string.IsNullOrWhiteSpace(entityType))
         {
             throw new ArgumentException("Audited entity type is required.", nameof(entityType));
         }
 
-        if (actorKind == AuditActorKind.Administrator && !actorUserId.HasValue)
+        if (actorKind is AuditActorKind.Administrator or AuditActorKind.Coach or AuditActorKind.Client &&
+            !actorUserId.HasValue)
         {
             throw new ArgumentException(
-                "Administrator audit actors require a user identifier.",
+                "Signed-in audit actors require a user identifier.",
                 nameof(actorUserId));
         }
+
+        if (clientId == Guid.Empty) throw new ArgumentException("A client identifier cannot be empty.", nameof(clientId));
 
         return new AuditEntry
         {
@@ -59,7 +89,10 @@ public sealed class AuditEntry : Entity
             ActorDisplayName = string.IsNullOrWhiteSpace(actorDisplayName)
                 ? null
                 : Limit(actorDisplayName.Trim(), 200),
-            OccurredAt = occurredAt
+            OccurredAt = occurredAt,
+            CoachId = TenantKey.Optional(coachId),
+            ClientId = clientId,
+            ChangesJson = string.IsNullOrWhiteSpace(changesJson) ? null : changesJson
         };
     }
 

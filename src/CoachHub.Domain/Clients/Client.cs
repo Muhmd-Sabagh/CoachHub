@@ -11,7 +11,8 @@ public sealed class Client : Entity, ITenantOwned
 
     public Guid CoachId { get; private set; }
     public string ClientCode { get; private set; } = string.Empty;
-    public string FormCode { get; private set; } = string.Empty;
+    // An access code for the legacy anonymous forms: a credential, never audited.
+    [AuditIgnore] public string FormCode { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public string? Phone { get; private set; }
     public string? Email { get; private set; }

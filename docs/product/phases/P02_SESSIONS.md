@@ -1,6 +1,6 @@
 # P2 — Accounts and secure sessions
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P2 · **Branch:** `phase/p02-sessions` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P2 · **Branch:** `phase/p02-sessions` · **Status:** Merged (PR #4).
 **Covers:** §2 (Client: change password, edit personal information, profile picture, log out, session management), §52 (secure sessions, secure file storage), §62.
 
 ## Purpose

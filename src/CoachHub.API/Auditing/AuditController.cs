@@ -7,8 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CoachHub.API.Auditing;
 
+/// <summary>
+/// The audit trail (§58). Administrators review everything; a coach reads their own tenant's
+/// entries only (tenant filter on AuditEntry).
+/// </summary>
 [ApiController]
-[Authorize(Policy = AuthPolicies.AdminOnly)]
+[Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/audit-entries")]
 public sealed class AuditController(AuditQueryService service) : ControllerBase
 {

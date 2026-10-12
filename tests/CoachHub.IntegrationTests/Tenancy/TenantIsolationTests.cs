@@ -153,7 +153,6 @@ public sealed class TenantIsolationTests(CoachHubSqlApiFactory factory) : IClass
 
         Assert.Equal(HttpStatusCode.Forbidden, (await coach.GetAsync("/api/v1/admin/coaches")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await coach.GetAsync("/api/v1/accounts")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await coach.GetAsync("/api/v1/audit-entries")).StatusCode);
     }
 
     private static async Task<ClientResponse> CreateClientAsync(HttpClient coach, string name)

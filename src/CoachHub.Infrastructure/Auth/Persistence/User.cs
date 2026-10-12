@@ -1,3 +1,4 @@
+using CoachHub.Domain.Common;
 using Microsoft.AspNetCore.Identity;
 
 namespace CoachHub.Infrastructure.Auth.Persistence;
@@ -8,6 +9,8 @@ public sealed class User : IdentityUser<Guid>
 
     public bool IsActive { get; set; } = true;
 
+    // Updated on every sign-in; the sign-in itself is audited as a new session.
+    [AuditIgnore]
     public DateTimeOffset? LastLoginAt { get; set; }
 
     /// <summary>Set for Coach accounts: the coach (tenant) this login belongs to.</summary>

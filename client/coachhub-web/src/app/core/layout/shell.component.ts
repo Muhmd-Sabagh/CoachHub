@@ -21,7 +21,7 @@ export class ShellComponent implements OnInit {
     { route: '/training', label: 'nav.training', icon: 'TR', roles: staff },
     { route: '/plans', label: 'nav.plans', icon: 'PL', roles: staff },
     { route: '/operations', label: 'nav.operations', icon: 'OP', roles: staff },
-    { route: '/audit', label: 'nav.audit', icon: 'AU', roles: ['Administrator'] },
+    { route: '/audit', label: 'nav.audit', icon: 'AU', roles: staff },
     { route: '/settings', label: 'nav.settings', icon: 'ST', roles: staff }
   ];
   get navItems(): NavItem[] {

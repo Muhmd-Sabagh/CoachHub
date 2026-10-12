@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CoachHub.Application.Common.Models;
 using CoachHub.Domain.Auditing;
 
@@ -20,6 +21,12 @@ public sealed record AuditQuery
     public string? SearchTerm { get; init; }
     public string? EntityType { get; init; }
     public Guid? EntityId { get; init; }
+
+    /// <summary>The affected client (§58).</summary>
+    public Guid? ClientId { get; init; }
+
+    /// <summary>The coach whose data changed. Only meaningful to administrators; coaches see their own tenant.</summary>
+    public Guid? CoachId { get; init; }
     public AuditOperation? Operation { get; init; }
     public AuditActorKind? ActorKind { get; init; }
     public DateTimeOffset? OccurredFrom { get; init; }
@@ -48,7 +55,13 @@ public sealed record AuditRecord(
     string ActorKind,
     Guid? ActorUserId,
     string? ActorDisplayName,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    Guid? CoachId,
+    Guid? ClientId,
+    IReadOnlyList<AuditChange> Changes);
+
+/// <summary>One changed property: the previous value (D2) and the new one. Null where not applicable.</summary>
+public sealed record AuditChange(string Property, JsonElement? From, JsonElement? To);
 
 public interface IAuditQueryRepository
 {

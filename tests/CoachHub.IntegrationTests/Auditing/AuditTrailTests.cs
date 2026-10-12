@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using CoachHub.API.Auditing;
 using CoachHub.Application.Auditing;
+using CoachHub.Application.Auth;
 using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.ReferenceData;
@@ -102,7 +103,7 @@ public sealed class AuditTrailTests
     }
 
     [Fact]
-    public void Http_actor_accessor_classifies_public_clients_without_storing_access_codes()
+    public void Http_actor_accessor_records_the_real_role_and_classifies_public_clients_without_access_codes()
     {
         var context = new DefaultHttpContext();
         context.Request.Path = "/api/v1/client-forms/submissions";
@@ -115,16 +116,25 @@ public sealed class AuditTrailTests
         Assert.Null(actor.DisplayName);
 
         var userId = Guid.NewGuid();
-        context.User = new ClaimsPrincipal(new ClaimsIdentity(
-        [
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Name, "Coach")
-        ], "Bearer", JwtRegisteredClaimNames.Name, ClaimTypes.Role));
+        foreach (var (role, kind) in new[]
+                 {
+                     (AuthRoles.Administrator, AuditActorKind.Administrator),
+                     (AuthRoles.Coach, AuditActorKind.Coach),
+                     (AuthRoles.Client, AuditActorKind.Client)
+                 })
+        {
+            context.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Name, "Someone"),
+                new Claim(ClaimTypes.Role, role)
+            ], "Bearer", JwtRegisteredClaimNames.Name, ClaimTypes.Role));
 
-        actor = accessor.Current;
-        Assert.Equal(AuditActorKind.Administrator, actor.Kind);
-        Assert.Equal(userId, actor.UserId);
-        Assert.Equal("Coach", actor.DisplayName);
+            actor = accessor.Current;
+            Assert.Equal(kind, actor.Kind);
+            Assert.Equal(userId, actor.UserId);
+            Assert.Equal("Someone", actor.DisplayName);
+        }
     }
 
     private sealed class StubActorAccessor(AuditActor actor) : IAuditActorAccessor

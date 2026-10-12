@@ -2,10 +2,12 @@ using CoachHub.API.Common.Routing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using CoachHub.Application.Auditing;
+using CoachHub.Application.Auth;
 using CoachHub.Domain.Auditing;
 
 namespace CoachHub.API.Auditing;
 
+/// <summary>The audit actor from the request: the signed-in user with their real role (D2).</summary>
 public sealed class HttpAuditActorAccessor(IHttpContextAccessor httpContextAccessor)
     : IAuditActorAccessor
 {
@@ -14,15 +16,18 @@ public sealed class HttpAuditActorAccessor(IHttpContextAccessor httpContextAcces
         get
         {
             var context = httpContextAccessor.HttpContext;
-            if (context?.User.Identity?.IsAuthenticated == true)
+            var user = context?.User;
+            if (user?.Identity?.IsAuthenticated == true &&
+                Guid.TryParse(user.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId))
             {
-                var userIdValue = context.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-                return new AuditActor(
-                    AuditActorKind.Administrator,
-                    Guid.TryParse(userIdValue, out var userId) ? userId : null,
-                    context.User.Identity.Name);
+                var kind = user.IsInRole(AuthRoles.Administrator) ? AuditActorKind.Administrator
+                    : user.IsInRole(AuthRoles.Coach) ? AuditActorKind.Coach
+                    : user.IsInRole(AuthRoles.Client) ? AuditActorKind.Client
+                    : (AuditActorKind?)null;
+                if (kind is { } role) return new AuditActor(role, userId, user.Identity.Name);
             }
 
+            // Only the route is known; the client and form codes are credentials and never recorded.
             if (context?.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/client-forms") == true)
             {
                 return new AuditActor(AuditActorKind.PublicClient);

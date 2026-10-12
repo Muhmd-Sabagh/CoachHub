@@ -2,7 +2,7 @@
 
 > **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
 >
-> - D2: metadata-only audit is replaced by audit entries that record the affected client, the real actor role and previous values (P3).
+> - D2: metadata-only audit is replaced by audit entries that record the affected coach and client, the real actor role and previous and new values. Implemented in P3; see [P03_AUDIT.md](../product/phases/P03_AUDIT.md).
 
 ## Scope decision
 

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CoachHub.Application.Auditing;
 using CoachHub.Application.Common.Models;
 using CoachHub.Domain.Auditing;
@@ -21,6 +22,10 @@ public sealed class AuditQueryRepository(CoachHubDbContext dbContext) : IAuditQu
             rows = rows.Where(entry => entry.EntityType == query.EntityType);
         if (query.EntityId.HasValue)
             rows = rows.Where(entry => entry.EntityId == query.EntityId);
+        if (query.ClientId.HasValue)
+            rows = rows.Where(entry => entry.ClientId == query.ClientId);
+        if (query.CoachId.HasValue)
+            rows = rows.Where(entry => entry.CoachId == query.CoachId);
         if (query.Operation.HasValue)
             rows = rows.Where(entry => entry.Operation == query.Operation);
         if (query.ActorKind.HasValue)
@@ -44,9 +49,24 @@ public sealed class AuditQueryRepository(CoachHubDbContext dbContext) : IAuditQu
             entry.ActorKind.ToString(),
             entry.ActorUserId,
             entry.ActorDisplayName,
-            entry.OccurredAt)).ToArray();
+            entry.OccurredAt,
+            entry.CoachId,
+            entry.ClientId,
+            Changes(entry.ChangesJson))).ToArray();
 
         return new(page, query.PageNumber, query.PageSize, totalCount);
+    }
+
+    private static IReadOnlyList<AuditChange> Changes(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.EnumerateObject()
+            .Select(property => new AuditChange(
+                property.Name,
+                property.Value.TryGetProperty("from", out var from) ? from.Clone() : null,
+                property.Value.TryGetProperty("to", out var to) ? to.Clone() : null))
+            .ToArray();
     }
 
     private static IQueryable<AuditEntry> ApplySort(
