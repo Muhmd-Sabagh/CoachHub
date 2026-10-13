@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   NutritionFood,
   baseAmount,
+  countedRows,
   difference,
   macroCalories,
   rowTotals,
@@ -62,5 +63,21 @@ describe('nutrition maths (§6, mirrors the API)', () => {
     expect(macroCalories(150, 200, 60)).toBe(1940);
     expect(difference(2100, 2200)).toBe(-100);
     expect(difference(2100, null)).toBeNull();
+  });
+
+  it('counts the chosen meal option, by default the first', () => {
+    const rows = [
+      { id: 'a1', mealOptionId: 'a' },
+      { id: 'b1', mealOptionId: 'b' },
+      { id: 'b2', mealOptionId: 'b' },
+    ];
+    const options = [
+      { id: 'a', nameEn: 'Option A' },
+      { id: 'b', nameEn: 'Option B' },
+    ];
+    expect(countedRows(rows, options).map((x) => x.id)).toEqual(['a1']);
+    expect(countedRows(rows, options, 'b').map((x) => x.id)).toEqual(['b1', 'b2']);
+    expect(countedRows(rows, options, 'missing').map((x) => x.id)).toEqual(['a1']);
+    expect(countedRows(rows, []).length).toBe(3);
   });
 });

@@ -61,6 +61,19 @@ public sealed class MealConfiguration : IEntityTypeConfiguration<Meal>
     }
 }
 
+public sealed class MealOptionConfiguration : IEntityTypeConfiguration<MealOption>
+{
+    public void Configure(EntityTypeBuilder<MealOption> builder)
+    {
+        builder.ToTable("DietPlanMealOptions"); builder.HasKey(x => x.Id);
+        builder.Property(x => x.NameEn).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.NameAr).HasMaxLength(100);
+        builder.HasIndex(x => new { x.MealId, x.Order }).IsUnique();
+        builder.HasIndex(x => x.RevisionId);
+        builder.HasOne<Meal>().WithMany().HasForeignKey(x => x.MealId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public sealed class MealFoodItemConfiguration : IEntityTypeConfiguration<MealFoodItem>
 {
     public void Configure(EntityTypeBuilder<MealFoodItem> builder)
@@ -73,6 +86,8 @@ public sealed class MealFoodItemConfiguration : IEntityTypeConfiguration<MealFoo
         builder.HasOne<Meal>().WithMany().HasForeignKey(x => x.MealId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<FoodItem>().WithMany().HasForeignKey(x => x.FoodItemId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<FoodUnit>().WithMany().HasForeignKey(x => x.FoodUnitId).OnDelete(DeleteBehavior.Restrict);
+        // The meal already cascades to its rows; a second cascade path through the option is not allowed.
+        builder.HasOne<MealOption>().WithMany().HasForeignKey(x => x.MealOptionId).OnDelete(DeleteBehavior.NoAction);
     }
 }
 
@@ -93,6 +108,7 @@ public sealed class DietReplacementGroupConfiguration : IEntityTypeConfiguration
     {
         builder.ToTable("DietReplacementGroups"); builder.HasKey(x => x.Id);
         builder.Property(x => x.Title).HasMaxLength(300).IsRequired();
+        builder.Property(x => x.Mode).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.HasIndex(x => new { x.DietPlanVariantId, x.Order }).IsUnique();
         builder.HasIndex(x => x.RevisionId);
         builder.HasOne<DietPlanVariant>().WithMany().HasForeignKey(x => x.DietPlanVariantId).OnDelete(DeleteBehavior.Cascade);
@@ -111,9 +127,10 @@ public sealed class DietReplacementOptionConfiguration : IEntityTypeConfiguratio
         builder.HasIndex(x => x.RevisionId);
         builder.ToTable(table => table.HasCheckConstraint(
             "CK_DietReplacementOptions_OneTarget",
-            "([ReplacementFoodItemId] IS NOT NULL AND [ReplacementMealId] IS NULL AND [Quantity] IS NOT NULL) OR ([ReplacementFoodItemId] IS NULL AND [ReplacementMealId] IS NOT NULL AND [Quantity] IS NULL)"));
+            "([ReplacementFoodItemId] IS NOT NULL AND [ReplacementMealId] IS NULL) OR ([ReplacementFoodItemId] IS NULL AND [ReplacementMealId] IS NOT NULL AND [Quantity] IS NULL AND [FoodUnitId] IS NULL)"));
         builder.HasOne<DietReplacementGroup>().WithMany().HasForeignKey(x => x.DietReplacementGroupId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<FoodItem>().WithMany().HasForeignKey(x => x.ReplacementFoodItemId).OnDelete(DeleteBehavior.NoAction);
         builder.HasOne<Meal>().WithMany().HasForeignKey(x => x.ReplacementMealId).OnDelete(DeleteBehavior.NoAction);
+        builder.HasOne<FoodUnit>().WithMany().HasForeignKey(x => x.FoodUnitId).OnDelete(DeleteBehavior.NoAction);
     }
 }

@@ -110,15 +110,18 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - `CoachHubDbContext` captures every tracked change automatically (`Infrastructure/Auditing/AuditCapture.cs`): real actor role, coach, affected client, and previous/new values. Do not write audit rows by hand except for operations that bypass change tracking (`ExecuteUpdate`/`ExecuteDelete`): record those with `CoachHubDbContext.RecordAudit`.
   - Mark secrets and pure bookkeeping fields `[AuditIgnore]` (`Domain/Common`). Never let password hashes, tokens, access codes or one-time links reach the trail.
   - Coaches read their own tenant's trail; administrators read all; clients never.
+- **Food tracking (§7–§11)** — implemented in P8; see `docs/product/phases/P08_FOOD_TRACKING.md`.
+  - The diary (`FoodLogEntry`) is written by the client only, under `/api/v1/me/nutrition`; coaches read it under `/clients/{id}/nutrition`. Entries keep their own name, unit label and nutrients (actual nutrition stays apart from the plan, §9); plan rows are referenced by ID only, without foreign keys.
+  - The plan for a day is the version in force that day (`NutritionAdherence.InForce`), the variant and meal options the client chose (`NutritionDay`), and `DietPlanFigures` for planned totals. Use `DietPlanFigures` for any planned value so the editor, diary and analytics agree.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration as a single-coach back office. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P8. Known gaps against REQUIREMENTS.md:
 
 - string-based workout prescriptions;
-- no client tracking, analytics, chat or calendars.
+- no workout or body tracking, chat or calendars (nutrition tracking exists since P8).
 
 Treat these as planned rework, not conventions to preserve.
 
@@ -151,6 +154,7 @@ Treat these as planned rework, not conventions to preserve.
 
 - NgModule-based app. Feature folders live under `src/app/features`, each with a `*.service.ts` per API area.
 - Visual language comes from TailAdmin through CSS custom properties; see `docs/design/TAILADMIN_ANGULAR_ADAPTATION.md`. Per-coach branding (D1) must override these tokens at runtime, so never hard-code colors in features.
+- Charts use ApexCharts (pinned exactly, P8), imported lazily inside the chart component. Series colors come from the theme tokens at render time, one y-axis per chart, and a table carries the same numbers.
 - The access token lives in `sessionStorage`; the refresh token is an HttpOnly cookie that scripts never see. `AuthService` refreshes silently (interceptor, guards, app initializer). The API is the authorization boundary; route guards are UX only.
 
 ## Workflow

@@ -1231,6 +1231,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("DietPlanVariantId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
@@ -1271,6 +1276,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("DietReplacementGroupId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("FoodUnitId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -1293,6 +1301,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FoodUnitId");
+
                     b.HasIndex("ReplacementFoodItemId");
 
                     b.HasIndex("ReplacementMealId");
@@ -1304,7 +1314,7 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.ToTable("DietReplacementOptions", null, t =>
                         {
-                            t.HasCheckConstraint("CK_DietReplacementOptions_OneTarget", "([ReplacementFoodItemId] IS NOT NULL AND [ReplacementMealId] IS NULL AND [Quantity] IS NOT NULL) OR ([ReplacementFoodItemId] IS NULL AND [ReplacementMealId] IS NOT NULL AND [Quantity] IS NULL)");
+                            t.HasCheckConstraint("CK_DietReplacementOptions_OneTarget", "([ReplacementFoodItemId] IS NOT NULL AND [ReplacementMealId] IS NULL) OR ([ReplacementFoodItemId] IS NULL AND [ReplacementMealId] IS NOT NULL AND [Quantity] IS NULL AND [FoodUnitId] IS NULL)");
                         });
                 });
 
@@ -1366,6 +1376,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("MealId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("MealOptionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -1386,12 +1399,211 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("FoodUnitId");
 
+                    b.HasIndex("MealOptionId");
+
                     b.HasIndex("RevisionId");
 
                     b.HasIndex("MealId", "Order")
                         .IsUnique();
 
                     b.ToTable("DietPlanMealFoods", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.DietPlanning.MealOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MealId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RevisionId");
+
+                    b.HasIndex("MealId", "Order")
+                        .IsUnique();
+
+                    b.ToTable("DietPlanMealOptions", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FoodTracking.FoodLogEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("BaseAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Calories")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal>("Carbohydrates")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Fat")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.Property<decimal>("Fiber")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.Property<Guid?>("FoodItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("FoodUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("LoggedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<Guid?>("PlannedMealFoodItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PlannedMealId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Protein")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.Property<decimal?>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("ReplacementOptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Slot")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("UnitLabel")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("UnitLabelAr")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("FoodItemId");
+
+                    b.HasIndex("FoodUnitId");
+
+                    b.HasIndex("ClientId", "Date");
+
+                    b.ToTable("FoodLogEntries", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_FoodLogEntries_Nutrients", "[Calories] >= 0 AND [Protein] >= 0 AND [Carbohydrates] >= 0 AND [Fat] >= 0 AND [Fiber] >= 0");
+
+                            t.HasCheckConstraint("CK_FoodLogEntries_Portion", "([FoodItemId] IS NULL AND [Quantity] IS NULL AND [BaseAmount] IS NULL AND [FoodUnitId] IS NULL) OR ([FoodItemId] IS NOT NULL AND [Quantity] > 0 AND [BaseAmount] > 0 AND [UnitLabel] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FoodTracking.NutritionDay", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("VariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("ClientId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("NutritionDays", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FoodTracking.NutritionDayMealChoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MealId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MealOptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("NutritionDayId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NutritionDayId", "MealId")
+                        .IsUnique();
+
+                    b.ToTable("NutritionDayMealChoices", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Media.MediaAsset", b =>
@@ -2914,6 +3126,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("CoachHub.Domain.Nutrition.FoodUnit", null)
+                        .WithMany()
+                        .HasForeignKey("FoodUnitId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("CoachHub.Domain.Nutrition.FoodItem", null)
                         .WithMany()
                         .HasForeignKey("ReplacementFoodItemId")
@@ -2950,6 +3167,69 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasOne("CoachHub.Domain.DietPlanning.Meal", null)
                         .WithMany()
                         .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.DietPlanning.MealOption", null)
+                        .WithMany()
+                        .HasForeignKey("MealOptionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.DietPlanning.MealOption", b =>
+                {
+                    b.HasOne("CoachHub.Domain.DietPlanning.Meal", null)
+                        .WithMany()
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FoodTracking.FoodLogEntry", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Nutrition.FoodItem", null)
+                        .WithMany()
+                        .HasForeignKey("FoodItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CoachHub.Domain.Nutrition.FoodUnit", null)
+                        .WithMany()
+                        .HasForeignKey("FoodUnitId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FoodTracking.NutritionDay", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FoodTracking.NutritionDayMealChoice", b =>
+                {
+                    b.HasOne("CoachHub.Domain.FoodTracking.NutritionDay", null)
+                        .WithMany("MealChoices")
+                        .HasForeignKey("NutritionDayId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3252,6 +3532,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoachHub.Domain.Clients.Subscription", b =>
                 {
                     b.Navigation("Renewals");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FoodTracking.NutritionDay", b =>
+                {
+                    b.Navigation("MealChoices");
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Nutrition.FoodItem", b =>

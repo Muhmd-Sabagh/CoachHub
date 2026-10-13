@@ -101,6 +101,25 @@ export function sumTotals(items: NutritionTotals[]): NutritionTotals {
   };
 }
 
+export interface MealOption {
+  id: string;
+  nameEn: string;
+}
+
+/**
+ * The rows a meal's totals count (§13): all of them, or with options those of the chosen option, by
+ * default the first.
+ */
+export function countedRows<T extends { mealOptionId?: string | null }>(
+  rows: T[],
+  options: MealOption[] | null | undefined,
+  chosenOptionId?: string | null,
+): T[] {
+  if (!options?.length) return rows;
+  const option = options.find((x) => x.id === chosenOptionId) ?? options[0];
+  return rows.filter((row) => row.mealOptionId === option.id);
+}
+
 /** Calories implied by macro grams (4/4/9 kcal per gram). */
 export function macroCalories(protein = 0, carbohydrates = 0, fat = 0): number {
   return round((protein ?? 0) * 4 + (carbohydrates ?? 0) * 4 + (fat ?? 0) * 9);

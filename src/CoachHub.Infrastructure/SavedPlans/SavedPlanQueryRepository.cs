@@ -22,9 +22,13 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
         // Rows convert their unit to base units (P7). Foods stay tenant-filtered: IgnoreQueryFilters would
         // lift the filters of the whole query, plans included. A transferred client's plan that still uses the
         // previous coach's custom food therefore lists without that food (its detail view includes it).
+        // A meal with options (P8) counts its first option, like the plan's own totals.
         var dietTotals =
             from revision in currentDiets
             join row in dbContext.Set<MealFoodItem>() on revision.Id equals row.RevisionId
+            where row.MealOptionId == null || row.MealOptionId == dbContext.Set<MealOption>()
+                .Where(option => option.MealId == row.MealId).OrderBy(option => option.Order)
+                .Select(option => (Guid?)option.Id).FirstOrDefault()
             join food in dbContext.Set<FoodItem>() on row.FoodItemId equals food.Id
             join unitValue in dbContext.Set<FoodUnit>() on row.FoodUnitId equals (Guid?)unitValue.Id into units
             from unit in units.DefaultIfEmpty()

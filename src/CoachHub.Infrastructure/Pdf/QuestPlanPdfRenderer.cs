@@ -189,8 +189,16 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             });
             if (!string.IsNullOrWhiteSpace(meal.Notes))
                 column.Item().Text(meal.Notes).FontSize(8).FontColor(Muted).DirectionAuto(language);
-            if (meal.FoodItems.Count > 0)
+            if (meal.Options.Count == 0 && meal.FoodItems.Count > 0)
                 column.Item().Table(table => DietFoodTable(table, meal.FoodItems, language));
+            // A flexible meal (§13) lists each option; the client eats one of them.
+            foreach (var option in meal.Options.OrderBy(x => x.Order))
+            {
+                column.Item().Text($"{PdfLanguageText.Name(option.NameEn, option.NameAr, language)} - {Number(option.Totals.Calories)} kcal")
+                    .Bold().FontSize(9).FontColor(Brand).DirectionAuto(language);
+                column.Item().Table(table => DietFoodTable(table,
+                    meal.FoodItems.Where(x => x.MealOptionId == option.Id).ToArray(), language));
+            }
             foreach (var group in replacements.OrderBy(x => x.Order))
                 column.Item().Background("#F9FAFB").Padding(7).Column(alternatives =>
                 {
@@ -201,7 +209,10 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
                             ? T(language, "Food alternative", "بديل غذائي")
                             : T(language, "Meal alternative", "وجبة بديلة");
                         var name = PdfLanguageText.Name(option.ReplacementNameEn, option.ReplacementNameAr, language);
-                        alternatives.Item().Text($"• {label}: {name} - {Number(option.Totals.Calories)} kcal")
+                        var amount = option.EffectiveQuantity is { } quantity
+                            ? $" {Number(quantity)} {(language == PlanPdfLanguage.Arabic ? option.UnitLabelAr : option.UnitLabel)}"
+                            : string.Empty;
+                        alternatives.Item().Text($"• {label}: {name}{amount} - {Number(option.Totals.Calories)} kcal")
                             .FontSize(8).DirectionAuto(language);
                     }
                 });

@@ -31,19 +31,32 @@ public sealed record DietPlanVariantInput(
     Guid Id, string NameEn, string? NameAr, int Order, bool IsActiveForPdf, string? Notes,
     IReadOnlyCollection<MealInput> Meals,
     IReadOnlyCollection<DietReplacementGroupInput> ReplacementGroups);
-/// <summary>A meal; without a <paramref name="Type"/> it is guessed from the name (anything else is a snack).</summary>
+/// <summary>
+/// A meal; without a <paramref name="Type"/> it is guessed from the name (anything else is a snack). With
+/// <paramref name="Options"/> (§13: "Option A", "Option B") every food row names its option.
+/// </summary>
 public sealed record MealInput(
     Guid Id, string NameEn, string? NameAr, int Order, string? Notes,
-    IReadOnlyCollection<MealFoodItemInput> FoodItems, MealType? Type = null);
-/// <summary>A food in a meal; <paramref name="Quantity"/> is in <paramref name="FoodUnitId"/> (one of the food's units) or its base unit.</summary>
+    IReadOnlyCollection<MealFoodItemInput> FoodItems, MealType? Type = null,
+    IReadOnlyCollection<MealOptionInput>? Options = null);
+/// <summary>An option of a flexible meal (§13); the first by order is the meal's default.</summary>
+public sealed record MealOptionInput(Guid Id, string NameEn, string? NameAr, int Order);
+/// <summary>
+/// A food in a meal; <paramref name="Quantity"/> is in <paramref name="FoodUnitId"/> (one of the food's units) or its
+/// base unit. <paramref name="MealOptionId"/> is required when the meal has options.
+/// </summary>
 public sealed record MealFoodItemInput(
-    Guid Id, Guid FoodItemId, decimal Quantity, int Order, string? Notes, Guid? FoodUnitId = null);
+    Guid Id, Guid FoodItemId, decimal Quantity, int Order, string? Notes, Guid? FoodUnitId = null, Guid? MealOptionId = null);
+/// <summary>
+/// The alternatives permitted for a food row, or a whole meal (§7). In <see cref="ReplacementMode.Flexible"/> mode
+/// a food's quantity is calculated unless the coach sets one.
+/// </summary>
 public sealed record DietReplacementGroupInput(
     Guid Id, Guid TargetMealId, Guid? TargetMealFoodItemId, string Title, int Order,
-    IReadOnlyCollection<DietReplacementOptionInput> Options);
+    IReadOnlyCollection<DietReplacementOptionInput> Options, ReplacementMode Mode = ReplacementMode.Exact);
 public sealed record DietReplacementOptionInput(
     Guid Id, Guid? ReplacementFoodItemId, Guid? ReplacementMealId,
-    decimal? Quantity, int Order, string? Notes);
+    decimal? Quantity, int Order, string? Notes, Guid? FoodUnitId = null);
 
 public sealed record CopyDietPlanInput(string NameEn, string? NameAr, Guid? ClientId);
 public sealed record AssignDietPlanInput(Guid? ClientId);
@@ -76,20 +89,28 @@ public sealed record DietPlanVariantResponse(
     IReadOnlyList<MealResponse> Meals,
     IReadOnlyList<DietReplacementGroupResponse> ReplacementGroups,
     NutritionTotals Totals);
+/// <summary>A meal; with options, <paramref name="Totals"/> are those of its first (default) option.</summary>
 public sealed record MealResponse(
     Guid Id, string NameEn, string? NameAr, MealType Type, int Order, string? Notes,
-    IReadOnlyList<MealFoodItemResponse> FoodItems, NutritionTotals Totals);
+    IReadOnlyList<MealFoodItemResponse> FoodItems, NutritionTotals Totals,
+    IReadOnlyList<MealOptionResponse> Options);
+public sealed record MealOptionResponse(Guid Id, string NameEn, string? NameAr, int Order, NutritionTotals Totals);
 /// <summary>A food row; <paramref name="UnitLabel"/> names the unit the quantity is in ("g", "slice", "cup").</summary>
 public sealed record MealFoodItemResponse(
     Guid Id, Guid FoodItemId, string FoodNameEn, string? FoodNameAr, Guid? FoodUnitId, string UnitLabel, string UnitLabelAr,
-    decimal Quantity, int Order, string? Notes, NutritionTotals Totals);
+    decimal Quantity, int Order, string? Notes, NutritionTotals Totals, Guid? MealOptionId = null);
 public sealed record DietReplacementGroupResponse(
     Guid Id, Guid TargetMealId, Guid? TargetMealFoodItemId, string Title, int Order,
-    IReadOnlyList<DietReplacementOptionResponse> Options);
+    IReadOnlyList<DietReplacementOptionResponse> Options, ReplacementMode Mode);
+/// <summary>
+/// An alternative. <paramref name="Quantity"/> is what the coach set; <paramref name="EffectiveQuantity"/> is what the
+/// client gets (the calculated one in a flexible group without an override), and <paramref name="Totals"/> are for it.
+/// </summary>
 public sealed record DietReplacementOptionResponse(
     Guid Id, Guid? ReplacementFoodItemId, Guid? ReplacementMealId,
     string ReplacementNameEn, string? ReplacementNameAr,
-    decimal? Quantity, int Order, string? Notes, NutritionTotals Totals);
+    decimal? Quantity, int Order, string? Notes, NutritionTotals Totals,
+    Guid? FoodUnitId, string? UnitLabel, string? UnitLabelAr, decimal? EffectiveQuantity, bool IsCalculated);
 
 [JsonConverter(typeof(JsonStringEnumConverter<BiologicalSex>))]
 public enum BiologicalSex { Male, Female }

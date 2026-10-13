@@ -13,7 +13,8 @@ public sealed record DietPlanAggregate(
     IReadOnlyList<Meal> Meals,
     IReadOnlyList<MealFoodItem> FoodItems,
     IReadOnlyList<DietReplacementGroup> ReplacementGroups,
-    IReadOnlyList<DietReplacementOption> ReplacementOptions);
+    IReadOnlyList<DietReplacementOption> ReplacementOptions,
+    IReadOnlyList<MealOption> MealOptions);
 
 public interface IDietPlanRepository
 {

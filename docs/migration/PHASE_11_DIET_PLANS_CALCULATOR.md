@@ -4,6 +4,7 @@
 >
 > - D4 (P6): `DietPlanVersion` (ordered tabs) is now `DietPlanVariant`, inside a `DietPlanRevision`. Plans have version history with dates; `PUT /diet-plans/{id}` is replaced by `PUT …/revisions/current` (save in place) and `POST …/revisions` (save as new version); archived versions are read-only. See [P06_PLAN_VERSIONS.md](../product/phases/P06_PLAN_VERSIONS.md).
 > - §14 and §15 (P7): the fixed ±500 kcal goal and the single protein g/kg + fat % mode are replaced by the coach's deficit/surplus % and activity factors and three macro modes chosen per client; food rows take a unit, meals a type, versions targets. See [P07_NUTRITION_ENGINE.md](../product/phases/P07_NUTRITION_ENGINE.md).
+> - §7 and §13 (P8): replacement groups are Exact (the coach's quantity) or Flexible (an equivalent quantity calculated by the coach's replacement rule), alternatives take a unit, and meals can have options A/B/C. Clients log against the plan in their food diary. See [P08_FOOD_TRACKING.md](../product/phases/P08_FOOD_TRACKING.md).
 > - D1: Administrator-only access is replaced by coach-owned plans (P1).
 
 ## Outcome
