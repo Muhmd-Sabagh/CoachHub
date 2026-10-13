@@ -71,6 +71,12 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
                 item => item.NameEn.ToUpper() == normalized && (!excludingId.HasValue || item.Id != excludingId.Value),
                 cancellationToken);
         }
+        if (typeof(TEntity) == typeof(MuscleGroup))
+        {
+            return dbContext.Set<MuscleGroup>().AnyAsync(
+                item => item.NameEn.ToUpper() == normalized && (!excludingId.HasValue || item.Id != excludingId.Value),
+                cancellationToken);
+        }
         if (typeof(TEntity) == typeof(Currency))
         {
             return dbContext.Set<Currency>().AnyAsync(
@@ -113,6 +119,16 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
             throw new ConflictException(
                 "Exercise category cannot be deleted while exercises reference it. Deactivate it instead.");
         }
+        // Exercises of every coach count, so these checks deliberately read across tenants (standalone queries).
+        if (entity is MuscleGroup muscle &&
+            (await dbContext.Set<Exercise>().IgnoreQueryFilters()
+                .AnyAsync(exercise => exercise.PrimaryMuscleGroupId == muscle.Id, cancellationToken) ||
+             await dbContext.Set<ExerciseSecondaryMuscle>()
+                .AnyAsync(link => link.MuscleGroupId == muscle.Id, cancellationToken)))
+            throw new ConflictException("Muscle group is used by exercises. Deactivate it instead.");
+        if (entity is Equipment equipment &&
+            await dbContext.Set<ExerciseEquipment>().AnyAsync(link => link.EquipmentId == equipment.Id, cancellationToken))
+            throw new ConflictException("Equipment is used by exercises. Deactivate it instead.");
         if (entity is Package package && await dbContext.Set<Subscription>()
                 .AnyAsync(subscription => subscription.PackageId == package.Id, cancellationToken))
             throw new ConflictException("Package is referenced by subscriptions. Deactivate it instead.");
@@ -162,6 +178,12 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
         if (typeof(TEntity) == typeof(Equipment))
         {
             var typed = (IQueryable<Equipment>)(object)source;
+            return (IQueryable<TEntity>)(object)typed.Where(item =>
+                item.NameEn.Contains(term) || (item.NameAr != null && item.NameAr.Contains(term)));
+        }
+        if (typeof(TEntity) == typeof(MuscleGroup))
+        {
+            var typed = (IQueryable<MuscleGroup>)(object)source;
             return (IQueryable<TEntity>)(object)typed.Where(item =>
                 item.NameEn.Contains(term) || (item.NameAr != null && item.NameAr.Contains(term)));
         }
@@ -229,6 +251,12 @@ public sealed class ReferenceRepository<TEntity>(CoachHubDbContext dbContext)
         if (typeof(TEntity) == typeof(Equipment))
         {
             var typed = (IQueryable<Equipment>)(object)source;
+            var sorted = descending ? typed.OrderByDescending(item => item.NameEn) : typed.OrderBy(item => item.NameEn);
+            return (IQueryable<TEntity>)(object)sorted.ThenBy(item => item.Id);
+        }
+        if (typeof(TEntity) == typeof(MuscleGroup))
+        {
+            var typed = (IQueryable<MuscleGroup>)(object)source;
             var sorted = descending ? typed.OrderByDescending(item => item.NameEn) : typed.OrderBy(item => item.NameEn);
             return (IQueryable<TEntity>)(object)sorted.ThenBy(item => item.Id);
         }

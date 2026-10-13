@@ -1976,6 +1976,132 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.ToTable("FoodCategories", (string)null);
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.ReferenceData.MuscleGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NameEn")
+                        .IsUnique();
+
+                    b.ToTable("MuscleGroups", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0001-4c8e-9a1b-5f3e2d1c0b01"),
+                            IsActive = true,
+                            NameAr = "الصدر",
+                            NameEn = "Chest"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0002-4c8e-9a1b-5f3e2d1c0b02"),
+                            IsActive = true,
+                            NameAr = "الظهر",
+                            NameEn = "Back"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0003-4c8e-9a1b-5f3e2d1c0b03"),
+                            IsActive = true,
+                            NameAr = "الأكتاف",
+                            NameEn = "Shoulders"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0004-4c8e-9a1b-5f3e2d1c0b04"),
+                            IsActive = true,
+                            NameAr = "العضلة ذات الرأسين",
+                            NameEn = "Biceps"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0005-4c8e-9a1b-5f3e2d1c0b05"),
+                            IsActive = true,
+                            NameAr = "العضلة ثلاثية الرؤوس",
+                            NameEn = "Triceps"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0006-4c8e-9a1b-5f3e2d1c0b06"),
+                            IsActive = true,
+                            NameAr = "الساعد",
+                            NameEn = "Forearms"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0007-4c8e-9a1b-5f3e2d1c0b07"),
+                            IsActive = true,
+                            NameAr = "الفخذ الأمامي",
+                            NameEn = "Quadriceps"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0008-4c8e-9a1b-5f3e2d1c0b08"),
+                            IsActive = true,
+                            NameAr = "الفخذ الخلفي",
+                            NameEn = "Hamstrings"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-0009-4c8e-9a1b-5f3e2d1c0b09"),
+                            IsActive = true,
+                            NameAr = "الأرداف",
+                            NameEn = "Glutes"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-000a-4c8e-9a1b-5f3e2d1c0b0a"),
+                            IsActive = true,
+                            NameAr = "السمانة",
+                            NameEn = "Calves"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-000b-4c8e-9a1b-5f3e2d1c0b0b"),
+                            IsActive = true,
+                            NameAr = "البطن",
+                            NameEn = "Abs"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-000c-4c8e-9a1b-5f3e2d1c0b0c"),
+                            IsActive = true,
+                            NameAr = "أسفل الظهر",
+                            NameEn = "Lower back"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-000d-4c8e-9a1b-5f3e2d1c0b0d"),
+                            IsActive = true,
+                            NameAr = "الترابيس",
+                            NameEn = "Traps"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e4d6c1a-000e-4c8e-9a1b-5f3e2d1c0b0e"),
+                            IsActive = true,
+                            NameAr = "العضلات المقربة",
+                            NameEn = "Adductors"
+                        });
+                });
+
             modelBuilder.Entity("CoachHub.Domain.ReferenceData.Package", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2246,8 +2372,39 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CoachingCuesAr")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("CoachingCuesEn")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("CommonMistakesAr")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("CommonMistakesEn")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Difficulty")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<Guid>("ExerciseCategoryId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InstructionsAr")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("InstructionsEn")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -2264,19 +2421,70 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<Guid?>("PrimaryMuscleGroupId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("YouTubeUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CoachId");
+
                     b.HasIndex("MediaId");
 
                     b.HasIndex("NameEn");
 
+                    b.HasIndex("PrimaryMuscleGroupId");
+
                     b.HasIndex("ExerciseCategoryId", "IsActive");
 
                     b.ToTable("Exercises", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Training.ExerciseEquipment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EquipmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.HasIndex("ExerciseId", "EquipmentId")
+                        .IsUnique();
+
+                    b.ToTable("ExerciseEquipment", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Training.ExerciseSecondaryMuscle", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MuscleGroupId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MuscleGroupId");
+
+                    b.HasIndex("ExerciseId", "MuscleGroupId")
+                        .IsUnique();
+
+                    b.ToTable("ExerciseSecondaryMuscles", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Training.LegacyExerciseImportRecord", b =>
@@ -2303,6 +2511,83 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("LegacyExerciseImports", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.PrescribedSet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsSkippable")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("LoadKg")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RepsMax")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RepsMin")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RestSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("Rir")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Rpe")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("decimal(3,1)");
+
+                    b.Property<int?>("TempoBottomPause")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TempoConcentric")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TempoEccentric")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TempoTopPause")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("WorkoutExerciseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RevisionId");
+
+                    b.HasIndex("WorkoutExerciseId", "Order")
+                        .IsUnique();
+
+                    b.ToTable("WorkoutPrescribedSets", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WorkoutPrescribedSets_Reps", "[RepsMax] IS NULL OR ([RepsMin] IS NOT NULL AND [RepsMin] <= [RepsMax])");
+
+                            t.HasCheckConstraint("CK_WorkoutPrescribedSets_Tempo", "([TempoEccentric] IS NULL AND [TempoBottomPause] IS NULL AND [TempoConcentric] IS NULL AND [TempoTopPause] IS NULL) OR ([TempoEccentric] IS NOT NULL AND [TempoBottomPause] IS NOT NULL AND [TempoConcentric] IS NOT NULL AND [TempoTopPause] IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.WorkoutDay", b =>
@@ -2348,6 +2633,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Block")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<Guid>("ExerciseId")
                         .HasColumnType("uniqueidentifier");
 
@@ -2358,28 +2648,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
-                    b.Property<string>("Repetitions")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Rest")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<Guid>("RevisionId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("RpeRir")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Sets")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Tempo")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<Guid?>("SetGroupId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("WorkoutDayId")
                         .HasColumnType("uniqueidentifier");
@@ -2389,6 +2662,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasIndex("ExerciseId");
 
                     b.HasIndex("RevisionId");
+
+                    b.HasIndex("SetGroupId");
 
                     b.HasIndex("WorkoutDayId", "Order")
                         .IsUnique();
@@ -2505,6 +2780,39 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_WorkoutPlanRevisions_Dates", "[EndDate] IS NULL OR [StartDate] IS NULL OR [EndDate] >= [StartDate]");
                         });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.WorkoutSetGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("RestSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("WorkoutDayId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RevisionId");
+
+                    b.HasIndex("WorkoutDayId");
+
+                    b.ToTable("WorkoutSetGroups", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Infrastructure.Auth.Persistence.Role", b =>
@@ -3361,6 +3669,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoachHub.Domain.Training.Exercise", b =>
                 {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("CoachHub.Domain.ReferenceData.ExerciseCategory", null)
                         .WithMany()
                         .HasForeignKey("ExerciseCategoryId")
@@ -3371,6 +3684,41 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("MediaId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("CoachHub.Domain.ReferenceData.MuscleGroup", null)
+                        .WithMany()
+                        .HasForeignKey("PrimaryMuscleGroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Training.ExerciseEquipment", b =>
+                {
+                    b.HasOne("CoachHub.Domain.ReferenceData.Equipment", null)
+                        .WithMany()
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Training.Exercise", null)
+                        .WithMany("Equipment")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Training.ExerciseSecondaryMuscle", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Training.Exercise", null)
+                        .WithMany("SecondaryMuscles")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.ReferenceData.MuscleGroup", null)
+                        .WithMany()
+                        .HasForeignKey("MuscleGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Training.LegacyExerciseImportRecord", b =>
@@ -3378,6 +3726,15 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasOne("CoachHub.Domain.Training.Exercise", null)
                         .WithOne()
                         .HasForeignKey("CoachHub.Domain.Training.LegacyExerciseImportRecord", "ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.PrescribedSet", b =>
+                {
+                    b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutExercise", null)
+                        .WithMany()
+                        .HasForeignKey("WorkoutExerciseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3398,6 +3755,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ExerciseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutSetGroup", null)
+                        .WithMany()
+                        .HasForeignKey("SetGroupId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutDay", null)
                         .WithMany()
@@ -3434,6 +3796,15 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutPlan", null)
                         .WithMany()
                         .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutPlanning.WorkoutSetGroup", b =>
+                {
+                    b.HasOne("CoachHub.Domain.WorkoutPlanning.WorkoutDay", null)
+                        .WithMany()
+                        .HasForeignKey("WorkoutDayId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3542,6 +3913,13 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoachHub.Domain.Nutrition.FoodItem", b =>
                 {
                     b.Navigation("Units");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Training.Exercise", b =>
+                {
+                    b.Navigation("Equipment");
+
+                    b.Navigation("SecondaryMuscles");
                 });
 #pragma warning restore 612, 618
         }

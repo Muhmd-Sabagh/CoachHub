@@ -6,7 +6,8 @@ namespace CoachHub.Application.WorkoutPlanning;
 /// <summary>A workout plan with the content of one of its versions.</summary>
 public sealed record WorkoutPlanAggregate(
     WorkoutPlan Plan, WorkoutPlanRevision Revision, int CurrentVersionNumber,
-    IReadOnlyList<WorkoutPlanNote> Notes, IReadOnlyList<WorkoutDay> Days, IReadOnlyList<WorkoutExercise> Exercises);
+    IReadOnlyList<WorkoutPlanNote> Notes, IReadOnlyList<WorkoutDay> Days, IReadOnlyList<WorkoutExercise> Exercises,
+    IReadOnlyList<WorkoutSetGroup> SetGroups, IReadOnlyList<PrescribedSet> Sets);
 
 public interface IWorkoutPlanRepository
 {
@@ -16,7 +17,14 @@ public interface IWorkoutPlanRepository
     Task<IReadOnlyList<WorkoutPlanRevision>?> ListRevisionsAsync(Guid planId, CancellationToken cancellationToken);
     Task<IReadOnlyDictionary<Guid, string>> FindAuthorNamesAsync(
         IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken);
+    /// <summary>Exercises the caller can see (platform exercises and the coach's own).</summary>
     Task<IReadOnlyDictionary<Guid, Exercise>> FindExercisesAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+    /// <summary>
+    /// Exercises referenced by a plan the caller can already see, whoever owns them (after a client transfer a
+    /// plan can reference the previous coach's custom exercises).
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, Exercise>> FindReferencedExercisesAsync(
         IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
     /// <summary>The client's current coach, or null when the client is not visible.</summary>
     Task<Guid?> FindClientCoachIdAsync(Guid clientId, CancellationToken cancellationToken);

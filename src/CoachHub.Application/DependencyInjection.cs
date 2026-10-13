@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<FoodCategoryService>();
         services.AddScoped<ExerciseCategoryService>();
         services.AddScoped<EquipmentService>();
+        services.AddScoped<MuscleGroupService>();
         services.AddScoped<ClientProfileService>();
         services.AddScoped<SavedPlanQueryService>();
         services.AddScoped<ExerciseService>();

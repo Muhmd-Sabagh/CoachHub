@@ -57,7 +57,7 @@ public sealed class PlanDeliveryRepository(CoachHubDbContext db, IDietPlanReposi
         var workout = await workouts.FindAsync(planId, versionNumber, false, token);
         if (workout is null) return null;
         var workoutName = arabic ? workout.Plan.NameAr ?? workout.Plan.NameEn : workout.Plan.NameEn;
-        var workoutSnapshot = new { workout.Plan, workout.Revision, workout.Notes, workout.Days, workout.Exercises };
+        var workoutSnapshot = new { workout.Plan, workout.Revision, workout.Notes, workout.Days, workout.Exercises, workout.SetGroups, workout.Sets };
         return new(workout.Plan.CoachId, workoutName, workout.Revision.Id, workout.Revision.VersionNumber, JsonSerializer.Serialize(workoutSnapshot));
     }
     public async Task<IReadOnlyList<DeliveredPlan>> ListAsync(Guid clientId, CancellationToken token) => await db.Set<DeliveredPlan>().AsNoTracking().Where(x => x.ClientId == clientId).OrderByDescending(x => x.DeliveredAt).ToArrayAsync(token);

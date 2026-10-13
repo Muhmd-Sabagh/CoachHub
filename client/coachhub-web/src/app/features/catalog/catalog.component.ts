@@ -9,7 +9,7 @@ import {
   ReferenceKey,
   ReferenceRecord,
 } from '../settings/reference-data.service';
-import { CatalogItem } from './catalog.models';
+import { CatalogItem, exerciseDifficulties } from './catalog.models';
 import { CatalogKind, CatalogService } from './catalog.service';
 @Component({ selector: 'app-catalog', templateUrl: './catalog.component.html', standalone: false })
 export class CatalogComponent implements OnInit {
@@ -22,8 +22,13 @@ export class CatalogComponent implements OnInit {
   appliedSearch = '';
   categoryId = '';
   active = '';
-  /** Foods only: both catalogs, the platform's, or the coach's own (§5). */
+  /** Both catalogs, the platform's, or the coach's own (§5, §17). */
   scope = '';
+  /** Exercises: training the group as primary or secondary muscle. */
+  muscleGroupId = '';
+  muscles: ReferenceRecord[] = [];
+  equipment: ReferenceRecord[] = [];
+  readonly difficulties = exerciseDifficulties;
   loading = false;
   saving = false;
   editorOpen = false;
@@ -31,10 +36,7 @@ export class CatalogComponent implements OnInit {
   error = '';
   editor = this.emptyEditor();
   readonly isAdmin: boolean;
-  /**
-   * Administrators manage the platform catalogs. Coaches also add custom foods of their own (§5);
-   * exercises stay platform-only until P9.
-   */
+  /** Administrators manage the platform catalogs; coaches add custom foods and exercises of their own (§5, §17). */
   readonly canCreate: boolean;
   constructor(
     route: ActivatedRoute,
@@ -44,7 +46,7 @@ export class CatalogComponent implements OnInit {
   ) {
     this.isAdmin = auth.isAdmin();
     this.kind = route.snapshot.data['kind'] as CatalogKind;
-    this.canCreate = this.isAdmin || this.kind === 'foods';
+    this.canCreate = true;
     this.title = this.kind === 'foods' ? 'Foods' : 'Exercises';
     this.categoryKey = this.kind === 'foods' ? 'food-categories' : 'exercise-categories';
   }
@@ -52,6 +54,10 @@ export class CatalogComponent implements OnInit {
     this.references
       .list(this.categoryKey, { pageSize: 100, isActive: true })
       .subscribe((x) => (this.categories = x.items));
+    if (this.kind === 'exercises') {
+      this.references.list('muscle-groups', { pageSize: 100, isActive: true }).subscribe((x) => (this.muscles = x.items));
+      this.references.list('equipment', { pageSize: 100, isActive: true }).subscribe((x) => (this.equipment = x.items));
+    }
     this.load();
   }
   applySearch(): void {
@@ -64,6 +70,7 @@ export class CatalogComponent implements OnInit {
     this.categoryId = '';
     this.active = '';
     this.scope = '';
+    this.muscleGroupId = '';
     this.load(1);
   }
   load(pageNumber = this.page.pageNumber): void {
@@ -76,7 +83,8 @@ export class CatalogComponent implements OnInit {
         searchTerm: this.appliedSearch,
         categoryId: this.categoryId,
         isActive: this.active,
-        scope: this.kind === 'foods' ? this.scope : '',
+        scope: this.scope,
+        muscleGroupId: this.kind === 'exercises' ? this.muscleGroupId : '',
       })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({ next: (p) => (this.page = p), error: (e) => (this.error = apiErrorMessage(e)) });
@@ -107,6 +115,16 @@ export class CatalogComponent implements OnInit {
       youTubeUrl: item.youTubeUrl ?? '',
       mediaId: item.mediaId ?? '',
       isActive: item.isActive,
+      difficulty: item.difficulty ?? '',
+      primaryMuscleGroupId: item.primaryMuscleGroupId ?? '',
+      secondaryMuscleGroupIds: new Set(item.secondaryMuscleGroupIds ?? []),
+      equipmentIds: new Set(item.equipmentIds ?? []),
+      instructionsEn: item.instructionsEn ?? '',
+      instructionsAr: item.instructionsAr ?? '',
+      coachingCuesEn: item.coachingCuesEn ?? '',
+      coachingCuesAr: item.coachingCuesAr ?? '',
+      commonMistakesEn: item.commonMistakesEn ?? '',
+      commonMistakesAr: item.commonMistakesAr ?? '',
     };
     this.editorOpen = true;
   }
@@ -147,6 +165,18 @@ export class CatalogComponent implements OnInit {
             ...common,
             exerciseCategoryId: this.editor.categoryId,
             youTubeUrl: this.editor.youTubeUrl || null,
+            difficulty: this.editor.difficulty || null,
+            primaryMuscleGroupId: this.editor.primaryMuscleGroupId || null,
+            secondaryMuscleGroupIds: [...this.editor.secondaryMuscleGroupIds].filter(
+              (x) => x !== this.editor.primaryMuscleGroupId,
+            ),
+            equipmentIds: [...this.editor.equipmentIds],
+            instructionsEn: this.editor.instructionsEn || null,
+            instructionsAr: this.editor.instructionsAr || null,
+            coachingCuesEn: this.editor.coachingCuesEn || null,
+            coachingCuesAr: this.editor.coachingCuesAr || null,
+            commonMistakesEn: this.editor.commonMistakesEn || null,
+            commonMistakesAr: this.editor.commonMistakesAr || null,
           };
     this.saving = true;
     const req = this.editingId
@@ -166,9 +196,16 @@ export class CatalogComponent implements OnInit {
         .delete(this.kind, item.id)
         .subscribe({ next: () => this.load(), error: (e) => (this.error = apiErrorMessage(e)) });
   }
-  /** Administrators edit anything; a coach edits only their own custom foods. */
+  /** Administrators edit anything; a coach edits only their own custom foods and exercises. */
   canEdit(item: CatalogItem): boolean {
-    return this.isAdmin || (this.kind === 'foods' && !!item.isCustom);
+    return this.isAdmin || !!item.isCustom;
+  }
+  toggle(set: Set<string>, id: string): void {
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
+  }
+  muscleName(id?: string | null): string {
+    return this.muscles.find((x) => x.id === id)?.nameEn ?? '—';
   }
   addUnit(): void {
     this.editor.units.push({ id: null, nameEn: '', nameAr: '', baseQuantity: 1 });
@@ -207,6 +244,16 @@ export class CatalogComponent implements OnInit {
       youTubeUrl: '',
       mediaId: '',
       isActive: true,
+      difficulty: '' as string,
+      primaryMuscleGroupId: '',
+      secondaryMuscleGroupIds: new Set<string>(),
+      equipmentIds: new Set<string>(),
+      instructionsEn: '',
+      instructionsAr: '',
+      coachingCuesEn: '',
+      coachingCuesAr: '',
+      commonMistakesEn: '',
+      commonMistakesAr: '',
     };
   }
 }

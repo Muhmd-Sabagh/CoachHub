@@ -1,5 +1,9 @@
 # Phase 7 training catalog
 
+> **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** Where this conflicts with the product requirements or decisions D1–D7, the requirements win.
+>
+> - §17 (P9): exercises gain a primary and secondary muscle groups (new `MuscleGroup` reference data), equipment, difficulty and bilingual instructions, coaching cues and common mistakes. Coaches keep custom exercises next to the platform library, which stays administrator-managed. See [P09_WORKOUT_BUILDER.md](../product/phases/P09_WORKOUT_BUILDER.md).
+
 ## Delivered scope
 
 Administrator-only exercise APIs are available at `api/training/exercises` for create, read, update, delete, and server-side listing. Queries support page number, page size, explicit search term, exercise category, active state, and stable sorting.

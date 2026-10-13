@@ -1,6 +1,6 @@
 # P8 — Replacements, flexible meals and food tracking
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P8 · **Branch:** `phase/p08-food-tracking` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P8 · **Branch:** `phase/p08-food-tracking` · **Status:** Merged (PR #10).
 **Covers:** §7, §8, §9, §10, §11, §13, §49 (food-replacement rule), D3.
 
 ## Purpose

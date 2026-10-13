@@ -1215,6 +1215,51 @@ textarea:focus {
 .dark .plan-summary {
   color: var(--gray-300);
 }
+/* §16: typed sets in the workout builder. */
+.workout-exercise {
+  display: grid;
+  gap: 8px;
+}
+.group-label {
+  min-width: 2.25rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-weight: 600;
+  text-align: center;
+}
+.set-table th,
+.set-table td {
+  padding: 4px;
+  white-space: nowrap;
+}
+.set-table input[type='number'] {
+  width: 64px;
+}
+.set-table .reps input {
+  width: 52px;
+}
+.set-table .tempo {
+  width: 80px;
+}
+.set-table .invalid {
+  border-color: var(--error);
+}
+.inline-field {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.inline-field input {
+  width: 64px;
+}
+/* §17: muscle and equipment pickers in the exercise editor. */
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px 12px;
+}
 /* §13: options of a flexible meal in the plan editor. */
 .meal-options {
   display: flex;

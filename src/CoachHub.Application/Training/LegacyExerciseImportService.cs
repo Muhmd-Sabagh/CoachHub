@@ -42,7 +42,8 @@ public sealed class LegacyExerciseImportService(
                 row.MediaId,
                 row.YouTubeLink,
                 true);
-            var exercise = ExerciseService.Create(input);
+            // Legacy exercises are platform exercises without muscles; an administrator adds those later.
+            var exercise = Exercise.Create(null, ExerciseService.Values(input));
             var record = LegacyExerciseImportRecord.Create(
                 row.LegacyId,
                 exercise.Id,

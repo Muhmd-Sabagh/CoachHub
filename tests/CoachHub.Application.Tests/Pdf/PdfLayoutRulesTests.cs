@@ -1,6 +1,7 @@
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Pdf;
 using CoachHub.Application.WorkoutPlanning;
+using CoachHub.Domain.WorkoutPlanning;
 
 namespace CoachHub.Application.Tests.Pdf;
 
@@ -11,17 +12,18 @@ public sealed class PdfLayoutRulesTests
     {
         var rows = new[]
         {
-            Exercise(sets: "3", notes: null),
-            Exercise(sets: null, notes: "Controlled")
+            Exercise([Set(0, loadKg: 60)], notes: null),
+            Exercise([Set(0)], notes: "Controlled")
         };
 
         var columns = PdfColumnVisibility.Workout(rows);
         Assert.True(columns.Sets);
+        Assert.True(columns.Load);
         Assert.True(columns.Notes);
-        Assert.False(columns.Repetitions);
+        Assert.False(columns.Reps);
         Assert.False(columns.Rest);
         Assert.False(columns.Tempo);
-        Assert.False(columns.RpeRir);
+        Assert.False(columns.Effort);
         Assert.False(columns.Video);
     }
 
@@ -44,7 +46,10 @@ public sealed class PdfLayoutRulesTests
         Assert.True(PdfColumnVisibility.DietNotes(rows));
     }
 
-    private static WorkoutExerciseResponse Exercise(string? sets, string? notes) => new(
+    private static WorkoutExerciseResponse Exercise(PrescribedSetResponse[] sets, string? notes) => new(
         Guid.NewGuid(), Guid.NewGuid(), "Press", null, Guid.NewGuid(), null, null, true,
-        0, sets, null, null, null, null, notes);
+        0, notes, WorkoutBlock.Main, null, null, null, sets);
+
+    private static PrescribedSetResponse Set(int order, decimal? loadKg = null) =>
+        new(Guid.NewGuid(), order, SetType.Normal, null, null, loadKg, null, null, null, null, null, false, null);
 }

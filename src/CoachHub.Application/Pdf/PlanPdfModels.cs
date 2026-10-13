@@ -20,8 +20,9 @@ public interface IPlanPdfClientRepository
     Task<PdfClientInfo?> FindAsync(Guid id, CancellationToken cancellationToken);
 }
 
+/// <summary>Which workout columns have anything to show; empty columns are left out of the PDF.</summary>
 public sealed record WorkoutPdfColumns(
-    bool Sets, bool Repetitions, bool Rest, bool Tempo, bool RpeRir, bool Notes, bool Video);
+    bool Sets, bool Reps, bool Load, bool Effort, bool Tempo, bool Rest, bool Notes, bool Video);
 
 public static class PdfColumnVisibility
 {
@@ -31,11 +32,12 @@ public static class PdfColumnVisibility
     public static WorkoutPdfColumns Workout(IEnumerable<WorkoutExerciseResponse> rows)
     {
         var values = rows.ToArray();
+        var summaries = values.Select(x => PrescriptionSummary.Of(x.Sets)).ToArray();
         return new(
-            values.Any(x => Meaningful(x.Sets)), values.Any(x => Meaningful(x.Repetitions)),
-            values.Any(x => Meaningful(x.Rest)), values.Any(x => Meaningful(x.Tempo)),
-            values.Any(x => Meaningful(x.RpeRir)), values.Any(x => Meaningful(x.Notes)),
-            values.Any(x => Meaningful(x.YouTubeUrl)));
+            summaries.Any(x => Meaningful(x.Sets)), summaries.Any(x => Meaningful(x.Reps)),
+            summaries.Any(x => Meaningful(x.Load)), summaries.Any(x => Meaningful(x.Effort)),
+            summaries.Any(x => Meaningful(x.Tempo)), summaries.Any(x => Meaningful(x.Rest)),
+            values.Any(x => Meaningful(x.Notes)), values.Any(x => Meaningful(x.YouTubeUrl)));
     }
 
     private static bool Meaningful(string? value) => !string.IsNullOrWhiteSpace(value);

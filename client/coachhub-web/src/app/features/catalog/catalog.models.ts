@@ -25,4 +25,18 @@ export interface CatalogItem {
   mediaId?: string | null;
   youTubeUrl?: string | null;
   isActive: boolean;
+  /** Exercises (§17). */
+  difficulty?: ExerciseDifficulty | null;
+  primaryMuscleGroupId?: string | null;
+  secondaryMuscleGroupIds?: string[];
+  equipmentIds?: string[];
+  instructionsEn?: string | null;
+  instructionsAr?: string | null;
+  coachingCuesEn?: string | null;
+  coachingCuesAr?: string | null;
+  commonMistakesEn?: string | null;
+  commonMistakesAr?: string | null;
 }
+
+export type ExerciseDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+export const exerciseDifficulties: ExerciseDifficulty[] = ['Beginner', 'Intermediate', 'Advanced'];

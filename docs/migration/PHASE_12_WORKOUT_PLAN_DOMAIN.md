@@ -2,7 +2,7 @@
 
 > **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).** This document records how the legacy-migration phase was built. Where it conflicts with the product requirements or decisions D1–D6, the requirements win. See [ROADMAP.md](../product/ROADMAP.md) for the phase that reworks this area.
 >
-> - D3: prescriptions kept as bounded strings are replaced by structured typed fields, set grouping and block types (P9).
+> - D3 (P9): prescriptions kept as bounded strings are replaced by one typed `PrescribedSet` per set (reps, load, RIR, RPE, tempo, rest, duration, set type), blocks (warm-up, main, cool-down) and set groups (superset, giant set). The migration converts the old text where it parses and keeps it in the notes. See [P09_WORKOUT_BUILDER.md](../product/phases/P09_WORKOUT_BUILDER.md).
 > - D4 (P6): days and notes belong to a `WorkoutPlanRevision`; plans have version history with dates and explicit save-in-place / save-as-new-version endpoints; archived versions are read-only. See [P06_PLAN_VERSIONS.md](../product/phases/P06_PLAN_VERSIONS.md).
 
 ## Outcome

@@ -7,12 +7,12 @@ public sealed class ExerciseTests
     [Fact]
     public void Create_allows_optional_arabic_media_and_youtube_values()
     {
-        var exercise = Exercise.Create(
+        var exercise = Exercise.Create(null, new ExerciseValues(
             "  Squat  ",
             null,
             Guid.NewGuid(),
             null,
-            " https://youtu.be/example ");
+            " https://youtu.be/example "));
 
         Assert.Equal("Squat", exercise.NameEn);
         Assert.Null(exercise.NameAr);
@@ -27,8 +27,8 @@ public sealed class ExerciseTests
     [InlineData("not-a-url")]
     public void Create_rejects_non_https_or_non_youtube_links(string url)
     {
-        Assert.Throws<ArgumentException>(() => Exercise.Create(
-            "Squat", null, Guid.NewGuid(), null, url));
+        Assert.Throws<ArgumentException>(() => Exercise.Create(null, new ExerciseValues(
+            "Squat", null, Guid.NewGuid(), null, url)));
     }
 
     [Theory]

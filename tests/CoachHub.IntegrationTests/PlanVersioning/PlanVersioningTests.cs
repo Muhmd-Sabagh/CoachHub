@@ -18,6 +18,7 @@ using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 using CoachHub.IntegrationTests.Persistence;
 using Microsoft.EntityFrameworkCore;
+using CoachHub.IntegrationTests.WorkoutPlanning;
 
 namespace CoachHub.IntegrationTests.PlanVersioning;
 
@@ -143,22 +144,22 @@ public sealed class PlanVersioningTests(CoachHubSqlApiFactory factory) : IClassF
         var category = await ReadAsync<BilingualReferenceResponse>(await admin.PostAsJsonAsync("/api/v1/reference-data/exercise-categories",
             new BilingualReferenceInput("Versioning " + Guid.NewGuid().ToString("N"), null)));
         var squat = await ReadAsync<ExerciseResponse>(await admin.PostAsJsonAsync("/api/v1/training/exercises",
-            new ExerciseInput("Squat " + Guid.NewGuid().ToString("N")[..6], null, category.Id, null, null, true)));
+            new ExerciseInput("Squat " + Guid.NewGuid().ToString("N")[..6], null, category.Id, null, null, true, PrimaryMuscleGroupId: TestWorkouts.Quadriceps)));
         var client = await ReadAsync<ClientResponse>(await coach.PostAsJsonAsync("/api/v1/clients",
             new ClientCreateInput("Workout versions", null, null, null)));
         var plan = await ReadAsync<WorkoutPlanResponse>(await coach.PostAsJsonAsync("/api/v1/workout-plans",
-            Workout(client.Id, squat.Id, "5")));
+            Workout(client.Id, squat.Id, 5)));
 
         var firstDelivery = await ReadAsync<DeliveredPlanResponse>(await coach.PostAsJsonAsync("/api/v1/plan-deliveries",
             new DeliveredPlanInput(client.Id, DeliveredPlanType.Workout, plan.Id, null, null, "en", DeliveryChannel.Download, null)));
         Assert.Equal((plan.Revision.Id, 1), (firstDelivery.RevisionId!.Value, firstDelivery.VersionNumber!.Value));
 
         var next = await ReadAsync<WorkoutPlanResponse>(await coach.PostAsJsonAsync($"/api/v1/workout-plans/{plan.Id}/revisions",
-            Workout(client.Id, squat.Id, "3") with { BaseVersionNumber = 1 }));
+            Workout(client.Id, squat.Id, 3) with { BaseVersionNumber = 1 }));
         Assert.Equal(2, next.Revision.VersionNumber);
         Assert.NotEqual(plan.Days[0].Id, next.Days[0].Id);
         var old = await coach.GetFromJsonAsync<WorkoutPlanResponse>($"/api/v1/workout-plans/{plan.Id}/revisions/1");
-        Assert.Equal("5", old!.Days[0].Exercises[0].Sets);
+        Assert.Equal(5, old!.Days[0].Exercises[0].Sets.Count);
         Assert.True(old.Revision.IsReadOnly);
 
         var resent = await ReadAsync<DeliveredPlanResponse>(await coach.PostAsJsonAsync("/api/v1/plan-deliveries",
@@ -169,7 +170,8 @@ public sealed class PlanVersioningTests(CoachHubSqlApiFactory factory) : IClassF
         await using (var context = factory.Database.CreateContext())
         {
             var snapshot = (await context.Set<DeliveredPlan>().SingleAsync(x => x.Id == resent.Id)).SnapshotJson;
-            Assert.Contains("\"Sets\":\"5\"", snapshot);
+            // Version 1 prescribed five sets; the snapshot keeps them.
+            Assert.Equal(5, snapshot.Split("\"WorkoutExerciseId\"").Length - 1);
             Assert.Contains("\"VersionNumber\":1", snapshot);
         }
 
@@ -254,11 +256,11 @@ public sealed class PlanVersioningTests(CoachHubSqlApiFactory factory) : IClassF
             [])).ToArray(),
         null, plan.Revision.StartDate, plan.Revision.EndDate, plan.Revision.Status, plan.Revision.VersionNumber);
 
-    private static WorkoutPlanInput Workout(Guid clientId, Guid exerciseId, string sets) => new(
+    private static WorkoutPlanInput Workout(Guid clientId, Guid exerciseId, int sets) => new(
         "Program", null, clientId,
         [new(Guid.NewGuid(), "Warm up", 0, true)],
         [new(Guid.NewGuid(), "Legs", null, null, null, 0,
-            [new(Guid.NewGuid(), exerciseId, 0, sets, "5", "180s", null, null, null)])],
+            [new(Guid.NewGuid(), exerciseId, 0, null, TestWorkouts.Sets(sets, 5, null, 180))])],
         StartDate: October);
 
     private static async Task<T> ReadAsync<T>(HttpResponseMessage response)
