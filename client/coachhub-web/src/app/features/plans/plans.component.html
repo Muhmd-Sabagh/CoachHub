@@ -353,6 +353,8 @@
                           ↓</button
                         ><button class="link-button" type="button" (click)="addFood(m)">
                           Add food</button
+                        ><button class="link-button" type="button" (click)="addMealOption(m)">
+                          Add option</button
                         ><button
                           class="link-button danger"
                           type="button"
@@ -362,8 +364,40 @@
                         </button>
                       </div>
                     </div>
+                    @if (m.options?.length) {
+                      <div class="meal-options" aria-label="Meal options">
+                        @for (o of m.options; track o.id; let oi = $index) {
+                          <span class="meal-option"
+                            ><input
+                              [name]="'option' + vi + '-' + mi + '-' + oi"
+                              [(ngModel)]="o.nameEn"
+                              aria-label="Option name" /><small
+                              >{{ mealTotals(m, o.id).calories | number: '1.0-0' }} kcal</small
+                            ><button
+                              class="link-button danger"
+                              type="button"
+                              (click)="removeMealOption(m, oi)"
+                              aria-label="Remove option"
+                            >
+                              ×
+                            </button></span
+                          >
+                        }
+                      </div>
+                    }
                     @for (f of m.foodItems; track f.id; let fi = $index) {
                       <div class="nested-row">
+                        @if (m.options?.length) {
+                          <select
+                            [name]="'rowoption' + vi + '-' + mi + '-' + fi"
+                            [(ngModel)]="f.mealOptionId"
+                            aria-label="Option"
+                          >
+                            @for (o of m.options; track o.id) {
+                              <option [ngValue]="o.id">{{ o.nameEn }}</option>
+                            }
+                          </select>
+                        }
                         <select
                           [name]="'food' + vi + '-' + mi + '-' + fi"
                           [(ngModel)]="f.foodItemId"
@@ -432,11 +466,32 @@
                         [name]="'gtitle' + vi + '-' + gi"
                         [(ngModel)]="g.title"
                         placeholder="Alternative title"
-                      /><select [name]="'targetmeal' + vi + '-' + gi" [(ngModel)]="g.targetMealId">
+                      /><select
+                        [name]="'targetmeal' + vi + '-' + gi"
+                        [(ngModel)]="g.targetMealId"
+                        (ngModelChange)="g.targetMealFoodItemId = null"
+                      >
                         <option value="">Target meal</option>
                         @for (m of v.meals; track m.id) {
                           <option [value]="m.id">{{ m.nameEn }}</option>
                         }</select
+                      ><select
+                        [name]="'targetrow' + vi + '-' + gi"
+                        [(ngModel)]="g.targetMealFoodItemId"
+                        aria-label="Food it replaces"
+                      >
+                        <option [ngValue]="null">Whole meal</option>
+                        @for (r of targetRows(v, g); track r.id) {
+                          <option [ngValue]="r.id">{{ foodName(r.foodItemId) }}</option>
+                        }</select
+                      ><select
+                        [name]="'gmode' + vi + '-' + gi"
+                        [(ngModel)]="g.mode"
+                        aria-label="Alternative mode"
+                        title="Exact: the quantity you set. Flexible: calculated to match the food it replaces."
+                      >
+                        <option value="Exact">Exact quantities</option>
+                        <option value="Flexible">Flexible (calculated)</option></select
                       ><button class="link-button" type="button" (click)="addReplacementOption(g)">
                         Add option</button
                       ><button
@@ -469,11 +524,29 @@
                           }</select
                         ><input
                           type="number"
+                          min="0.01"
+                          step="any"
                           [disabled]="!!o.replacementMealId"
                           [name]="'replacementqty' + vi + '-' + gi + '-' + oi"
                           [(ngModel)]="o.quantity"
-                          placeholder="Quantity"
-                        /><button
+                          [placeholder]="g.mode === 'Flexible' ? 'Calculated' : 'Quantity'"
+                        /><select
+                          [disabled]="!o.replacementFoodItemId"
+                          [name]="'replacementunit' + vi + '-' + gi + '-' + oi"
+                          [(ngModel)]="o.foodUnitId"
+                          aria-label="Unit"
+                        >
+                          <option [ngValue]="null">
+                            {{ food(o.replacementFoodItemId)?.baseUnitLabel ?? 'unit' }}
+                          </option>
+                          @for (u of food(o.replacementFoodItemId)?.units ?? []; track u.id) {
+                            <option [ngValue]="u.id">{{ u.nameEn }}</option>
+                          }</select
+                        >@if (o.isCalculated && o.effectiveQuantity != null) {
+                          <small class="row-kcal"
+                            >≈ {{ o.effectiveQuantity | number: '1.0-1' }} {{ o.unitLabel }}</small
+                          >
+                        }<button
                           class="link-button danger"
                           type="button"
                           (click)="removeFrom(g.options, oi)"

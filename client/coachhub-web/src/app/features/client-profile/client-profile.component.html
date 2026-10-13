@@ -155,6 +155,8 @@
       </ul>
     </section>
   }
+  @case ('nutrition') { <app-client-nutrition [clientId]="id" view="analytics" /> }
+  @case ('diary') { <app-client-nutrition [clientId]="id" view="diary" /> }
   @default {
     <section class="card workbench"><p class="muted">This section arrives with roadmap phase {{ arrivesIn(tab) }}.</p></section>
   }

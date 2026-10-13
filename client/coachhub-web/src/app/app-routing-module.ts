@@ -21,6 +21,7 @@ const routes: Routes = [
     loadComponent: () => import('./features/client-area/client-shell.component').then(m => m.ClientShellComponent),
     children: [
       { path: '', pathMatch: 'full', loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
+      { path: 'nutrition', loadComponent: () => import('./features/nutrition-tracking/my-nutrition.component').then(m => m.MyNutritionComponent) },
       { path: 'forms', loadComponent: () => import('./features/client-area/my-forms.component').then(m => m.MyFormsComponent) },
       { path: 'forms/:id', loadComponent: () => import('./features/client-area/my-form.component').then(m => m.MyFormComponent) },
       { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },

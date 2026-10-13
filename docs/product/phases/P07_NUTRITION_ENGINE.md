@@ -1,6 +1,6 @@
 # P7 — Food database v2 and nutrition engine
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P7 · **Branch:** `phase/p07-nutrition-engine` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P7 · **Branch:** `phase/p07-nutrition-engine` · **Status:** Merged (PR #9).
 **Covers:** §4 (diet targets), §5, §6, §14, §15, §49 (coefficients), D3.
 
 ## Purpose

@@ -24,7 +24,8 @@ public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanR
             await Query<Meal>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
             await Query<MealFoodItem>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
             await Query<DietReplacementGroup>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
-            await Query<DietReplacementOption>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken));
+            await Query<DietReplacementOption>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
+            await Query<MealOption>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken));
     }
 
     public async Task<IReadOnlyList<DietPlanRevision>?> ListRevisionsAsync(Guid planId, CancellationToken cancellationToken)
@@ -104,6 +105,7 @@ public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanR
         dbContext.RemoveRange(dbContext.Set<DietReplacementOption>().Where(x => revisionIds.Contains(x.RevisionId)));
         dbContext.RemoveRange(dbContext.Set<DietReplacementGroup>().Where(x => revisionIds.Contains(x.RevisionId)));
         dbContext.RemoveRange(dbContext.Set<MealFoodItem>().Where(x => revisionIds.Contains(x.RevisionId)));
+        dbContext.RemoveRange(dbContext.Set<MealOption>().Where(x => revisionIds.Contains(x.RevisionId)));
         dbContext.RemoveRange(dbContext.Set<Meal>().Where(x => revisionIds.Contains(x.RevisionId)));
         dbContext.RemoveRange(dbContext.Set<DietPlanVariant>().Where(x => revisionIds.Contains(x.RevisionId)));
         dbContext.RemoveRange(dbContext.Set<DietPlanNote>().Where(x => revisionIds.Contains(x.RevisionId)));
@@ -112,7 +114,7 @@ public sealed class DietPlanRepository(CoachHubDbContext dbContext) : IDietPlanR
     private void AddContent(DietPlanAggregate aggregate)
     {
         dbContext.AddRange(aggregate.Notes); dbContext.AddRange(aggregate.Variants);
-        dbContext.AddRange(aggregate.Meals); dbContext.AddRange(aggregate.FoodItems);
+        dbContext.AddRange(aggregate.Meals); dbContext.AddRange(aggregate.MealOptions); dbContext.AddRange(aggregate.FoodItems);
         dbContext.AddRange(aggregate.ReplacementGroups); dbContext.AddRange(aggregate.ReplacementOptions);
     }
 }

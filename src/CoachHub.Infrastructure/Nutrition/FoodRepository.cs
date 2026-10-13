@@ -82,7 +82,7 @@ public sealed class FoodRepository(CoachHubDbContext dbContext) : IFoodRepositor
         }
         catch (DbUpdateException)
         {
-            throw new ConflictException("The food is used by plans or client profiles. Deactivate it instead.");
+            throw new ConflictException("The food is used by plans, client profiles or food diaries. Deactivate it instead.");
         }
     }
 

@@ -8,6 +8,7 @@ using CoachHub.Application.Coaches;
 using CoachHub.Application.Communications;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
+using CoachHub.Application.FoodTracking;
 using CoachHub.Application.Media;
 using CoachHub.Application.Pdf;
 using CoachHub.Application.PlanDelivery;
@@ -44,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<SubscriptionService>();
         services.AddScoped<DietPlanService>();
         services.AddScoped<NutritionTargetService>();
+        services.AddScoped<FoodTrackingService>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<MediaService>();
         services.AddScoped<PlanPdfService>();

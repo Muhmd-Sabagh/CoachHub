@@ -44,6 +44,7 @@ public sealed class PlanDeliveryRepository(CoachHubDbContext db, IDietPlanReposi
                 Variant = variant,
                 Notes = aggregate.Notes,
                 Meals = meals,
+                MealOptions = aggregate.MealOptions.Where(x => mealIds.Contains(x.MealId)),
                 FoodItems = aggregate.FoodItems.Where(x => mealIds.Contains(x.MealId)),
                 ReplacementGroups = groups,
                 ReplacementOptions = aggregate.ReplacementOptions.Where(x => groupIds.Contains(x.DietReplacementGroupId))

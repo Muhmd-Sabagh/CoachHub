@@ -1215,6 +1215,28 @@ textarea:focus {
 .dark .plan-summary {
   color: var(--gray-300);
 }
+/* §13: options of a flexible meal in the plan editor. */
+.meal-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.meal-option {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: 999px;
+}
+.meal-option input {
+  width: 110px;
+}
+.meal-option small {
+  color: var(--gray-500);
+  white-space: nowrap;
+}
 /* D4: plan version history and read-only archived versions. */
 .plain-fieldset {
   min-width: 0;

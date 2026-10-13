@@ -2,7 +2,7 @@
 
 > **Superseded in part by [docs/product/REQUIREMENTS.md](../product/REQUIREMENTS.md).**
 >
-> - P6/P7: summaries show each plan's current version, totals apply food units, and the query was rewritten to translate on SQL Server (it had only been tested on EF InMemory). See [P06_PLAN_VERSIONS.md](../product/phases/P06_PLAN_VERSIONS.md) and [P07_NUTRITION_ENGINE.md](../product/phases/P07_NUTRITION_ENGINE.md).
+> - P6/P7/P8: summaries show each plan's current version, totals apply food units and count only the first option of a flexible meal, and the query was rewritten to translate on SQL Server (it had only been tested on EF InMemory). See [P06_PLAN_VERSIONS.md](../product/phases/P06_PLAN_VERSIONS.md) and [P07_NUTRITION_ENGINE.md](../product/phases/P07_NUTRITION_ENGINE.md).
 
 ## Outcome
 

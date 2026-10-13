@@ -43,12 +43,12 @@ public sealed class ClientsController(
         CancellationToken cancellationToken) =>
         clientService.UpdateAsync(id, input, cancellationToken);
 
-    /// <summary>The structured profile (§3), entered at onboarding and editable later.</summary>
     /// <summary>Calorie and macro targets from the client's profile and macro settings (§14, §15).</summary>
     [HttpGet("{id:guid}/nutrition-targets")]
     public Task<EnergyCalculatorResponse> NutritionTargets(Guid id, CancellationToken cancellationToken) =>
         nutritionTargets.ForClientAsync(id, cancellationToken);
 
+    /// <summary>The structured profile (§3), entered at onboarding and editable later.</summary>
     [HttpGet("{id:guid}/profile")]
     public Task<ClientProfileResponse> Profile(Guid id, CancellationToken cancellationToken) =>
         profileService.GetAsync(id, cancellationToken);

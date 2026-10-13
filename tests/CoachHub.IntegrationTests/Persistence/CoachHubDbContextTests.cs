@@ -53,6 +53,10 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.WorkoutPlanning.WorkoutPlanRevision), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.Meal), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.MealFoodItem), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.DietPlanning.MealOption), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.FoodTracking.FoodLogEntry), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.FoodTracking.NutritionDay), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.FoodTracking.NutritionDayMealChoice), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanNote), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementGroup), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementOption), entityTypes);
@@ -99,10 +103,12 @@ public sealed class CoachHubDbContextTests
             .ToArray();
 
         // 15 coach-owned business types (P1), MediaAsset (P2), AuditEntry (P3), Brand and
-        // CoachSettings (P4), and FoodItem (P7, a catalog entry). MediaAsset, AuditEntry, Brand and
-        // FoodItem also admit platform rows.
-        Assert.Equal(20, owned.Length);
+        // CoachSettings (P4), FoodItem (P7, a catalog entry), and FoodLogEntry and NutritionDay (P8). MediaAsset,
+        // AuditEntry, Brand and FoodItem also admit platform rows.
+        Assert.Equal(22, owned.Length);
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Nutrition.FoodItem));
+        Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.FoodTracking.FoodLogEntry));
+        Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.FoodTracking.NutritionDay));
         Assert.All(owned, type =>
         {
             Assert.NotEmpty(type.GetDeclaredQueryFilters());

@@ -9,6 +9,7 @@ import { Client, ClientsService } from '../clients/clients.service';
 import {
   NutritionFood,
   NutritionTotals,
+  countedRows,
   difference,
   macroCalories,
   mealTypes,
@@ -283,6 +284,7 @@ export class PlansComponent implements OnInit, OnDestroy {
       id: id(),
       foodItemId: '',
       foodUnitId: null,
+      mealOptionId: m.options?.length ? m.options[m.options.length - 1].id : null,
       quantity: 100,
       order: m.foodItems.length,
       notes: null,
@@ -294,15 +296,43 @@ export class PlansComponent implements OnInit, OnDestroy {
     row.foodUnitId = null;
     if (food) row.quantity = food.servingSize;
   }
-  food(foodId: string): NutritionFood | undefined {
+  food(foodId: string | null | undefined): NutritionFood | undefined {
     return this.foods.find((x) => x.id === foodId) as NutritionFood | undefined;
   }
   // Live totals (§6): recomputed as quantities change; the server's totals win on save.
   rowTotals(row: any): NutritionTotals {
     return rowTotals(this.food(row.foodItemId), row.quantity, row.foodUnitId);
   }
-  mealTotals(meal: any): NutritionTotals {
-    return sumTotals(meal.foodItems.map((row: any) => this.rowTotals(row)));
+  /** With options (§13) a meal counts its first option, as the server does. */
+  mealTotals(meal: any, optionId?: string): NutritionTotals {
+    const rows = countedRows(meal.foodItems, meal.options, optionId);
+    return sumTotals(rows.map((row: any) => this.rowTotals(row)));
+  }
+  /** Adds an option to a flexible meal; the first option takes the meal's existing foods. */
+  addMealOption(meal: any) {
+    meal.options ??= [];
+    if (meal.options.length >= 10) return;
+    const option = {
+      id: id(),
+      nameEn: `Option ${String.fromCharCode(65 + meal.options.length)}`,
+      nameAr: null,
+      order: meal.options.length,
+    };
+    meal.options.push(option);
+    if (meal.options.length === 1) meal.foodItems.forEach((row: any) => (row.mealOptionId = option.id));
+  }
+  /** Removes an option with its foods; without options left, the meal's foods are plain again. */
+  removeMealOption(meal: any, index: number) {
+    const [option] = meal.options.splice(index, 1);
+    meal.foodItems = meal.foodItems.filter((row: any) => row.mealOptionId !== option.id);
+    if (!meal.options.length) meal.foodItems.forEach((row: any) => (row.mealOptionId = null));
+  }
+  /** Food rows a group can target: those of its target meal. */
+  targetRows(variant: any, group: any): any[] {
+    return variant.meals.find((m: any) => m.id === group.targetMealId)?.foodItems ?? [];
+  }
+  foodName(foodId: string): string {
+    return this.foods.find((x) => x.id === foodId)?.nameEn ?? 'Food';
   }
   variantTotals(variant: any): NutritionTotals {
     return sumTotals(variant.meals.map((meal: any) => this.mealTotals(meal)));
@@ -338,30 +368,25 @@ export class PlansComponent implements OnInit, OnDestroy {
   addReplacement(v: any) {
     const meal = v.meals[0];
     if (!meal) return;
+    // §7: alternatives usually target one food; flexible ones get their quantity calculated on save.
     v.replacementGroups.push({
       id: id(),
       targetMealId: meal.id,
-      targetMealFoodItemId: null,
+      targetMealFoodItemId: meal.foodItems[0]?.id ?? null,
       title: 'Alternative',
       order: v.replacementGroups.length,
-      options: [
-        {
-          id: id(),
-          replacementFoodItemId: null,
-          replacementMealId: null,
-          quantity: 100,
-          order: 0,
-          notes: null,
-        },
-      ],
+      mode: 'Flexible',
+      options: [],
     });
+    this.addReplacementOption(v.replacementGroups[v.replacementGroups.length - 1]);
   }
   addReplacementOption(g: any) {
     g.options.push({
       id: id(),
       replacementFoodItemId: null,
       replacementMealId: null,
-      quantity: 100,
+      foodUnitId: null,
+      quantity: g.mode === 'Flexible' ? null : 100,
       order: g.options.length,
       notes: null,
     });
@@ -413,6 +438,7 @@ export class PlansComponent implements OnInit, OnDestroy {
         v.meals.forEach((m: any, mi: number) => {
           m.order = mi;
           m.foodItems.forEach((f: any, fi: number) => (f.order = fi));
+          (m.options ?? []).forEach((o: any, oi: number) => (o.order = oi));
         });
         v.replacementGroups.forEach((g: any, gi: number) => {
           g.order = gi;
@@ -433,6 +459,7 @@ export class PlansComponent implements OnInit, OnDestroy {
       type,
       order: 0,
       notes: null,
+      options: [],
       foodItems: [],
     };
   }
