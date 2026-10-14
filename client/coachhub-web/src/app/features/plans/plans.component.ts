@@ -4,6 +4,17 @@ import { finalize, forkJoin } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { CatalogItem } from '../catalog/catalog.models';
+import {
+  PrescribedSet,
+  SetGroupType,
+  formatTempo,
+  groupLabels,
+  nextSet,
+  parseTempo,
+  setTypes,
+  summarizeSets,
+  workoutBlocks,
+} from './workout-math';
 import { CatalogService } from '../catalog/catalog.service';
 import { Client, ClientsService } from '../clients/clients.service';
 import {
@@ -138,6 +149,10 @@ export class PlansComponent implements OnInit, OnDestroy {
    */
   save(mode: 'inPlace' | 'newVersion' = 'inPlace') {
     if (this.readOnly) return;
+    if (this.hasInvalidTempo()) {
+      this.error = 'Write tempo as four numbers, for example 3-1-1-0.';
+      return;
+    }
     this.saving = true;
     this.error = '';
     this.normalizeOrders();
@@ -400,20 +415,64 @@ export class PlansComponent implements OnInit, OnDestroy {
       notes: null,
       order: this.editor.days.length,
       exercises: [],
+      setGroups: [],
     });
   }
+  readonly workoutBlocks = workoutBlocks;
+  readonly setTypes = setTypes;
+  /** A new exercise starts in the block of the day's last exercise, with three working sets (§16). */
   addExercise(d: any) {
+    const last = d.exercises[d.exercises.length - 1];
+    const first = nextSet(id());
+    const sets = [first, nextSet(id(), first), nextSet(id(), nextSet(id(), first))];
     d.exercises.push({
       id: id(),
       exerciseId: '',
       order: d.exercises.length,
-      sets: '3',
-      repetitions: '10',
-      rest: '60 sec',
-      tempo: null,
-      rpeRir: null,
+      block: last?.block ?? 'Main',
+      setGroupId: null,
       notes: null,
+      sets: sets.map((s, order) => ({ ...s, order })),
     });
+  }
+  addSet(e: any) {
+    e.sets.push(nextSet(id(), e.sets[e.sets.length - 1]));
+  }
+  /** Supersets take two exercises, giant sets three or more (§16); exercises join them in the editor. */
+  addSetGroup(d: any, type: SetGroupType) {
+    d.setGroups ??= [];
+    d.setGroups.push({ id: id(), type, restSeconds: type === 'Superset' ? 90 : 120, notes: null });
+  }
+  removeSetGroup(d: any, index: number) {
+    const [group] = d.setGroups.splice(index, 1);
+    d.exercises.forEach((e: any) => {
+      if (e.setGroupId === group.id) e.setGroupId = null;
+    });
+  }
+  groupLabel(d: any, exerciseRowId: string): string {
+    return groupLabels(d.exercises).get(exerciseRowId) ?? '';
+  }
+  groupName(d: any, group: any): string {
+    const first = d.exercises.find((e: any) => e.setGroupId === group.id);
+    const letter = first ? (groupLabels(d.exercises).get(first.id) ?? '').charAt(0) : '?';
+    return `${letter} · ${group.type === 'Superset' ? 'Superset' : 'Giant set'}`;
+  }
+  setSummary(e: any): string {
+    return summarizeSets(e.sets ?? []);
+  }
+  tempoText(s: any): string {
+    return s.tempoText ?? formatTempo(s.tempo);
+  }
+  /** Tempo is typed as "3-1-1-0"; unreadable text is kept so the coach can fix it, and blocks saving. */
+  setTempo(s: any, text: string) {
+    s.tempoText = text;
+    const tempo = parseTempo(text);
+    s.tempoInvalid = tempo === undefined;
+    if (tempo !== undefined) s.tempo = tempo;
+  }
+  hasInvalidTempo(): boolean {
+    return this.editorType === 'Workout' && (this.editor?.days ?? []).some((d: any) =>
+      d.exercises.some((e: any) => (e.sets ?? []).some((s: PrescribedSet & { tempoInvalid?: boolean }) => s.tempoInvalid)));
   }
   removeFrom(items: any[], index: number) {
     items.splice(index, 1);
@@ -448,7 +507,10 @@ export class PlansComponent implements OnInit, OnDestroy {
     else
       this.editor.days.forEach((d: any, di: number) => {
         d.order = di;
-        d.exercises.forEach((e: any, ei: number) => (e.order = ei));
+        d.exercises.forEach((e: any, ei: number) => {
+          e.order = ei;
+          (e.sets ?? []).forEach((s: any, si: number) => (s.order = si));
+        });
       });
   }
   private newMeal(type = 'Breakfast') {
@@ -505,6 +567,7 @@ export class PlansComponent implements OnInit, OnDestroy {
           notes: null,
           order: 0,
           exercises: [],
+          setGroups: [],
         },
       ],
     };

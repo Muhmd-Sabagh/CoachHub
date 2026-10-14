@@ -21,7 +21,9 @@ public sealed class WorkoutPlanRepository(CoachHubDbContext dbContext) : IWorkou
         return new(plan, revision, current.VersionNumber,
             await Query<WorkoutPlanNote>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
             await Query<WorkoutDay>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
-            await Query<WorkoutExercise>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken));
+            await Query<WorkoutExercise>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
+            await Query<WorkoutSetGroup>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken),
+            await Query<PrescribedSet>(tracking).Where(x => x.RevisionId == revisionId).ToListAsync(cancellationToken));
     }
 
     public async Task<IReadOnlyList<WorkoutPlanRevision>?> ListRevisionsAsync(Guid planId, CancellationToken cancellationToken)
@@ -37,6 +39,12 @@ public sealed class WorkoutPlanRepository(CoachHubDbContext dbContext) : IWorkou
     public async Task<IReadOnlyDictionary<Guid, Exercise>> FindExercisesAsync(
         IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
         await dbContext.Set<Exercise>().AsNoTracking().Where(x => ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
+
+    // Deliberately cross-tenant: only called for exercises a visible plan already references (see the port).
+    public async Task<IReadOnlyDictionary<Guid, Exercise>> FindReferencedExercisesAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        await dbContext.Set<Exercise>().IgnoreQueryFilters().AsNoTracking().Where(x => ids.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
     public Task<Guid?> FindClientCoachIdAsync(Guid clientId, CancellationToken cancellationToken) =>
         dbContext.Set<Client>().Where(x => x.Id == clientId).Select(x => (Guid?)x.CoachId)
             .SingleOrDefaultAsync(cancellationToken);
@@ -81,12 +89,15 @@ public sealed class WorkoutPlanRepository(CoachHubDbContext dbContext) : IWorkou
     private IQueryable<T> Query<T>(bool tracking) where T : class => tracking ? dbContext.Set<T>() : dbContext.Set<T>().AsNoTracking();
     private void RemoveContent(Guid[] revisionIds)
     {
+        dbContext.RemoveRange(dbContext.Set<PrescribedSet>().Where(x => revisionIds.Contains(x.RevisionId)));
         dbContext.RemoveRange(dbContext.Set<WorkoutExercise>().Where(x => revisionIds.Contains(x.RevisionId)));
+        dbContext.RemoveRange(dbContext.Set<WorkoutSetGroup>().Where(x => revisionIds.Contains(x.RevisionId)));
         dbContext.RemoveRange(dbContext.Set<WorkoutDay>().Where(x => revisionIds.Contains(x.RevisionId)));
         dbContext.RemoveRange(dbContext.Set<WorkoutPlanNote>().Where(x => revisionIds.Contains(x.RevisionId)));
     }
     private void AddContent(WorkoutPlanAggregate aggregate)
     {
-        dbContext.AddRange(aggregate.Notes); dbContext.AddRange(aggregate.Days); dbContext.AddRange(aggregate.Exercises);
+        dbContext.AddRange(aggregate.Notes); dbContext.AddRange(aggregate.Days); dbContext.AddRange(aggregate.SetGroups);
+        dbContext.AddRange(aggregate.Exercises); dbContext.AddRange(aggregate.Sets);
     }
 }

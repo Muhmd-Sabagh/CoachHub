@@ -102,6 +102,10 @@ public sealed class FoodCategoriesController(FoodCategoryService service)
 public sealed class EquipmentController(EquipmentService service)
     : PlatformReferenceDataController<Equipment, BilingualReferenceInput, BilingualReferenceResponse>(service);
 
+[Route(ApiRoutes.V1 + "/reference-data/muscle-groups")]
+public sealed class MuscleGroupsController(MuscleGroupService service)
+    : PlatformReferenceDataController<MuscleGroup, BilingualReferenceInput, BilingualReferenceResponse>(service);
+
 [Route(ApiRoutes.V1 + "/reference-data/exercise-categories")]
 public sealed class ExerciseCategoriesController(ExerciseCategoryService service)
     : PlatformReferenceDataController<ExerciseCategory, BilingualReferenceInput, BilingualReferenceResponse>(service);

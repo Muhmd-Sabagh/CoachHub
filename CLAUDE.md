@@ -91,13 +91,13 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - `ICurrentUser.Scope` (Application) drives the filters: Administrator and system work are `Unrestricted`, a coach sees their tenant, a client sees only their own rows, anonymous callers see nothing. `CoachHubDbContext` also rejects cross-tenant writes on save.
   - New records: use `CoachOwnership.ForNewRecordAsync` (coach = self; Administrator must name an active coach). Records derived from another record take that record's `CoachId`, and references must stay within one coach (`CoachOwnership.EnsureSameCoach`).
   - Use `IgnoreQueryFilters()` only for deliberate cross-tenant reads (global uniqueness checks, transfer, identity lookups) and comment why. It lifts the filters of the **whole query**, so only use it in a standalone query, never on a join or subquery of a query that reads tenant data (P7 fixed a leak caused by this).
-  - Catalog entries (`ICatalogEntry`, P7): platform rows (no coach) are visible to every signed-in user; a coach's rows to that coach and their clients.
+  - Catalog entries (`ICatalogEntry`, P7: foods; P9: exercises): platform rows (no coach) are visible to every signed-in user; a coach's rows to that coach and their clients. A plan may keep the previous coach's entries after a transfer (`FindReferenced*Async`).
   - Commercial records keep the selling coach forever; coaching records follow the client on transfer (D7).
   - Tenant-isolation tests run on SQL Server (`CoachHubSqlApiFactory`); see `tests/CoachHub.IntegrationTests/Tenancy`.
 - **Ownership (§62):** every endpoint verifies the caller may access the specific client's data, files and photos, not only that they hold a permission.
 - **Structured data (D3):** use typed numeric or enum fields for prescriptions (sets, rep min/max, load, RIR, RPE, tempo, rest, duration, set grouping, block type), profile data, and all tracking time-series. Free-text notes go alongside, never instead.
 - **Versioning (D4)** — implemented in P6; see `docs/product/phases/P06_PLAN_VERSIONS.md`.
-  - Plan content (diet variants, meals, foods, alternatives, notes; workout days, exercises, notes) belongs to a version (`DietPlanRevision` / `WorkoutPlanRevision`, base `PlanRevision`). Every content row implements `IPlanRevisionContent` and carries its `RevisionId`; new content types must too.
+  - Plan content (diet variants, meals, meal options, foods, alternatives, notes; workout days, set groups, exercises, prescribed sets, notes) belongs to a version (`DietPlanRevision` / `WorkoutPlanRevision`, base `PlanRevision`). Every content row implements `IPlanRevisionContent` and carries its `RevisionId`; new content types must too.
   - Saves are explicit: `PUT …/revisions/current` (in place) or `POST …/revisions` (new version, fresh row IDs). Never add a plain `PUT` that replaces plan content.
   - Archived versions are read-only: `CoachHubDbContext` rejects any change to them or their rows (409). Only deleting the whole plan removes them.
   - Deliveries record the version (and diet variant) sent; delivered-plan snapshots stay immutable.
@@ -118,9 +118,8 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P8. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P9. Known gaps against REQUIREMENTS.md:
 
-- string-based workout prescriptions;
 - no workout or body tracking, chat or calendars (nutrition tracking exists since P8).
 
 Treat these as planned rework, not conventions to preserve.
@@ -128,7 +127,7 @@ Treat these as planned rework, not conventions to preserve.
 ## Security invariants (keep)
 
 - `tests/CoachHub.IntegrationTests/Security/ControllerAuthorizationTests.cs` pins the anonymous API surface (every anonymous action must be rate-limited) and requires every `[Authorize]` to use an `AuthPolicies` role policy: `AdminOnly`, `CoachOrAdmin`, `ClientOnly` or `AnyRole` (self-service).
-- Platform catalogs (foods, exercises, currencies, categories) and `/media` writes are `AdminOnly`; coaches read them. Coaches also write their own custom foods (P7, ownership checked in `FoodService`).
+- Platform catalogs (foods, exercises, currencies, categories, equipment, muscle groups) and `/media` writes are `AdminOnly`; coaches read them. Coaches also write their own custom foods (P7) and exercises (P9); `FoodService` and `ExerciseService` check ownership.
 - Branding (P4): brands are read across tenants on purpose (public data); writes pass the save guard. Subdomains and custom domains are Administrator-only. Brand images are coach-library or platform media.
 - Settings (P4): calculations read coach defaults from `SettingsService.CoachAsync`, never constants. The nutrition engine (P7) is `EnergyCalculator` with one `IMacroStrategy` per macro mode.
 - Enums cross the API as names: every public enum carries `[JsonConverter(typeof(JsonStringEnumConverter<T>))]` (guarded by `EnumContractTests`). A `[Flags]` set is exposed as a list of names instead.

@@ -4,6 +4,7 @@ using CoachHub.Application.Common.Models;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.Pdf;
 using CoachHub.Application.WorkoutPlanning;
+using CoachHub.Domain.WorkoutPlanning;
 using QuestPDF.Drawing;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -276,30 +277,42 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
         table.ColumnsDefinition(columns =>
         {
             columns.RelativeColumn(3);
-            if (visible.Sets) columns.RelativeColumn(); if (visible.Repetitions) columns.RelativeColumn();
-            if (visible.Rest) columns.RelativeColumn(); if (visible.Tempo) columns.RelativeColumn();
-            if (visible.RpeRir) columns.RelativeColumn(); if (visible.Notes) columns.RelativeColumn(2);
+            if (visible.Sets) columns.RelativeColumn(); if (visible.Reps) columns.RelativeColumn();
+            if (visible.Load) columns.RelativeColumn(); if (visible.Effort) columns.RelativeColumn();
+            if (visible.Tempo) columns.RelativeColumn(); if (visible.Rest) columns.RelativeColumn();
+            if (visible.Notes) columns.RelativeColumn(2);
             if (visible.Video) columns.RelativeColumn();
         });
         table.Header(header =>
         {
             HeaderCell(header, T(language, "Exercise", "التمرين"), language);
             if (visible.Sets) HeaderCell(header, T(language, "Sets", "المجموعات"), language);
-            if (visible.Repetitions) HeaderCell(header, T(language, "Reps", "التكرارات"), language);
-            if (visible.Rest) HeaderCell(header, T(language, "Rest", "الراحة"), language);
+            if (visible.Reps) HeaderCell(header, T(language, "Reps", "التكرارات"), language);
+            if (visible.Load) HeaderCell(header, T(language, "Load", "الوزن"), language);
+            if (visible.Effort) HeaderCell(header, "RIR / RPE", language);
             if (visible.Tempo) HeaderCell(header, T(language, "Tempo", "الإيقاع"), language);
-            if (visible.RpeRir) HeaderCell(header, "RPE / RIR", language);
+            if (visible.Rest) HeaderCell(header, T(language, "Rest", "الراحة"), language);
             if (visible.Notes) HeaderCell(header, T(language, "Notes", "ملاحظات"), language);
             if (visible.Video) HeaderCell(header, T(language, "Video", "فيديو"), language);
         });
         foreach (var row in rows.OrderBy(x => x.Order))
         {
-            BodyCell(table, PdfLanguageText.Name(row.ExerciseNameEn, row.ExerciseNameAr, language), language);
-            if (visible.Sets) BodyCell(table, row.Sets ?? string.Empty, language);
-            if (visible.Repetitions) BodyCell(table, row.Repetitions ?? string.Empty, language);
-            if (visible.Rest) BodyCell(table, row.Rest ?? string.Empty, language);
-            if (visible.Tempo) BodyCell(table, row.Tempo ?? string.Empty, language);
-            if (visible.RpeRir) BodyCell(table, row.RpeRir ?? string.Empty, language);
+            var summary = PrescriptionSummary.Of(row.Sets, language == PlanPdfLanguage.Arabic);
+            // A grouped exercise shows its label (A1, A2) and every block but the main one its name.
+            var block = row.Block switch
+            {
+                WorkoutBlock.WarmUp => T(language, "Warm-up", "إحماء") + " · ",
+                WorkoutBlock.Cooldown => T(language, "Cool-down", "تهدئة") + " · ",
+                _ => string.Empty
+            };
+            var label = row.GroupLabel is null ? string.Empty : row.GroupLabel + " ";
+            BodyCell(table, block + label + PdfLanguageText.Name(row.ExerciseNameEn, row.ExerciseNameAr, language), language);
+            if (visible.Sets) BodyCell(table, summary.Sets, language);
+            if (visible.Reps) BodyCell(table, summary.Reps, language);
+            if (visible.Load) BodyCell(table, summary.Load, language);
+            if (visible.Effort) BodyCell(table, summary.Effort, language);
+            if (visible.Tempo) BodyCell(table, summary.Tempo, language);
+            if (visible.Rest) BodyCell(table, summary.Rest, language);
             if (visible.Notes) BodyCell(table, row.Notes ?? string.Empty, language);
             if (visible.Video)
             {

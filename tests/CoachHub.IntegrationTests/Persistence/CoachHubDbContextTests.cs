@@ -64,6 +64,11 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.WorkoutPlanning.WorkoutPlanNote), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.WorkoutPlanning.WorkoutDay), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.WorkoutPlanning.WorkoutExercise), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.WorkoutPlanning.WorkoutSetGroup), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.WorkoutPlanning.PrescribedSet), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.ReferenceData.MuscleGroup), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Training.ExerciseSecondaryMuscle), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Training.ExerciseEquipment), entityTypes);
         Assert.DoesNotContain(entityTypes, type => type.Name is
             "ClientAssessment" or "ClientUpdate" or "GymDbContext");
     }
@@ -103,9 +108,10 @@ public sealed class CoachHubDbContextTests
             .ToArray();
 
         // 15 coach-owned business types (P1), MediaAsset (P2), AuditEntry (P3), Brand and
-        // CoachSettings (P4), FoodItem (P7, a catalog entry), and FoodLogEntry and NutritionDay (P8). MediaAsset,
-        // AuditEntry, Brand and FoodItem also admit platform rows.
-        Assert.Equal(22, owned.Length);
+        // CoachSettings (P4), FoodItem (P7, a catalog entry), FoodLogEntry and NutritionDay (P8), and Exercise
+        // (P9, a catalog entry). MediaAsset, AuditEntry, Brand, FoodItem and Exercise also admit platform rows.
+        Assert.Equal(23, owned.Length);
+        Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Training.Exercise));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Nutrition.FoodItem));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.FoodTracking.FoodLogEntry));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.FoodTracking.NutritionDay));

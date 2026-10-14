@@ -1,3 +1,4 @@
+using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.Training;
 using CoachHub.Domain.ReferenceData;
@@ -21,6 +22,18 @@ public sealed class ExerciseRepository(CoachHubDbContext dbContext) : IExerciseR
                 (exercise.NameAr != null && exercise.NameAr.Contains(query.SearchTerm)) ||
                 (exercise.YouTubeUrl != null && exercise.YouTubeUrl.Contains(query.SearchTerm)));
         }
+        // The query filter already limits custom exercises to the caller's coach.
+        if (query.Scope == ExerciseScope.Platform)
+            exercises = exercises.Where(exercise => exercise.CoachId == null);
+        else if (query.Scope == ExerciseScope.Custom)
+            exercises = exercises.Where(exercise => exercise.CoachId != null);
+        if (query.MuscleGroupId is { } muscle)
+            exercises = exercises.Where(exercise => exercise.PrimaryMuscleGroupId == muscle ||
+                exercise.SecondaryMuscles.Any(link => link.MuscleGroupId == muscle));
+        if (query.EquipmentId is { } equipment)
+            exercises = exercises.Where(exercise => exercise.Equipment.Any(link => link.EquipmentId == equipment));
+        if (query.Difficulty is { } difficulty)
+            exercises = exercises.Where(exercise => exercise.Difficulty == difficulty);
         if (query.CategoryId.HasValue)
         {
             exercises = exercises.Where(exercise =>
@@ -62,7 +75,14 @@ public sealed class ExerciseRepository(CoachHubDbContext dbContext) : IExerciseR
     public async Task DeleteAsync(Exercise exercise, CancellationToken cancellationToken)
     {
         dbContext.Set<Exercise>().Remove(exercise);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("The exercise is used by workout plans. Deactivate it instead.");
+        }
     }
 
     public Task<LegacyExerciseImportRecord?> FindLegacyImportAsync(

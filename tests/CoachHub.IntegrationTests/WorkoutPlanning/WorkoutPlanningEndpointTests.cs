@@ -29,9 +29,9 @@ public sealed class WorkoutPlanningEndpointTests : IClassFixture<CoachHubApiFact
         var category = await AdminPostAsync<BilingualReferenceResponse>("/api/v1/reference-data/exercise-categories",
             new BilingualReferenceInput("Plan exercises " + Guid.NewGuid().ToString("N"), null));
         var press = await AdminPostAsync<ExerciseResponse>("/api/v1/training/exercises",
-            new ExerciseInput("Bench Press", "ضغط صدر", category.Id, null, "https://youtu.be/example", true));
+            new ExerciseInput("Bench Press", "ضغط صدر", category.Id, null, "https://youtu.be/example", true, PrimaryMuscleGroupId: TestWorkouts.Chest));
         var squat = await AdminPostAsync<ExerciseResponse>("/api/v1/training/exercises",
-            new ExerciseInput("Squat", null, category.Id, null, null, true));
+            new ExerciseInput("Squat", null, category.Id, null, null, true, PrimaryMuscleGroupId: TestWorkouts.Quadriceps));
         var client = await PostAsync<ClientResponse>("/api/v1/clients",
             new ClientCreateInput("Workout client", null, null, null));
 
@@ -41,15 +41,15 @@ public sealed class WorkoutPlanningEndpointTests : IClassFixture<CoachHubApiFact
             [new(noteId, "Warm up first", 0, true)],
             [
                 new(pushId, "Push", "دفع", "Upper body", "Control tempo", 0,
-                    [new(pressRowId, press.Id, 0, "3-4", "8-12", "90-120s", "2-0-1-0", "RPE 8", "Pause")]),
+                    [new(pressRowId, press.Id, 0, "Pause", TestWorkouts.Sets(3, 8, 12, 90))]),
                 new(legsId, "Legs", null, null, null, 1,
-                    [new(squatRowId, squat.Id, 0, "4", "6", "120s", null, "RIR 2", null)])
+                    [new(squatRowId, squat.Id, 0, null, TestWorkouts.Sets(4, 6, null, 120, rir: 2))])
             ]);
 
         var created = await PostAsync<WorkoutPlanResponse>("/api/v1/workout-plans", input);
         Assert.Null(created.NameAr);
         Assert.Equal("دفع", created.Days[0].NameAr);
-        Assert.Equal("3-4", created.Days[0].Exercises[0].Sets);
+        Assert.Equal((3, 8, 12), (created.Days[0].Exercises[0].Sets.Count, created.Days[0].Exercises[0].Sets[0].RepsMin!.Value, created.Days[0].Exercises[0].Sets[0].RepsMax!.Value));
         Assert.Equal("Bench Press", created.Days[0].Exercises[0].ExerciseNameEn);
         Assert.Equal(press.MediaId, created.Days[0].Exercises[0].MediaId);
 

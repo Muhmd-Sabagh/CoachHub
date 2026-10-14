@@ -572,54 +572,129 @@
                       ↑</button
                     ><button class="link-button" type="button" (click)="move(editor.days, di, 1)">
                       ↓</button
+                    ><button class="link-button" type="button" (click)="addSetGroup(d, 'Superset')">
+                      Add superset</button
+                    ><button class="link-button" type="button" (click)="addSetGroup(d, 'GiantSet')">
+                      Add giant set</button
                     ><button class="button button-secondary" type="button" (click)="addExercise(d)">
                       Add exercise
                     </button>
                   </div>
                 </div>
-                @for (e of d.exercises; track e.id; let ei = $index) {
-                  <div class="nested-row workout-row">
-                    <select [name]="'exercise' + di + '-' + ei" [(ngModel)]="e.exerciseId" required>
-                      <option value="">Select exercise</option>
-                      @for (x of exercises; track x.id) {
-                        <option [value]="x.id">{{ x.nameEn }}</option>
-                      }</select
-                    ><input
-                      [name]="'sets' + di + '-' + ei"
-                      [(ngModel)]="e.sets"
-                      placeholder="Sets"
-                    /><input
-                      [name]="'reps' + di + '-' + ei"
-                      [(ngModel)]="e.repetitions"
-                      placeholder="Reps"
-                    /><input
-                      [name]="'rest' + di + '-' + ei"
-                      [(ngModel)]="e.rest"
-                      placeholder="Rest"
-                    /><input
-                      [name]="'tempo' + di + '-' + ei"
-                      [(ngModel)]="e.tempo"
-                      placeholder="Tempo"
-                    /><input
-                      [name]="'rpe' + di + '-' + ei"
-                      [(ngModel)]="e.rpeRir"
-                      placeholder="RPE / RIR"
-                    /><input
-                      [name]="'exerciseNotes' + di + '-' + ei"
-                      [(ngModel)]="e.notes"
-                      placeholder="Notes"
-                    /><button class="link-button" type="button" (click)="move(d.exercises, ei, -1)">
-                      ↑</button
-                    ><button class="link-button" type="button" (click)="move(d.exercises, ei, 1)">
-                      ↓</button
-                    ><button
-                      class="link-button danger"
-                      type="button"
-                      (click)="removeFrom(d.exercises, ei)"
-                    >
-                      Remove
-                    </button>
+                @if (d.setGroups?.length) {
+                  <div class="meal-options" aria-label="Set groups">
+                    @for (g of d.setGroups; track g.id; let gi = $index) {
+                      <span class="meal-option"
+                        ><strong>{{ groupName(d, g) }}</strong
+                        ><label class="inline-field"
+                          >rest
+                          <input
+                            type="number"
+                            min="0"
+                            max="3600"
+                            [name]="'grest' + di + '-' + gi"
+                            [(ngModel)]="g.restSeconds"
+                            aria-label="Rest after each round, seconds"
+                          />
+                          s</label
+                        ><button
+                          class="link-button danger"
+                          type="button"
+                          (click)="removeSetGroup(d, gi)"
+                          aria-label="Remove set group"
+                        >
+                          ×
+                        </button></span
+                      >
+                    }
                   </div>
+                }
+                @for (e of d.exercises; track e.id; let ei = $index) {
+                  <article class="nested-card workout-exercise">
+                    <div class="nested-row workout-row">
+                      @if (groupLabel(d, e.id); as label) {
+                        <span class="group-label">{{ label }}</span>
+                      }
+                      <select [name]="'exercise' + di + '-' + ei" [(ngModel)]="e.exerciseId" required>
+                        <option value="">Select exercise</option>
+                        @for (x of exercises; track x.id) {
+                          <option [value]="x.id">{{ x.nameEn }}{{ x.isCustom ? ' (custom)' : '' }}</option>
+                        }</select
+                      ><select [name]="'block' + di + '-' + ei" [(ngModel)]="e.block" aria-label="Block">
+                        @for (b of workoutBlocks; track b.value) {
+                          <option [value]="b.value">{{ b.label }}</option>
+                        }</select
+                      ><select [name]="'group' + di + '-' + ei" [(ngModel)]="e.setGroupId" aria-label="Set group">
+                        <option [ngValue]="null">No group</option>
+                        @for (g of d.setGroups ?? []; track g.id) {
+                          <option [ngValue]="g.id">{{ groupName(d, g) }}</option>
+                        }</select
+                      ><input
+                        [name]="'exerciseNotes' + di + '-' + ei"
+                        [(ngModel)]="e.notes"
+                        placeholder="Notes"
+                      /><small class="row-kcal">{{ setSummary(e) }}</small
+                      ><button class="link-button" type="button" (click)="move(d.exercises, ei, -1)">
+                        ↑</button
+                      ><button class="link-button" type="button" (click)="move(d.exercises, ei, 1)">
+                        ↓</button
+                      ><button
+                        class="link-button danger"
+                        type="button"
+                        (click)="removeFrom(d.exercises, ei)"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div class="table-scroll">
+                      <table class="set-table">
+                        <thead>
+                          <tr>
+                            <th>Set</th><th>Type</th><th>Reps</th><th>Load kg</th><th>RIR</th><th>RPE</th>
+                            <th>Tempo</th><th>Rest s</th><th>Time s</th><th>Skip</th><th>Notes</th><th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (s of e.sets; track s.id; let si = $index) {
+                            <tr>
+                              <td>{{ si + 1 }}</td>
+                              <td>
+                                <select [name]="'stype' + di + '-' + ei + '-' + si" [(ngModel)]="s.type" aria-label="Set type">
+                                  @for (t of setTypes; track t.value) {
+                                    <option [value]="t.value">{{ t.label }}</option>
+                                  }
+                                </select>
+                              </td>
+                              <td class="reps">
+                                <input type="number" min="0" max="1000" [name]="'rmin' + di + '-' + ei + '-' + si" [(ngModel)]="s.repsMin" aria-label="Reps (minimum)" />–<input
+                                  type="number" min="0" max="1000" [name]="'rmax' + di + '-' + ei + '-' + si" [(ngModel)]="s.repsMax" aria-label="Reps (maximum)" />
+                              </td>
+                              <td><input type="number" min="0" max="1000" step="0.25" [name]="'load' + di + '-' + ei + '-' + si" [(ngModel)]="s.loadKg" aria-label="Load in kg" /></td>
+                              <td><input type="number" min="0" max="10" [name]="'rir' + di + '-' + ei + '-' + si" [(ngModel)]="s.rir" aria-label="RIR" /></td>
+                              <td><input type="number" min="1" max="10" step="0.5" [name]="'rpe' + di + '-' + ei + '-' + si" [(ngModel)]="s.rpe" aria-label="RPE" /></td>
+                              <td>
+                                <input
+                                  class="tempo"
+                                  [class.invalid]="s.tempoInvalid"
+                                  placeholder="3-1-1-0"
+                                  [name]="'tempo' + di + '-' + ei + '-' + si"
+                                  [ngModel]="tempoText(s)"
+                                  (ngModelChange)="setTempo(s, $event)"
+                                  aria-label="Tempo: eccentric, pause, concentric, pause"
+                                />
+                              </td>
+                              <td><input type="number" min="0" max="3600" [name]="'srest' + di + '-' + ei + '-' + si" [(ngModel)]="s.restSeconds" aria-label="Rest seconds" /></td>
+                              <td><input type="number" min="1" max="36000" [name]="'dur' + di + '-' + ei + '-' + si" [(ngModel)]="s.durationSeconds" aria-label="Duration seconds" /></td>
+                              <td><input type="checkbox" [name]="'skip' + di + '-' + ei + '-' + si" [(ngModel)]="s.isSkippable" aria-label="Client may skip" /></td>
+                              <td><input [name]="'snote' + di + '-' + ei + '-' + si" [(ngModel)]="s.notes" maxlength="500" aria-label="Set notes" /></td>
+                              <td><button class="link-button danger" type="button" [disabled]="e.sets.length === 1" (click)="removeFrom(e.sets, si)" aria-label="Remove set">×</button></td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                    <button class="link-button" type="button" (click)="addSet(e)">Add set</button>
+                  </article>
                 }
               </section>
             }
@@ -644,21 +719,21 @@
               Restore as V{{ (currentVersionNumber ?? 0) + 1 }}
             </button>
           } @else if (!editingId) {
-            <button class="button button-primary" [disabled]="saving">
+            <button class="button button-primary" [disabled]="saving || hasInvalidTempo()">
               {{ saving ? 'Saving…' : 'Create plan' }}
             </button>
           } @else {
             <button
               class="button button-secondary"
               type="button"
-              [disabled]="saving"
+              [disabled]="saving || hasInvalidTempo()"
               [title]="
                 'Keep V' + version?.versionNumber + ' read-only and save this as the next version'
               "
               (click)="save('newVersion')"
             >
               Save as new version</button
-            ><button class="button button-primary" [disabled]="saving">
+            ><button class="button button-primary" [disabled]="saving || hasInvalidTempo()">
               {{ saving ? 'Saving…' : 'Save (V' + version?.versionNumber + ')' }}
             </button>
           }

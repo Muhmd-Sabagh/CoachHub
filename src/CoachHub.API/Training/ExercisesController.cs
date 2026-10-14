@@ -11,6 +11,7 @@ namespace CoachHub.API.Training;
 [ApiController]
 [Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/training/exercises")]
+// Writes: administrators manage platform exercises; coaches their own custom ones (checked in ExerciseService).
 public sealed class ExercisesController(
     ExerciseService exerciseService,
     LegacyExerciseImportService importService) : ControllerBase
@@ -26,7 +27,6 @@ public sealed class ExercisesController(
         exerciseService.GetAsync(id, cancellationToken);
 
     [HttpPost]
-    [Authorize(Policy = AuthPolicies.AdminOnly)]
     public async Task<ActionResult<ExerciseResponse>> Create(
         ExerciseInput input,
         CancellationToken cancellationToken)
@@ -36,7 +36,6 @@ public sealed class ExercisesController(
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = AuthPolicies.AdminOnly)]
     public Task<ExerciseResponse> Update(
         Guid id,
         ExerciseInput input,
@@ -44,7 +43,6 @@ public sealed class ExercisesController(
         exerciseService.UpdateAsync(id, input, cancellationToken);
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = AuthPolicies.AdminOnly)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         await exerciseService.DeleteAsync(id, cancellationToken);

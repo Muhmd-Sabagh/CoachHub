@@ -52,6 +52,39 @@ public sealed class EquipmentConfiguration : IEntityTypeConfiguration<Equipment>
     }
 }
 
+/// <summary>Muscle groups (§17, §23), seeded with a standard set that administrators can extend.</summary>
+public sealed class MuscleGroupConfiguration : IEntityTypeConfiguration<MuscleGroup>
+{
+    public void Configure(EntityTypeBuilder<MuscleGroup> builder)
+    {
+        builder.ToTable("MuscleGroups");
+        PackageConfiguration.ConfigureBilingual(builder);
+        builder.HasData(MuscleGroupSeed.All.Select(x => new { x.Id, x.NameEn, NameAr = (string?)x.NameAr, IsActive = true }));
+    }
+}
+
+/// <summary>The muscle groups every installation starts with; their identifiers are fixed.</summary>
+public static class MuscleGroupSeed
+{
+    public static readonly (Guid Id, string NameEn, string NameAr)[] All =
+    [
+        (new("0e4d6c1a-0001-4c8e-9a1b-5f3e2d1c0b01"), "Chest", "الصدر"),
+        (new("0e4d6c1a-0002-4c8e-9a1b-5f3e2d1c0b02"), "Back", "الظهر"),
+        (new("0e4d6c1a-0003-4c8e-9a1b-5f3e2d1c0b03"), "Shoulders", "الأكتاف"),
+        (new("0e4d6c1a-0004-4c8e-9a1b-5f3e2d1c0b04"), "Biceps", "العضلة ذات الرأسين"),
+        (new("0e4d6c1a-0005-4c8e-9a1b-5f3e2d1c0b05"), "Triceps", "العضلة ثلاثية الرؤوس"),
+        (new("0e4d6c1a-0006-4c8e-9a1b-5f3e2d1c0b06"), "Forearms", "الساعد"),
+        (new("0e4d6c1a-0007-4c8e-9a1b-5f3e2d1c0b07"), "Quadriceps", "الفخذ الأمامي"),
+        (new("0e4d6c1a-0008-4c8e-9a1b-5f3e2d1c0b08"), "Hamstrings", "الفخذ الخلفي"),
+        (new("0e4d6c1a-0009-4c8e-9a1b-5f3e2d1c0b09"), "Glutes", "الأرداف"),
+        (new("0e4d6c1a-000a-4c8e-9a1b-5f3e2d1c0b0a"), "Calves", "السمانة"),
+        (new("0e4d6c1a-000b-4c8e-9a1b-5f3e2d1c0b0b"), "Abs", "البطن"),
+        (new("0e4d6c1a-000c-4c8e-9a1b-5f3e2d1c0b0c"), "Lower back", "أسفل الظهر"),
+        (new("0e4d6c1a-000d-4c8e-9a1b-5f3e2d1c0b0d"), "Traps", "الترابيس"),
+        (new("0e4d6c1a-000e-4c8e-9a1b-5f3e2d1c0b0e"), "Adductors", "العضلات المقربة"),
+    ];
+}
+
 public sealed class CurrencyConfiguration : IEntityTypeConfiguration<Currency>
 {
     public void Configure(EntityTypeBuilder<Currency> builder)

@@ -23,13 +23,22 @@
           <option value="false">Inactive</option>
         </select></label
       >
-      @if (kind === 'foods') {
+      <label
+        ><span>Catalog</span
+        ><select name="scope" [(ngModel)]="scope">
+          <option value="">Platform and custom</option>
+          <option value="Platform">Platform</option>
+          <option value="Custom">My custom {{ kind === 'foods' ? 'foods' : 'exercises' }}</option>
+        </select></label
+      >
+      @if (kind === 'exercises') {
         <label
-          ><span>Catalog</span
-          ><select name="scope" [(ngModel)]="scope">
-            <option value="">Platform and custom</option>
-            <option value="Platform">Platform</option>
-            <option value="Custom">My custom foods</option>
+          ><span>Muscle</span
+          ><select name="muscle" [(ngModel)]="muscleGroupId">
+            <option value="">All</option>
+            @for (m of muscles; track m.id) {
+              <option [value]="m.id">{{ m.nameEn }}</option>
+            }
           </select></label
         >
       }
@@ -38,7 +47,7 @@
     </form>
     @if (canCreate) {
       <button class="button button-primary" type="button" (click)="create()">
-        {{ kind === 'foods' && !isAdmin ? 'Add custom food' : 'Add ' + title }}
+        {{ !isAdmin ? (kind === 'foods' ? 'Add custom food' : 'Add custom exercise') : 'Add ' + title }}
       </button>
     }
   </div>
@@ -54,7 +63,7 @@
           @if (kind === 'foods') {
             <th>Nutrition / 100 base units</th>
           } @else {
-            <th>Video</th>
+            <th>Muscles / video</th>
           }
           <th>Status</th>
           <th class="actions">Actions</th>
@@ -95,13 +104,18 @@
               </td>
             } @else {
               <td>
-                @if (item.youTubeUrl) {
-                  <a class="link-button" [href]="item.youTubeUrl" target="_blank" rel="noopener"
-                    >Open video</a
-                  >
-                } @else {
-                  —
-                }
+                <span class="metric">{{ muscleName(item.primaryMuscleGroupId) }}</span
+                ><small>
+                  @if (item.secondaryMuscleGroupIds?.length) {
+                    + {{ item.secondaryMuscleGroupIds!.length }} secondary ·
+                  }
+                  {{ item.difficulty ?? '' }}
+                  @if (item.youTubeUrl) {
+                    <a class="link-button" [href]="item.youTubeUrl" target="_blank" rel="noopener"
+                      >Video</a
+                    >
+                  }
+                </small>
               </td>
             }
             <td><app-status-badge [value]="item.isActive ? 'Active' : 'Inactive'" /></td>
@@ -283,6 +297,75 @@
           </div>
         } @else {
           <label
+            ><span>Primary muscle</span
+            ><select name="primaryMuscle" [(ngModel)]="editor.primaryMuscleGroupId" required>
+              <option value="">Select</option>
+              @for (m of muscles; track m.id) {
+                <option [value]="m.id">{{ m.nameEn }}</option>
+              }
+            </select></label
+          ><label
+            ><span>Difficulty</span
+            ><select name="difficulty" [(ngModel)]="editor.difficulty">
+              <option value="">Not set</option>
+              @for (d of difficulties; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select></label
+          >
+          <fieldset class="span-2 plain-fieldset">
+            <legend>Secondary muscles</legend>
+            <div class="checkbox-grid">
+              @for (m of muscles; track m.id) {
+                @if (m.id !== editor.primaryMuscleGroupId) {
+                  <label class="checkbox-row"
+                    ><input
+                      type="checkbox"
+                      [checked]="editor.secondaryMuscleGroupIds.has(m.id)"
+                      (change)="toggle(editor.secondaryMuscleGroupIds, m.id)"
+                    />
+                    {{ m.nameEn }}</label
+                  >
+                }
+              }
+            </div>
+          </fieldset>
+          <fieldset class="span-2 plain-fieldset">
+            <legend>Equipment</legend>
+            <div class="checkbox-grid">
+              @for (e of equipment; track e.id) {
+                <label class="checkbox-row"
+                  ><input
+                    type="checkbox"
+                    [checked]="editor.equipmentIds.has(e.id)"
+                    (change)="toggle(editor.equipmentIds, e.id)"
+                  />
+                  {{ e.nameEn }}</label
+                >
+              } @empty {
+                <small class="muted">No equipment defined yet.</small>
+              }
+            </div>
+          </fieldset>
+          <label
+            ><span>Instructions</span
+            ><textarea name="instructionsEn" rows="3" maxlength="4000" [(ngModel)]="editor.instructionsEn"></textarea></label
+          ><label
+            ><span>Instructions (Arabic)</span
+            ><textarea name="instructionsAr" rows="3" maxlength="4000" dir="rtl" [(ngModel)]="editor.instructionsAr"></textarea></label
+          ><label
+            ><span>Coaching cues</span
+            ><textarea name="cuesEn" rows="2" maxlength="4000" [(ngModel)]="editor.coachingCuesEn"></textarea></label
+          ><label
+            ><span>Coaching cues (Arabic)</span
+            ><textarea name="cuesAr" rows="2" maxlength="4000" dir="rtl" [(ngModel)]="editor.coachingCuesAr"></textarea></label
+          ><label
+            ><span>Common mistakes</span
+            ><textarea name="mistakesEn" rows="2" maxlength="4000" [(ngModel)]="editor.commonMistakesEn"></textarea></label
+          ><label
+            ><span>Common mistakes (Arabic)</span
+            ><textarea name="mistakesAr" rows="2" maxlength="4000" dir="rtl" [(ngModel)]="editor.commonMistakesAr"></textarea></label
+          ><label class="span-2"
             ><span>YouTube URL</span
             ><input name="youtube" [(ngModel)]="editor.youTubeUrl" type="url"
           /></label>

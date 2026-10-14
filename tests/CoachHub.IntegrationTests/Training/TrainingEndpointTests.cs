@@ -7,6 +7,7 @@ using CoachHub.Application.Media;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Training;
 using CoachHub.IntegrationTests.Auth;
+using CoachHub.IntegrationTests.WorkoutPlanning;
 
 namespace CoachHub.IntegrationTests.Training;
 
@@ -32,11 +33,11 @@ public sealed class TrainingEndpointTests : IClassFixture<CoachHubApiFactory>
         var prefix = "Phase7-" + Guid.NewGuid().ToString("N");
 
         var first = await CreateExerciseAsync(new ExerciseInput(
-            prefix + " Squat", null, category.Id, media.Id, "https://youtu.be/squat", true));
+            prefix + " Squat", null, category.Id, media.Id, "https://youtu.be/squat", true, PrimaryMuscleGroupId: TestWorkouts.Quadriceps));
         await CreateExerciseAsync(new ExerciseInput(
-            prefix + " Press", "ضغط", category.Id, null, null, true));
+            prefix + " Press", "ضغط", category.Id, null, null, true, PrimaryMuscleGroupId: TestWorkouts.Chest));
         await CreateExerciseAsync(new ExerciseInput(
-            "Unrelated " + prefix, null, category.Id, null, null, false));
+            "Unrelated " + prefix, null, category.Id, null, null, false, PrimaryMuscleGroupId: TestWorkouts.Chest));
 
         var page = await _client.GetFromJsonAsync<PagedResult<ExerciseResponse>>(
             $"/api/v1/training/exercises?searchTerm={prefix}&categoryId={category.Id}&isActive=true&pageNumber=1&pageSize=1&sortBy=name");
@@ -47,7 +48,7 @@ public sealed class TrainingEndpointTests : IClassFixture<CoachHubApiFactory>
         var update = await _client.PutAsJsonAsync(
             $"/api/v1/training/exercises/{first.Id}",
             new ExerciseInput(
-                first.NameEn, "قرفصاء", category.Id, media.Id, first.YouTubeUrl, false));
+                first.NameEn, "قرفصاء", category.Id, media.Id, first.YouTubeUrl, false, PrimaryMuscleGroupId: TestWorkouts.Quadriceps));
         update.EnsureSuccessStatusCode();
         var updated = await update.Content.ReadFromJsonAsync<ExerciseResponse>();
         Assert.False(updated!.IsActive);
@@ -151,7 +152,7 @@ public sealed class TrainingEndpointTests : IClassFixture<CoachHubApiFactory>
     private async Task<ExerciseResponse> CreateExerciseAsync(ExerciseInput input)
     {
         var response = await _client.PostAsJsonAsync("/api/v1/training/exercises", input);
-        response.EnsureSuccessStatusCode();
+        Assert.True(response.IsSuccessStatusCode, await response.Content.ReadAsStringAsync());
         return (await response.Content.ReadFromJsonAsync<ExerciseResponse>())!;
     }
 }

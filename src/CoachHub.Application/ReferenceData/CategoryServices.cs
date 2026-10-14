@@ -44,6 +44,27 @@ public sealed class ExerciseCategoryService(IReferenceRepository<ExerciseCategor
         new(entity.Id, entity.NameEn, entity.NameAr, entity.IsActive);
 }
 
+/// <summary>Muscle groups, a platform catalog (§17, §23).</summary>
+public sealed class MuscleGroupService(IReferenceRepository<MuscleGroup> repository)
+    : ReferenceDataService<MuscleGroup, BilingualReferenceInput, BilingualReferenceResponse>(repository)
+{
+    protected override string ResourceName => "Muscle group";
+    protected override void Validate(BilingualReferenceInput input)
+    {
+        var errors = new Dictionary<string, string[]>();
+        Required(errors, "nameEn", input.NameEn, 100);
+        Optional(errors, "nameAr", input.NameAr, 100);
+        ThrowValidation(errors);
+    }
+    protected override string UniquenessKey(BilingualReferenceInput input) => input.NameEn;
+    protected override MuscleGroup Create(BilingualReferenceInput input, Guid? ownerCoachId) =>
+        MuscleGroup.Create(input.NameEn, input.NameAr, input.IsActive);
+    protected override void Update(MuscleGroup entity, BilingualReferenceInput input) =>
+        entity.Update(input.NameEn, input.NameAr, input.IsActive);
+    protected override BilingualReferenceResponse Map(MuscleGroup entity) =>
+        new(entity.Id, entity.NameEn, entity.NameAr, entity.IsActive);
+}
+
 /// <summary>Training equipment, a platform catalog (§3, §16).</summary>
 public sealed class EquipmentService(IReferenceRepository<Equipment> repository)
     : ReferenceDataService<Equipment, BilingualReferenceInput, BilingualReferenceResponse>(repository)

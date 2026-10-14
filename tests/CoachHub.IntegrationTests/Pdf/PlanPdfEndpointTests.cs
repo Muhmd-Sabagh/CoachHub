@@ -9,6 +9,7 @@ using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
 using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
+using CoachHub.IntegrationTests.WorkoutPlanning;
 
 namespace CoachHub.IntegrationTests.Pdf;
 
@@ -35,7 +36,7 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
         var exerciseCategory = await AdminPostAsync<BilingualReferenceResponse>("/api/v1/reference-data/exercise-categories",
             new BilingualReferenceInput("PDF exercise " + Guid.NewGuid().ToString("N"), null));
         var press = await AdminPostAsync<ExerciseResponse>("/api/v1/training/exercises",
-            new ExerciseInput("Bench Press", "ضغط الصدر", exerciseCategory.Id, null, "https://youtu.be/example", true));
+            new ExerciseInput("Bench Press", "ضغط الصدر", exerciseCategory.Id, null, "https://youtu.be/example", true, PrimaryMuscleGroupId: TestWorkouts.Chest));
 
         var mealId = Guid.NewGuid();
         var diet = await PostAsync<DietPlanResponse>("/api/v1/diet-plans", new DietPlanInput(
@@ -53,8 +54,8 @@ public sealed class PlanPdfEndpointTests : IClassFixture<CoachHubApiFactory>
             [new(Guid.NewGuid(), "Visible workout note", 0, true), new(Guid.NewGuid(), "Hidden workout note", 1, false)],
             [new(Guid.NewGuid(), "Push Day", "يوم الدفع", "Upper body", "Warm up", 0,
                 [
-                    new(Guid.NewGuid(), press.Id, 0, "3", "8-12", "90s", null, "RPE 8", "Controlled"),
-                    new(Guid.NewGuid(), press.Id, 1, null, null, null, null, null, null)
+                    new(Guid.NewGuid(), press.Id, 0, "Controlled", TestWorkouts.Sets(3, 8, 12, 90)),
+                    new(Guid.NewGuid(), press.Id, 1, null, TestWorkouts.Sets(1))
                 ])]));
 
         var serverPdfFilesBefore = Directory.GetFiles(AppContext.BaseDirectory, "*.pdf", SearchOption.AllDirectories);
