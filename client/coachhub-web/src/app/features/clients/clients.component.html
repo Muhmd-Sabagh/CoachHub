@@ -28,6 +28,16 @@
           <option value="true">Active</option>
           <option value="false">Inactive</option>
         </select></label
+      ><label
+        ><span>Client status</span
+        ><select name="clientStatus" [(ngModel)]="clientStatus">
+          <option value="">All</option>
+          <option value="OnTrack">On track</option>
+          <option value="NeedsReview">Needs review</option>
+          <option value="CheckInOverdue">Check-in overdue</option>
+          <option value="SubscriptionExpired">Subscription expired</option>
+          <option value="Inactive">Inactive</option>
+        </select></label
       ><button class="button button-primary">Search</button
       ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
     </form>

@@ -1,3 +1,5 @@
+using CoachHub.Application.Dashboards;
+
 namespace CoachHub.Application.Reporting;
 
 public sealed record ReportingQuery
@@ -26,15 +28,6 @@ public sealed record AssessmentMetrics(int InitialSubmissions, int UpdateSubmiss
 
 public sealed record PlanMetrics(int AssignedDietPlans, int AssignedWorkoutPlans);
 
-public sealed record CommercialBreakdown(
-    string Key,
-    Guid? Id,
-    string Label,
-    string CurrencyCode,
-    int SubscriptionTransactions,
-    int RenewalTransactions,
-    decimal Amount);
-
 public sealed record ExpiringSubscription(
     Guid SubscriptionId,
     Guid ClientId,
@@ -44,6 +37,7 @@ public sealed record ExpiringSubscription(
     DateOnly EndDate,
     int DaysRemaining);
 
+/// <summary>The operational report; the breakdowns are revenue (D6), not subscription prices.</summary>
 public sealed record OperationalReport(
     DateOnly From,
     DateOnly To,
@@ -52,9 +46,9 @@ public sealed record OperationalReport(
     WorkflowMetrics Workflow,
     AssessmentMetrics Assessments,
     PlanMetrics Plans,
-    IReadOnlyList<CommercialBreakdown> ByCurrency,
-    IReadOnlyList<CommercialBreakdown> ByPackage,
-    IReadOnlyList<CommercialBreakdown> ByPaymentAccount,
+    IReadOnlyList<RevenueLine> ByCurrency,
+    IReadOnlyList<RevenueLine> ByPackage,
+    IReadOnlyList<RevenueLine> ByPaymentAccount,
     IReadOnlyList<ExpiringSubscription> ExpiringSubscriptions);
 
 public interface IReportingRepository

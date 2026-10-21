@@ -138,14 +138,18 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Chat: one open `Conversation` per client; on transfer it is archived (client-only, read-only) and the new coach starts a new one. Staff endpoints never return archived conversations; administrators read but do not write.
   - Live delivery is the SignalR `RealtimeHub` at `/api/v1/realtime` (AnyRole), behind `IRealtimePublisher`. It only pushes; all writes stay on REST endpoints. Only that path accepts the access token from the query string.
   - Shared files (`ClientFile`) and chat attachments use `MediaUploadPolicy.Shared` (also video, Office documents, text; 50 MB). Other uploads keep images and PDF at 20 MB. Delete chats and shared files before a client's media.
+- **Calendars and dashboards (§38, §45, §46, §48, D6)** — implemented in P15; see `docs/product/phases/P15_CALENDARS_DASHBOARDS.md`.
+  - Calendar entries are derived on read (`CalendarService`): the workout rotation on the coach's `TrainingDays` (`TrainingCalendar`, pure), check-in due dates from `CheckInSchedule`, plan start and end dates, plus `CalendarEvent`s. Only coaches create events; clients never see follow-ups or events not shared with them.
+  - Revenue (D6) is settled payments minus refunds recorded in the period, per currency (`RevenueQuery` rows, `RevenueCalculator`). Every dashboard and report uses it; never report subscription prices as revenue.
+  - The coach dashboard's status counts reuse `ClientRepository.WithStatus`, so they match the client list filter.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P14. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P15. Known gaps against REQUIREMENTS.md:
 
-- no calendars, reports or subscription access rules yet (tracking exists since P8–P11, check-ins since P12, fitness tests since P13, chat, notifications and shared files since P14).
+- no reports, data export or subscription access rules yet (tracking exists since P8–P11, check-ins since P12, fitness tests since P13, chat, notifications and shared files since P14, calendars and dashboards since P15).
 
 Treat these as planned rework, not conventions to preserve.
 

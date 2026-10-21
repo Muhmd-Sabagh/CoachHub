@@ -1,6 +1,6 @@
 # P14 — Chat, event notifications and files
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P14 · **Branch:** `phase/p14-chat-notifications-files` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P14 · **Branch:** `phase/p14-chat-notifications-files` · **Status:** Merged (PR #16).
 **Covers:** §41, §42, §43, D2, D5, D7.
 
 ## Purpose

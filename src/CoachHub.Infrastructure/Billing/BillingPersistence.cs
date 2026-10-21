@@ -32,7 +32,8 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 }
 public sealed class RefundConfiguration : IEntityTypeConfiguration<Refund>
 {
-    public void Configure(EntityTypeBuilder<Refund> b) { b.ToTable("Refunds"); b.HasKey(x => x.Id); b.Property(x => x.Amount).HasPrecision(18, 2); b.Property(x => x.Reason).HasMaxLength(500); b.HasIndex(x => x.RecordedAt); }
+    // Refunds are added through their payment; the key is set by the domain, so EF must not treat them as existing rows.
+    public void Configure(EntityTypeBuilder<Refund> b) { b.ToTable("Refunds"); b.HasKey(x => x.Id); b.Property(x => x.Id).ValueGeneratedNever(); b.Property(x => x.Amount).HasPrecision(18, 2); b.Property(x => x.Reason).HasMaxLength(500); b.HasIndex(x => x.RecordedAt); }
 }
 
 public sealed class BillingRepository(CoachHubDbContext db) : IBillingRepository

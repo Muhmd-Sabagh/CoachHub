@@ -11,8 +11,83 @@
     <p class="eyebrow">{{ 'dashboard.findClient' | translate }}</p>
     <app-search-filter [label]="'dashboard.findClient' | translate" [placeholder]="'dashboard.searchPlaceholder' | translate" (search)="findClient($event)" />
   </article>
-  <article class="card ready-card"><span class="success-icon">OK</span><div><h2>Operational overview</h2><p>Live module data as of {{ report?.asOf || 'today' }}. Commercial amounts are not payment settlement.</p></div></article>
+  <article class="card ready-card"><span class="success-icon">OK</span><div><h2>Operational overview</h2><p>Live module data as of {{ report?.asOf || 'today' }}. Revenue is payments settled in the period minus refunds recorded in it, per currency.</p></div></article>
 </section>
+@if (coach(); as c) {
+  <section class="card workbench">
+    <div class="section-heading"><div><p class="eyebrow">Coach dashboard</p><h2>Your clients today</h2></div><a routerLink="/calendar">Open calendar</a></div>
+    <div class="report-metrics">
+      <article><span>Total clients</span><strong>{{ c.clients.total }}</strong><small>{{ c.clients.active }} active · {{ c.clients.inactive }} inactive</small></article>
+      @for (s of c.statuses; track s.status) {
+        <a class="metric-link" routerLink="/clients" [queryParams]="{ status: s.status }"><span>{{ statusLabels[s.status] || s.status }}</span><strong>{{ s.count }}</strong><small>Show clients</small></a>
+      }
+      <a class="metric-link" routerLink="/check-ins"><span>Check-ins awaiting review</span><strong>{{ c.checkIns.awaitingReview }}</strong><small>{{ c.checkIns.due }} due now · {{ c.checkIns.overdue }} overdue</small></a>
+      <article><span>Expired programs</span><strong>{{ c.expiredProgramCount }}</strong><small>Active plans past their end date</small></article>
+    </div>
+    <div class="report-columns">
+      <section>
+        <div class="section-heading"><h3>Expired programs</h3></div>
+        <div class="table-scroll"><table><thead><tr><th>Client</th><th>Plan</th><th>Ended</th></tr></thead><tbody>
+          @for (p of c.expiredPrograms; track p.planId) { <tr><td><a [routerLink]="['/clients', p.clientId]">{{ p.clientName }}</a></td><td>{{ p.kind }} · {{ p.planName }}</td><td>{{ p.endedOn | date: 'd MMM y' }}</td></tr> }
+          @if (!c.expiredPrograms.length) { <tr><td colspan="3" class="table-message">No expired programs.</td></tr> }
+        </tbody></table></div>
+      </section>
+      <section>
+        <div class="section-heading"><h3>Recent activity</h3></div>
+        <ul class="activity">
+          @for (a of c.recentActivity; track $index) {
+            <li><span>{{ activityText(a) }}@if (a.clientName) { · <a [routerLink]="['/clients', a.clientId]">{{ a.clientName }}</a> }</span><small class="muted">{{ a.at | date: 'd MMM, shortTime' }}</small></li>
+          } @empty { <li class="muted">No activity yet.</li> }
+        </ul>
+      </section>
+    </div>
+    <div class="section-heading"><h3>Revenue</h3><span>{{ c.from }} to {{ c.to }}</span></div>
+    <div class="table-scroll"><table><thead><tr><th>Currency</th><th>Settled</th><th>Refunded</th><th>Net</th></tr></thead><tbody>
+      @for (r of c.revenue; track r.key) { <tr><td><strong>{{ r.currencyCode }}</strong></td><td>{{ r.settled | number: '1.2-2' }}</td><td>{{ r.refunded | number: '1.2-2' }}</td><td><strong>{{ r.net | number: '1.2-2' }}</strong></td></tr> }
+      @if (!c.revenue.length) { <tr><td colspan="4" class="table-message">No revenue in this period.</td></tr> }
+    </tbody></table></div>
+  </section>
+}
+@if (admin(); as a) {
+  <section class="card workbench">
+    <div class="section-heading"><div><p class="eyebrow">Platform</p><h2>Administrator dashboard</h2></div><span>{{ a.from }} to {{ a.to }}</span></div>
+    <div class="report-metrics">
+      <article><span>Clients</span><strong>{{ a.clients }}</strong><small>{{ a.newUsers.clients }} new in period</small></article>
+      <article><span>Coaches</span><strong>{{ a.coaches }}</strong><small>{{ a.activeCoaches }} active · {{ a.newUsers.coaches }} new</small></article>
+      <article><span>Active users</span><strong>{{ a.activeUsers }}</strong><small>Signed in or made a change</small></article>
+      <article><span>Expired subscriptions</span><strong>{{ a.expiredSubscriptions.clients }}</strong><small>{{ a.expiredSubscriptions.endedInPeriod }} ended in period</small></article>
+    </div>
+    <div class="report-columns">
+      <section>
+        <div class="section-heading"><h3>Revenue by coach</h3></div>
+        <div class="table-scroll"><table><thead><tr><th>Coach</th><th>Settled</th><th>Refunded</th><th>Net</th></tr></thead><tbody>
+          @for (r of a.revenueByCoach; track r.key + r.currencyCode) { <tr><td>{{ r.label }}</td><td>{{ r.settled | number: '1.2-2' }}</td><td>{{ r.refunded | number: '1.2-2' }}</td><td><strong>{{ r.net | number: '1.2-2' }} {{ r.currencyCode }}</strong></td></tr> }
+          @if (!a.revenueByCoach.length) { <tr><td colspan="4" class="table-message">No revenue in this period.</td></tr> }
+        </tbody></table></div>
+      </section>
+      <section>
+        <div class="section-heading"><h3>Platform usage</h3></div>
+        <div class="table-scroll"><table><tbody>
+          <tr><td>Workouts logged</td><td>{{ a.usage.workoutsLogged }}</td></tr>
+          <tr><td>Food entries</td><td>{{ a.usage.foodEntries }}</td></tr>
+          <tr><td>Body and lifestyle entries</td><td>{{ a.usage.progressEntries }}</td></tr>
+          <tr><td>Check-ins sent</td><td>{{ a.usage.checkInsSent }}</td></tr>
+          <tr><td>Form submissions</td><td>{{ a.usage.formSubmissions }}</td></tr>
+          <tr><td>Chat messages</td><td>{{ a.usage.chatMessages }}</td></tr>
+          <tr><td>Files shared</td><td>{{ a.usage.filesShared }}</td></tr>
+          <tr><td>Plans delivered</td><td>{{ a.usage.plansDelivered }}</td></tr>
+        </tbody></table></div>
+      </section>
+    </div>
+    <div class="section-heading"><h3>User activity</h3><span>Active accounts per day</span></div>
+    <div class="activity-bars" role="img" [attr.aria-label]="'Active users per day, up to ' + maxActive()">
+      @for (d of a.userActivity; track d.date) { <span [style.height.%]="(d.activeUsers / maxActive()) * 100" [title]="d.date + ': ' + d.activeUsers + ' users, ' + d.changes + ' changes'"></span> }
+    </div>
+    <div class="table-scroll"><table><thead><tr><th>Day</th><th>Active users</th><th>Changes</th></tr></thead><tbody>
+      @for (d of a.userActivity.slice(-7); track d.date) { <tr><td>{{ d.date | date: 'EEE d MMM' }}</td><td>{{ d.activeUsers }}</td><td>{{ d.changes }}</td></tr> }
+    </tbody></table></div>
+  </section>
+}
 <section class="card workbench reporting-workbench">
   <div class="toolbar">
     <div><p class="eyebrow">Management reporting</p><h2>Selected-period activity</h2></div>
@@ -44,21 +119,21 @@
         </tbody></table></div>
       </section>
       <section>
-        <div class="section-heading"><h3>Commercial activity by currency</h3><span>Coverage starts + recorded renewals</span></div>
-        <div class="table-scroll"><table><thead><tr><th>Currency</th><th>Subscriptions</th><th>Renewals</th><th>Amount</th></tr></thead><tbody>
-          @for (item of report.byCurrency; track item.key) { <tr><td><strong>{{ item.label }}</strong></td><td>{{ item.subscriptionTransactions }}</td><td>{{ item.renewalTransactions }}</td><td>{{ item.amount | number: '1.2-2' }}</td></tr> }
-          @if (!report.byCurrency.length) { <tr><td colspan="4" class="table-message">No commercial activity in this period.</td></tr> }
+        <div class="section-heading"><h3>Revenue by currency</h3><span>Settled payments − refunds in the period</span></div>
+        <div class="table-scroll"><table><thead><tr><th>Currency</th><th>Settled</th><th>Refunded</th><th>Net</th></tr></thead><tbody>
+          @for (item of report.byCurrency; track item.key) { <tr><td><strong>{{ item.label }}</strong></td><td>{{ item.settled | number: '1.2-2' }} ({{ item.payments }})</td><td>{{ item.refunded | number: '1.2-2' }} ({{ item.refunds }})</td><td><strong>{{ item.net | number: '1.2-2' }}</strong></td></tr> }
+          @if (!report.byCurrency.length) { <tr><td colspan="4" class="table-message">No revenue in this period.</td></tr> }
         </tbody></table></div>
       </section>
     </div>
     <div class="report-columns">
-      <section><div class="section-heading"><h3>By package</h3></div><div class="table-scroll"><table><thead><tr><th>Package</th><th>Transactions</th><th>Amount</th></tr></thead><tbody>
-        @for (item of report.byPackage; track item.key) { <tr><td>{{ item.label }}</td><td>{{ item.subscriptionTransactions + item.renewalTransactions }}</td><td>{{ item.amount | number: '1.2-2' }} {{ item.currencyCode }}</td></tr> }
-        @if (!report.byPackage.length) { <tr><td colspan="3" class="table-message">No package activity.</td></tr> }
+      <section><div class="section-heading"><h3>Revenue by package</h3></div><div class="table-scroll"><table><thead><tr><th>Package</th><th>Payments</th><th>Net</th></tr></thead><tbody>
+        @for (item of report.byPackage; track item.key + item.currencyCode) { <tr><td>{{ item.label }}</td><td>{{ item.payments }}</td><td>{{ item.net | number: '1.2-2' }} {{ item.currencyCode }}</td></tr> }
+        @if (!report.byPackage.length) { <tr><td colspan="3" class="table-message">No revenue.</td></tr> }
       </tbody></table></div></section>
-      <section><div class="section-heading"><h3>By payment account</h3></div><div class="table-scroll"><table><thead><tr><th>Account</th><th>Transactions</th><th>Amount</th></tr></thead><tbody>
-        @for (item of report.byPaymentAccount; track item.key) { <tr><td>{{ item.label }}</td><td>{{ item.subscriptionTransactions + item.renewalTransactions }}</td><td>{{ item.amount | number: '1.2-2' }} {{ item.currencyCode }}</td></tr> }
-        @if (!report.byPaymentAccount.length) { <tr><td colspan="3" class="table-message">No account activity.</td></tr> }
+      <section><div class="section-heading"><h3>Revenue by payment account</h3></div><div class="table-scroll"><table><thead><tr><th>Account</th><th>Payments</th><th>Net</th></tr></thead><tbody>
+        @for (item of report.byPaymentAccount; track item.key + item.currencyCode) { <tr><td>{{ item.label }}</td><td>{{ item.payments }}</td><td>{{ item.net | number: '1.2-2' }} {{ item.currencyCode }}</td></tr> }
+        @if (!report.byPaymentAccount.length) { <tr><td colspan="3" class="table-message">No revenue.</td></tr> }
       </tbody></table></div></section>
     </div>
   }
