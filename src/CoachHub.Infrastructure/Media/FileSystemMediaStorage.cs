@@ -97,13 +97,5 @@ public sealed class FileSystemMediaStorage(IOptions<MediaStorageOptions> options
         return Path.GetFullPath(configuredRoot);
     }
 
-    private static string ContentTypeExtension(string contentType) => contentType switch
-    {
-        "image/jpeg" => ".jpg",
-        "image/png" => ".png",
-        "image/webp" => ".webp",
-        "image/gif" => ".gif",
-        "application/pdf" => ".pdf",
-        _ => throw new InvalidOperationException("Unsupported media content type.")
-    };
+    private static string ContentTypeExtension(string contentType) => MediaFileExtensions.For(contentType);
 }

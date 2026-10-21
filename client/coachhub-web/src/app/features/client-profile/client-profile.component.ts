@@ -15,6 +15,8 @@ import { ClientTrainingComponent } from '../training-tracking/client-training.co
 import { ClientProgressComponent } from '../progress-tracking/client-progress.component';
 import { CheckInsComponent } from '../check-ins/check-ins.component';
 import { ClientTestsComponent } from '../fitness-tests/client-tests.component';
+import { ChatThreadComponent } from '../chat/chat-thread.component';
+import { ClientFilesComponent } from '../client-files/client-files.component';
 import { ReferenceDataService, ReferenceRecord } from '../settings/reference-data.service';
 
 type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progress' | 'measurements' | 'photos' | 'checkins' | 'tests' | 'messages' | 'files';
@@ -23,7 +25,7 @@ type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progres
 interface TabItem { id: Tab; label: string; arrivesIn?: string; }
 
 /** Everything about one client in one place (§40), starting with the structured profile (§3). */
-@Component({ selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent, ClientTestsComponent], templateUrl: './client-profile.component.html' })
+@Component({ selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent, ClientTestsComponent, ChatThreadComponent, ClientFilesComponent], templateUrl: './client-profile.component.html' })
 export class ClientProfileComponent implements OnInit {
   readonly tabs: TabItem[] = [
     { id: 'overview', label: 'Overview' }, { id: 'profile', label: 'Profile' },
@@ -31,7 +33,7 @@ export class ClientProfileComponent implements OnInit {
     { id: 'diary', label: 'Food diary' }, { id: 'progress', label: 'Progress' },
     { id: 'measurements', label: 'Measurements' }, { id: 'photos', label: 'Photos' },
     { id: 'checkins', label: 'Check-ins' }, { id: 'tests', label: 'Tests' },
-    { id: 'messages', label: 'Messages', arrivesIn: 'P14' }, { id: 'files', label: 'Files', arrivesIn: 'P14' },
+    { id: 'messages', label: 'Messages' }, { id: 'files', label: 'Files' },
   ];
   readonly statuses = clientStatuses;
   readonly restrictions = dietaryRestrictions;

@@ -44,5 +44,5 @@ public sealed class S3MediaStorage : IMediaStorage, IDisposable
 
     public void Dispose() => _client.Dispose();
     private static void ValidateKey(string key) { if (string.IsNullOrWhiteSpace(key) || key.StartsWith('/') || key.Contains("..", StringComparison.Ordinal)) throw new InvalidOperationException("Invalid media storage key."); }
-    private static string Extension(string type) => type switch { "image/jpeg" => ".jpg", "image/png" => ".png", "image/webp" => ".webp", "image/gif" => ".gif", "application/pdf" => ".pdf", _ => throw new InvalidOperationException("Unsupported media content type.") };
+    private static string Extension(string type) => MediaFileExtensions.For(type);
 }

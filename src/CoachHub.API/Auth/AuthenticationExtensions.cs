@@ -52,6 +52,18 @@ public static class AuthenticationExtensions
                     NameClaimType = JwtRegisteredClaimNames.Name,
                     RoleClaimType = ClaimTypes.Role
                 };
+                // Browsers cannot set headers on WebSockets, so the real-time hub (P14), and only it, takes the
+                // access token from the query string.
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var token = context.Request.Query["access_token"].ToString();
+                        if (!string.IsNullOrEmpty(token) && context.HttpContext.Request.Path.StartsWithSegments(Realtime.RealtimeHub.Path))
+                            context.Token = token;
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         // Role policies decide who may call an endpoint; which rows they see is decided by the

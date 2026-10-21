@@ -156,6 +156,56 @@ public sealed class MediaServiceTests
         Assert.False(MediaService.IsPlatformImage(null));
     }
 
+    [Theory]
+    [InlineData("video/mp4", new byte[] { 0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6F, 0x6D })]
+    [InlineData("video/quicktime", new byte[] { 0, 0, 0, 0x14, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74, 0x20, 0x20 })]
+    [InlineData("video/webm", new byte[] { 0x1A, 0x45, 0xDF, 0xA3, 1, 2 })]
+    [InlineData("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", new byte[] { 0x50, 0x4B, 0x03, 0x04, 1 })]
+    [InlineData("text/plain", new byte[] { 0x48, 0x69, 0x0A })]
+    public async Task Shared_uploads_accept_videos_documents_and_text(string contentType, byte[] bytes)
+    {
+        var storage = new StubStorage();
+        var service = new MediaService(storage, new StubRepository());
+        await using var content = new MemoryStream(bytes);
+
+        await service.UploadAsync(content, "file", contentType, content.Length, MediaOwner.Platform(null), MediaUploadPolicy.Shared, CancellationToken.None);
+
+        Assert.True(storage.StoreCalled);
+    }
+
+    [Theory]
+    [InlineData("video/mp4", new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0 }, "file")]
+    [InlineData("text/plain", new byte[] { 0x48, 0x00, 0x69 }, "file")]
+    [InlineData("application/zip", new byte[] { 0x50, 0x4B, 0x03, 0x04 }, "contentType")]
+    public async Task Shared_uploads_still_check_types_and_signatures(string contentType, byte[] bytes, string field)
+    {
+        var storage = new StubStorage();
+        var service = new MediaService(storage, new StubRepository());
+        await using var content = new MemoryStream(bytes);
+
+        var exception = await Assert.ThrowsAsync<ValidationException>(() => service.UploadAsync(
+            content, "file", contentType, content.Length, MediaOwner.Platform(null), MediaUploadPolicy.Shared, CancellationToken.None));
+
+        Assert.Contains(field, exception.Errors);
+        Assert.False(storage.StoreCalled);
+    }
+
+    [Fact]
+    public async Task Size_limits_depend_on_the_upload_policy()
+    {
+        var service = new MediaService(new StubStorage(), new StubRepository());
+        await using var content = new MemoryStream([0x25, 0x50, 0x44, 0x46, 0x2D]);
+
+        var standard = await Assert.ThrowsAsync<ValidationException>(() => service.UploadAsync(content, "big.pdf", "application/pdf",
+            MediaService.MaximumFileSizeBytes + 1, MediaOwner.Platform(null), CancellationToken.None));
+        Assert.Contains("20 MB", Assert.Single(standard.Errors["file"]));
+        await service.UploadAsync(content, "big.pdf", "application/pdf", MediaService.MaximumFileSizeBytes + 1,
+            MediaOwner.Platform(null), MediaUploadPolicy.Shared, CancellationToken.None);
+        var shared = await Assert.ThrowsAsync<ValidationException>(() => service.UploadAsync(content, "big.pdf", "application/pdf",
+            MediaService.MaximumSharedFileSizeBytes + 1, MediaOwner.Platform(null), MediaUploadPolicy.Shared, CancellationToken.None));
+        Assert.Contains("50 MB", Assert.Single(shared.Errors["file"]));
+    }
+
     private sealed class StubStorage : IMediaStorage
     {
         public List<string> Deleted { get; } = [];

@@ -23,12 +23,14 @@ public sealed class WorkoutPlan : Entity, ITenantOwned
         NameEn = WorkoutText.Required(nameEn, 255, nameof(nameEn));
         NameAr = WorkoutText.Optional(nameAr, 255, nameof(nameAr));
         if (clientId == Guid.Empty) throw new ArgumentException("Client identifier cannot be empty.", nameof(clientId));
+        if (clientId is { } client && client != ClientId) Raise(new PlanAssigned(PlanKind.Workout, Id, client));
         ClientId = clientId;
     }
 
     public void Assign(Guid? clientId)
     {
         if (clientId == Guid.Empty) throw new ArgumentException("Client identifier cannot be empty.", nameof(clientId));
+        if (clientId is { } client && client != ClientId) Raise(new PlanAssigned(PlanKind.Workout, Id, client));
         ClientId = clientId;
     }
 }

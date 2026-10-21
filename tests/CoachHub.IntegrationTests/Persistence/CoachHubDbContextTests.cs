@@ -76,6 +76,11 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.FitnessTests.TestDefinition), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.FitnessTests.TestAssignment), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.FitnessTests.TestResult), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Chat.Conversation), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Chat.ChatMessage), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Chat.ChatAttachment), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.ClientFiles.ClientFile), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Communications.NotificationPreference), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanNote), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementGroup), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementOption), entityTypes);
@@ -131,7 +136,7 @@ public sealed class CoachHubDbContextTests
         // (P9, a catalog entry), WorkoutSession and PersonalRecord (P10), and six tracking entries, ProgressPhoto and
         // LifestyleTargets (P11), and CheckInSchedule and CheckIn (P12). MediaAsset, AuditEntry, Brand, FoodItem and
         // Exercise also admit platform rows.
-        Assert.Equal(38, owned.Length);
+        Assert.Equal(41, owned.Length);
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.CheckIns.CheckIn));
         Assert.DoesNotContain(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressEntry));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressPhoto));

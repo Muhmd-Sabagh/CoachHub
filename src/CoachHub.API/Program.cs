@@ -20,6 +20,11 @@ builder.Services.AddCoachHubAuthentication(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditActorAccessor, HttpAuditActorAccessor>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+// P14: live chat and notifications over SignalR; the publisher replaces Infrastructure's no-op one.
+builder.Services.AddSignalR().AddJsonProtocol(options =>
+    options.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, CoachHub.API.Realtime.SubjectUserIdProvider>();
+builder.Services.AddSingleton<CoachHub.Application.Notifications.IRealtimePublisher, CoachHub.API.Realtime.SignalRRealtimePublisher>();
 // Enums travel as names (each enum also declares this itself, so tests and clients agree).
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
@@ -102,6 +107,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<CoachHub.API.Realtime.RealtimeHub>(CoachHub.API.Realtime.RealtimeHub.Path);
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
     .WithName("Health")
     .WithTags("Platform");

@@ -9,6 +9,19 @@ namespace CoachHub.Domain.Common;
 [JsonConverter(typeof(JsonStringEnumConverter<PlanRevisionStatus>))]
 public enum PlanRevisionStatus { Draft, Active, Archived }
 
+/// <summary>Which kind of plan a version or event belongs to.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<PlanKind>))]
+public enum PlanKind { Diet, Workout }
+
+/// <summary>A version became Active: version 1 is a new plan for the client, later ones a new program (§42).</summary>
+public sealed record PlanVersionActivated(PlanKind Kind, Guid PlanId, Guid RevisionId, int VersionNumber) : IDomainEvent;
+
+/// <summary>The active version was saved in place (§42 "program updated").</summary>
+public sealed record ActivePlanVersionSaved(PlanKind Kind, Guid PlanId, Guid RevisionId) : IDomainEvent;
+
+/// <summary>The plan was given to a client; it notifies them when its current version is already Active.</summary>
+public sealed record PlanAssigned(PlanKind Kind, Guid PlanId, Guid ClientId) : IDomainEvent;
+
 /// <summary>A row that belongs to one plan version; archived versions reject changes to it.</summary>
 public interface IPlanRevisionContent
 {
@@ -35,6 +48,9 @@ public abstract class PlanRevision : Entity
 
     public bool IsArchived => Status == PlanRevisionStatus.Archived;
 
+    /// <summary>Diet or workout, for the events this version raises.</summary>
+    public abstract PlanKind Kind { get; }
+
     protected void Initialize(
         Guid planId, int versionNumber, PlanRevisionStatus status, DateOnly? startDate, DateOnly? endDate,
         Guid? createdByUserId, DateTimeOffset createdAt)
@@ -47,13 +63,17 @@ public abstract class PlanRevision : Entity
         CreatedByUserId = createdByUserId;
         CreatedAt = createdAt;
         Apply(status, startDate, endDate, createdAt);
+        if (Status == PlanRevisionStatus.Active) Raise(new PlanVersionActivated(Kind, PlanId, Id, VersionNumber));
     }
 
     /// <summary>Save in place: the current version's dates and Draft/Active status.</summary>
     public void Update(PlanRevisionStatus status, DateOnly? startDate, DateOnly? endDate, DateTimeOffset updatedAt)
     {
         EnsureEditable();
+        var wasActive = Status == PlanRevisionStatus.Active;
         Apply(status, startDate, endDate, updatedAt);
+        if (Status == PlanRevisionStatus.Active)
+            Raise(wasActive ? new ActivePlanVersionSaved(Kind, PlanId, Id) : new PlanVersionActivated(Kind, PlanId, Id, VersionNumber));
     }
 
     /// <summary>Records that the content was saved in place.</summary>
@@ -61,6 +81,7 @@ public abstract class PlanRevision : Entity
     {
         EnsureEditable();
         UpdatedAt = updatedAt;
+        if (Status == PlanRevisionStatus.Active) Raise(new ActivePlanVersionSaved(Kind, PlanId, Id));
     }
 
     /// <summary>Superseded by a new version: from now on this version is read-only.</summary>

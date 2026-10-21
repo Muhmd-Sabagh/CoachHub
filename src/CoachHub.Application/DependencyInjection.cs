@@ -1,7 +1,10 @@
 using CoachHub.Application.Auditing;
 using CoachHub.Application.Adherence;
 using CoachHub.Application.Assessments;
+using CoachHub.Application.Chat;
 using CoachHub.Application.CheckIns;
+using CoachHub.Application.ClientFiles;
+using CoachHub.Application.Common.Events;
 using CoachHub.Application.FitnessTests;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth.Login;
@@ -15,6 +18,7 @@ using CoachHub.Application.FoodTracking;
 using CoachHub.Application.Media;
 using CoachHub.Application.Pdf;
 using CoachHub.Application.PlanDelivery;
+using CoachHub.Application.Notifications;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Progress;
@@ -24,6 +28,9 @@ using CoachHub.Application.Settings;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutTracking;
 using CoachHub.Application.WorkoutPlanning;
+using CoachHub.Domain.Chat;
+using CoachHub.Domain.CheckIns;
+using CoachHub.Domain.Common;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CoachHub.Application;
@@ -74,6 +81,18 @@ public static class DependencyInjection
         services.AddScoped<ProgressService>();
         services.AddScoped<ProgressDashboardService>();
         services.AddScoped<CheckInService>();
+        // P14: chat, shared files and event notifications. Handlers run after a save (IDomainEventDispatcher).
+        services.AddScoped<ChatService>();
+        services.AddScoped<ClientFileService>();
+        services.AddScoped<InboxService>();
+        services.AddScoped<NotificationCenter>();
+        services.AddScoped<EventNotificationScanner>();
+        services.AddScoped<PlanNotificationHandler>();
+        services.AddScoped<IDomainEventHandler<PlanVersionActivated>>(sp => sp.GetRequiredService<PlanNotificationHandler>());
+        services.AddScoped<IDomainEventHandler<ActivePlanVersionSaved>>(sp => sp.GetRequiredService<PlanNotificationHandler>());
+        services.AddScoped<IDomainEventHandler<PlanAssigned>>(sp => sp.GetRequiredService<PlanNotificationHandler>());
+        services.AddScoped<IDomainEventHandler<CheckInReviewed>, CheckInNotificationHandler>();
+        services.AddScoped<IDomainEventHandler<ChatMessageSent>, ChatMessageSentHandler>();
         services.AddScoped<TestDefinitionService>();
         services.AddScoped<FitnessTestService>();
         services.AddScoped<AdherenceService>();

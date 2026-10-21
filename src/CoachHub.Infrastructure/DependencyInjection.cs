@@ -19,7 +19,10 @@ using CoachHub.Application.SavedPlans;
 using CoachHub.Application.Settings;
 using CoachHub.Application.Training;
 using CoachHub.Application.WorkoutPlanning;
+using CoachHub.Application.Chat;
 using CoachHub.Application.CheckIns;
+using CoachHub.Application.ClientFiles;
+using CoachHub.Application.Common.Events;
 using CoachHub.Application.FitnessTests;
 using CoachHub.Application.Progress;
 using CoachHub.Application.WorkoutTracking;
@@ -45,7 +48,10 @@ using CoachHub.Infrastructure.SavedPlans;
 using CoachHub.Infrastructure.Settings;
 using CoachHub.Infrastructure.Training;
 using CoachHub.Infrastructure.WorkoutPlanning;
+using CoachHub.Infrastructure.Chat;
 using CoachHub.Infrastructure.CheckIns;
+using CoachHub.Infrastructure.ClientFiles;
+using CoachHub.Infrastructure.Notifications;
 using CoachHub.Infrastructure.FitnessTests;
 using CoachHub.Infrastructure.Progress;
 using CoachHub.Infrastructure.WorkoutTracking;
@@ -53,6 +59,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace CoachHub.Infrastructure;
@@ -126,6 +133,7 @@ public static class DependencyInjection
         services.AddHttpClient<WhatsAppNotificationSender>();
         services.AddScoped<INotificationSender>(provider => provider.GetRequiredService<WhatsAppNotificationSender>());
         services.AddHostedService<NotificationDispatcher>();
+        services.AddHostedService<EventNotificationWorker>();
         services.AddSingleton<ITokenIssuer, JwtTokenIssuer>();
         services.AddScoped<AdminBootstrapper>();
 
@@ -146,6 +154,16 @@ public static class DependencyInjection
         services.AddScoped<IProgressRepository, ProgressRepository>();
         services.AddScoped<ICheckInRepository, CheckInRepository>();
         services.AddScoped<IFitnessTestRepository, FitnessTestRepository>();
+        // P14: domain events, event notifications, chat and shared files. The API replaces the real-time publisher.
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.TryAddSingleton<Application.Notifications.IRealtimePublisher, NullRealtimePublisher>();
+        services.AddScoped<Application.Notifications.IAppLinks, AppLinks>();
+        services.AddScoped<Application.Notifications.IRecipientDirectory, RecipientDirectory>();
+        services.AddScoped<Application.Notifications.IInboxRepository, InboxRepository>();
+        services.AddScoped<Application.Notifications.IPlanLookup, PlanLookup>();
+        services.AddScoped<Application.Notifications.INotificationEventSource, NotificationEventSource>();
+        services.AddScoped<IChatRepository, ChatRepository>();
+        services.AddScoped<IClientFileRepository, ClientFileRepository>();
         services.AddScoped<IFormRepository, FormRepository>();
         services.AddScoped<IFormImportRepository, FormImportRepository>();
         services.AddSingleton<IAssessmentWorkbookParser, XlsxAssessmentWorkbookParser>();

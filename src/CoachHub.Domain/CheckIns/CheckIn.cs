@@ -150,8 +150,8 @@ public sealed class CheckIn : Entity, ITenantOwned
     /// <summary>A reply or feedback the client sees (§29).</summary>
     public CheckInReply Reply(Guid authorUserId, string text, DateTimeOffset now)
     {
-        var reply = CheckInReply.Create(Id, authorUserId, text, now);
-        _replies.Add(reply);
+        var reply = AddReply(authorUserId, text, now);
+        Raise(new CheckInReviewed(Id, CoachId, ClientId, null));
         return reply;
     }
 
@@ -165,10 +165,18 @@ public sealed class CheckIn : Entity, ITenantOwned
     private void Review(CheckInStatus status, Guid reviewerUserId, string? message, DateTimeOffset now)
     {
         if (reviewerUserId == Guid.Empty) throw new ArgumentException("A reviewer is required.", nameof(reviewerUserId));
-        if (!string.IsNullOrWhiteSpace(message)) Reply(reviewerUserId, message, now);
+        if (!string.IsNullOrWhiteSpace(message)) AddReply(reviewerUserId, message, now);
         Status = status;
         ReviewedByUserId = reviewerUserId;
         ReviewedAt = now;
+        Raise(new CheckInReviewed(Id, CoachId, ClientId, status));
+    }
+
+    private CheckInReply AddReply(Guid authorUserId, string text, DateTimeOffset now)
+    {
+        var reply = CheckInReply.Create(Id, authorUserId, text, now);
+        _replies.Add(reply);
+        return reply;
     }
 
     private void AddSubmission(Guid submissionId, bool late, DateTimeOffset now)
@@ -217,3 +225,6 @@ public sealed class CheckInReply : Entity
         return new CheckInReply { CheckInId = checkInId, AuthorUserId = authorUserId, Text = value, CreatedAt = now };
     }
 }
+
+/// <summary>The coach approved, asked for changes (<see cref="Outcome"/>) or replied (no outcome): the client is notified (§42).</summary>
+public sealed record CheckInReviewed(Guid CheckInId, Guid CoachId, Guid ClientId, CheckInStatus? Outcome) : IDomainEvent;

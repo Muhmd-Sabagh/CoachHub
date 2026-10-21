@@ -1,13 +1,23 @@
+using System.Text.Json.Serialization;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Domain.Media;
 
 namespace CoachHub.Application.Media;
+
+/// <summary>
+/// What an upload may be. Standard: images and PDF up to 20 MB. Shared (P14: files a coach shares, chat
+/// attachments): also videos, Office documents and plain text, up to 50 MB.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<MediaUploadPolicy>))]
+public enum MediaUploadPolicy { Standard, Shared }
 
 public sealed class MediaService(
     IMediaStorage storage,
     IMediaRepository repository)
 {
     public const long MaximumFileSizeBytes = 20 * 1024 * 1024;
+    public const long MaximumSharedFileSizeBytes = 50 * 1024 * 1024;
+    private const int SignatureBytes = 512;
 
     private static readonly HashSet<string> AllowedContentTypes =
     [
@@ -18,15 +28,37 @@ public sealed class MediaService(
         "application/pdf"
     ];
 
+    private static readonly HashSet<string> SharedContentTypes =
+    [
+        .. AllowedContentTypes,
+        "video/mp4",
+        "video/webm",
+        "video/quicktime",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "text/plain"
+    ];
+
+    public Task<MediaMetadata> UploadAsync(
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long sizeBytes,
+        MediaOwner owner,
+        CancellationToken cancellationToken) =>
+        UploadAsync(content, originalFileName, contentType, sizeBytes, owner, MediaUploadPolicy.Standard, cancellationToken);
+
     public async Task<MediaMetadata> UploadAsync(
         Stream content,
         string originalFileName,
         string contentType,
         long sizeBytes,
         MediaOwner owner,
+        MediaUploadPolicy policy,
         CancellationToken cancellationToken)
     {
-        ValidateUpload(content, originalFileName, contentType, sizeBytes);
+        ValidateUpload(content, originalFileName, contentType, sizeBytes, policy);
 
         var stored = await storage.StoreAsync(
             content,
@@ -115,17 +147,20 @@ public sealed class MediaService(
         Stream content,
         string originalFileName,
         string contentType,
-        long sizeBytes)
+        long sizeBytes,
+        MediaUploadPolicy policy)
     {
         var errors = new Dictionary<string, string[]>();
+        var shared = policy == MediaUploadPolicy.Shared;
+        var limit = shared ? MaximumSharedFileSizeBytes : MaximumFileSizeBytes;
 
         if (!content.CanRead || sizeBytes <= 0)
         {
             errors["file"] = ["A non-empty readable file is required."];
         }
-        else if (sizeBytes > MaximumFileSizeBytes)
+        else if (sizeBytes > limit)
         {
-            errors["file"] = ["The file exceeds the 20 MB limit."];
+            errors["file"] = [$"The file exceeds the {limit / (1024 * 1024)} MB limit."];
         }
 
         if (string.IsNullOrWhiteSpace(originalFileName))
@@ -133,9 +168,11 @@ public sealed class MediaService(
             errors["fileName"] = ["The original file name is required."];
         }
 
-        if (!AllowedContentTypes.Contains(contentType))
+        if (!(shared ? SharedContentTypes : AllowedContentTypes).Contains(contentType))
         {
-            errors["contentType"] = ["JPEG, PNG, WebP, GIF, or PDF files are supported."];
+            errors["contentType"] = [shared
+                ? "Images, PDF, MP4/WebM/MOV videos, Word, Excel, PowerPoint or text files are supported."
+                : "JPEG, PNG, WebP, GIF, or PDF files are supported."];
         }
         else if (content.CanRead && sizeBytes > 0 && !HasExpectedSignature(content, contentType))
         {
@@ -156,7 +193,7 @@ public sealed class MediaService(
         }
 
         var originalPosition = content.Position;
-        Span<byte> header = stackalloc byte[12];
+        Span<byte> header = stackalloc byte[SignatureBytes];
         var bytesRead = content.Read(header);
         content.Position = originalPosition;
 
@@ -171,6 +208,16 @@ public sealed class MediaService(
             "image/gif" => bytesRead >= 6 &&
                 (header[..6].SequenceEqual("GIF87a"u8) || header[..6].SequenceEqual("GIF89a"u8)),
             "application/pdf" => bytesRead >= 5 && header[..5].SequenceEqual("%PDF-"u8),
+            // ISO base media (MP4, QuickTime): a box size, then "ftyp".
+            "video/mp4" or "video/quicktime" => bytesRead >= 8 && header[4..8].SequenceEqual("ftyp"u8),
+            "video/webm" => bytesRead >= 4 && header[..4].SequenceEqual(new byte[] { 0x1A, 0x45, 0xDF, 0xA3 }),
+            // Office Open XML documents are ZIP packages.
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" or
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" or
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation" =>
+                bytesRead >= 4 && header[..4].SequenceEqual(new byte[] { 0x50, 0x4B, 0x03, 0x04 }),
+            // Text has no signature; a NUL byte at the start means binary content.
+            "text/plain" => bytesRead > 0 && !header[..bytesRead].Contains((byte)0),
             _ => false
         };
     }

@@ -10,6 +10,8 @@ public sealed class DietPlanRevision : PlanRevision
 {
     private DietPlanRevision() { }
 
+    public override PlanKind Kind => PlanKind.Diet;
+
     public decimal? TargetCalories { get; private set; }
     public decimal? TargetProtein { get; private set; }
     public decimal? TargetCarbohydrates { get; private set; }

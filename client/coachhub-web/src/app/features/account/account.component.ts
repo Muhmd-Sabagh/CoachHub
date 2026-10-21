@@ -6,13 +6,14 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
+import { NotificationPreferencesComponent } from '../notifications/notification-preferences.component';
 import { AccountService, MyProfile, PreferredLanguage, UserSession } from './account.service';
 
 /** My account (§2): personal information, profile picture, password and signed-in devices. Every role. */
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, NotificationPreferencesComponent],
   templateUrl: './account.component.html',
   styles: [`
     .account-page { display: grid; gap: 16px; }

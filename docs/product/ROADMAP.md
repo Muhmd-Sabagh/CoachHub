@@ -333,13 +333,14 @@ Added 2026-10-21 after P10. These are issues found outside P10's scope, collecte
 - **Local release gate on Windows PowerShell 5.1.**
   - **Problem.** `scripts/Verify-Release.ps1` sets `$ErrorActionPreference = 'Stop'`. Under Windows PowerShell 5.1 the `npm warn deprecated …` lines that `npm ci` prints on stderr become terminating errors, so the gate fails locally even though CI passes (CI uses PowerShell 7).
   - **Fix.** Make native-command stderr non-fatal in the script (rely on exit codes), or require `pwsh` and say so in CLAUDE.md.
-- **Browser smoke test of P8–P13.** P8 to P13 were verified by build and tests only. Click through as Admin, Coach A, Coach B and a Client, at phone and desktop widths:
+- **Browser smoke test of P8–P14.** P8 to P14 were verified by build and tests only. Click through as Admin, Coach A, Coach B and a Client, at phone and desktop widths:
   - the food diary and nutrition analytics;
   - the exercise library and the structured workout builder;
   - workout logging, the rest timer, PRs and training analytics;
   - body and lifestyle tracking, photo upload and comparison, targets and the progress dashboard;
   - check-in forms with measures, schedules, the review and resubmission, and adherence;
-  - the test library, assigning tests, recording results on both sides and the coach's classification.
+  - the test library, assigning tests, recording results on both sides and the coach's classification;
+  - chat on both sides (live delivery, files, read status, the archived chat after a transfer), shared files including video playback, and the notification bell and email preferences.
 
   Record the results in the phase doc.
 - **Done when:** the screens refresh after loading without interaction, the full gate passes in both PowerShell editions, and the smoke-test findings are fixed or tracked.

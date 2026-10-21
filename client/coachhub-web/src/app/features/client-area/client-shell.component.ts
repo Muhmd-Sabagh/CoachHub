@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { BrandingService, brandInitials } from '../../core/branding/branding.service';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { NotificationBellComponent } from '../notifications/notification-bell.component';
 
 /**
  * The client area (§53): mobile first, branded with the client's coach (§63), with a bottom
@@ -11,7 +12,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 @Component({
   selector: 'app-client-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   template: `
     <div class="client-shell">
       <header class="client-topbar">
@@ -19,6 +20,8 @@ import { I18nService } from '../../core/i18n/i18n.service';
         @else { <span class="brand-mark">{{ initials(branding.brand().brandName) }}</span> }
         <strong>{{ branding.brand().brandName }}</strong>
         <span class="topbar-spacer"></span>
+        <app-notification-bell />
+        <a class="icon-link" routerLink="/app/account" aria-label="Account">☺</a>
         <button class="language-button" type="button" (click)="i18n.toggle()">{{ i18n.language() === 'en' ? 'ع' : 'EN' }}</button>
         <button class="link-button" type="button" (click)="auth.logout()">Sign out</button>
       </header>
@@ -29,7 +32,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
         <a routerLink="/app/nutrition" routerLinkActive="active"><span aria-hidden="true">◔</span>Nutrition</a>
         <a routerLink="/app/progress" routerLinkActive="active"><span aria-hidden="true">↗</span>Progress</a>
         <a routerLink="/app/forms" routerLinkActive="active"><span aria-hidden="true">✎</span>Forms</a>
-        <a routerLink="/app/account" routerLinkActive="active"><span aria-hidden="true">☺</span>Account</a>
+        <a routerLink="/app/chat" routerLinkActive="active"><span aria-hidden="true">✉</span>Chat</a>
       </nav>
     </div>
   `,
@@ -38,6 +41,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
     .client-topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 10px;
       padding: 10px 16px; background: white; border-bottom: 1px solid var(--gray-200); }
     .topbar-spacer { flex: 1; }
+    .icon-link { display: grid; place-items: center; min-width: 40px; min-height: 40px; font-size: 1.2rem; color: inherit; }
     .client-content { flex: 1; width: 100%; max-width: 960px; margin: 0 auto; padding: 16px 16px 96px; }
     .client-tabbar { position: fixed; inset: auto 0 0 0; z-index: 10; display: grid; grid-template-columns: repeat(6, 1fr);
       background: white; border-top: 1px solid var(--gray-200); padding-bottom: env(safe-area-inset-bottom); }
