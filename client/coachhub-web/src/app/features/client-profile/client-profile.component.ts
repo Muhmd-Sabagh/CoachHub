@@ -13,6 +13,7 @@ import { EnergyTargets, MacroMode, PlansService } from '../plans/plans.service';
 import { ClientNutritionComponent } from '../nutrition-tracking/client-nutrition.component';
 import { ClientTrainingComponent } from '../training-tracking/client-training.component';
 import { ClientProgressComponent } from '../progress-tracking/client-progress.component';
+import { CheckInsComponent } from '../check-ins/check-ins.component';
 import { ReferenceDataService, ReferenceRecord } from '../settings/reference-data.service';
 
 type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progress' | 'measurements' | 'photos' | 'checkins' | 'tests' | 'messages' | 'files';
@@ -21,7 +22,7 @@ type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progres
 interface TabItem { id: Tab; label: string; arrivesIn?: string; }
 
 /** Everything about one client in one place (§40), starting with the structured profile (§3). */
-@Component({ selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent], templateUrl: './client-profile.component.html' })
+@Component({ selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent], templateUrl: './client-profile.component.html' })
 export class ClientProfileComponent implements OnInit {
   readonly tabs: TabItem[] = [
     { id: 'overview', label: 'Overview' }, { id: 'profile', label: 'Profile' },

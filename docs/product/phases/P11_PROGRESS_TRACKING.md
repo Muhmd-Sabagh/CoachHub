@@ -1,6 +1,6 @@
 # P11 — Body and lifestyle tracking, and the progress dashboard
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P11 · **Branch:** `phase/p11-progress-tracking` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P11 · **Branch:** `phase/p11-progress-tracking` · **Status:** Merged (PR #13).
 **Covers:** §24, §25, §26, §27, §31, §32, §33, §37, §49 (default targets), §54 (health integrations), D3.
 
 ## Purpose

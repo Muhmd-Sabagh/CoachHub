@@ -52,9 +52,17 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
               <span class="muted">goal {{ percent(d.lifestyle.stepsGoalPercent) }}</span></article>
             <article class="card workbench tile"><small>Water</small><strong>{{ d.lifestyle.averageWaterMl !== null ? (d.lifestyle.averageWaterMl | number) + ' ml' : '–' }}</strong>
               <span class="muted">goal {{ percent(d.lifestyle.waterGoalPercent) }}</span></article>
+            <article class="card workbench tile"><small>Overall adherence</small><strong>{{ percent(d.adherence.overallPercent) }}</strong>
+              <span class="muted">weighted by your coach</span></article>
+            <article class="card workbench tile"><small>Check-ins</small><strong>{{ d.checkIn.adherence.completed }} / {{ d.checkIn.adherence.due }}</strong>
+              <span class="muted">{{ d.checkIn.schedule?.nextDueOn ? 'next ' + (d.checkIn.schedule!.nextDueOn | date: 'd MMM') : 'none scheduled' }}</span></article>
             <article class="card workbench tile"><small>Photos</small><strong>{{ d.body.photoCount }}</strong>
               <span class="muted">{{ d.body.latestPhoto ? 'latest ' + (d.body.latestPhoto.date | date: 'd MMM') : 'none yet' }}</span></article>
           </div>
+          @if (d.checkIn.latestFeedback; as f) {
+            <section class="card workbench"><h2>Latest from your coach</h2><p>{{ f.text }}</p>
+              <small class="muted">{{ f.createdAt | date: 'd MMM, shortTime' }}</small></section>
+          }
           @if (d.training.recentRecords.length) {
             <section class="card workbench"><h2>Recent PRs</h2>
               <ul class="plain-list">@for (r of d.training.recentRecords; track r.id) { <li>{{ recordText(r) }}</li> }</ul></section>

@@ -7,16 +7,17 @@ namespace CoachHub.Application.Assessments;
 public sealed record CreateFormInput(string Name, AssessmentFormType FormType, Guid? CoachId = null);
 public sealed record SectionInput(string Title, int Order);
 public sealed record OptionInput(string Value, string Label, int Order);
+/// <param name="Metric">The measure the answer records (P12): a number question for a measure, a media upload for a photo.</param>
 public sealed record QuestionInput(
     Guid? SectionId, string Text, QuestionType QuestionType,
-    bool IsRequired, int Order, IReadOnlyList<OptionInput> Options);
+    bool IsRequired, int Order, IReadOnlyList<OptionInput> Options, QuestionMetric? Metric = null);
 public sealed record ReorderQuestionsInput(IReadOnlyList<Guid> QuestionIds);
 public sealed record FormSummary(Guid Id, string Name, AssessmentFormType FormType, bool IsArchived);
 public sealed record OptionResponse(Guid Id, string Value, string Label, int Order);
 public sealed record QuestionResponse(
     Guid Id, Guid StableKey, Guid? SectionId, string Text,
     QuestionType QuestionType, bool IsRequired, int Order,
-    IReadOnlyList<OptionResponse> Options);
+    IReadOnlyList<OptionResponse> Options, QuestionMetric? Metric = null);
 public sealed record SectionResponse(Guid Id, string Title, int Order);
 public sealed record FormVersionResponse(
     Guid DefinitionId, string Name, AssessmentFormType FormType,
@@ -27,7 +28,8 @@ public sealed record EligibleForm(Guid Id, string Name, AssessmentFormType FormT
 /// <summary>The forms a signed-in client can fill in (D5).</summary>
 public sealed record MyFormsResponse(string ClientName, IReadOnlyList<EligibleForm> EligibleForms);
 public sealed record AnswerInput(Guid QuestionId, JsonElement Value, Guid? MediaId);
-public sealed record MyFormSubmissionInput(IReadOnlyList<AnswerInput> Answers);
+/// <param name="Date">The client's local day of the answers (for measures they record); today (UTC) when left out.</param>
+public sealed record MyFormSubmissionInput(IReadOnlyList<AnswerInput> Answers, DateOnly? Date = null);
 public sealed record SubmissionResponse(Guid SubmissionId, DateTimeOffset SubmittedAt);
 
 public sealed record FormGraph(

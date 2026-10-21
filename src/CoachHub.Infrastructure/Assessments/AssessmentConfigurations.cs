@@ -24,7 +24,7 @@ public sealed class FormSectionConfiguration : IEntityTypeConfiguration<FormSect
 public sealed class FormQuestionConfiguration : IEntityTypeConfiguration<FormQuestion>
 {
     public void Configure(EntityTypeBuilder<FormQuestion> b)
-    { b.ToTable("FormQuestions"); b.HasKey(x => x.Id); b.Property(x => x.Text).HasMaxLength(1000); b.Property(x => x.QuestionType).HasConversion<string>().HasMaxLength(30); b.HasIndex(x => new { x.FormVersionId, x.Order }); b.HasIndex(x => new { x.FormVersionId, x.StableKey }).IsUnique(); b.HasOne<FormVersion>().WithMany().HasForeignKey(x => x.FormVersionId).OnDelete(DeleteBehavior.Cascade); b.HasOne<FormSection>().WithMany().HasForeignKey(x => x.FormSectionId).OnDelete(DeleteBehavior.NoAction); }
+    { b.ToTable("FormQuestions"); b.HasKey(x => x.Id); b.Property(x => x.Text).HasMaxLength(1000); b.Property(x => x.QuestionType).HasConversion<string>().HasMaxLength(30); b.Property(x => x.Metric).HasConversion<string>().HasMaxLength(30); b.HasIndex(x => new { x.FormVersionId, x.Order }); b.HasIndex(x => new { x.FormVersionId, x.StableKey }).IsUnique(); b.HasOne<FormVersion>().WithMany().HasForeignKey(x => x.FormVersionId).OnDelete(DeleteBehavior.Cascade); b.HasOne<FormSection>().WithMany().HasForeignKey(x => x.FormSectionId).OnDelete(DeleteBehavior.NoAction); }
 }
 public sealed class QuestionOptionConfiguration : IEntityTypeConfiguration<QuestionOption>
 {

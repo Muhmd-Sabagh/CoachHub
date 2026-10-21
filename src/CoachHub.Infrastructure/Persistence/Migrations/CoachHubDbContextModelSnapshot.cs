@@ -193,6 +193,10 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsRequired")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Metric")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
@@ -624,11 +628,170 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.ToTable("Refunds", (string)null);
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckIn", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("DueOn")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("FormDefinitionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsLate")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PrivateNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("SubmissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FormDefinitionId");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.HasIndex("ClientId", "DueOn")
+                        .IsUnique();
+
+                    b.HasIndex("CoachId", "Status", "SubmittedAt");
+
+                    b.ToTable("CheckIns", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInReply", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AuthorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CheckInId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CheckInId");
+
+                    b.ToTable("CheckInReplies", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DueWeekday")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<Guid>("FormDefinitionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("IntervalWeeks")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("StartsOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique();
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("FormDefinitionId");
+
+                    b.ToTable("CheckInSchedules", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CheckInSchedules_Interval", "[IntervalWeeks] IN (1, 2, 4)");
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInSubmission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CheckInId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FormSubmissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsLate")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CheckInId");
+
+                    b.HasIndex("FormSubmissionId")
+                        .IsUnique();
+
+                    b.ToTable("CheckInSubmissions", (string)null);
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Clients.Client", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("CheckInAwaitingReview")
+                        .HasColumnType("bit");
+
+                    b.Property<DateOnly?>("CheckInDueOn")
+                        .HasColumnType("date");
 
                     b.Property<string>("ClientCode")
                         .IsRequired()
@@ -3919,6 +4082,78 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckIn", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Assessments.FormDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("FormDefinitionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Assessments.FormSubmission", null)
+                        .WithMany()
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInReply", b =>
+                {
+                    b.HasOne("CoachHub.Domain.CheckIns.CheckIn", null)
+                        .WithMany("Replies")
+                        .HasForeignKey("CheckInId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInSchedule", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Assessments.FormDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("FormDefinitionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInSubmission", b =>
+                {
+                    b.HasOne("CoachHub.Domain.CheckIns.CheckIn", null)
+                        .WithMany("Submissions")
+                        .HasForeignKey("CheckInId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Assessments.FormSubmission", null)
+                        .WithMany()
+                        .HasForeignKey("FormSubmissionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Clients.Client", b =>
                 {
                     b.HasOne("CoachHub.Domain.Coaches.Coach", null)
@@ -4745,6 +4980,13 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoachHub.Domain.Billing.Payment", b =>
                 {
                     b.Navigation("Refunds");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckIn", b =>
+                {
+                    b.Navigation("Replies");
+
+                    b.Navigation("Submissions");
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Clients.Client", b =>

@@ -1,7 +1,9 @@
 using System.Globalization;
 using System.Text.Json;
+using CoachHub.Application.CheckIns;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Media;
+using CoachHub.Application.Progress;
 using CoachHub.Domain.Assessments;
 
 namespace CoachHub.Application.Assessments;
@@ -9,19 +11,29 @@ namespace CoachHub.Application.Assessments;
 public sealed class FormSubmissionService(
     IFormRepository repository,
     IMediaRepository mediaRepository,
+    CheckInService checkIns,
+    ProgressService progress,
     TimeProvider timeProvider)
 {
-    /// <summary>The forms a signed-in client may fill in now (D5): their coach's published, active forms.</summary>
+    /// <summary>How far back a submission's day may be (as for tracking entries).</summary>
+    public const int MaximumDaysBack = 366;
+
+    /// <summary>
+    /// The forms a signed-in client may fill in now (D5): their coach's published, active forms. A check-in form is
+    /// offered only while the client's scheduled check-in is open, or to resubmit after the coach requested changes.
+    /// </summary>
     public async Task<MyFormsResponse> ListForClientAsync(Guid clientId, CancellationToken cancellationToken)
     {
         var client = await ActiveClientAsync(clientId, cancellationToken);
         var definitions = await repository.ListPublishedDefinitionsAsync(client.CoachId, cancellationToken);
         var hasInitial = await repository.HasInitialSubmissionAsync(client.Id, cancellationToken);
-        var eligible = definitions
-            .Where(definition => !definition.IsArchived)
-            .Where(definition => definition.FormType != AssessmentFormType.InitialAssessment || !hasInitial)
-            .Select(definition => new EligibleForm(definition.Id, definition.Name, definition.FormType))
-            .ToArray();
+        var eligible = new List<EligibleForm>();
+        foreach (var definition in definitions.Where(definition => !definition.IsArchived))
+        {
+            if (definition.FormType == AssessmentFormType.InitialAssessment && hasInitial) continue;
+            if (definition.FormType == AssessmentFormType.CheckIn && !await checkIns.IsOpenAsync(client, definition.Id, cancellationToken)) continue;
+            eligible.Add(new EligibleForm(definition.Id, definition.Name, definition.FormType));
+        }
         return new(client.Name, eligible);
     }
 
@@ -60,6 +72,13 @@ public sealed class FormSubmissionService(
         if (graph.Definition.FormType == AssessmentFormType.InitialAssessment &&
             await repository.HasInitialSubmissionAsync(client.Id, cancellationToken))
             throw new ConflictException("The client has already submitted an initial assessment.");
+        var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
+        var submittedOn = input.Date ?? today;
+        if (submittedOn > today.AddDays(1) || submittedOn < today.AddDays(-MaximumDaysBack))
+            throw Validation("date", "The day must be between a year ago and today.");
+        var target = graph.Definition.FormType == AssessmentFormType.CheckIn
+            ? await checkIns.TargetAsync(client, graph.Definition.Id, submittedOn, cancellationToken)
+            : null;
 
         var answerMap = (input.Answers ?? []).GroupBy(answer => answer.QuestionId).ToArray();
         if (answerMap.Any(group => group.Count() > 1) ||
@@ -67,6 +86,7 @@ public sealed class FormSubmissionService(
             throw Validation("answers", "Answers must reference each published question at most once.");
 
         var pendingAnswers = new List<(FormQuestion Question, string ValueJson, Guid? MediaId)>();
+        var metrics = new List<MetricAnswer>();
         foreach (var question in graph.Questions)
         {
             var inputAnswer = answerMap.SingleOrDefault(group => group.Key == question.Id)?.Single();
@@ -82,6 +102,13 @@ public sealed class FormSubmissionService(
                 inputAnswer,
                 cancellationToken);
             pendingAnswers.Add((question, valueJson, inputAnswer.MediaId));
+            if (question.Metric is { } metric)
+            {
+                // A measured answer also becomes the client's typed entry (D3, P12); check it before storing anything.
+                decimal? number = inputAnswer.Value.ValueKind == JsonValueKind.Number ? inputAnswer.Value.GetDecimal() : null;
+                ProgressService.CheckMetric(metric, number, question.Id.ToString());
+                metrics.Add(new MetricAnswer(metric, number, inputAnswer.MediaId));
+            }
         }
 
         var submission = FormSubmission.Create(
@@ -94,6 +121,9 @@ public sealed class FormSubmissionService(
             answer.MediaId)).ToArray();
         client.RecordAssessmentSubmission(graph.Definition.FormType);
         await repository.SubmitAsync(submission, answers, cancellationToken);
+        if (target is not null)
+            await checkIns.RecordAsync(client, target, graph.Definition.Id, submission.Id, submittedOn, cancellationToken);
+        await progress.RecordMetricsAsync(client.Id, submittedOn, metrics, cancellationToken);
         return new(submission.Id, submission.SubmittedAt);
     }
 
@@ -173,7 +203,8 @@ public sealed class FormSubmissionService(
             question.QuestionType, question.IsRequired, question.Order,
             graph.Options.Where(option => option.FormQuestionId == question.Id)
                 .OrderBy(option => option.Order)
-                .Select(option => new OptionResponse(option.Id, option.Value, option.Label, option.Order)).ToArray())).ToArray());
+                .Select(option => new OptionResponse(option.Id, option.Value, option.Label, option.Order)).ToArray(),
+            question.Metric)).ToArray());
     private static ValidationException Validation(string field, string message) =>
         new(new Dictionary<string, string[]> { [field] = [message] });
 }

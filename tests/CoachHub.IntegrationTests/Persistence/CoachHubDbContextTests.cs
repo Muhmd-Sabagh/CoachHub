@@ -69,6 +69,10 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.Progress.WaterEntry), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Progress.ProgressPhoto), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Progress.LifestyleTargets), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckInSchedule), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckIn), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckInSubmission), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckInReply), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanNote), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementGroup), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementOption), entityTypes);
@@ -122,8 +126,10 @@ public sealed class CoachHubDbContextTests
         // 15 coach-owned business types (P1), MediaAsset (P2), AuditEntry (P3), Brand and
         // CoachSettings (P4), FoodItem (P7, a catalog entry), FoodLogEntry and NutritionDay (P8), Exercise
         // (P9, a catalog entry), WorkoutSession and PersonalRecord (P10), and six tracking entries, ProgressPhoto and
-        // LifestyleTargets (P11). MediaAsset, AuditEntry, Brand, FoodItem and Exercise also admit platform rows.
-        Assert.Equal(33, owned.Length);
+        // LifestyleTargets (P11), and CheckInSchedule and CheckIn (P12). MediaAsset, AuditEntry, Brand, FoodItem and
+        // Exercise also admit platform rows.
+        Assert.Equal(35, owned.Length);
+        Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.CheckIns.CheckIn));
         Assert.DoesNotContain(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressEntry));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressPhoto));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.WorkoutTracking.WorkoutSession));

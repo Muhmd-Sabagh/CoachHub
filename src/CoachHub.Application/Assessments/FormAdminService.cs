@@ -39,9 +39,9 @@ public sealed class FormAdminService(IFormRepository repository, CoachOwnership 
         var graph = await DraftRequiredAsync(definitionId, cancellationToken);
         graph.Version.EnsureDraft();
         ValidateQuestion(input, graph);
-        var question = FormQuestion.Create(
+        var question = DomainValidation.Run(() => FormQuestion.Create(
             graph.Version.Id, input.SectionId, Guid.NewGuid(), input.Text,
-            input.QuestionType, input.IsRequired, input.Order);
+            input.QuestionType, input.IsRequired, input.Order, input.Metric), "question");
         var options = input.Options.Select(option =>
             QuestionOption.Create(question.Id, option.Value, option.Label, option.Order)).ToArray();
         await repository.AddQuestionAsync(question, options, cancellationToken);
@@ -59,7 +59,7 @@ public sealed class FormAdminService(IFormRepository repository, CoachOwnership 
         ValidateQuestion(input, graph);
         var question = graph.Questions.SingleOrDefault(item => item.Id == questionId)
             ?? throw new NotFoundException("Question", questionId);
-        question.Update(input.SectionId, input.Text, input.QuestionType, input.IsRequired, input.Order);
+        DomainValidation.Run(() => question.Update(input.SectionId, input.Text, input.QuestionType, input.IsRequired, input.Order, input.Metric), "question");
         var options = input.Options.Select(option =>
             QuestionOption.Create(question.Id, option.Value, option.Label, option.Order)).ToArray();
         await repository.UpdateQuestionAsync(question, options, cancellationToken);
@@ -108,7 +108,7 @@ public sealed class FormAdminService(IFormRepository repository, CoachOwnership 
         var questions = source.Questions.Select(question => FormQuestion.Create(
             version.Id,
             question.FormSectionId.HasValue ? sectionMap[question.FormSectionId.Value].Id : null,
-            question.StableKey, question.Text, question.QuestionType, question.IsRequired, question.Order)).ToArray();
+            question.StableKey, question.Text, question.QuestionType, question.IsRequired, question.Order, question.Metric)).ToArray();
         var questionMap = source.Questions.Zip(questions).ToDictionary(pair => pair.First.Id, pair => pair.Second.Id);
         var options = source.Options.Select(option => QuestionOption.Create(
             questionMap[option.FormQuestionId], option.Value, option.Label, option.Order)).ToArray();
@@ -144,7 +144,8 @@ public sealed class FormAdminService(IFormRepository repository, CoachOwnership 
     private static QuestionResponse Map(FormQuestion question, IReadOnlyList<QuestionOption> options) => new(
         question.Id, question.StableKey, question.FormSectionId, question.Text,
         question.QuestionType, question.IsRequired, question.Order,
-        options.OrderBy(option => option.Order).Select(option => new OptionResponse(option.Id, option.Value, option.Label, option.Order)).ToArray());
+        options.OrderBy(option => option.Order).Select(option => new OptionResponse(option.Id, option.Value, option.Label, option.Order)).ToArray(),
+        question.Metric);
     private static ValidationException Validation(string field, string message) =>
         new(new Dictionary<string, string[]> { [field] = [message] });
 }

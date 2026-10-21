@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Routing;
+using CoachHub.Application.Adherence;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Media;
@@ -18,12 +19,17 @@ namespace CoachHub.API.Me;
 [ApiController]
 [Authorize(Policy = AuthPolicies.ClientOnly)]
 [Route(ApiRoutes.V1 + "/me/progress")]
-public sealed class MyProgressController(ProgressService progress) : ControllerBase
+public sealed class MyProgressController(ProgressService progress, ProgressDashboardService dashboard, AdherenceService adherence) : ControllerBase
 {
     /// <summary>Body, nutrition, training and lifestyle for the range (at most 366 days).</summary>
     [HttpGet("dashboard")]
     public Task<ProgressDashboardResponse> Dashboard([FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken token) =>
-        progress.DashboardAsync(ClientId(), from, to, token);
+        dashboard.DashboardAsync(ClientId(), from, to, token);
+
+    /// <summary>Adherence per area and overall (§30) for the range.</summary>
+    [HttpGet("adherence")]
+    public Task<AdherenceResponse> Adherence([FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken token) =>
+        adherence.ScoreAsync(ClientId(), from, to, token);
 
     /// <summary>Weight, body fat and measurements: history summaries, and entries within the range.</summary>
     [HttpGet("body")]

@@ -29,7 +29,32 @@ export interface Question {
   isRequired: boolean;
   order: number;
   options: Option[];
+  /** The measure the answer records (P12), for example the weight or a front photo. */
+  metric?: QuestionMetric | null;
 }
+
+export type QuestionMetric =
+  | 'WeightKg' | 'BodyFatPercent' | 'WaistCm' | 'ChestCm' | 'ArmCm' | 'ThighCm' | 'HipCm' | 'NeckCm' | 'CalfCm'
+  | 'Steps' | 'SleepHours' | 'WaterMl' | 'FrontPhoto' | 'SidePhoto' | 'BackPhoto';
+
+/** Measures a question can record, by the answer type they need (P12). */
+export const questionMetrics: { value: QuestionMetric; label: string; type: 'Number' | 'MediaUpload' }[] = [
+  { value: 'WeightKg', label: 'Weight (kg)', type: 'Number' },
+  { value: 'BodyFatPercent', label: 'Body fat (%)', type: 'Number' },
+  { value: 'WaistCm', label: 'Waist (cm)', type: 'Number' },
+  { value: 'ChestCm', label: 'Chest (cm)', type: 'Number' },
+  { value: 'ArmCm', label: 'Arm (cm)', type: 'Number' },
+  { value: 'ThighCm', label: 'Thigh (cm)', type: 'Number' },
+  { value: 'HipCm', label: 'Hip (cm)', type: 'Number' },
+  { value: 'NeckCm', label: 'Neck (cm)', type: 'Number' },
+  { value: 'CalfCm', label: 'Calf (cm)', type: 'Number' },
+  { value: 'Steps', label: 'Steps', type: 'Number' },
+  { value: 'SleepHours', label: 'Sleep (hours)', type: 'Number' },
+  { value: 'WaterMl', label: 'Water (ml)', type: 'Number' },
+  { value: 'FrontPhoto', label: 'Front progress photo', type: 'MediaUpload' },
+  { value: 'SidePhoto', label: 'Side progress photo', type: 'MediaUpload' },
+  { value: 'BackPhoto', label: 'Back progress photo', type: 'MediaUpload' },
+];
 export interface FormVersion {
   definitionId: string;
   name: string;
