@@ -41,6 +41,7 @@ const routes: Routes = [
       { path: 'clients/:id', loadComponent: () => import('./features/client-profile/client-profile.component').then(m => m.ClientProfileComponent) },
       { path: 'subscriptions', component: ClientsComponent, data: { workspace: 'subscriptions' } },
       { path: 'assessments', component: AssessmentsComponent },
+      { path: 'check-ins', loadComponent: () => import('./features/check-ins/check-ins.component').then(m => m.CheckInsComponent) },
       { path: 'nutrition', component: CatalogComponent, data: { kind: 'foods' } },
       { path: 'training', component: CatalogComponent, data: { kind: 'exercises' } },
       { path: 'plans', component: PlansComponent },

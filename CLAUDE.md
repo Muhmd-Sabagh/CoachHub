@@ -123,14 +123,19 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Progress photos are the client's own media (P2), opened through `/media/{id}`. Delete a `ProgressPhoto` before its media.
   - Use `ProgressStatistics` for start/current/change/weekly figures and goal completion. The dashboard reuses the nutrition and training services; never recompute their figures.
   - The nutrition engine uses the latest weigh-in, else the profile's starting weight.
+- **Check-ins and adherence (§28–§30, §39)** — implemented in P12; see `docs/product/phases/P12_CHECK_INS.md`.
+  - Check-ins are `CheckIn`-type forms scheduled per client (`CheckInSchedule`). Clients submit through `/me/forms`; `CheckInService` places each submission on a due date. Questions with a `QuestionMetric` also write the client's typed entries via `ProgressService`.
+  - `Client.CheckInDueOn` and `Client.CheckInAwaitingReview` feed `GetStatus` and the SQL status filter. Only the check-in workflow and transfer change them; keep both status paths identical.
+  - `CheckIn.PrivateNotes` is coach-only: never map it into `/me` responses.
+  - Adherence goes through `AdherenceService`/`AdherenceScore` with the coach's `AdherenceWeights`; the dashboard is `ProgressDashboardService`.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P11. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P12. Known gaps against REQUIREMENTS.md:
 
-- no check-in workflow, chat or calendars (nutrition tracking exists since P8, workout tracking since P10, body and lifestyle tracking since P11).
+- no mobility/strength/endurance tests, chat, notifications for events, or calendars (tracking exists since P8–P11, check-ins since P12).
 
 Treat these as planned rework, not conventions to preserve.
 

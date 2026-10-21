@@ -60,7 +60,20 @@ import { TrendChartComponent } from './trend-chart.component';
             @for (r of d.training.recentRecords; track r.id) { <li class="muted">{{ r.achievedOn | date: 'd MMM' }} · {{ recordText(r) }}</li> }
             @if (!d.training.strength.length && !d.training.recentRecords.length) { <li class="muted">No records yet.</li> }
           </ul>
-          <p class="muted">The check-in section (latest check-in, adherence and feedback) arrives with the check-in workflow (P12).</p>
+          <h3>Adherence</h3>
+          <div class="table-scroll"><table>
+            <thead><tr><th>Area</th><th>Score</th><th>Weight</th></tr></thead>
+            <tbody>
+              @for (a of d.adherence.areas; track a.area) { <tr><td>{{ a.area }}</td><td>{{ percent(a.percent) }}</td><td>{{ a.weight }}%</td></tr> }
+              <tr><td><strong>Overall</strong></td><td><strong>{{ percent(d.adherence.overallPercent) }}</strong></td><td></td></tr>
+            </tbody>
+          </table></div>
+          <h3>Check-in</h3>
+          @if (d.checkIn.latest; as c) {
+            <p>Latest due {{ c.dueOn | date: 'd MMM' }} · {{ c.status }}{{ c.isLate ? ' · late' : '' }}
+              · {{ d.checkIn.adherence.completed }} of {{ d.checkIn.adherence.due }} done in this range</p>
+          } @else { <p class="muted">No check-ins yet.</p> }
+          @if (d.checkIn.latestFeedback; as f) { <p class="muted">Latest feedback: “{{ f.text }}”</p> }
         } @else if (loading()) { <p class="table-message">Loading…</p> }
       </section>
 

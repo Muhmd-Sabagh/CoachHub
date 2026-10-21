@@ -3,9 +3,8 @@ using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.FoodTracking;
 using CoachHub.Application.Media;
 using CoachHub.Application.Settings;
-using CoachHub.Application.WorkoutTracking;
+using CoachHub.Domain.Assessments;
 using CoachHub.Domain.Progress;
-using CoachHub.Domain.WorkoutTracking;
 
 namespace CoachHub.Application.Progress;
 
@@ -19,13 +18,10 @@ public sealed class ProgressService(
     IClientRepository clients,
     SettingsService settings,
     MediaService media,
-    FoodTrackingService nutrition,
-    WorkoutTrackingService training,
     TimeProvider timeProvider)
 {
     /// <summary>The longest range, and how far back entries can be written.</summary>
     public const int MaximumRangeDays = 366;
-    public const int DashboardRecords = 5;
 
     public async Task<BodyProgressResponse> BodyAsync(Guid clientId, DateOnly from, DateOnly to, CancellationToken cancellationToken)
     {
@@ -223,36 +219,101 @@ public sealed class ProgressService(
         return Map(photo);
     }
 
-    /// <summary>Deletes a photo and its image.</summary>
+    /// <summary>
+    /// Deletes a photo and its image. An image a check-in answer also holds (P12) stays with the check-in.
+    /// </summary>
     public async Task DeletePhotoAsync(Guid clientId, Guid id, CancellationToken cancellationToken)
     {
         var photo = await RequiredPhotoAsync(clientId, id, cancellationToken);
         repository.Remove(photo);
         await repository.SaveChangesAsync(cancellationToken);
-        await media.DeleteAsync(photo.MediaId, cancellationToken);
+        try
+        {
+            await media.DeleteAsync(photo.MediaId, cancellationToken);
+        }
+        catch (ConflictException)
+        {
+            // Still referenced by a form answer: the check-in keeps its photo.
+        }
     }
 
-    /// <summary>The client progress dashboard (§37) for a range: body, nutrition, training and lifestyle.</summary>
-    public async Task<ProgressDashboardResponse> DashboardAsync(Guid clientId, DateOnly from, DateOnly to, CancellationToken cancellationToken)
+    /// <summary>
+    /// Checks a measure answered in a form (P12) the way its entry would, so a bad value fails before anything is
+    /// stored. Photos are checked by the form (the client's own media).
+    /// </summary>
+    public static void CheckMetric(QuestionMetric metric, decimal? value, string field)
     {
-        EnsureRange(from, to);
-        var body = await BodyAsync(clientId, from, to, cancellationToken);
-        var photos = await repository.ListPhotosAsync(clientId, null, cancellationToken);
-        var ordered = photos.OrderBy(x => x.Date).ThenBy(x => x.CreatedAt).ToArray();
-        var lifestyle = await LifestyleAsync(clientId, from, to, cancellationToken);
-        var food = await nutrition.AnalyticsAsync(clientId, from, to, cancellationToken);
-        var workouts = await training.AnalyticsAsync(clientId, from, to, cancellationToken);
-        var records = await training.RecordsAsync(clientId, cancellationToken);
-        return new ProgressDashboardResponse(from, to,
-            new BodyDashboard(body.Weight.Summary, body.BodyFat.Summary,
-                body.Measurements.Where(x => x.Summary.Count > 0).Select(x => new MeasurementChange(x.Site, x.Summary)).ToArray(),
-                ordered.Length, ordered.Length == 0 ? null : Map(ordered[0]), ordered.Length == 0 ? null : Map(ordered[^1])),
-            food.Summary,
-            new TrainingDashboard(workouts.Summary, records.Recent.Take(DashboardRecords).ToArray(),
-                records.Current.Where(x => x.Type == PersonalRecordType.EstimatedOneRepMax)
-                    .OrderByDescending(x => x.Value).Take(DashboardRecords).ToArray()),
-            lifestyle.Summary, lifestyle.Targets);
+        if (QuestionMetrics.IsPhoto(metric)) return;
+        if (value is not { } v) throw Validation(field, "Enter a number.");
+        var probe = Guid.NewGuid();
+        var day = DateOnly.FromDateTime(DateTime.UtcNow);
+        var now = DateTimeOffset.UtcNow;
+        try
+        {
+            _ = metric switch
+            {
+                QuestionMetric.WeightKg => (object)WeightEntry.Create(probe, probe, day, v, null, now),
+                QuestionMetric.BodyFatPercent => BodyFatEntry.Create(probe, probe, day, v, null, now),
+                QuestionMetric.Steps => StepsEntry.Create(probe, probe, day, Whole(v, field), null, now),
+                QuestionMetric.SleepHours => SleepEntry.Create(probe, probe, day, v, null, null, null, null, now),
+                QuestionMetric.WaterMl => WaterEntry.Create(probe, probe, day, Whole(v, field), null, now),
+                _ => BodyMeasurement.Create(probe, probe, day, SiteOf(metric), v, null, now)
+            };
+        }
+        catch (ArgumentException exception)
+        {
+            throw Validation(field, exception.Message);
+        }
     }
+
+    /// <summary>
+    /// Writes the measures a submitted form answered (P12) as the client's entries for <paramref name="date"/>: a
+    /// weigh-in, body fat, measurements, steps and sleep hours replace the day's value; water adds a drink; photos
+    /// become progress photos (the image stays shared with the answer).
+    /// </summary>
+    public async Task RecordMetricsAsync(Guid clientId, DateOnly date, IReadOnlyList<MetricAnswer> answers, CancellationToken cancellationToken)
+    {
+        if (answers.Count == 0) return;
+        var coachId = await ClientCoachAsync(clientId, cancellationToken);
+        EnsureWritable(date);
+        foreach (var answer in answers)
+        {
+            switch (answer.Metric)
+            {
+                case QuestionMetric.WeightKg: await SetWeightAsync(clientId, date, new WeightInput(answer.Value!.Value), cancellationToken); break;
+                case QuestionMetric.BodyFatPercent: await SetBodyFatAsync(clientId, date, new BodyFatInput(answer.Value!.Value), cancellationToken); break;
+                case QuestionMetric.Steps: await SetStepsAsync(clientId, date, new StepsInput((int)answer.Value!.Value), cancellationToken); break;
+                case QuestionMetric.WaterMl: await AddWaterAsync(clientId, new WaterInput(date, (int)answer.Value!.Value), cancellationToken); break;
+                case QuestionMetric.SleepHours:
+                    var night = (await repository.FindOnAsync<SleepEntry>(clientId, date, cancellationToken)).SingleOrDefault();
+                    await SetSleepAsync(clientId, date, new SleepInput(answer.Value!.Value, night?.Quality), cancellationToken);
+                    break;
+                case QuestionMetric.FrontPhoto or QuestionMetric.SidePhoto or QuestionMetric.BackPhoto:
+                    var pose = answer.Metric switch { QuestionMetric.FrontPhoto => PhotoPose.Front, QuestionMetric.SidePhoto => PhotoPose.Side, _ => PhotoPose.Back };
+                    repository.Add(ProgressPhoto.Create(coachId, clientId, date, pose, null, answer.MediaId!.Value, "From a check-in", timeProvider.GetUtcNow()));
+                    await repository.SaveChangesAsync(cancellationToken);
+                    break;
+                default:
+                    await SetMeasurementsAsync(clientId, date, new MeasurementsInput([new(SiteOf(answer.Metric), answer.Value)]), cancellationToken);
+                    break;
+            }
+        }
+    }
+
+    private static MeasurementSite SiteOf(QuestionMetric metric) => metric switch
+    {
+        QuestionMetric.WaistCm => MeasurementSite.Waist,
+        QuestionMetric.ChestCm => MeasurementSite.Chest,
+        QuestionMetric.ArmCm => MeasurementSite.Arm,
+        QuestionMetric.ThighCm => MeasurementSite.Thigh,
+        QuestionMetric.HipCm => MeasurementSite.Hip,
+        QuestionMetric.NeckCm => MeasurementSite.Neck,
+        QuestionMetric.CalfCm => MeasurementSite.Calf,
+        _ => throw new ArgumentOutOfRangeException(nameof(metric))
+    };
+
+    private static int Whole(decimal value, string field) =>
+        decimal.Truncate(value) == value && value is >= int.MinValue and <= int.MaxValue ? (int)value : throw Validation(field, "Enter a whole number.");
 
     private async Task UpsertDailyAsync<T>(
         Guid clientId, DateOnly date, Func<Guid, DateTimeOffset, T> create, Action<T, DateTimeOffset> change, string field,

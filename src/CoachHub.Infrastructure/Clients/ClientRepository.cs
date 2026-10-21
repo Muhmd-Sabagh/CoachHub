@@ -9,6 +9,7 @@ using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Domain.CheckIns;
 using CoachHub.Domain.Progress;
 using CoachHub.Domain.WorkoutTracking;
 using CoachHub.Infrastructure.Auth.Persistence;
@@ -107,8 +108,9 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
     }
 
     /// <summary>
-    /// The computed status (§39) in SQL, matching <see cref="Client.GetStatus"/>: a manual
-    /// override while it lasts, otherwise Inactive, SubscriptionExpired, NeedsReview or OnTrack.
+    /// The computed status (§39) in SQL, matching <see cref="Client.GetStatus"/>: a manual override while it lasts,
+    /// otherwise Inactive, SubscriptionExpired, NeedsReview (a plan or a check-in awaits review), CheckInOverdue (P12)
+    /// or OnTrack.
     /// </summary>
     private static IQueryable<Client> WithStatus(IQueryable<Client> clients, ClientStatus status, DateOnly today) => status switch
     {
@@ -127,15 +129,24 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 : client.IsActive &&
                   (!client.Subscriptions.Any() ||
                    client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)) &&
-                  (client.DietStatus == PlanWorkflowStatus.ReviewRequired || client.WorkoutStatus == PlanWorkflowStatus.ReviewRequired)),
+                  (client.DietStatus == PlanWorkflowStatus.ReviewRequired || client.WorkoutStatus == PlanWorkflowStatus.ReviewRequired ||
+                   client.CheckInAwaitingReview)),
+        ClientStatus.CheckInOverdue => clients.Where(client =>
+            (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
+                ? client.StatusOverride == status
+                : client.IsActive &&
+                  (!client.Subscriptions.Any() ||
+                   client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)) &&
+                  client.DietStatus != PlanWorkflowStatus.ReviewRequired && client.WorkoutStatus != PlanWorkflowStatus.ReviewRequired &&
+                  !client.CheckInAwaitingReview && client.CheckInDueOn != null && client.CheckInDueOn < today),
         ClientStatus.OnTrack => clients.Where(client =>
             (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
                 ? client.StatusOverride == status
                 : client.IsActive &&
                   (!client.Subscriptions.Any() ||
                    client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)) &&
-                  client.DietStatus != PlanWorkflowStatus.ReviewRequired && client.WorkoutStatus != PlanWorkflowStatus.ReviewRequired),
-        // Only a manual override yields CheckInOverdue until check-in due dates exist (P12).
+                  client.DietStatus != PlanWorkflowStatus.ReviewRequired && client.WorkoutStatus != PlanWorkflowStatus.ReviewRequired &&
+                  !client.CheckInAwaitingReview && (client.CheckInDueOn == null || client.CheckInDueOn >= today)),
         _ => clients.Where(client =>
             client.StatusOverride == status && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
     };
@@ -160,9 +171,15 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        // Order matters, so each step saves on its own: answers (cascading with their submission)
-        // reference media, and media references the client. Coaching rows and client media
-        // follow the client on transfer, so they all belong to the client's current coach.
+        // Order matters, so each step saves on its own: check-ins reference submissions, answers
+        // (cascading with their submission) reference media, and media references the client. Coaching
+        // rows and client media follow the client on transfer, so they all belong to the client's current coach.
+        var checkIns = await dbContext.Set<CheckIn>()
+            .Where(checkIn => checkIn.ClientId == client.Id)
+            .ToArrayAsync(cancellationToken);
+        dbContext.Set<CheckIn>().RemoveRange(checkIns);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         var submissions = await dbContext.Set<FormSubmission>()
             .Where(submission => submission.ClientId == client.Id)
             .ToArrayAsync(cancellationToken);
@@ -200,6 +217,11 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
     {
         var fromCoachId = client.CoachId;
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        // The check-in schedule names the previous coach's form, so it ends; the new coach sets their own (P12).
+        var schedule = await dbContext.Set<CheckInSchedule>().SingleOrDefaultAsync(x => x.ClientId == client.Id, cancellationToken);
+        if (schedule is not null) dbContext.Set<CheckInSchedule>().Remove(schedule);
+        client.SetCheckInState(null, client.CheckInAwaitingReview);
+        await dbContext.SaveChangesAsync(cancellationToken);
         client.TransferTo(toCoachId);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -243,6 +265,9 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         await dbContext.Set<LifestyleTargets>().IgnoreQueryFilters()
             .Where(targets => targets.ClientId == client.Id && targets.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(targets => targets.CoachId, toCoachId), cancellationToken);
+        var checkInsMoved = await dbContext.Set<CheckIn>().IgnoreQueryFilters()
+            .Where(checkIn => checkIn.ClientId == client.Id && checkIn.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(checkIn => checkIn.CoachId, toCoachId), cancellationToken);
         var media = await dbContext.Set<MediaAsset>().IgnoreQueryFilters()
             .Where(asset => asset.ClientId == client.Id && asset.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(asset => asset.CoachId, (Guid?)toCoachId), cancellationToken);
@@ -260,6 +285,7 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 ["WorkoutSessionsMoved"] = (null, workouts),
                 ["ProgressEntriesMoved"] = (null, progress),
                 ["ProgressPhotosMoved"] = (null, photos),
+                ["CheckInsMoved"] = (null, checkInsMoved),
                 ["MediaMoved"] = (null, media)
             });
         await dbContext.SaveChangesAsync(cancellationToken);

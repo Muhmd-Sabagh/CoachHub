@@ -116,6 +116,7 @@
           ><select name="type" [(ngModel)]="newForm.formType">
             <option>InitialAssessment</option>
             <option>UpdateAssessment</option>
+            <option value="CheckIn">CheckIn (scheduled per client)</option>
           </select></label
         >
         <footer class="modal-actions span-2">
@@ -162,7 +163,7 @@
             <span class="drag-handle" aria-hidden="true">⋮⋮</span>
             <div>
               <strong>{{ q.text }}</strong
-              ><small>{{ q.questionType }} · {{ q.isRequired ? 'Required' : 'Optional' }}</small>
+              ><small>{{ q.questionType }} · {{ q.isRequired ? 'Required' : 'Optional' }}{{ q.metric ? ' · records ' + metricLabel(q.metric) : '' }}</small>
             </div>
             @if (builder.status === 'Draft') {
               <div class="actions">
@@ -219,7 +220,19 @@
               <option [value]="s.id">{{ s.title }}</option>
             }
           </select></label
-        ><label class="checkbox-row span-2"
+        >
+        @if (metricsFor(question.questionType).length) {
+          <label
+            ><span>Records</span
+            ><select name="metric" [(ngModel)]="question.metric">
+              <option [ngValue]="null">Nothing (answer only)</option>
+              @for (m of metricsFor(question.questionType); track m.value) {
+                <option [ngValue]="m.value">{{ m.label }}</option>
+              }
+            </select></label
+          >
+        }
+        <label class="checkbox-row span-2"
           ><input type="checkbox" name="required" [(ngModel)]="question.isRequired" />
           Required</label
         >

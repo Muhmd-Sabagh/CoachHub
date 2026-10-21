@@ -1,5 +1,7 @@
+using CoachHub.Application.CheckIns;
 using CoachHub.Application.FoodTracking;
 using CoachHub.Application.WorkoutTracking;
+using CoachHub.Domain.Assessments;
 using CoachHub.Domain.Progress;
 
 namespace CoachHub.Application.Progress;
@@ -20,6 +22,9 @@ public sealed record WaterInput(DateOnly Date, int AmountMl, string? Notes = nul
 
 /// <summary>A photo's details; the image itself is uploaded with them.</summary>
 public sealed record ProgressPhotoInput(DateOnly Date, PhotoPose Pose, string? Label = null, string? Notes = null);
+
+/// <summary>A form answer bound to a measure (P12): a number, or the client's uploaded photo.</summary>
+public sealed record MetricAnswer(QuestionMetric Metric, decimal? Value, Guid? MediaId);
 
 /// <summary>An entry of a series, as stored.</summary>
 public sealed record SeriesEntry(Guid Id, DateOnly Date, decimal Value, EntrySource Source, string? Notes);
@@ -69,11 +74,14 @@ public sealed record BodyDashboard(
 public sealed record TrainingDashboard(
     TrainingPeriodSummary Summary, IReadOnlyList<PersonalRecordResponse> RecentRecords, IReadOnlyList<PersonalRecordResponse> Strength);
 
+/// <summary>The check-in part of the dashboard (§37): the latest check-in, check-in adherence, and the coach's latest feedback.</summary>
+public sealed record CheckInDashboard(
+    MyCheckInResponse? Latest, CheckInScheduleResponse? Schedule, CheckInAdherence Adherence, CheckInReplyResponse? LatestFeedback);
+
 /// <summary>
-/// The client progress dashboard (§37): body, nutrition (P8), training (P10) and lifestyle for a range, all from the
-/// same services the detailed screens use. The check-in section (latest check-in, adherence, coach feedback) is added
-/// by the check-in workflow (P12).
+/// The client progress dashboard (§37): body, nutrition (P8), training (P10), lifestyle (P11), check-ins and adherence
+/// (P12) for a range, all from the same services the detailed screens use.
 /// </summary>
 public sealed record ProgressDashboardResponse(
     DateOnly From, DateOnly To, BodyDashboard Body, NutritionPeriodSummary Nutrition, TrainingDashboard Training,
-    LifestyleSummary Lifestyle, LifestyleTargetValues Targets);
+    LifestyleSummary Lifestyle, LifestyleTargetValues Targets, CheckInDashboard CheckIn, Adherence.AdherenceResponse Adherence);

@@ -24,6 +24,12 @@ public sealed class Client : Entity, ITenantOwned
 
     /// <summary>The last day the override applies; null keeps it until the coach clears it.</summary>
     public DateOnly? StatusOverrideUntil { get; private set; }
+
+    /// <summary>The next check-in due date (P12); null without an active schedule. Maintained by the check-in workflow.</summary>
+    public DateOnly? CheckInDueOn { get; private set; }
+
+    /// <summary>Whether a submitted check-in waits for the coach's review (P12). Maintained by the check-in workflow.</summary>
+    public bool CheckInAwaitingReview { get; private set; }
     public IReadOnlyCollection<Subscription> Subscriptions => _subscriptions;
 
     public static Client Create(
@@ -67,6 +73,8 @@ public sealed class Client : Entity, ITenantOwned
 
     public void RecordAssessmentSubmission(CoachHub.Domain.Assessments.AssessmentFormType formType)
     {
+        // A check-in waits for review on its own (CheckInAwaitingReview); it does not reopen the plans (P12).
+        if (formType == CoachHub.Domain.Assessments.AssessmentFormType.CheckIn) return;
         if (formType == CoachHub.Domain.Assessments.AssessmentFormType.InitialAssessment)
         {
             if (DietStatus == PlanWorkflowStatus.NotStarted) DietStatus = PlanWorkflowStatus.WaitingForPlan;
@@ -81,16 +89,17 @@ public sealed class Client : Entity, ITenantOwned
     }
     /// <summary>
     /// The client's status (§39). A coach's override wins while it lasts; otherwise, in order:
-    /// Inactive, SubscriptionExpired, NeedsReview (a plan awaits review), OnTrack. CheckInOverdue
-    /// is derived from check-in due dates once they exist (P12).
+    /// Inactive, SubscriptionExpired, NeedsReview (a plan or a submitted check-in awaits the coach), CheckInOverdue (the
+    /// check-in due date has passed, P12), OnTrack.
     /// </summary>
     public ClientStatus GetStatus(DateOnly today)
     {
         if (StatusOverride is { } manual && (StatusOverrideUntil is null || StatusOverrideUntil >= today)) return manual;
         if (!IsActive) return ClientStatus.Inactive;
         if (GetSubscriptionStatus(today) == SubscriptionStatus.Expired) return ClientStatus.SubscriptionExpired;
-        if (DietStatus == PlanWorkflowStatus.ReviewRequired || WorkoutStatus == PlanWorkflowStatus.ReviewRequired)
+        if (DietStatus == PlanWorkflowStatus.ReviewRequired || WorkoutStatus == PlanWorkflowStatus.ReviewRequired || CheckInAwaitingReview)
             return ClientStatus.NeedsReview;
+        if (CheckInDueOn is { } due && due < today) return ClientStatus.CheckInOverdue;
         return ClientStatus.OnTrack;
     }
 
@@ -102,6 +111,13 @@ public sealed class Client : Entity, ITenantOwned
             throw new ArgumentException("The override must end between today and one year from now.", nameof(until));
         StatusOverride = status;
         StatusOverrideUntil = until;
+    }
+
+    /// <summary>The check-in facts the status (§39) reads: the next due date and whether a check-in awaits review.</summary>
+    public void SetCheckInState(DateOnly? dueOn, bool awaitingReview)
+    {
+        CheckInDueOn = dueOn;
+        CheckInAwaitingReview = awaitingReview;
     }
 
     public void ClearStatusOverride()

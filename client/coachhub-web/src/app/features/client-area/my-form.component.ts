@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
+import { isoDate } from '../nutrition-tracking/nutrition-tracking.service';
 import { FormQuestion, MyFormsService, PublishedForm, UploadedMedia, hasAnswer } from './my-forms.service';
 
 /** Fill in one form, signed in (D5). One question per row, large controls for phones. */
@@ -135,7 +136,7 @@ export class MyFormComponent implements OnInit {
         mediaId: this.media[question.id]?.id ?? null,
       }));
     this.saving = true; this.error = '';
-    this.api.submit(this.form.definitionId, answers).pipe(finalize(() => (this.saving = false))).subscribe({
+    this.api.submit(this.form.definitionId, answers, isoDate(new Date())).pipe(finalize(() => (this.saving = false))).subscribe({
       next: () => { this.done = true; window.scrollTo({ top: 0 }); },
       error: e => (this.error = apiErrorMessage(e)),
     });

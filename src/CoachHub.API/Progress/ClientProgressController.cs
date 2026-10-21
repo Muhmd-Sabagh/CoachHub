@@ -1,4 +1,5 @@
 using CoachHub.API.Common.Routing;
+using CoachHub.Application.Adherence;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Progress;
 using CoachHub.Domain.Progress;
@@ -14,11 +15,16 @@ namespace CoachHub.API.Progress;
 [ApiController]
 [Authorize(Policy = AuthPolicies.CoachOrAdmin)]
 [Route(ApiRoutes.V1 + "/clients/{clientId:guid}/progress")]
-public sealed class ClientProgressController(ProgressService progress) : ControllerBase
+public sealed class ClientProgressController(ProgressService progress, ProgressDashboardService dashboard, AdherenceService adherence) : ControllerBase
 {
     [HttpGet("dashboard")]
     public Task<ProgressDashboardResponse> Dashboard(Guid clientId, [FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken token) =>
-        progress.DashboardAsync(clientId, from, to, token);
+        dashboard.DashboardAsync(clientId, from, to, token);
+
+    /// <summary>Adherence per area and overall (§30), weighted by the coach's adherence weights.</summary>
+    [HttpGet("adherence")]
+    public Task<AdherenceResponse> Adherence(Guid clientId, [FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken token) =>
+        adherence.ScoreAsync(clientId, from, to, token);
 
     [HttpGet("body")]
     public Task<BodyProgressResponse> Body(Guid clientId, [FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken token) =>

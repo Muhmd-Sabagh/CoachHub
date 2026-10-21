@@ -8,8 +8,7 @@ import {
   FormSummary,
   FormVersion,
   Question,
-  SubmissionSummary,
-} from './assessments.service';
+  SubmissionSummary, QuestionMetric, questionMetrics } from './assessments.service';
 @Component({
   selector: 'app-assessments',
   templateUrl: './assessments.component.html',
@@ -122,12 +121,14 @@ export class AssessmentsComponent implements OnInit {
       isRequired: q.isRequired,
       order: q.order,
       options: q.options.map((x) => ({ value: x.value, label: x.label, order: x.order })),
+      metric: q.metric ?? null,
     };
     this.questionOpen = true;
   }
   saveQuestion() {
     if (!this.builder) return;
-    const input = { ...this.question, sectionId: this.question.sectionId || null };
+    const metric = this.metricsFor(this.question.questionType).some((x) => x.value === this.question.metric) ? this.question.metric : null;
+    const input = { ...this.question, sectionId: this.question.sectionId || null, metric };
     const req = this.editingQuestionId
       ? this.data.updateQuestion(this.builder.definitionId, this.editingQuestionId, input)
       : this.data.addQuestion(this.builder.definitionId, input);
@@ -183,6 +184,16 @@ export class AssessmentsComponent implements OnInit {
       isRequired: false,
       order: 0,
       options: [] as { value: string; label: string; order: number }[],
+      metric: null as QuestionMetric | null,
     };
+  }
+
+  /** The measures a question of this answer type can record. */
+  metricsFor(type: string) {
+    return questionMetrics.filter((x) => x.type === type);
+  }
+
+  metricLabel(metric: QuestionMetric | null | undefined): string {
+    return questionMetrics.find((x) => x.value === metric)?.label ?? '';
   }
 }

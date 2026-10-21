@@ -4,6 +4,7 @@ import { map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { NutritionPeriod } from '../nutrition-tracking/nutrition-tracking.service';
 import { PersonalRecord, TrainingPeriod } from '../training-tracking/training-tracking.service';
+import { Adherence, CheckInAdherence, CheckInReply, CheckInSchedule, MyCheckIn } from '../check-ins/check-ins.service';
 
 export type EntrySource = 'Manual' | 'AppleHealth' | 'HealthConnect' | 'Wearable';
 export type MeasurementSite = 'Waist' | 'Chest' | 'Arm' | 'Thigh' | 'Hip' | 'Neck' | 'Calf';
@@ -93,6 +94,8 @@ export interface ProgressDashboard {
   training: { summary: TrainingPeriod; recentRecords: PersonalRecord[]; strength: PersonalRecord[] };
   lifestyle: LifestyleSummary;
   targets: LifestyleTargets;
+  checkIn: { latest: MyCheckIn | null; schedule: CheckInSchedule | null; adherence: CheckInAdherence; latestFeedback: CheckInReply | null };
+  adherence: Adherence;
 }
 export interface SleepInput { hours?: number | null; quality?: number | null; bedtime?: string | null; wakeTime?: string | null; notes?: string | null; }
 
