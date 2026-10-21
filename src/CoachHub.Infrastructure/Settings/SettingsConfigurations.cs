@@ -69,5 +69,7 @@ public sealed class CoachSettingsConfiguration : IEntityTypeConfiguration<CoachS
         builder.Property(settings => settings.ReplacementRule).HasConversion<string>().HasMaxLength(20);
         builder.Property(settings => settings.OneRepMaxFormula).HasConversion<string>().HasMaxLength(20);
         builder.Property(settings => settings.SecondaryMuscleWeight).HasPrecision(3, 2);
+        builder.Property(settings => settings.DefaultSleepTargetHours).HasPrecision(4, 2);
+        builder.Ignore(settings => settings.DefaultTargets);
     }
 }

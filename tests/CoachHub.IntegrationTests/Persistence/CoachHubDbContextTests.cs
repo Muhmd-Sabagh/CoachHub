@@ -61,6 +61,14 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.WorkoutTracking.LoggedExercise), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.WorkoutTracking.LoggedSet), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.WorkoutTracking.PersonalRecord), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Progress.WeightEntry), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Progress.BodyFatEntry), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Progress.BodyMeasurement), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Progress.SleepEntry), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Progress.StepsEntry), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Progress.WaterEntry), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Progress.ProgressPhoto), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Progress.LifestyleTargets), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanNote), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementGroup), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementOption), entityTypes);
@@ -113,9 +121,11 @@ public sealed class CoachHubDbContextTests
 
         // 15 coach-owned business types (P1), MediaAsset (P2), AuditEntry (P3), Brand and
         // CoachSettings (P4), FoodItem (P7, a catalog entry), FoodLogEntry and NutritionDay (P8), Exercise
-        // (P9, a catalog entry), and WorkoutSession and PersonalRecord (P10). MediaAsset, AuditEntry, Brand,
-        // FoodItem and Exercise also admit platform rows.
-        Assert.Equal(25, owned.Length);
+        // (P9, a catalog entry), WorkoutSession and PersonalRecord (P10), and six tracking entries, ProgressPhoto and
+        // LifestyleTargets (P11). MediaAsset, AuditEntry, Brand, FoodItem and Exercise also admit platform rows.
+        Assert.Equal(33, owned.Length);
+        Assert.DoesNotContain(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressEntry));
+        Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressPhoto));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.WorkoutTracking.WorkoutSession));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.WorkoutTracking.PersonalRecord));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Training.Exercise));

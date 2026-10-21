@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using CoachHub.Domain.Common;
+using CoachHub.Domain.Progress;
 
 namespace CoachHub.Domain.Settings;
 
@@ -91,6 +92,11 @@ public sealed class CoachSettings : Entity, ITenantOwned
     /// primary muscle counts; at 0.5 a set counts half a set for each secondary muscle.
     /// </summary>
     public decimal SecondaryMuscleWeight { get; private set; }
+
+    // Default daily lifestyle targets for the coach's clients (P11); a client's own targets win.
+    public int? DefaultStepsTarget { get; private set; }
+    public int? DefaultWaterTargetMl { get; private set; }
+    public decimal? DefaultSleepTargetHours { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
     /// <summary>Common defaults: Mifflin-St Jeor activity multipliers, 20% deficit, 10% surplus, 2.0/0.8 g/kg.</summary>
@@ -149,6 +155,17 @@ public sealed class CoachSettings : Entity, ITenantOwned
             throw new ArgumentException("Use at most two decimals.", nameof(secondaryMuscleWeight));
         OneRepMaxFormula = formula;
         SecondaryMuscleWeight = secondaryMuscleWeight;
+        UpdatedAt = now;
+    }
+
+    public LifestyleTargetValues DefaultTargets => new(DefaultStepsTarget, DefaultWaterTargetMl, DefaultSleepTargetHours);
+
+    /// <summary>Default lifestyle targets for clients without their own (P11); all optional.</summary>
+    public void UpdateDefaultTargets(LifestyleTargetValues targets, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+        targets.Validate();
+        (DefaultStepsTarget, DefaultWaterTargetMl, DefaultSleepTargetHours) = (targets.Steps, targets.WaterMl, targets.SleepHours);
         UpdatedAt = now;
     }
 

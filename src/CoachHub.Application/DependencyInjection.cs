@@ -14,6 +14,7 @@ using CoachHub.Application.Pdf;
 using CoachHub.Application.PlanDelivery;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
+using CoachHub.Application.Progress;
 using CoachHub.Application.Reporting;
 using CoachHub.Application.SavedPlans;
 using CoachHub.Application.Settings;
@@ -67,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<LegacyExerciseImportService>();
         services.AddScoped<WorkoutPlanService>();
         services.AddScoped<WorkoutTrackingService>();
+        services.AddScoped<ProgressService>();
         return services;
     }
 }

@@ -118,14 +118,19 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - The schedule is a **weekly rotation**: each ISO week expects every day of the version in force once (`WorkoutSchedule`). The version in force uses the shared `PlanRevisions.InForce`.
   - Warm-up sets count for nothing; drop sets count toward volume but not set records. Use `TrainingSets`, `TrainingAnalytics` and `PersonalRecordDetector` for any training figure.
   - `PersonalRecord` rows are derived: rebuild them (`WorkoutTrackingService`) after any change to a completed workout, never patch them. e1RM goes through `IOneRepMaxFormula` with the coach's `OneRepMaxFormula`.
+- **Body and lifestyle tracking (§24–§27, §31–§33, §37)** — implemented in P11; see `docs/product/phases/P11_PROGRESS_TRACKING.md`.
+  - Entries derive from `ProgressEntry` (client row, `Source` + `ExternalId` for future `IHealthDataProvider` imports) and are written by the client only, under `/api/v1/me/progress`; coaches read under `/clients/{id}/progress` and set `LifestyleTargets` (falling back to `CoachSettings` defaults).
+  - Progress photos are the client's own media (P2), opened through `/media/{id}`. Delete a `ProgressPhoto` before its media.
+  - Use `ProgressStatistics` for start/current/change/weekly figures and goal completion. The dashboard reuses the nutrition and training services; never recompute their figures.
+  - The nutrition engine uses the latest weigh-in, else the profile's starting weight.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P10. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P11. Known gaps against REQUIREMENTS.md:
 
-- no body or lifestyle tracking, chat or calendars (nutrition tracking exists since P8, workout tracking since P10).
+- no check-in workflow, chat or calendars (nutrition tracking exists since P8, workout tracking since P10, body and lifestyle tracking since P11).
 
 Treat these as planned rework, not conventions to preserve.
 

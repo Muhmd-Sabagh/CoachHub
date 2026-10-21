@@ -9,6 +9,7 @@ using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Domain.Progress;
 using CoachHub.Domain.WorkoutTracking;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Persistence;
@@ -89,6 +90,10 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         dbContext.Set<Client>().IgnoreQueryFilters().AnyAsync(client => client.ClientCode == code, cancellationToken);
 
     /// <summary>Reached only after the caller found the client through the tenant filter.</summary>
+    public Task<decimal?> FindLatestWeightKgAsync(Guid clientId, CancellationToken cancellationToken) =>
+        dbContext.Set<WeightEntry>().Where(entry => entry.ClientId == clientId).OrderByDescending(entry => entry.Date)
+            .Select(entry => (decimal?)entry.WeightKg).FirstOrDefaultAsync(cancellationToken);
+
     public Task<ClientProfile?> FindProfileAsync(Guid clientId, CancellationToken cancellationToken) =>
         dbContext.Set<ClientProfile>()
             .Include(profile => profile.Equipment)
@@ -164,6 +169,13 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         dbContext.Set<FormSubmission>().RemoveRange(submissions);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        // Progress photos reference the client's media too (P11).
+        var photos = await dbContext.Set<ProgressPhoto>()
+            .Where(photo => photo.ClientId == client.Id)
+            .ToArrayAsync(cancellationToken);
+        dbContext.Set<ProgressPhoto>().RemoveRange(photos);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         var media = await dbContext.Set<MediaAsset>()
             .Where(asset => asset.ClientId == client.Id)
             .ToArrayAsync(cancellationToken);
@@ -217,6 +229,20 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         await dbContext.Set<PersonalRecord>().IgnoreQueryFilters()
             .Where(record => record.ClientId == client.Id && record.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(record => record.CoachId, toCoachId), cancellationToken);
+        var progress = 0;
+        progress += await MoveAsync<WeightEntry>(client.Id, fromCoachId, toCoachId, cancellationToken);
+        progress += await MoveAsync<BodyFatEntry>(client.Id, fromCoachId, toCoachId, cancellationToken);
+        progress += await MoveAsync<BodyMeasurement>(client.Id, fromCoachId, toCoachId, cancellationToken);
+        progress += await MoveAsync<SleepEntry>(client.Id, fromCoachId, toCoachId, cancellationToken);
+        progress += await MoveAsync<StepsEntry>(client.Id, fromCoachId, toCoachId, cancellationToken);
+        progress += await MoveAsync<WaterEntry>(client.Id, fromCoachId, toCoachId, cancellationToken);
+        var photos = await dbContext.Set<ProgressPhoto>().IgnoreQueryFilters()
+            .Where(photo => photo.ClientId == client.Id && photo.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(photo => photo.CoachId, toCoachId), cancellationToken);
+        // Targets are coaching data too; the new coach's defaults apply where the client has none.
+        await dbContext.Set<LifestyleTargets>().IgnoreQueryFilters()
+            .Where(targets => targets.ClientId == client.Id && targets.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(targets => targets.CoachId, toCoachId), cancellationToken);
         var media = await dbContext.Set<MediaAsset>().IgnoreQueryFilters()
             .Where(asset => asset.ClientId == client.Id && asset.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(asset => asset.CoachId, (Guid?)toCoachId), cancellationToken);
@@ -232,11 +258,20 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 ["DeliveredPlansMoved"] = (null, deliveries),
                 ["FoodLogEntriesMoved"] = (null, foodLog),
                 ["WorkoutSessionsMoved"] = (null, workouts),
+                ["ProgressEntriesMoved"] = (null, progress),
+                ["ProgressPhotosMoved"] = (null, photos),
                 ["MediaMoved"] = (null, media)
             });
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
+    // Deliberately cross-tenant: the transfer moves the client's rows from the old coach to the new one.
+    private Task<int> MoveAsync<T>(Guid clientId, Guid fromCoachId, Guid toCoachId, CancellationToken cancellationToken)
+        where T : ProgressEntry =>
+        dbContext.Set<T>().IgnoreQueryFilters()
+            .Where(entry => entry.ClientId == clientId && entry.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(entry => entry.CoachId, toCoachId), cancellationToken);
+
     public Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Set<Subscription>()
             .Include(subscription => subscription.Renewals)
