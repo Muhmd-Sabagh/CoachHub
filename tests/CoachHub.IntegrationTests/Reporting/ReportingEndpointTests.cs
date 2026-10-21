@@ -1,3 +1,4 @@
+using CoachHub.Application.Billing;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -23,7 +24,7 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
     }
 
     [Fact]
-    public async Task Administrator_receives_operational_and_separated_commercial_metrics()
+    public async Task Administrator_receives_operational_metrics_and_revenue_per_currency()
     {
         await AuthenticateAsync();
         var suffix = Guid.NewGuid().ToString("N");
@@ -67,20 +68,29 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
         Assert.Equal(1, report.Clients.ClientsWithActiveSubscription);
         Assert.Equal(0, report.Clients.ClientsWithOnlyExpiredSubscriptions);
         Assert.Equal(0, report.Clients.ClientsWithoutSubscriptions);
-        Assert.Equal(2, report.ByCurrency.Count);
-        var currencyTotal = Assert.Single(report.ByCurrency, item => item.Id == currency.Id);
-        Assert.Equal(1, currencyTotal.SubscriptionTransactions);
-        Assert.Equal(0, currencyTotal.RenewalTransactions);
-        Assert.Equal(1250, currencyTotal.Amount);
-        Assert.Equal(currency.Code, currencyTotal.CurrencyCode);
-        Assert.Equal(2, report.ByPackage.Count);
-        Assert.All(report.ByPackage, item => Assert.Equal(package.Id, item.Id));
-        Assert.Contains(report.ByPackage, item => item.CurrencyCode == currency.Code && item.Amount == 1250);
-        Assert.Contains(report.ByPackage, item => item.CurrencyCode == secondCurrency.Code && item.Amount == 500);
-        Assert.Equal(2, report.ByPaymentAccount.Count);
-        Assert.All(report.ByPaymentAccount, item => Assert.Equal(account.Id, item.Id));
-        Assert.Contains(report.ByPaymentAccount, item => item.CurrencyCode == currency.Code);
-        Assert.Contains(report.ByPaymentAccount, item => item.CurrencyCode == secondCurrency.Code);
+        // Subscriptions alone are not revenue (D6).
+        Assert.Empty(report.ByCurrency);
+
+        // Revenue: payments settled in the period minus refunds recorded in it, per currency.
+        var invoice = await ReadAsync<InvoiceResponse>(await _client.PostAsJsonAsync("/api/v1/billing/invoices",
+            new InvoiceInput(client.Id, null, currency.Id, 1250, null)));
+        invoice = await ReadAsync<InvoiceResponse>(await _client.PostAsJsonAsync($"/api/v1/billing/invoices/{invoice.Id}/payments",
+            new PaymentInput(account.Id, 1000, "TX-1")));
+        await ReadAsync<InvoiceResponse>(await _client.PostAsJsonAsync($"/api/v1/billing/invoices/payments/{invoice.Payments[0].Id}/refunds",
+            new RefundInput(200, "Partial refund")));
+        var second = await ReadAsync<InvoiceResponse>(await _client.PostAsJsonAsync("/api/v1/billing/invoices",
+            new InvoiceInput(client.Id, null, secondCurrency.Id, 500, null)));
+        await ReadAsync<InvoiceResponse>(await _client.PostAsJsonAsync($"/api/v1/billing/invoices/{second.Id}/payments",
+            new PaymentInput(null, 500, null)));
+        report = await _client.GetFromJsonAsync<OperationalReport>(
+            $"/api/v1/reporting/overview?from={today.AddDays(-1):yyyy-MM-dd}&to={today:yyyy-MM-dd}");
+        Assert.Equal(2, report!.ByCurrency.Count);
+        var main = Assert.Single(report.ByCurrency, item => item.Id == currency.Id);
+        Assert.Equal((currency.Code, 1, 1, 1000m, 200m, 800m), (main.CurrencyCode, main.Payments, main.Refunds, main.Settled, main.Refunded, main.Net));
+        Assert.Equal(500m, Assert.Single(report.ByCurrency, item => item.Id == secondCurrency.Id).Net);
+        Assert.All(report.ByPackage, item => Assert.Equal("No package", item.Label));
+        Assert.Equal(800m, Assert.Single(report.ByPaymentAccount, item => item.Id == account.Id).Net);
+        Assert.Equal(500m, Assert.Single(report.ByPaymentAccount, item => item.Id == null).Net);
         var expiring = Assert.Single(report.ExpiringSubscriptions);
         Assert.Equal(client.Id, expiring.ClientId);
         Assert.InRange(expiring.DaysRemaining, 27, 30);
@@ -146,5 +156,11 @@ public sealed class ReportingEndpointTests : IClassFixture<CoachHubApiFactory>
             new PaymentAccountInput(name, "Reporting", true));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<PaymentAccountResponse>())!;
+    }
+
+    private static async Task<T> ReadAsync<T>(HttpResponseMessage response)
+    {
+        Assert.True(response.IsSuccessStatusCode, $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+        return (await response.Content.ReadFromJsonAsync<T>())!;
     }
 }

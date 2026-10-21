@@ -1,9 +1,11 @@
+using CoachHub.Application.Dashboards;
 using CoachHub.Application.Reporting;
 using CoachHub.Domain.Assessments;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.ReferenceData;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Infrastructure.Dashboards;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,48 +56,8 @@ public sealed class ReportingRepository(CoachHubDbContext dbContext) : IReportin
         var assignedWorkoutPlans = await dbContext.Set<WorkoutPlan>().AsNoTracking()
             .CountAsync(plan => plan.ClientId != null, cancellationToken);
 
-        var originalRows = await (
-            from subscription in subscriptions
-            join package in dbContext.Set<Package>().AsNoTracking()
-                on subscription.PackageId equals package.Id
-            join currency in dbContext.Set<Currency>().AsNoTracking()
-                on subscription.CurrencyId equals currency.Id
-            join accountValue in dbContext.Set<PaymentAccount>().AsNoTracking()
-                on subscription.PaymentAccountId equals accountValue.Id into accountJoin
-            from account in accountJoin.DefaultIfEmpty()
-            where subscription.StartDate >= periodFrom && subscription.StartDate <= periodTo
-            select new CommercialRow(
-                subscription.PackageId,
-                package.NameEn,
-                subscription.CurrencyId,
-                currency.Code,
-                subscription.PaymentAccountId,
-                account == null ? "No payment account" : account.Name,
-                subscription.Price,
-                false)).ToArrayAsync(cancellationToken);
-
-        var renewalRows = await (
-            from renewal in dbContext.Set<SubscriptionRenewal>().AsNoTracking()
-            join subscription in subscriptions on renewal.SubscriptionId equals subscription.Id
-            join package in dbContext.Set<Package>().AsNoTracking()
-                on subscription.PackageId equals package.Id
-            join currency in dbContext.Set<Currency>().AsNoTracking()
-                on renewal.CurrencyId equals currency.Id
-            join accountValue in dbContext.Set<PaymentAccount>().AsNoTracking()
-                on renewal.PaymentAccountId equals accountValue.Id into accountJoin
-            from account in accountJoin.DefaultIfEmpty()
-            where renewal.RecordedAt >= periodStart && renewal.RecordedAt <= periodEnd
-            select new CommercialRow(
-                subscription.PackageId,
-                package.NameEn,
-                renewal.CurrencyId,
-                currency.Code,
-                renewal.PaymentAccountId,
-                account == null ? "No payment account" : account.Name,
-                renewal.Price,
-                true)).ToArrayAsync(cancellationToken);
-
-        var commercialRows = originalRows.Concat(renewalRows).ToArray();
+        // Revenue (D6): settled payments minus refunds recorded in the period, per currency.
+        var revenue = await RevenueQuery.RowsAsync(dbContext, periodFrom, periodTo, cancellationToken);
         var expiring = await (
             from subscription in subscriptions
             join client in clients on subscription.ClientId equals client.Id
@@ -131,47 +93,9 @@ public sealed class ReportingRepository(CoachHubDbContext dbContext) : IReportin
             new WorkflowMetrics(dietReview, workoutReview),
             new AssessmentMetrics(initialSubmissions, updateSubmissions),
             new PlanMetrics(assignedDietPlans, assignedWorkoutPlans),
-            Breakdown(commercialRows, row => (
-                row.CurrencyId.ToString(),
-                (Guid?)row.CurrencyId,
-                row.CurrencyLabel,
-                row.CurrencyLabel)),
-            Breakdown(commercialRows, row => (
-                $"{row.PackageId}:{row.CurrencyId}",
-                (Guid?)row.PackageId,
-                row.PackageLabel,
-                row.CurrencyLabel)),
-            Breakdown(commercialRows, row => (
-                $"{row.PaymentAccountId?.ToString() ?? "none"}:{row.CurrencyId}",
-                row.PaymentAccountId,
-                row.PaymentAccountLabel,
-                row.CurrencyLabel)),
+            RevenueCalculator.ByCurrency(revenue),
+            RevenueCalculator.ByPackage(revenue),
+            RevenueCalculator.ByPaymentAccount(revenue),
             expiring);
     }
-
-    private static IReadOnlyList<CommercialBreakdown> Breakdown(
-        IEnumerable<CommercialRow> rows,
-        Func<CommercialRow, (string Key, Guid? Id, string Label, string CurrencyCode)> keySelector) =>
-        rows.GroupBy(keySelector)
-            .Select(group => new CommercialBreakdown(
-                group.Key.Key,
-                group.Key.Id,
-                group.Key.Label,
-                group.Key.CurrencyCode,
-                group.Count(row => !row.IsRenewal),
-                group.Count(row => row.IsRenewal),
-                group.Sum(row => row.Amount)))
-            .OrderByDescending(item => item.Amount)
-            .ThenBy(item => item.Label)
-            .ToArray();
-
-    private sealed record CommercialRow(
-        Guid PackageId,
-        string PackageLabel,
-        Guid CurrencyId,
-        string CurrencyLabel,
-        Guid? PaymentAccountId,
-        string PaymentAccountLabel,
-        decimal Amount,
-        bool IsRenewal);
 }

@@ -15,6 +15,8 @@ export class ClientsComponent implements OnInit {
   appliedSearch = '';
   active = '';
   subscriptionStatus = '';
+  /** The computed client status (§39); the coach dashboard links here with ?status=. */
+  clientStatus = '';
   loading = false;
   saving = false;
   error = '';
@@ -46,6 +48,7 @@ export class ClientsComponent implements OnInit {
     this.subscriptionsWorkspace = route.snapshot.data['workspace'] === 'subscriptions';
     this.search = route.snapshot.queryParamMap.get('search') ?? '';
     this.appliedSearch = this.search;
+    this.clientStatus = route.snapshot.queryParamMap.get('status') ?? '';
   }
   ngOnInit(): void {
     forkJoin({
@@ -90,6 +93,7 @@ export class ClientsComponent implements OnInit {
     this.appliedSearch = '';
     this.active = '';
     this.subscriptionStatus = '';
+    this.clientStatus = '';
     this.load(1);
   }
   load(pageNumber = this.page.pageNumber): void {
@@ -101,6 +105,7 @@ export class ClientsComponent implements OnInit {
         searchTerm: this.appliedSearch,
         isActive: this.active,
         subscriptionStatus: this.subscriptionStatus,
+        status: this.clientStatus,
       })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({ next: (p) => (this.page = p), error: (e) => (this.error = apiErrorMessage(e)) });

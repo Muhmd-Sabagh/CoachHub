@@ -1,6 +1,7 @@
 using CoachHub.Application.Auditing;
 using CoachHub.Application.Adherence;
 using CoachHub.Application.Assessments;
+using CoachHub.Application.Calendar;
 using CoachHub.Application.Chat;
 using CoachHub.Application.CheckIns;
 using CoachHub.Application.ClientFiles;
@@ -13,6 +14,7 @@ using CoachHub.Application.Billing;
 using CoachHub.Application.Coaches;
 using CoachHub.Application.Communications;
 using CoachHub.Application.Clients;
+using CoachHub.Application.Dashboards;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Application.FoodTracking;
 using CoachHub.Application.Media;
@@ -83,6 +85,9 @@ public static class DependencyInjection
         services.AddScoped<CheckInService>();
         // P14: chat, shared files and event notifications. Handlers run after a save (IDomainEventDispatcher).
         services.AddScoped<ChatService>();
+        // P15: calendars and dashboards.
+        services.AddScoped<CalendarService>();
+        services.AddScoped<DashboardService>();
         services.AddScoped<ClientFileService>();
         services.AddScoped<InboxService>();
         services.AddScoped<NotificationCenter>();

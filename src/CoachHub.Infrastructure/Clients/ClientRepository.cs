@@ -9,6 +9,7 @@ using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Domain.Calendar;
 using CoachHub.Domain.Chat;
 using CoachHub.Domain.CheckIns;
 using CoachHub.Domain.ClientFiles;
@@ -117,7 +118,7 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
     /// otherwise Inactive, SubscriptionExpired, NeedsReview (a plan or a check-in awaits review), CheckInOverdue (P12)
     /// or OnTrack.
     /// </summary>
-    private static IQueryable<Client> WithStatus(IQueryable<Client> clients, ClientStatus status, DateOnly today) => status switch
+    internal static IQueryable<Client> WithStatus(IQueryable<Client> clients, ClientStatus status, DateOnly today) => status switch
     {
         ClientStatus.Inactive => clients.Where(client =>
             (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
@@ -336,6 +337,17 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         var filesMoved = await dbContext.Set<ClientFile>().IgnoreQueryFilters()
             .Where(file => file.ClientId == client.Id && file.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(file => file.CoachId, toCoachId), cancellationToken);
+        // Calendar (P15): training days and the events shared with the client move; the previous coach's private
+        // events and follow-ups about the client stay in their calendar, no longer linked to the client.
+        await dbContext.Set<TrainingDays>().IgnoreQueryFilters()
+            .Where(days => days.ClientId == client.Id && days.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(days => days.CoachId, toCoachId), cancellationToken);
+        var eventsMoved = await dbContext.Set<CalendarEvent>().IgnoreQueryFilters()
+            .Where(item => item.ClientId == client.Id && item.CoachId == fromCoachId && item.VisibleToClient)
+            .ExecuteUpdateAsync(update => update.SetProperty(item => item.CoachId, toCoachId), cancellationToken);
+        await dbContext.Set<CalendarEvent>().IgnoreQueryFilters()
+            .Where(item => item.ClientId == client.Id && item.CoachId == fromCoachId && !item.VisibleToClient)
+            .ExecuteUpdateAsync(update => update.SetProperty(item => item.ClientId, (Guid?)null), cancellationToken);
         var clientAccounts = dbContext.Set<User>().Where(user => user.ClientId == client.Id).Select(user => (Guid?)user.Id);
         await dbContext.Set<Notification>().IgnoreQueryFilters()
             .Where(notification => notification.ClientId == client.Id && notification.CoachId == fromCoachId &&
@@ -363,6 +375,7 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 ["TestAssignmentsEnded"] = (null, testAssignmentsEnded),
                 ["ConversationsArchived"] = (null, conversationsMoved),
                 ["ClientFilesMoved"] = (null, filesMoved),
+                ["CalendarEventsMoved"] = (null, eventsMoved),
                 ["MediaMoved"] = (null, media)
             });
         await dbContext.SaveChangesAsync(cancellationToken);

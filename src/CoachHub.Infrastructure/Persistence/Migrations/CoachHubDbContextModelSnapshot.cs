@@ -596,7 +596,6 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoachHub.Domain.Billing.Refund", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Amount")
@@ -626,6 +625,95 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasIndex("RecordedAt");
 
                     b.ToTable("Refunds", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Calendar.CalendarEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly?>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<bool>("IsDone")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<TimeOnly?>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("VisibleToClient")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId", "Date");
+
+                    b.HasIndex("CoachId", "Date");
+
+                    b.ToTable("CalendarEvents", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CalendarEvents_Times", "[EndTime] IS NULL OR ([StartTime] IS NOT NULL AND [EndTime] > [StartTime])");
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Calendar.TrainingDays", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Weekdays")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique();
+
+                    b.HasIndex("CoachId");
+
+                    b.ToTable("TrainingDays", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Chat.ChatAttachment", b =>
@@ -4634,6 +4722,35 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasOne("CoachHub.Domain.Billing.Payment", null)
                         .WithMany("Refunds")
                         .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Calendar.CalendarEvent", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Calendar.TrainingDays", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

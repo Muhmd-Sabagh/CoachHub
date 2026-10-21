@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
-import { AdvancedReport, DashboardService, OperationalReport } from './dashboard.service';
+import { AdminDashboard, AdvancedReport, CoachDashboard, DashboardService, OperationalReport } from './dashboard.service';
 
 @Component({ selector: 'app-dashboard', templateUrl: './dashboard.component.html', standalone: false })
 export class DashboardComponent implements OnInit {
@@ -11,6 +11,12 @@ export class DashboardComponent implements OnInit {
   to = this.isoDate(0);
   report: OperationalReport | null = null;
   advanced: AdvancedReport | null = null;
+  /** §38 for coaches, §48 for administrators; signals so the zoneless page updates when they arrive. */
+  readonly coach = signal<CoachDashboard | null>(null);
+  readonly admin = signal<AdminDashboard | null>(null);
+  readonly statusLabels: Record<string, string> = {
+    OnTrack: 'On track', NeedsReview: 'Needs review', CheckInOverdue: 'Check-in overdue', SubscriptionExpired: 'Subscription expired', Inactive: 'Inactive',
+  };
   loading = false;
   error = '';
 
@@ -33,11 +39,23 @@ export class DashboardComponent implements OnInit {
         next: ([report, advanced]) => { this.report = report; this.advanced = advanced; },
         error: (error) => (this.error = apiErrorMessage(error)),
       });
+    if (this.auth.isAdmin()) {
+      this.data.admin(this.from, this.to).subscribe({ next: x => this.admin.set(x), error: e => (this.error = apiErrorMessage(e)) });
+    } else {
+      this.data.coach(this.from, this.to).subscribe({ next: x => this.coach.set(x), error: e => (this.error = apiErrorMessage(e)) });
+    }
   }
 
   findClient(term: string): void {
     void this.router.navigate(['/clients'], { queryParams: term ? { search: term } : {} });
   }
+
+  activityText(item: CoachDashboard['recentActivity'][number]): string {
+    const verb = item.operation === 'Create' ? 'added' : item.operation === 'Delete' ? 'removed' : 'updated';
+    return `${item.actor} ${verb} ${item.entityType.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()}`;
+  }
+
+  maxActive(): number { return Math.max(1, ...(this.admin()?.userActivity.map(x => x.activeUsers) ?? [1])); }
 
   openClient(clientName: string): void {
     void this.router.navigate(['/clients'], { queryParams: { search: clientName } });
