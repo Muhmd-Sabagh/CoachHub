@@ -50,6 +50,7 @@ Training                                P6 → P9 → P10
 Progress                                P5 → P11 → P12 → P13
 Engagement   P14 (after P5)   P15 (after P8, P10, P12)   P16 (hook from P1)   P17 (after P11)
 Hardening    P18 (last)
+Fixes        P10A (any time before P18; recommended before P11)
 ```
 
 ---
@@ -319,6 +320,28 @@ Then:
 
 - **Reports.** Weekly and monthly client reports built from the P8, P10, P11 and P12 services. The PDF reuses the QuestPDF infrastructure (`src/CoachHub.Infrastructure/Pdf/QuestPlanPdfRenderer.cs`, Noto Arabic font) with brand styling.
 - **CSV export.** Client data, progress, nutrition, workout history and check-ins.
+
+### P10A: Client UI refresh and local release gate (S), covering §53, §60
+
+Added 2026-10-21 after P10. These are issues found outside P10's scope, collected here so they are fixed deliberately rather than in passing.
+
+- **Zoneless change detection.**
+  - **Problem.** The app runs without zone.js (Angular's default when zone.js is absent). Many screens assign plain fields inside HTTP subscriptions, for example `this.day = day` in `MyNutritionComponent`, and Angular does not re-render after an HTTP response without a signal change or `markForCheck`. Those screens may stay on "Loading…" or show stale data until the next click.
+  - **Confirm.** Run the browser smoke test below.
+  - **Fix.** Move asynchronous component state to signals, as the P10 training screens do, or use `markForCheck` or the `async` pipe. Start with the client area (Home, Nutrition, Forms, Account), then the staff screens.
+  - **Test.** Add a component test that proves a screen renders an HTTP result without user input.
+- **Local release gate on Windows PowerShell 5.1.**
+  - **Problem.** `scripts/Verify-Release.ps1` sets `$ErrorActionPreference = 'Stop'`. Under Windows PowerShell 5.1 the `npm warn deprecated …` lines that `npm ci` prints on stderr become terminating errors, so the gate fails locally even though CI passes (CI uses PowerShell 7).
+  - **Fix.** Make native-command stderr non-fatal in the script (rely on exit codes), or require `pwsh` and say so in CLAUDE.md.
+- **Browser smoke test of P8–P10.** P8, P9 and P10 were verified by build and tests only. Click through as Admin, Coach A, Coach B and a Client, at phone and desktop widths:
+  - the food diary and nutrition analytics;
+  - the exercise library and the structured workout builder;
+  - workout logging, the rest timer, PRs and training analytics.
+
+  Record the results in the phase doc.
+- **Done when:** the screens refresh after loading without interaction, the full gate passes in both PowerShell editions, and the smoke-test findings are fixed or tracked.
+
+---
 
 ### P18: Hardening and release (M), covering §53–§55, §60
 

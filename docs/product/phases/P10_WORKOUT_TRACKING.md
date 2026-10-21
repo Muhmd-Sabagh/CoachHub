@@ -140,7 +140,7 @@ All of the following are pure and unit-tested:
 - **Coach notifications of PRs and completed workouts** arrive with event notifications in P14.
 - **Subscription access rules** (for example "logging blocked when expired") arrive in P16.
 - **Exercise names show in English** in the training screens, as in the P8 screens. Arabic names are returned by the API for a later pass.
-- **Zoneless change detection (observed, outside P10).** The app runs without zone.js. Older screens assign plain fields inside HTTP subscriptions, which Angular does not re-render until the next event. P10's screens use signals. The older screens need the browser smoke test below to confirm whether they refresh.
+- **Zoneless change detection (observed, outside P10).** The app runs without zone.js. Older screens assign plain fields inside HTTP subscriptions, which Angular does not re-render until the next event. P10's screens use signals. Tracked as roadmap phase **P10A**, together with the local release gate on Windows PowerShell 5.1.
 - **No manual browser smoke test yet.** The UI was checked by build and tests only.
 
 ## Verification
