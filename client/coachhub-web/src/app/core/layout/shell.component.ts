@@ -19,6 +19,7 @@ export class ShellComponent implements OnInit {
     { route: '/subscriptions', label: 'nav.subscriptions', icon: 'SB', roles: staff },
     { route: '/assessments', label: 'nav.assessments', icon: 'AS', roles: staff },
     { route: '/check-ins', label: 'nav.checkIns', icon: 'CI', roles: staff },
+    { route: '/fitness-tests', label: 'nav.fitnessTests', icon: 'FT', roles: staff },
     { route: '/nutrition', label: 'nav.nutrition', icon: 'NU', roles: staff },
     { route: '/training', label: 'nav.training', icon: 'TR', roles: staff },
     { route: '/plans', label: 'nav.plans', icon: 'PL', roles: staff },

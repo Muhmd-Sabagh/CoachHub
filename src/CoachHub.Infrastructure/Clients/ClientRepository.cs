@@ -10,6 +10,7 @@ using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Domain.WorkoutPlanning;
 using CoachHub.Domain.CheckIns;
+using CoachHub.Domain.FitnessTests;
 using CoachHub.Domain.Progress;
 using CoachHub.Domain.WorkoutTracking;
 using CoachHub.Infrastructure.Auth.Persistence;
@@ -268,6 +269,18 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         var checkInsMoved = await dbContext.Set<CheckIn>().IgnoreQueryFilters()
             .Where(checkIn => checkIn.ClientId == client.Id && checkIn.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(checkIn => checkIn.CoachId, toCoachId), cancellationToken);
+        // Test results follow the client and keep their test, even a previous coach's custom one (P13). Assignments
+        // of such tests end, because the new coach cannot see them; platform-test assignments move.
+        var testResults = await dbContext.Set<TestResult>().IgnoreQueryFilters()
+            .Where(result => result.ClientId == client.Id && result.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(result => result.CoachId, toCoachId), cancellationToken);
+        var testAssignmentsEnded = await dbContext.Set<TestAssignment>().IgnoreQueryFilters()
+            .Where(assignment => assignment.ClientId == client.Id && assignment.CoachId == fromCoachId &&
+                dbContext.Set<TestDefinition>().Any(test => test.Id == assignment.TestDefinitionId && test.CoachId != null))
+            .ExecuteDeleteAsync(cancellationToken);
+        await dbContext.Set<TestAssignment>().IgnoreQueryFilters()
+            .Where(assignment => assignment.ClientId == client.Id && assignment.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(assignment => assignment.CoachId, toCoachId), cancellationToken);
         var media = await dbContext.Set<MediaAsset>().IgnoreQueryFilters()
             .Where(asset => asset.ClientId == client.Id && asset.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(asset => asset.CoachId, (Guid?)toCoachId), cancellationToken);
@@ -286,6 +299,8 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 ["ProgressEntriesMoved"] = (null, progress),
                 ["ProgressPhotosMoved"] = (null, photos),
                 ["CheckInsMoved"] = (null, checkInsMoved),
+                ["TestResultsMoved"] = (null, testResults),
+                ["TestAssignmentsEnded"] = (null, testAssignmentsEnded),
                 ["MediaMoved"] = (null, media)
             });
         await dbContext.SaveChangesAsync(cancellationToken);

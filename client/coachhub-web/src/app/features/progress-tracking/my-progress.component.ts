@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { addDays, isoDate } from '../nutrition-tracking/nutrition-tracking.service';
@@ -22,9 +23,10 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
 @Component({
   selector: 'app-my-progress',
   standalone: true,
-  imports: [CommonModule, FormsModule, TrendChartComponent, PhotoCompareComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent],
   template: `
-    <section class="dashboard-hero"><div><p class="eyebrow">Progress</p><h1>My progress</h1></div></section>
+    <section class="dashboard-hero"><div><p class="eyebrow">Progress</p><h1>My progress</h1></div>
+      <a class="button button-secondary" routerLink="/app/tests">My tests</a></section>
     <nav class="segmented sections" role="tablist" aria-label="Progress sections">
       @for (s of sections; track s.id) {
         <button type="button" role="tab" [class.active]="section() === s.id" [attr.aria-selected]="section() === s.id" (click)="open(s.id)">{{ s.label }}</button>
