@@ -20,6 +20,7 @@ import { PaginationComponent } from './shared/components/pagination/pagination.c
 import { SearchFilterComponent } from './shared/components/search-filter/search-filter.component';
 import { StatusBadgeComponent } from './shared/components/status-badge/status-badge.component';
 import { TranslatePipe } from './shared/pipes/translate.pipe';
+import { NotificationBellComponent } from './features/notifications/notification-bell.component';
 @NgModule({
   declarations: [
     App,
@@ -36,7 +37,7 @@ import { TranslatePipe } from './shared/pipes/translate.pipe';
     StatusBadgeComponent,
     TranslatePipe,
   ],
-  imports: [BrowserModule, FormsModule, ReactiveFormsModule, AppRoutingModule],
+  imports: [BrowserModule, FormsModule, ReactiveFormsModule, AppRoutingModule, NotificationBellComponent],
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withInterceptors([authInterceptor])),

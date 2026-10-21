@@ -42,7 +42,8 @@ public sealed class MediaController(MediaService mediaService) : ControllerBase
     public async Task<IActionResult> Open(Guid id, CancellationToken cancellationToken)
     {
         var media = await mediaService.OpenReadAsync(id, cancellationToken);
-        return File(media.Content, media.ContentType, media.FileName);
+        // Range requests let videos (P14) seek without downloading the whole file.
+        return File(media.Content, media.ContentType, media.FileName, enableRangeProcessing: true);
     }
 
     [HttpDelete("{id:guid}")]

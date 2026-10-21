@@ -23,11 +23,13 @@ public sealed class DietPlan : Entity, ITenantOwned
         NameEn = DietPlanText.Required(nameEn, 255, nameof(nameEn));
         NameAr = DietPlanText.Optional(nameAr, 255, nameof(nameAr));
         if (clientId == Guid.Empty) throw new ArgumentException("Client identifier cannot be empty.", nameof(clientId));
+        if (clientId is { } client && client != ClientId) Raise(new PlanAssigned(PlanKind.Diet, Id, client));
         ClientId = clientId;
     }
     public void Assign(Guid? clientId)
     {
         if (clientId == Guid.Empty) throw new ArgumentException("Client identifier cannot be empty.", nameof(clientId));
+        if (clientId is { } client && client != ClientId) Raise(new PlanAssigned(PlanKind.Diet, Id, client));
         ClientId = clientId;
     }
 }

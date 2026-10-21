@@ -1,6 +1,6 @@
 # P13 — Mobility, strength and endurance tests
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P13 · **Branch:** `phase/p13-fitness-tests` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P13 · **Branch:** `phase/p13-fitness-tests` · **Status:** Merged (PR #15).
 **Covers:** §34, §35, §36, D3, D5, D7.
 
 ## Purpose

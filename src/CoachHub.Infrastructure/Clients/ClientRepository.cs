@@ -9,7 +9,11 @@ using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Domain.Chat;
 using CoachHub.Domain.CheckIns;
+using CoachHub.Domain.ClientFiles;
+using CoachHub.Domain.Coaches;
+using CoachHub.Domain.Communications;
 using CoachHub.Domain.FitnessTests;
 using CoachHub.Domain.Progress;
 using CoachHub.Domain.WorkoutTracking;
@@ -187,6 +191,37 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         dbContext.Set<FormSubmission>().RemoveRange(submissions);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        // Chat attachments and shared files reference the client's media too (P14).
+        var conversations = await dbContext.Set<Conversation>()
+            .Where(conversation => conversation.ClientId == client.Id)
+            .ToArrayAsync(cancellationToken);
+        dbContext.Set<Conversation>().RemoveRange(conversations);
+        var files = await dbContext.Set<ClientFile>()
+            .Where(file => file.ClientId == client.Id)
+            .ToArrayAsync(cancellationToken);
+        dbContext.Set<ClientFile>().RemoveRange(files);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        // Notifications about the client go too, including platform mail (a password reset) that no coach owns and
+        // the coach could not otherwise remove: a deliberately cross-tenant, standalone query of the client's rows.
+        var notifications = dbContext.Set<Notification>().IgnoreQueryFilters()
+            .Where(notification => notification.ClientId == client.Id);
+        if (dbContext.Database.IsRelational())
+        {
+            var deleted = await notifications.ExecuteDeleteAsync(cancellationToken);
+            if (deleted > 0)
+            {
+                // The bulk delete bypasses change tracking, so it is recorded explicitly (D2).
+                dbContext.RecordAudit("ClientNotifications", client.Id, AuditOperation.Delete, client.CoachId, client.Id,
+                    new Dictionary<string, (object? From, object? To)> { ["NotificationsDeleted"] = (deleted, null) });
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
+        else
+        {
+            dbContext.Set<Notification>().RemoveRange(await notifications.ToArrayAsync(cancellationToken));
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         // Progress photos reference the client's media too (P11).
         var photos = await dbContext.Set<ProgressPhoto>()
             .Where(photo => photo.ClientId == client.Id)
@@ -222,6 +257,15 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         var schedule = await dbContext.Set<CheckInSchedule>().SingleOrDefaultAsync(x => x.ClientId == client.Id, cancellationToken);
         if (schedule is not null) dbContext.Set<CheckInSchedule>().Remove(schedule);
         client.SetCheckInState(null, client.CheckInAwaitingReview);
+        // The open chat is archived: readable by the client only; the new coach starts a new one (P14, owner decision).
+        var openChat = await dbContext.Set<Conversation>().IgnoreQueryFilters()
+            .SingleOrDefaultAsync(conversation => conversation.ClientId == client.Id && !conversation.IsArchived, cancellationToken);
+        if (openChat is not null)
+        {
+            var coachName = await dbContext.Set<Coach>().Where(coach => coach.Id == fromCoachId)
+                .Select(coach => coach.DisplayName).SingleOrDefaultAsync(cancellationToken);
+            openChat.Archive(coachName ?? string.Empty, DateTimeOffset.UtcNow);
+        }
         await dbContext.SaveChangesAsync(cancellationToken);
         client.TransferTo(toCoachId);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -281,6 +325,22 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         await dbContext.Set<TestAssignment>().IgnoreQueryFilters()
             .Where(assignment => assignment.ClientId == client.Id && assignment.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(assignment => assignment.CoachId, toCoachId), cancellationToken);
+        // Chats (archived above, so hidden from the new coach) and shared files move with the client, as do the
+        // in-app notifications of the client's own account.
+        var conversationsMoved = await dbContext.Set<Conversation>().IgnoreQueryFilters()
+            .Where(conversation => conversation.ClientId == client.Id && conversation.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(conversation => conversation.CoachId, toCoachId), cancellationToken);
+        await dbContext.Set<ChatMessage>().IgnoreQueryFilters()
+            .Where(message => message.ClientId == client.Id && message.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(message => message.CoachId, toCoachId), cancellationToken);
+        var filesMoved = await dbContext.Set<ClientFile>().IgnoreQueryFilters()
+            .Where(file => file.ClientId == client.Id && file.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(file => file.CoachId, toCoachId), cancellationToken);
+        var clientAccounts = dbContext.Set<User>().Where(user => user.ClientId == client.Id).Select(user => (Guid?)user.Id);
+        await dbContext.Set<Notification>().IgnoreQueryFilters()
+            .Where(notification => notification.ClientId == client.Id && notification.CoachId == fromCoachId &&
+                notification.Channel == NotificationChannel.InApp && clientAccounts.Contains(notification.RecipientUserId))
+            .ExecuteUpdateAsync(update => update.SetProperty(notification => notification.CoachId, (Guid?)toCoachId), cancellationToken);
         var media = await dbContext.Set<MediaAsset>().IgnoreQueryFilters()
             .Where(asset => asset.ClientId == client.Id && asset.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(asset => asset.CoachId, (Guid?)toCoachId), cancellationToken);
@@ -301,6 +361,8 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 ["CheckInsMoved"] = (null, checkInsMoved),
                 ["TestResultsMoved"] = (null, testResults),
                 ["TestAssignmentsEnded"] = (null, testAssignmentsEnded),
+                ["ConversationsArchived"] = (null, conversationsMoved),
+                ["ClientFilesMoved"] = (null, filesMoved),
                 ["MediaMoved"] = (null, media)
             });
         await dbContext.SaveChangesAsync(cancellationToken);

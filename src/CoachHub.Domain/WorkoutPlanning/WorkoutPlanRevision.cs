@@ -7,6 +7,8 @@ public sealed class WorkoutPlanRevision : PlanRevision
 {
     private WorkoutPlanRevision() { }
 
+    public override PlanKind Kind => PlanKind.Workout;
+
     public static WorkoutPlanRevision Create(
         Guid planId, int versionNumber, PlanRevisionStatus status, DateOnly? startDate, DateOnly? endDate,
         Guid? createdByUserId, DateTimeOffset createdAt)

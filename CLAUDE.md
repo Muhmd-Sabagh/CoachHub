@@ -132,14 +132,20 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - `TestDefinition` is a catalog entry (platform starter tests seeded in `TestDefinitionSeed`, plus coach tests). The coach assigns tests (`TestAssignment`); the client records only assigned tests under `/me/fitness-tests`, the coach any of their tests under `/clients/{id}/fitness-tests`. A client changes only results it recorded.
   - `TestResult` copies the test's name, unit, direction and cut-offs when recorded; classification comes from `TestCutOffs` unless the coach overrides it. Progress uses `TestProgressCalculator`.
   - On transfer, results move and keep their test; assignments of the previous coach's custom tests end. A test that any client uses cannot be deleted (checked across tenants), only deactivated.
+- **Chat, notifications and files (§41–§43)** — implemented in P14; see `docs/product/phases/P14_CHAT_NOTIFICATIONS_FILES.md`.
+  - Domain events: entities `Raise` an `IDomainEvent`; `CoachHubDbContext` dispatches them after a successful `SaveChangesAsync` to `IDomainEventHandler<T>` registrations (`IDomainEventDispatcher`). Handlers are side effects: a failure is logged, never fails the save.
+  - Event notifications go through `NotificationCenter`: an `InApp` `Notification` per recipient account (pushed live), plus an email copy through the outbox when the account's `NotificationPreference` wants it. `EventKey` makes an occurrence notify once. Time-based events come from `EventNotificationScanner` (hourly worker).
+  - Chat: one open `Conversation` per client; on transfer it is archived (client-only, read-only) and the new coach starts a new one. Staff endpoints never return archived conversations; administrators read but do not write.
+  - Live delivery is the SignalR `RealtimeHub` at `/api/v1/realtime` (AnyRole), behind `IRealtimePublisher`. It only pushes; all writes stay on REST endpoints. Only that path accepts the access token from the query string.
+  - Shared files (`ClientFile`) and chat attachments use `MediaUploadPolicy.Shared` (also video, Office documents, text; 50 MB). Other uploads keep images and PDF at 20 MB. Delete chats and shared files before a client's media.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P13. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P14. Known gaps against REQUIREMENTS.md:
 
-- no chat, notifications for events, or calendars (tracking exists since P8–P11, check-ins since P12, fitness tests since P13).
+- no calendars, reports or subscription access rules yet (tracking exists since P8–P11, check-ins since P12, fitness tests since P13, chat, notifications and shared files since P14).
 
 Treat these as planned rework, not conventions to preserve.
 

@@ -1,4 +1,5 @@
 using CoachHub.Application.Auditing;
+using CoachHub.Application.Common.Events;
 using CoachHub.Infrastructure.Auditing;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Tenancy;
@@ -21,7 +22,8 @@ namespace CoachHub.Infrastructure.Persistence;
 public sealed class CoachHubDbContext(
     DbContextOptions<CoachHubDbContext> options,
     IAuditActorAccessor? auditActorAccessor = null,
-    ICurrentUser? currentUser = null)
+    ICurrentUser? currentUser = null,
+    IDomainEventDispatcher? domainEvents = null)
     : IdentityDbContext<
         User,
         Role,
@@ -55,7 +57,31 @@ public sealed class CoachHubDbContext(
         EnforceTenantOwnership();
         await EnforceArchivedPlanVersionsAsync(async: true, cancellationToken);
         CaptureAuditEntries();
-        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        var saved = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        await DispatchDomainEventsAsync(cancellationToken);
+        return saved;
+    }
+
+    private int _dispatchDepth;
+
+    /// <summary>
+    /// P14: hands the events raised by the saved entities to their handlers. Handlers may save again (their own
+    /// notifications); the depth limit stops a handler loop.
+    /// </summary>
+    private async Task DispatchDomainEventsAsync(CancellationToken cancellationToken)
+    {
+        if (domainEvents is null || _dispatchDepth > 3) return;
+        var events = ChangeTracker.Entries<Entity>().SelectMany(entry => entry.Entity.TakeDomainEvents()).ToArray();
+        if (events.Length == 0) return;
+        _dispatchDepth++;
+        try
+        {
+            await domainEvents.DispatchAsync(events, cancellationToken);
+        }
+        finally
+        {
+            _dispatchDepth--;
+        }
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
