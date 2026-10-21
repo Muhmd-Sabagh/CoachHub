@@ -48,6 +48,8 @@ export interface CoachDefaults {
   oneRepMaxFormula: OneRepMaxFormula;
   /** 0–1: how much a set counts for each secondary muscle in muscle analytics (§23); 0 counts the primary only. */
   secondaryMuscleWeight: number;
+  /** Default daily targets for clients without their own (P11); each optional. */
+  defaultTargets: { steps: number | null; waterMl: number | null; sleepHours: number | null } | null;
   isSaved?: boolean;
 }
 

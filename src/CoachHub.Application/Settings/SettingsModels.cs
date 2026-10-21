@@ -1,3 +1,4 @@
+using CoachHub.Domain.Progress;
 using CoachHub.Domain.Settings;
 
 namespace CoachHub.Application.Settings;
@@ -124,7 +125,8 @@ public sealed record CoachSettingsResponse(
     FoodReplacementRule ReplacementRule,
     DateTimeOffset? UpdatedAt,
     OneRepMaxFormula OneRepMaxFormula = OneRepMaxFormula.Epley,
-    decimal SecondaryMuscleWeight = 0m);
+    decimal SecondaryMuscleWeight = 0m,
+    LifestyleTargetValues? DefaultTargets = null);
 
 public sealed record CoachSettingsInput(
     ActivityFactors ActivityFactors,
@@ -136,7 +138,8 @@ public sealed record CoachSettingsInput(
     AdherenceWeights AdherenceWeights,
     FoodReplacementRule ReplacementRule,
     OneRepMaxFormula OneRepMaxFormula = OneRepMaxFormula.Epley,
-    decimal SecondaryMuscleWeight = 0m);
+    decimal SecondaryMuscleWeight = 0m,
+    LifestyleTargetValues? DefaultTargets = null);
 
 /// <summary>What every signed-in screen needs: the brand name to show, units and default language.</summary>
 public sealed record WorkspaceSettingsResponse(string ProductName, string? CoachName, UnitSystem Units, string DefaultLanguage);

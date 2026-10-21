@@ -1,6 +1,6 @@
 # P10 — Workout tracking, history, PRs and training analytics
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P10 · **Branch:** `phase/p10-workout-tracking` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P10 · **Branch:** `phase/p10-workout-tracking` · **Status:** Merged (PR #12).
 **Covers:** §18, §19, §20, §21, §22, §23, §49 (training defaults), D3.
 
 ## Purpose

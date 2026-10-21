@@ -115,6 +115,7 @@ public sealed class ClientServiceTests
         public Task<bool> ClientCodeExistsAsync(string code, CancellationToken cancellationToken) => Task.FromResult(ClientCodeChecks++ == 0);
         public List<Client> Clients { get; } = [];
         public Task<ClientProfile?> FindProfileAsync(Guid clientId, CancellationToken cancellationToken) => Task.FromResult<ClientProfile?>(null);
+        public Task<decimal?> FindLatestWeightKgAsync(Guid clientId, CancellationToken cancellationToken) => Task.FromResult<decimal?>(null);
         public Task AddProfileAsync(ClientProfile profile, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddAsync(Client client, CancellationToken cancellationToken)
         {

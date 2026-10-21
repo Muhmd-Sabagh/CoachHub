@@ -1,6 +1,7 @@
 using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Tenancy;
+using CoachHub.Domain.Progress;
 using CoachHub.Domain.Settings;
 
 namespace CoachHub.Application.Settings;
@@ -73,6 +74,8 @@ public sealed class SettingsService(
             timeProvider.GetUtcNow()), "settings");
         DomainValidation.Run(() => target.UpdateTraining(
             input.OneRepMaxFormula, input.SecondaryMuscleWeight, timeProvider.GetUtcNow()), "settings");
+        DomainValidation.Run(() => target.UpdateDefaultTargets(
+            input.DefaultTargets ?? LifestyleTargetValues.None, timeProvider.GetUtcNow()), "defaultTargets");
         if (stored is null) settings.Add(target);
         await settings.SaveChangesAsync(cancellationToken);
         return Map(target, true);
@@ -85,5 +88,5 @@ public sealed class SettingsService(
     private static CoachSettingsResponse Map(CoachSettings value, bool saved) => new(
         value.CoachId, saved, value.Factors, value.DeficitPercent, value.SurplusPercent, value.ProteinGramsPerKg,
         value.FatGramsPerKg, value.DefaultMacroMode, value.Weights, value.ReplacementRule, saved ? value.UpdatedAt : null,
-        value.OneRepMaxFormula, value.SecondaryMuscleWeight);
+        value.OneRepMaxFormula, value.SecondaryMuscleWeight, value.DefaultTargets);
 }

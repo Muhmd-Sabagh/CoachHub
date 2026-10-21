@@ -7,6 +7,8 @@ public interface IClientRepository
 {
     /// <summary>The client's profile with its equipment and food choices; null until first saved.</summary>
     Task<ClientProfile?> FindProfileAsync(Guid clientId, CancellationToken cancellationToken);
+    /// <summary>The client's most recent weigh-in in kg (P11), or null without one.</summary>
+    Task<decimal?> FindLatestWeightKgAsync(Guid clientId, CancellationToken cancellationToken);
     Task AddProfileAsync(ClientProfile profile, CancellationToken cancellationToken);
     Task<PagedResult<Client>> ListAsync(ClientQuery query, DateOnly today, CancellationToken cancellationToken);
     Task<Client?> FindAsync(Guid id, CancellationToken cancellationToken);

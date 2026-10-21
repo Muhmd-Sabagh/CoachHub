@@ -34,14 +34,15 @@ public sealed class NutritionTargetService(
     }
 
     /// <summary>
-    /// The client's targets from their profile: age, sex, height, starting weight, activity level and goal.
-    /// Missing profile fields are reported per field. (The latest weigh-in replaces the starting weight in P11.)
+    /// The client's targets from their profile: age, sex, height, activity level and goal, with the latest weigh-in
+    /// (P11; the profile's starting weight until there is one). Missing fields are reported per field.
     /// </summary>
     public async Task<EnergyCalculatorResponse> ForClientAsync(Guid clientId, CancellationToken cancellationToken)
     {
         var client = await clients.FindAsync(clientId, cancellationToken) ?? throw new NotFoundException("Client", clientId);
         var profile = await clients.FindProfileAsync(clientId, cancellationToken);
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
+        var weightKg = await clients.FindLatestWeightKgAsync(clientId, cancellationToken) ?? profile?.StartingWeightKg;
 
         var missing = new Dictionary<string, string[]>();
         void Require(object? value, string field, string label)
@@ -51,7 +52,7 @@ public sealed class NutritionTargetService(
         Require(profile?.DateOfBirth, "dateOfBirth", "date of birth");
         Require(profile?.Sex, "sex", "sex");
         Require(profile?.HeightCm, "heightCm", "height");
-        Require(profile?.StartingWeightKg, "startingWeightKg", "weight");
+        if (weightKg is null) missing["startingWeightKg"] = ["Log a weigh-in or add the client's starting weight to their profile."];
         Require(profile?.ActivityLevel, "activityLevel", "activity level");
         Require(profile?.Goal, "goal", "goal");
         if (missing.Count > 0) throw new ValidationException(missing);
@@ -60,7 +61,7 @@ public sealed class NutritionTargetService(
         return EnergyCalculator.Calculate(
             new EnergyProfile(profile!.AgeOn(today)!.Value,
                 profile.Sex == Sex.Male ? BiologicalSex.Male : BiologicalSex.Female,
-                profile.StartingWeightKg!.Value, profile.HeightCm!.Value, profile.ActivityLevel!.Value, GoalFor(profile.Goal!.Value)),
+                weightKg!.Value, profile.HeightCm!.Value, profile.ActivityLevel!.Value, GoalFor(profile.Goal!.Value)),
             profile.Macros, coach);
     }
 
