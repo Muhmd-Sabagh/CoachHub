@@ -2,6 +2,7 @@ using CoachHub.Application.Auditing;
 using CoachHub.Application.Adherence;
 using CoachHub.Application.Assessments;
 using CoachHub.Application.CheckIns;
+using CoachHub.Application.FitnessTests;
 using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Auth.Sessions;
@@ -73,6 +74,8 @@ public static class DependencyInjection
         services.AddScoped<ProgressService>();
         services.AddScoped<ProgressDashboardService>();
         services.AddScoped<CheckInService>();
+        services.AddScoped<TestDefinitionService>();
+        services.AddScoped<FitnessTestService>();
         services.AddScoped<AdherenceService>();
         return services;
     }

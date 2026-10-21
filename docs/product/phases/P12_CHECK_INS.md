@@ -1,6 +1,6 @@
 # P12 — Check-in workflow and adherence
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P12 · **Branch:** `phase/p12-check-ins` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P12 · **Branch:** `phase/p12-check-ins` · **Status:** Merged (PR #14).
 **Covers:** §28, §29, §30, §37 (check-in section), §39, D3, D5.
 
 ## Purpose

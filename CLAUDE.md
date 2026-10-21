@@ -128,14 +128,18 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - `Client.CheckInDueOn` and `Client.CheckInAwaitingReview` feed `GetStatus` and the SQL status filter. Only the check-in workflow and transfer change them; keep both status paths identical.
   - `CheckIn.PrivateNotes` is coach-only: never map it into `/me` responses.
   - Adherence goes through `AdherenceService`/`AdherenceScore` with the coach's `AdherenceWeights`; the dashboard is `ProgressDashboardService`.
+- **Mobility, strength and endurance tests (§34–§36)** — implemented in P13; see `docs/product/phases/P13_FITNESS_TESTS.md`.
+  - `TestDefinition` is a catalog entry (platform starter tests seeded in `TestDefinitionSeed`, plus coach tests). The coach assigns tests (`TestAssignment`); the client records only assigned tests under `/me/fitness-tests`, the coach any of their tests under `/clients/{id}/fitness-tests`. A client changes only results it recorded.
+  - `TestResult` copies the test's name, unit, direction and cut-offs when recorded; classification comes from `TestCutOffs` unless the coach overrides it. Progress uses `TestProgressCalculator`.
+  - On transfer, results move and keep their test; assignments of the previous coach's custom tests end. A test that any client uses cannot be deleted (checked across tenants), only deactivated.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P12. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P13. Known gaps against REQUIREMENTS.md:
 
-- no mobility/strength/endurance tests, chat, notifications for events, or calendars (tracking exists since P8–P11, check-ins since P12).
+- no chat, notifications for events, or calendars (tracking exists since P8–P11, check-ins since P12, fitness tests since P13).
 
 Treat these as planned rework, not conventions to preserve.
 

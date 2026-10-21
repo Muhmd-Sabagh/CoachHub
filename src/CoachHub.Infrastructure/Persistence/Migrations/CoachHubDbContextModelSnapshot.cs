@@ -1606,6 +1606,355 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.ToTable("DietPlanMealOptions", (string)null);
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.FitnessTests.TestAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("AssignedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TestDefinitionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("TestDefinitionId");
+
+                    b.HasIndex("ClientId", "TestDefinitionId")
+                        .IsUnique();
+
+                    b.ToTable("TestAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FitnessTests.TestDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("GoodThreshold")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)");
+
+                    b.Property<bool>("HigherIsBetter")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("InstructionsAr")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("InstructionsEn")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<decimal?>("PoorThreshold")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("YouTubeUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId", "Kind", "NameEn");
+
+                    b.ToTable("TestDefinitions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TestDefinitions_CutOffs", "([GoodThreshold] IS NULL AND [PoorThreshold] IS NULL) OR ([GoodThreshold] IS NOT NULL AND [PoorThreshold] IS NOT NULL)");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0001-4b6e-8c2d-1a9e5f000001"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Sit with legs straight and feet against the box. Reach forward slowly and hold for two seconds. Record the best of three reaches.",
+                            IsActive = true,
+                            Kind = "Mobility",
+                            NameAr = "الجلوس والوصول",
+                            NameEn = "Sit and reach",
+                            Unit = "Centimeters"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0002-4b6e-8c2d-1a9e5f000002"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Hold a dowel overhead with straight arms and squat as deep as you can. Score 0 (pain) to 3 (full depth, heels down, torso upright).",
+                            IsActive = true,
+                            Kind = "Mobility",
+                            NameAr = "القرفصاء مع رفع الذراعين",
+                            NameEn = "Overhead squat",
+                            Unit = "Points"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0003-4b6e-8c2d-1a9e5f000003"),
+                            HigherIsBetter = false,
+                            InstructionsEn = "Reach one hand over the shoulder and the other up the back. Measure the gap between the fists; record 0 when they touch.",
+                            IsActive = true,
+                            Kind = "Mobility",
+                            NameAr = "مرونة الكتف",
+                            NameEn = "Shoulder reach",
+                            Unit = "Centimeters"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0004-4b6e-8c2d-1a9e5f000004"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Lunge facing a wall and push the knee to the wall with the heel down. Record the longest toe-to-wall distance.",
+                            IsActive = true,
+                            Kind = "Mobility",
+                            NameAr = "الركبة إلى الحائط",
+                            NameEn = "Knee to wall",
+                            Unit = "Centimeters"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0005-4b6e-8c2d-1a9e5f000005"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Warm up, then work up to the heaviest single repetition with full range and a spotter.",
+                            IsActive = true,
+                            Kind = "Strength",
+                            NameAr = "ضغط البنش - أقصى تكرار واحد",
+                            NameEn = "Bench press 1RM",
+                            Unit = "Kilograms"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0006-4b6e-8c2d-1a9e5f000006"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Warm up, then work up to the heaviest single repetition to at least parallel depth, with safety bars set.",
+                            IsActive = true,
+                            Kind = "Strength",
+                            NameAr = "القرفصاء الخلفي - أقصى تكرار واحد",
+                            NameEn = "Back squat 1RM",
+                            Unit = "Kilograms"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0007-4b6e-8c2d-1a9e5f000007"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Warm up, then work up to the heaviest single repetition with a neutral spine.",
+                            IsActive = true,
+                            Kind = "Strength",
+                            NameAr = "الرفعة المميتة - أقصى تكرار واحد",
+                            NameEn = "Deadlift 1RM",
+                            Unit = "Kilograms"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0008-4b6e-8c2d-1a9e5f000008"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Do as many full push-ups as you can without resting, chest to a fist's height from the floor.",
+                            IsActive = true,
+                            Kind = "Strength",
+                            NameAr = "تمرين الضغط - أقصى عدد",
+                            NameEn = "Push-ups (max reps)",
+                            Unit = "Repetitions"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-0009-4b6e-8c2d-1a9e5f000009"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "From a dead hang, pull the chin over the bar as many times as you can without kipping.",
+                            IsActive = true,
+                            Kind = "Strength",
+                            NameAr = "العقلة - أقصى عدد",
+                            NameEn = "Pull-ups (max reps)",
+                            Unit = "Repetitions"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-000a-4b6e-8c2d-1a9e5f00000a"),
+                            HigherIsBetter = false,
+                            InstructionsEn = "Run 2.4 km (1.5 miles) on a flat course as fast as you can. Record the time in seconds.",
+                            IsActive = true,
+                            Kind = "Endurance",
+                            NameAr = "جري 2.4 كم",
+                            NameEn = "2.4 km run",
+                            Unit = "Seconds"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-000b-4b6e-8c2d-1a9e5f00000b"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Run or walk as far as you can in 12 minutes on a flat course. Record the distance in metres.",
+                            IsActive = true,
+                            Kind = "Endurance",
+                            NameAr = "جري 12 دقيقة",
+                            NameEn = "12-minute run",
+                            Unit = "Meters"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-000c-4b6e-8c2d-1a9e5f00000c"),
+                            HigherIsBetter = false,
+                            InstructionsEn = "Walk 1.6 km (1 mile) as fast as you can without running. Record the time in seconds.",
+                            IsActive = true,
+                            Kind = "Endurance",
+                            NameAr = "مشي 1.6 كم",
+                            NameEn = "1.6 km walk",
+                            Unit = "Seconds"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-000d-4b6e-8c2d-1a9e5f00000d"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Do as many full push-ups as you can in 60 seconds; resting in the top position is allowed.",
+                            IsActive = true,
+                            Kind = "Endurance",
+                            NameAr = "تمرين الضغط في دقيقة",
+                            NameEn = "Push-ups in 1 minute",
+                            Unit = "Repetitions"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-000e-4b6e-8c2d-1a9e5f00000e"),
+                            HigherIsBetter = true,
+                            InstructionsEn = "Hold a forearm plank with a straight line from head to heels. Stop when the hips drop; record the time in seconds.",
+                            IsActive = true,
+                            Kind = "Endurance",
+                            NameAr = "ثبات البلانك",
+                            NameEn = "Plank hold",
+                            Unit = "Seconds"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d1f3a20-000f-4b6e-8c2d-1a9e5f00000f"),
+                            HigherIsBetter = false,
+                            InstructionsEn = "Step up and down a 30 cm step at 96 beats per minute for 3 minutes, sit, and count the heart rate for one minute.",
+                            IsActive = true,
+                            Kind = "Endurance",
+                            NameAr = "اختبار الصعود 3 دقائق",
+                            NameEn = "3-minute step test",
+                            Unit = "BeatsPerMinute"
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FitnessTests.TestResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Classification")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("GoodThreshold")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)");
+
+                    b.Property<bool>("HigherIsBetter")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsClassificationOverridden")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("PoorThreshold")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)");
+
+                    b.Property<string>("RecordedBy")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<Guid>("TestDefinitionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("TestDefinitionId");
+
+                    b.HasIndex("ClientId", "TestDefinitionId", "Date");
+
+                    b.ToTable("TestResults", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TestResults_Value", "[Value] >= 0");
+                        });
+                });
+
             modelBuilder.Entity("CoachHub.Domain.FoodTracking.FoodLogEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4398,6 +4747,56 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("MealId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FitnessTests.TestAssignment", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.FitnessTests.TestDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("TestDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FitnessTests.TestDefinition", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.FitnessTests.TestResult", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.FitnessTests.TestDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("TestDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
