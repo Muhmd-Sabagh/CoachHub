@@ -32,6 +32,8 @@ export interface AdherenceWeights { nutrition: number; workout: number; checkIn:
 
 export type MacroMode = 'GramsPerKg' | 'Percentages' | 'FixedGrams';
 export type ReplacementRule = 'Calories' | 'DominantMacro';
+/** The estimated one-rep max formula (§22) for PRs and strength analytics. */
+export type OneRepMaxFormula = 'Epley' | 'Brzycki';
 export type UnitSystem = 'Metric' | 'Imperial';
 
 export interface CoachDefaults {
@@ -43,6 +45,9 @@ export interface CoachDefaults {
   defaultMacroMode: MacroMode;
   adherenceWeights: AdherenceWeights;
   replacementRule: ReplacementRule;
+  oneRepMaxFormula: OneRepMaxFormula;
+  /** 0–1: how much a set counts for each secondary muscle in muscle analytics (§23); 0 counts the primary only. */
+  secondaryMuscleWeight: number;
   isSaved?: boolean;
 }
 

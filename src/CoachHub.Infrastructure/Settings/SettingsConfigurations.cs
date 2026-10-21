@@ -67,5 +67,7 @@ public sealed class CoachSettingsConfiguration : IEntityTypeConfiguration<CoachS
         builder.Property(settings => settings.FatGramsPerKg).HasPrecision(4, 2);
         builder.Property(settings => settings.DefaultMacroMode).HasConversion<string>().HasMaxLength(20);
         builder.Property(settings => settings.ReplacementRule).HasConversion<string>().HasMaxLength(20);
+        builder.Property(settings => settings.OneRepMaxFormula).HasConversion<string>().HasMaxLength(20);
+        builder.Property(settings => settings.SecondaryMuscleWeight).HasPrecision(3, 2);
     }
 }

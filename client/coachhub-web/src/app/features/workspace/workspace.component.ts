@@ -8,7 +8,7 @@ import { isHexColor } from '../../core/theme/theme.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { Coach, CoachesService } from '../coaches/coaches.service';
 import {
-  BrandImage, BrandInput, BrandRecord, CoachDefaults, MacroMode, PlatformSettings, ReplacementRule, Scope, WorkspaceService, weightTotal,
+  BrandImage, BrandInput, BrandRecord, CoachDefaults, MacroMode, OneRepMaxFormula, PlatformSettings, ReplacementRule, Scope, WorkspaceService, weightTotal,
 } from './workspace.service';
 
 /**
@@ -29,6 +29,10 @@ export class WorkspaceComponent implements OnInit {
   readonly replacementRules: { value: ReplacementRule; label: string }[] = [
     { value: 'Calories', label: 'Match calories' },
     { value: 'DominantMacro', label: 'Match the dominant macro' },
+  ];
+  readonly oneRepMaxFormulas: { value: OneRepMaxFormula; label: string }[] = [
+    { value: 'Epley', label: 'Epley: weight × (1 + reps / 30)' },
+    { value: 'Brzycki', label: 'Brzycki: weight × 36 / (37 − reps)' },
   ];
   coaches: Coach[] = [];
   /** '' is the platform for administrators; otherwise a coach ID. Coaches always edit their own. */

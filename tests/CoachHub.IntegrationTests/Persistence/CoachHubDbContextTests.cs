@@ -57,6 +57,10 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.FoodTracking.FoodLogEntry), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.FoodTracking.NutritionDay), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.FoodTracking.NutritionDayMealChoice), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.WorkoutTracking.WorkoutSession), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.WorkoutTracking.LoggedExercise), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.WorkoutTracking.LoggedSet), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.WorkoutTracking.PersonalRecord), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanNote), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementGroup), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementOption), entityTypes);
@@ -108,9 +112,12 @@ public sealed class CoachHubDbContextTests
             .ToArray();
 
         // 15 coach-owned business types (P1), MediaAsset (P2), AuditEntry (P3), Brand and
-        // CoachSettings (P4), FoodItem (P7, a catalog entry), FoodLogEntry and NutritionDay (P8), and Exercise
-        // (P9, a catalog entry). MediaAsset, AuditEntry, Brand, FoodItem and Exercise also admit platform rows.
-        Assert.Equal(23, owned.Length);
+        // CoachSettings (P4), FoodItem (P7, a catalog entry), FoodLogEntry and NutritionDay (P8), Exercise
+        // (P9, a catalog entry), and WorkoutSession and PersonalRecord (P10). MediaAsset, AuditEntry, Brand,
+        // FoodItem and Exercise also admit platform rows.
+        Assert.Equal(25, owned.Length);
+        Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.WorkoutTracking.WorkoutSession));
+        Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.WorkoutTracking.PersonalRecord));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Training.Exercise));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Nutrition.FoodItem));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.FoodTracking.FoodLogEntry));

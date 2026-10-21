@@ -36,6 +36,17 @@ public enum FoodReplacementRule
     DominantMacro
 }
 
+/// <summary>How an estimated one-rep max is calculated (§22). Epley is the default; the formula is replaceable.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<OneRepMaxFormula>))]
+public enum OneRepMaxFormula
+{
+    /// <summary>weight × (1 + reps / 30).</summary>
+    Epley,
+
+    /// <summary>weight × 36 / (37 − reps).</summary>
+    Brzycki
+}
+
 /// <summary>
 /// A coach's calculation defaults (§49), typed (D3): activity factors, calorie adjustment,
 /// macro defaults, adherence weights and the replacement rule. Consumed by the nutrition engine
@@ -71,6 +82,15 @@ public sealed class CoachSettings : Entity, ITenantOwned
     public int SleepWeight { get; private set; }
 
     public FoodReplacementRule ReplacementRule { get; private set; }
+
+    /// <summary>The e1RM formula for PRs and strength analytics (P10).</summary>
+    public OneRepMaxFormula OneRepMaxFormula { get; private set; }
+
+    /// <summary>
+    /// How much a set counts for each secondary muscle in muscle analytics (§23), 0–1. At 0 (the default) only the
+    /// primary muscle counts; at 0.5 a set counts half a set for each secondary muscle.
+    /// </summary>
+    public decimal SecondaryMuscleWeight { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
     /// <summary>Common defaults: Mifflin-St Jeor activity multipliers, 20% deficit, 10% surplus, 2.0/0.8 g/kg.</summary>
@@ -83,6 +103,7 @@ public sealed class CoachSettings : Entity, ITenantOwned
             new AdherenceWeights(35, 35, 15, 5, 5, 5),
             FoodReplacementRule.Calories,
             now);
+        settings.UpdateTraining(OneRepMaxFormula.Epley, 0m, now);
         return settings;
     }
 
@@ -116,6 +137,18 @@ public sealed class CoachSettings : Entity, ITenantOwned
         (NutritionWeight, WorkoutWeight, CheckInWeight, StepsWeight, WaterWeight, SleepWeight) =
             (weights.Nutrition, weights.Workout, weights.CheckIn, weights.Steps, weights.Water, weights.Sleep);
         ReplacementRule = replacementRule;
+        UpdatedAt = now;
+    }
+
+    /// <summary>Training analytics defaults (P10): the e1RM formula and the secondary-muscle weight.</summary>
+    public void UpdateTraining(OneRepMaxFormula formula, decimal secondaryMuscleWeight, DateTimeOffset now)
+    {
+        if (!Enum.IsDefined(formula)) throw new ArgumentException("Unknown one-rep max formula.", nameof(formula));
+        Range(secondaryMuscleWeight, 0m, 1m, nameof(secondaryMuscleWeight));
+        if (decimal.Round(secondaryMuscleWeight, 2) != secondaryMuscleWeight)
+            throw new ArgumentException("Use at most two decimals.", nameof(secondaryMuscleWeight));
+        OneRepMaxFormula = formula;
+        SecondaryMuscleWeight = secondaryMuscleWeight;
         UpdatedAt = now;
     }
 

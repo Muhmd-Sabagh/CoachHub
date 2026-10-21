@@ -1,6 +1,6 @@
 # P9 — Exercise library v2 and structured workout builder
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P9 · **Branch:** `phase/p09-workout-builder` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P9 · **Branch:** `phase/p09-workout-builder` · **Status:** Merged (PR #11).
 **Covers:** §16, §17, D3.
 
 ## Purpose
@@ -103,8 +103,8 @@
 - **Old prescriptions** are converted where they parse and kept verbatim in the notes. No data needs preserving, but nothing is thrown away.
 
 ## Known limitations (tracked for later phases)
-- **Workout logging, history, PRs and training analytics** come in P10.
-- **Secondary-muscle weighting** for analytics is configured in P10 (by default only the primary muscle counts).
+- **Workout logging, history, PRs and training analytics** came in P10 ([P10_WORKOUT_TRACKING.md](P10_WORKOUT_TRACKING.md)).
+- **Secondary-muscle weighting** for analytics is a coach setting since P10 (by default only the primary muscle counts).
 - **No manual browser smoke test yet.** The UI was checked by build and tests only.
 
 ## Verification

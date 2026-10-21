@@ -122,7 +122,9 @@ public sealed record CoachSettingsResponse(
     MacroMode DefaultMacroMode,
     AdherenceWeights AdherenceWeights,
     FoodReplacementRule ReplacementRule,
-    DateTimeOffset? UpdatedAt);
+    DateTimeOffset? UpdatedAt,
+    OneRepMaxFormula OneRepMaxFormula = OneRepMaxFormula.Epley,
+    decimal SecondaryMuscleWeight = 0m);
 
 public sealed record CoachSettingsInput(
     ActivityFactors ActivityFactors,
@@ -132,7 +134,9 @@ public sealed record CoachSettingsInput(
     decimal FatGramsPerKg,
     MacroMode DefaultMacroMode,
     AdherenceWeights AdherenceWeights,
-    FoodReplacementRule ReplacementRule);
+    FoodReplacementRule ReplacementRule,
+    OneRepMaxFormula OneRepMaxFormula = OneRepMaxFormula.Epley,
+    decimal SecondaryMuscleWeight = 0m);
 
 /// <summary>What every signed-in screen needs: the brand name to show, units and default language.</summary>
 public sealed record WorkspaceSettingsResponse(string ProductName, string? CoachName, UnitSystem Units, string DefaultLanguage);

@@ -313,7 +313,7 @@ public sealed class WorkoutPlanService(
     }
 
     /// <summary>A day with its exercises in order; set groups are lettered A, B, … by first appearance.</summary>
-    private static WorkoutDayResponse MapDay(
+    internal static WorkoutDayResponse MapDay(
         WorkoutPlanAggregate aggregate, WorkoutDay day, IReadOnlyDictionary<Guid, Domain.Training.Exercise> catalog)
     {
         var exercises = aggregate.Exercises.Where(x => x.WorkoutDayId == day.Id).OrderBy(x => x.Order).ToArray();
