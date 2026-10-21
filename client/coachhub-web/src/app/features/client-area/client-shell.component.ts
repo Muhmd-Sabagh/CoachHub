@@ -25,6 +25,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
       <main class="client-content"><router-outlet /></main>
       <nav class="client-tabbar" aria-label="Client navigation">
         <a routerLink="/app" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><span aria-hidden="true">⌂</span>Home</a>
+        <a routerLink="/app/training" routerLinkActive="active"><span aria-hidden="true">⚑</span>Training</a>
         <a routerLink="/app/nutrition" routerLinkActive="active"><span aria-hidden="true">◔</span>Nutrition</a>
         <a routerLink="/app/forms" routerLinkActive="active"><span aria-hidden="true">✎</span>Forms</a>
         <a routerLink="/app/account" routerLinkActive="active"><span aria-hidden="true">☺</span>Account</a>
@@ -37,7 +38,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
       padding: 10px 16px; background: white; border-bottom: 1px solid var(--gray-200); }
     .topbar-spacer { flex: 1; }
     .client-content { flex: 1; width: 100%; max-width: 960px; margin: 0 auto; padding: 16px 16px 96px; }
-    .client-tabbar { position: fixed; inset: auto 0 0 0; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr);
+    .client-tabbar { position: fixed; inset: auto 0 0 0; z-index: 10; display: grid; grid-template-columns: repeat(5, 1fr);
       background: white; border-top: 1px solid var(--gray-200); padding-bottom: env(safe-area-inset-bottom); }
     .client-tabbar a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px;
       min-height: 56px; color: var(--gray-500); font-size: 0.8rem; }

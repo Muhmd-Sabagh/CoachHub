@@ -2288,6 +2288,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("NutritionWeight")
                         .HasColumnType("int");
 
+                    b.Property<string>("OneRepMaxFormula")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<decimal>("ProteinGramsPerKg")
                         .HasPrecision(4, 2)
                         .HasColumnType("decimal(4,2)");
@@ -2296,6 +2301,10 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("SecondaryMuscleWeight")
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)");
 
                     b.Property<decimal>("SedentaryFactor")
                         .HasPrecision(5, 3)
@@ -2813,6 +2822,245 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasIndex("WorkoutDayId");
 
                     b.ToTable("WorkoutSetGroups", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.LoggedExercise", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Block")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GroupLabel")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<bool>("IsSkipped")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("PlannedExerciseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkoutSessionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("WorkoutSessionId");
+
+                    b.ToTable("WorkoutLoggedExercises", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.LoggedSet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("LoggedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("LoggedExerciseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("PlannedSetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("Reps")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Rir")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Rpe")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("decimal(3,1)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal?>("WeightKg")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoggedExerciseId");
+
+                    b.ToTable("WorkoutLoggedSets", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WorkoutLoggedSets_Ranges", "([Reps] IS NULL OR [Reps] BETWEEN 0 AND 1000) AND ([WeightKg] IS NULL OR [WeightKg] BETWEEN 0 AND 1000) AND ([Rir] IS NULL OR [Rir] BETWEEN 0 AND 10) AND ([Rpe] IS NULL OR [Rpe] BETWEEN 1 AND 10) AND ([DurationSeconds] IS NULL OR [DurationSeconds] BETWEEN 1 AND 36000)");
+
+                            t.HasCheckConstraint("CK_WorkoutLoggedSets_Values", "([Status] = 'Skipped' AND [Reps] IS NULL AND [WeightKg] IS NULL AND [Rir] IS NULL AND [Rpe] IS NULL AND [DurationSeconds] IS NULL) OR ([Status] = 'Completed' AND ([Reps] IS NOT NULL OR [DurationSeconds] IS NOT NULL))");
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.PersonalRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("AchievedOn")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("LoggedSetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("PreviousValue")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int?>("Reps")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("WeightKg")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)");
+
+                    b.Property<Guid>("WorkoutSessionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("ClientId", "ExerciseId", "Type");
+
+                    b.ToTable("PersonalRecords", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PersonalRecords_Value", "[Value] > 0 AND ([PreviousValue] IS NULL OR [PreviousValue] < [Value])");
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.WorkoutSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("DayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid?>("PlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("RevisionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("VersionNumber")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("WorkoutDayId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_WorkoutSessions_ClientId_InProgress")
+                        .HasFilter("[Status] = 'InProgress'");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("ClientId", "Date");
+
+                    b.ToTable("WorkoutSessions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_WorkoutSessions_Completed", "([Status] = 'Completed' AND [CompletedAt] IS NOT NULL) OR ([Status] = 'InProgress' AND [CompletedAt] IS NULL)");
+
+                            t.HasCheckConstraint("CK_WorkoutSessions_PlannedDay", "([WorkoutDayId] IS NULL AND [PlanId] IS NULL AND [RevisionId] IS NULL AND [VersionNumber] IS NULL AND [DayOrder] IS NULL) OR ([WorkoutDayId] IS NOT NULL AND [PlanId] IS NOT NULL AND [RevisionId] IS NOT NULL AND [VersionNumber] IS NOT NULL AND [DayOrder] IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("CoachHub.Infrastructure.Auth.Persistence.Role", b =>
@@ -3809,6 +4057,66 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.LoggedExercise", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Training.Exercise", null)
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.WorkoutTracking.WorkoutSession", null)
+                        .WithMany("Exercises")
+                        .HasForeignKey("WorkoutSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.LoggedSet", b =>
+                {
+                    b.HasOne("CoachHub.Domain.WorkoutTracking.LoggedExercise", null)
+                        .WithMany("Sets")
+                        .HasForeignKey("LoggedExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.PersonalRecord", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Training.Exercise", null)
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.WorkoutSession", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CoachHub.Infrastructure.Auth.Persistence.User", b =>
                 {
                     b.HasOne("CoachHub.Domain.Media.MediaAsset", null)
@@ -3920,6 +4228,16 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Navigation("Equipment");
 
                     b.Navigation("SecondaryMuscles");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.LoggedExercise", b =>
+                {
+                    b.Navigation("Sets");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.WorkoutTracking.WorkoutSession", b =>
+                {
+                    b.Navigation("Exercises");
                 });
 #pragma warning restore 612, 618
         }

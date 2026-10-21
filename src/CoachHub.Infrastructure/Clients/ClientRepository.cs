@@ -9,6 +9,7 @@ using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.Media;
 using CoachHub.Domain.PlanDelivery;
 using CoachHub.Domain.WorkoutPlanning;
+using CoachHub.Domain.WorkoutTracking;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -210,6 +211,12 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         await dbContext.Set<NutritionDay>().IgnoreQueryFilters()
             .Where(day => day.ClientId == client.Id && day.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(day => day.CoachId, toCoachId), cancellationToken);
+        var workouts = await dbContext.Set<WorkoutSession>().IgnoreQueryFilters()
+            .Where(session => session.ClientId == client.Id && session.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(session => session.CoachId, toCoachId), cancellationToken);
+        await dbContext.Set<PersonalRecord>().IgnoreQueryFilters()
+            .Where(record => record.ClientId == client.Id && record.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(record => record.CoachId, toCoachId), cancellationToken);
         var media = await dbContext.Set<MediaAsset>().IgnoreQueryFilters()
             .Where(asset => asset.ClientId == client.Id && asset.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(asset => asset.CoachId, (Guid?)toCoachId), cancellationToken);
@@ -224,6 +231,7 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 ["FormSubmissionsMoved"] = (null, submissions),
                 ["DeliveredPlansMoved"] = (null, deliveries),
                 ["FoodLogEntriesMoved"] = (null, foodLog),
+                ["WorkoutSessionsMoved"] = (null, workouts),
                 ["MediaMoved"] = (null, media)
             });
         await dbContext.SaveChangesAsync(cancellationToken);

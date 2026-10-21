@@ -18,6 +18,7 @@ using CoachHub.Application.Reporting;
 using CoachHub.Application.SavedPlans;
 using CoachHub.Application.Settings;
 using CoachHub.Application.Training;
+using CoachHub.Application.WorkoutTracking;
 using CoachHub.Application.WorkoutPlanning;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -65,6 +66,7 @@ public static class DependencyInjection
         services.AddScoped<ExerciseService>();
         services.AddScoped<LegacyExerciseImportService>();
         services.AddScoped<WorkoutPlanService>();
+        services.AddScoped<WorkoutTrackingService>();
         return services;
     }
 }

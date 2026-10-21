@@ -113,14 +113,19 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 - **Food tracking (§7–§11)** — implemented in P8; see `docs/product/phases/P08_FOOD_TRACKING.md`.
   - The diary (`FoodLogEntry`) is written by the client only, under `/api/v1/me/nutrition`; coaches read it under `/clients/{id}/nutrition`. Entries keep their own name, unit label and nutrients (actual nutrition stays apart from the plan, §9); plan rows are referenced by ID only, without foreign keys.
   - The plan for a day is the version in force that day (`NutritionAdherence.InForce`), the variant and meal options the client chose (`NutritionDay`), and `DietPlanFigures` for planned totals. Use `DietPlanFigures` for any planned value so the editor, diary and analytics agree.
+- **Workout tracking (§18–§23)** — implemented in P10; see `docs/product/phases/P10_WORKOUT_TRACKING.md`.
+  - Workouts (`WorkoutSession` → `LoggedExercise` → `LoggedSet`) are written by the client only, under `/api/v1/me/training`; coaches read them under `/clients/{id}/training`. Plan rows are referenced by ID only, without foreign keys; the catalog exercise is a real key.
+  - The schedule is a **weekly rotation**: each ISO week expects every day of the version in force once (`WorkoutSchedule`). The version in force uses the shared `PlanRevisions.InForce`.
+  - Warm-up sets count for nothing; drop sets count toward volume but not set records. Use `TrainingSets`, `TrainingAnalytics` and `PersonalRecordDetector` for any training figure.
+  - `PersonalRecord` rows are derived: rebuild them (`WorkoutTrackingService`) after any change to a completed workout, never patch them. e1RM goes through `IOneRepMaxFormula` with the coach's `OneRepMaxFormula`.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P9. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P10. Known gaps against REQUIREMENTS.md:
 
-- no workout or body tracking, chat or calendars (nutrition tracking exists since P8).
+- no body or lifestyle tracking, chat or calendars (nutrition tracking exists since P8, workout tracking since P10).
 
 Treat these as planned rework, not conventions to preserve.
 

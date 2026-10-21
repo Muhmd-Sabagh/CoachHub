@@ -11,6 +11,7 @@ import {
 } from '../clients/clients.service';
 import { EnergyTargets, MacroMode, PlansService } from '../plans/plans.service';
 import { ClientNutritionComponent } from '../nutrition-tracking/client-nutrition.component';
+import { ClientTrainingComponent } from '../training-tracking/client-training.component';
 import { ReferenceDataService, ReferenceRecord } from '../settings/reference-data.service';
 
 type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progress' | 'measurements' | 'photos' | 'checkins' | 'tests' | 'messages' | 'files';
@@ -19,11 +20,11 @@ type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progres
 interface TabItem { id: Tab; label: string; arrivesIn?: string; }
 
 /** Everything about one client in one place (§40), starting with the structured profile (§3). */
-@Component({ selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent], templateUrl: './client-profile.component.html' })
+@Component({ selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent], templateUrl: './client-profile.component.html' })
 export class ClientProfileComponent implements OnInit {
   readonly tabs: TabItem[] = [
     { id: 'overview', label: 'Overview' }, { id: 'profile', label: 'Profile' },
-    { id: 'workout', label: 'Workout', arrivesIn: 'P9–P10' }, { id: 'nutrition', label: 'Nutrition' },
+    { id: 'workout', label: 'Training' }, { id: 'nutrition', label: 'Nutrition' },
     { id: 'diary', label: 'Food diary' }, { id: 'progress', label: 'Progress', arrivesIn: 'P11' },
     { id: 'measurements', label: 'Measurements', arrivesIn: 'P11' }, { id: 'photos', label: 'Photos', arrivesIn: 'P11' },
     { id: 'checkins', label: 'Check-ins' }, { id: 'tests', label: 'Tests', arrivesIn: 'P13' },

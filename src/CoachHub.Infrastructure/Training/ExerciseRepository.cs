@@ -81,7 +81,7 @@ public sealed class ExerciseRepository(CoachHubDbContext dbContext) : IExerciseR
         }
         catch (DbUpdateException)
         {
-            throw new ConflictException("The exercise is used by workout plans. Deactivate it instead.");
+            throw new ConflictException("The exercise is used by workout plans or workout logs. Deactivate it instead.");
         }
     }
 

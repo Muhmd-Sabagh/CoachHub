@@ -71,6 +71,8 @@ public sealed class SettingsService(
             input.ActivityFactors, input.DeficitPercent, input.SurplusPercent, input.ProteinGramsPerKg,
             input.FatGramsPerKg, input.DefaultMacroMode, input.AdherenceWeights, input.ReplacementRule,
             timeProvider.GetUtcNow()), "settings");
+        DomainValidation.Run(() => target.UpdateTraining(
+            input.OneRepMaxFormula, input.SecondaryMuscleWeight, timeProvider.GetUtcNow()), "settings");
         if (stored is null) settings.Add(target);
         await settings.SaveChangesAsync(cancellationToken);
         return Map(target, true);
@@ -82,5 +84,6 @@ public sealed class SettingsService(
 
     private static CoachSettingsResponse Map(CoachSettings value, bool saved) => new(
         value.CoachId, saved, value.Factors, value.DeficitPercent, value.SurplusPercent, value.ProteinGramsPerKg,
-        value.FatGramsPerKg, value.DefaultMacroMode, value.Weights, value.ReplacementRule, saved ? value.UpdatedAt : null);
+        value.FatGramsPerKg, value.DefaultMacroMode, value.Weights, value.ReplacementRule, saved ? value.UpdatedAt : null,
+        value.OneRepMaxFormula, value.SecondaryMuscleWeight);
 }

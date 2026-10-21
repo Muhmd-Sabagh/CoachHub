@@ -1,4 +1,4 @@
-using CoachHub.Domain.Common;
+using CoachHub.Application.Common.Models;
 using CoachHub.Domain.DietPlanning;
 
 namespace CoachHub.Application.FoodTracking;
@@ -23,21 +23,9 @@ public static class NutritionAdherence
     /// <summary>The share of <paramref name="part"/> in <paramref name="whole"/> as a percentage; null for an empty whole.</summary>
     public static decimal? Share(int part, int whole) => whole <= 0 ? null : Round(part * 100m / whole);
 
-    /// <summary>
-    /// The diet version in force for the client on <paramref name="day"/>. Each plan contributes the version that
-    /// was current that day (the oldest one not archived by then); it applies when it is not a draft and its
-    /// dates cover the day. With several plans, the latest start wins, then the newest plan.
-    /// </summary>
+    /// <summary>The diet version in force for the client on <paramref name="day"/> (see <see cref="PlanRevisions.InForce"/>).</summary>
     public static DietVersion? InForce(IEnumerable<DietVersion> versions, DateOnly day) =>
-        versions.GroupBy(x => x.Plan.Id)
-            .Select(plan => plan.Where(x => x.Revision.ArchivedAt is not { } archived ||
-                    DateOnly.FromDateTime(archived.UtcDateTime) > day)
-                .MinBy(x => x.Revision.VersionNumber))
-            .OfType<DietVersion>()
-            .Where(x => x.Revision.Status != PlanRevisionStatus.Draft && x.Revision.Covers(day))
-            .OrderByDescending(x => x.Revision.StartDate ?? DateOnly.MinValue)
-            .ThenByDescending(x => x.Plan.CreatedAt)
-            .FirstOrDefault();
+        PlanRevisions.InForce(versions, day, x => x.Plan.Id, x => x.Revision, x => x.Plan.CreatedAt);
 
     /// <summary>The figures of a period from its day rows; days after <paramref name="today"/> are not counted.</summary>
     public static NutritionPeriodSummary Summarize(DateOnly start, DateOnly end, IEnumerable<NutritionDayRow> rows, DateOnly today)

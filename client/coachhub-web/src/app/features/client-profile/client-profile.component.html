@@ -155,6 +155,7 @@
       </ul>
     </section>
   }
+  @case ('workout') { <app-client-training [clientId]="id" /> }
   @case ('nutrition') { <app-client-nutrition [clientId]="id" view="analytics" /> }
   @case ('diary') { <app-client-nutrition [clientId]="id" view="diary" /> }
   @default {
