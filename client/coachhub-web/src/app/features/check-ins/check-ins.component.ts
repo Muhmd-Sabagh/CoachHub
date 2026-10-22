@@ -83,7 +83,7 @@ type View = 'AwaitingReview' | 'Pending' | 'Overdue' | 'All';
               <tr [class.chosen]="detail()?.checkIn?.id === c.id">
                 @if (!clientId) { <td>{{ c.clientName }}</td> }
                 <td>{{ c.dueOn | date: 'd MMM y' }}</td>
-                <td>{{ c.submittedAt | date: 'd MMM, shortTime' }}{{ c.isLate ? ' · late' : '' }}{{ c.submissionCount > 1 ? ' · resubmitted' : '' }}</td>
+                <td>{{ c.submittedAt | date: 'd MMM, HH:mm' }}{{ c.isLate ? ' · late' : '' }}{{ c.submissionCount > 1 ? ' · resubmitted' : '' }}</td>
                 <td><span class="badge" [class.ok]="c.status === 'Approved'" [class.alert]="c.status === 'ChangesRequested'">{{ statuses[c.status] }}</span></td>
                 <td>{{ c.replyCount }}</td>
                 <td><button class="link-button" type="button" (click)="select(c)">Review</button></td>
@@ -106,7 +106,7 @@ type View = 'AwaitingReview' | 'Pending' | 'Overdue' | 'All';
         </table></div>
         <h3>Replies (the client sees these)</h3>
         <ul class="plain-list">
-          @for (r of d.replies; track r.id) { <li><span class="muted">{{ r.createdAt | date: 'd MMM, shortTime' }} · {{ r.authorName || 'Coach' }}:</span> {{ r.text }}</li> }
+          @for (r of d.replies; track r.id) { <li><span class="muted">{{ r.createdAt | date: 'd MMM, HH:mm' }} · {{ r.authorName || 'Coach' }}:</span> {{ r.text }}</li> }
           @empty { <li class="muted">No replies yet.</li> }
         </ul>
         <label><span>Message to the client</span><textarea [(ngModel)]="message" name="message" rows="3" maxlength="4000"></textarea></label>

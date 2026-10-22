@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
@@ -7,7 +7,9 @@ import { apiErrorMessage } from '../../shared/services/api-error';
 import { Coach, CoachesService } from './coaches.service';
 
 /** Administrators manage coaches (tenants) and their login accounts (§2 Admin, §56). */
-@Component({ selector: 'app-coaches', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './coaches.component.html' })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-coaches', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './coaches.component.html' })
 export class CoachesComponent implements OnInit {
   page: PagedResult<Coach> = emptyPage();
   search = '';

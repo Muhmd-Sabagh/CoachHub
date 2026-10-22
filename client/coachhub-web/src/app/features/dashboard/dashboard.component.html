@@ -36,7 +36,7 @@
         <div class="section-heading"><h3>Recent activity</h3></div>
         <ul class="activity">
           @for (a of c.recentActivity; track $index) {
-            <li><span>{{ activityText(a) }}@if (a.clientName) { · <a [routerLink]="['/clients', a.clientId]">{{ a.clientName }}</a> }</span><small class="muted">{{ a.at | date: 'd MMM, shortTime' }}</small></li>
+            <li><span>{{ activityText(a) }}@if (a.clientName) { · <a [routerLink]="['/clients', a.clientId]">{{ a.clientName }}</a> }</span><small class="muted">{{ a.at | date: 'd MMM, HH:mm' }}</small></li>
           } @empty { <li class="muted">No activity yet.</li> }
         </ul>
       </section>

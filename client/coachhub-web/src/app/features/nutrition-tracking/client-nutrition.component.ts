@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -14,6 +14,8 @@ import {
  * diary of one day (§8). Read-only; the client keeps the diary.
  */
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-client-nutrition',
   standalone: true,
   imports: [CommonModule, FormsModule, CalorieChartComponent],

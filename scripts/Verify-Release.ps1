@@ -9,9 +9,21 @@ $solution = Join-Path $repositoryRoot 'CoachHub.slnx'
 $clientRoot = Join-Path $repositoryRoot 'client/coachhub-web'
 $resultsRoot = Join-Path $repositoryRoot 'artifacts/test-results'
 
-function Assert-LastCommandSucceeded([string]$description) {
-    if ($LASTEXITCODE -ne 0) {
-        throw "$description failed with exit code $LASTEXITCODE."
+# Runs a native command and fails on its exit code only. Tools such as npm write warnings to stderr; Windows
+# PowerShell 5.1 turns that output into errors, which 'Stop' would make fatal even when the command succeeded (P10A).
+# The same script therefore behaves the same in Windows PowerShell 5.1 and PowerShell 7.
+function Invoke-Native([string]$description, [scriptblock]$command) {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & $command
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previous
+    }
+    if ($exitCode -ne 0) {
+        throw "$description failed with exit code $exitCode."
     }
 }
 
@@ -29,38 +41,34 @@ try {
     }
 
     if (-not $SkipRestore) {
-        dotnet restore $solution
-        Assert-LastCommandSucceeded 'Solution restore'
+        Invoke-Native 'Solution restore' { dotnet restore $solution }
     }
 
-    dotnet build $solution --configuration Release --no-restore
-    Assert-LastCommandSucceeded 'Release build'
+    Invoke-Native 'Release build' { dotnet build $solution --configuration Release --no-restore }
 
     if (Test-Path $resultsRoot) {
         Remove-Item -LiteralPath $resultsRoot -Recurse -Force
     }
     New-Item -ItemType Directory -Path $resultsRoot -Force | Out-Null
 
-    dotnet test $solution `
-        --configuration Release `
-        --no-build `
-        --logger 'trx' `
-        --results-directory $resultsRoot `
-        --collect 'XPlat Code Coverage'
-    Assert-LastCommandSucceeded 'Backend tests'
+    Invoke-Native 'Backend tests' {
+        dotnet test $solution `
+            --configuration Release `
+            --no-build `
+            --logger 'trx' `
+            --results-directory $resultsRoot `
+            --collect 'XPlat Code Coverage'
+    }
 
     Push-Location $clientRoot
     try {
         if (-not $SkipRestore) {
-            npm ci --no-audit --prefer-offline
-            Assert-LastCommandSucceeded 'Angular dependency restore'
+            Invoke-Native 'Angular dependency restore' { npm ci --no-audit --prefer-offline }
         }
 
-        npm test -- --watch=false --isolate=false
-        Assert-LastCommandSucceeded 'Angular tests'
+        Invoke-Native 'Angular tests' { npm test -- --watch=false --isolate=false }
 
-        npm run build
-        Assert-LastCommandSucceeded 'Angular production build'
+        Invoke-Native 'Angular production build' { npm run build }
     }
     finally {
         Pop-Location

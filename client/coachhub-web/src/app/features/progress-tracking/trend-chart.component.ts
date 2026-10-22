@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
 import type ApexCharts from 'apexcharts';
 import type { ApexAxisChartSeries, ApexOptions } from 'apexcharts';
 
@@ -8,6 +8,8 @@ import type { ApexAxisChartSeries, ApexOptions } from 'apexcharts';
  * is shown. The table next to each chart carries the same numbers.
  */
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-trend-chart',
   standalone: true,
   template: `<div #host class="trend-chart" role="img" [attr.aria-label]="label"></div>`,

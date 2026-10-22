@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -8,7 +8,9 @@ import { Coach, CoachesService } from '../coaches/coaches.service';
 import { ReferenceDataService, ReferenceRecord } from '../settings/reference-data.service';
 import { Client, ClientDetail, ClientsService, Subscription } from './clients.service';
 import { ReportsService, saveFile } from '../reports/reports.service';
-@Component({ selector: 'app-clients', templateUrl: './clients.component.html', standalone: false })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-clients', templateUrl: './clients.component.html', standalone: false })
 export class ClientsComponent implements OnInit {
   readonly subscriptionsWorkspace: boolean;
   page: PagedResult<Client> = emptyPage();

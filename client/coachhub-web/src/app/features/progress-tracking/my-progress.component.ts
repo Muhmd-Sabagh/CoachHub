@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
@@ -22,13 +22,14 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
  * sleep, steps and water against the coach's targets.
  */
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-my-progress',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent, ClientReportsComponent],
   template: `
     <section class="dashboard-hero"><div><p class="eyebrow">Progress</p><h1>My progress</h1></div>
       <a class="button button-secondary" routerLink="/app/tests">My tests</a></section>
-    <app-client-reports />
     <nav class="segmented sections" role="tablist" aria-label="Progress sections">
       @for (s of sections; track s.id) {
         <button type="button" role="tab" [class.active]="section() === s.id" [attr.aria-selected]="section() === s.id" (click)="open(s.id)">{{ s.label }}</button>
@@ -65,7 +66,7 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
           </div>
           @if (d.checkIn.latestFeedback; as f) {
             <section class="card workbench"><h2>Latest from your coach</h2><p>{{ f.text }}</p>
-              <small class="muted">{{ f.createdAt | date: 'd MMM, shortTime' }}</small></section>
+              <small class="muted">{{ f.createdAt | date: 'd MMM, HH:mm' }}</small></section>
           }
           @if (d.training.recentRecords.length) {
             <section class="card workbench"><h2>Recent PRs</h2>
@@ -216,6 +217,7 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
         }
       }
     }
+    <app-client-reports />
   `,
   styles: [`
     .sections { display: flex; margin: 0 0 12px; overflow-x: auto; border: 1px solid var(--gray-200); border-radius: 8px; }

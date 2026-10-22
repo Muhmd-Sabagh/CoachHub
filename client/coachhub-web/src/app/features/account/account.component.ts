@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -11,6 +11,8 @@ import { AccountService, MyProfile, PreferredLanguage, UserSession } from './acc
 
 /** My account (§2): personal information, profile picture, password and signed-in devices. Every role. */
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-account',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, NotificationPreferencesComponent],
