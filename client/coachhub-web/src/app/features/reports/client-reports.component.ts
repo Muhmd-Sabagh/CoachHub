@@ -35,7 +35,7 @@ import {
 
       @if (report(); as r) {
         <p class="muted">{{ r.from | date: 'd MMM' }} – {{ r.to | date: 'd MMM y' }}</p>
-        <div class="table-scroll"><table>
+        <div class="table-scroll"><table class="compact-table">
           <tbody>
             <tr><th scope="row">Weight</th><td>{{ r.progress.body.weight.current ? r.progress.body.weight.current.value + ' kg' : '–' }}</td>
               <td>{{ signed(r.progress.body.weight.change, ' kg') }}</td></tr>

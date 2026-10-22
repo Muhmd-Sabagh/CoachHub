@@ -13,7 +13,7 @@ public sealed class AuditQueryRepository(CoachHubDbContext dbContext) : IAuditQu
         AuditQuery query,
         CancellationToken cancellationToken)
     {
-        var rows = dbContext.Set<AuditEntry>().AsNoTracking();
+        var rows = dbContext.Set<AuditEntry>().AsNoTracking().SeekOptionalCoach(dbContext);
 
         if (query.SearchTerm is not null)
             rows = rows.Where(entry => entry.EntityType.Contains(query.SearchTerm) ||

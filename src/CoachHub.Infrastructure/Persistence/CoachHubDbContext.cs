@@ -41,6 +41,8 @@ public sealed class CoachHubDbContext(
     internal Guid TenantCoachId => currentUser?.CoachId ?? Guid.Empty;
     internal Guid TenantClientId => currentUser?.ClientId ?? Guid.Empty;
     internal bool TenantSignedIn => currentUser?.Scope is TenantScope.Coach or TenantScope.Client;
+    // A coach with a coach key (TenantSeek repeats it as a plain predicate for the query plan; P18).
+    internal bool TenantCoachScoped => currentUser?.Scope == TenantScope.Coach && currentUser.CoachId is not null;
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

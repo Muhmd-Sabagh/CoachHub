@@ -1,13 +1,14 @@
-using CoachHub.API.Common.Routing;
 using CoachHub.API.Auditing;
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Errors;
+using CoachHub.API.Common.Hosting;
 using CoachHub.Application;
 using CoachHub.Application.Auditing;
 using CoachHub.Application.Common.Tenancy;
 using CoachHub.Infrastructure;
 using CoachHub.Infrastructure.Auth;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,7 @@ builder.Services.AddInfrastructure(
     builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"));
 builder.Services.AddCoachHubAuthentication(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<ForwardedHeadersOptions>(options => ReverseProxy.Configure(options, builder.Configuration));
 builder.Services.AddScoped<IAuditActorAccessor, HttpAuditActorAccessor>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 // P14: live chat and notifications over SignalR; the publisher replaces Infrastructure's no-op one.
@@ -68,6 +70,8 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
+// First, so rate limits, HTTPS redirection and secure cookies see the real client behind a trusted proxy.
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 
 if (!app.Environment.IsDevelopment())
@@ -89,8 +93,9 @@ app.Use(async (context, next) =>
         context.Response.Headers.ContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'";
         context.Response.Headers.Append("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
 
-        if (context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/auth") ||
-            context.Request.Path.StartsWithSegments("/" + ApiRoutes.V1 + "/me"))
+        // API responses carry client data (health, photos, finances): never cached unless the endpoint opts in, as
+        // the public brand images do (P18; it used to cover only /auth and /me).
+        if (string.IsNullOrEmpty(context.Response.Headers.CacheControl))
         {
             context.Response.Headers.CacheControl = "no-store, no-cache, max-age=0";
             context.Response.Headers.Pragma = "no-cache";

@@ -109,6 +109,9 @@ public sealed class BrandingAndSettingsTests(CoachHubSqlApiFactory factory) : IC
         var served = await anonymous.GetAsync($"/api/v1/branding/assets/{second.LogoMediaId}");
         Assert.Equal(HttpStatusCode.OK, served.StatusCode);
         Assert.Equal("image/png", served.Content.Headers.ContentType!.MediaType);
+        // Brand images are public and cacheable; every other API response is no-store (P18).
+        Assert.Equal(TimeSpan.FromHours(1), served.Headers.CacheControl?.MaxAge);
+        Assert.NotEqual(true, served.Headers.CacheControl?.NoStore);
         Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"/api/v1/branding/assets/{first.LogoMediaId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"/api/v1/branding/assets/{clientPhoto!.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.OK,
