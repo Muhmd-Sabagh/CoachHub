@@ -458,7 +458,7 @@ The client area comes first because clients mostly use their phones (§53).
 - **Photo privacy (§26, §52).**
   - Uploaded images (progress photos, avatars, chat and shared images, brand images) are stripped of metadata such as EXIF location.
   - The pipeline also normalises orientation and caps the dimensions.
-  - It sits behind an `IImageProcessor` port in Infrastructure. The library is chosen at phase start (recommended: a permissively licensed one).
+  - It sits behind an `IImageProcessor` port, implemented in Infrastructure with **SkiaSharp** (MIT; owner decision, 2026-10-22). Linux hosts and CI need its native assets package (`SkiaSharp.NativeAssets.Linux`); record it in `THIRD_PARTY_NOTICES.md`.
   - Existing images are not rewritten.
 - **Arabic** for every screen touched.
 
