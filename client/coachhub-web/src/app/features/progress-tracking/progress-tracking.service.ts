@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { environment } from '../../../environments/environment';
 import { NutritionPeriod } from '../nutrition-tracking/nutrition-tracking.service';
 import { PersonalRecord, TrainingPeriod } from '../training-tracking/training-tracking.service';
@@ -196,10 +197,12 @@ export function percentText(value: number | null | undefined): string {
 }
 
 /** "7 h 30 m" from decimal hours. */
-export function hoursText(hours: number | null | undefined): string {
+export function hoursText(hours: number | null | undefined, i18n?: I18nService): string {
   if (hours === null || hours === undefined) return '–';
   const minutes = Math.round(hours * 60);
-  return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} m`;
+  const h = Math.floor(minutes / 60);
+  const m = String(minutes % 60).padStart(2, '0');
+  return i18n ? i18n.translate('progress.hoursMinutes', { hours: String(h), minutes: m }) : `${h} h ${m} m`;
 }
 
 /** The earliest and latest photos of a pose: the default before/after pair (§26). */

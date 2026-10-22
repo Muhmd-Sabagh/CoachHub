@@ -2,6 +2,7 @@ using CoachHub.API.Auditing;
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Errors;
 using CoachHub.API.Common.Hosting;
+using CoachHub.API.Common.Localization;
 using CoachHub.Application;
 using CoachHub.Application.Auditing;
 using CoachHub.Application.Common.Tenancy;
@@ -63,13 +64,17 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 builder.Services.AddOpenApi();
-builder.Services.AddProblemDetails();
+// Every problem response is written in the request's language (P19).
+builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
+    ProblemLocalization.Apply(context.ProblemDetails, CoachHub.Application.Common.Localization.UiCulture.Current));
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
 // First, so rate limits, HTTPS redirection and secure cookies see the real client behind a trusted proxy.
 app.UseForwardedHeaders();
+// Before the exception handler, so error responses are written in the request's language (P19).
+app.UseUiLanguage();
 app.UseExceptionHandler();
 
 if (!app.Environment.IsDevelopment())

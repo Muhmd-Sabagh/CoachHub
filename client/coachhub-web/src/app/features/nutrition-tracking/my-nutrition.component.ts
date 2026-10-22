@@ -1,7 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, finalize } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { MealType, mealTypes } from '../plans/nutrition-math';
 import {
@@ -16,72 +18,72 @@ import {
 @Component({
   selector: 'app-my-nutrition',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, ...I18N_PIPES],
   template: `
     <section class="dashboard-hero">
       <div>
-        <p class="eyebrow">Nutrition</p>
+        <p class="eyebrow">{{ 'nutrition.eyebrow' | translate }}</p>
         <div class="day-nav">
-          <button class="icon-button" type="button" (click)="go(-1)" aria-label="Previous day">‹</button>
-          <h1>{{ date() === today ? 'Today' : (date() | date: 'EEE d MMM') }}</h1>
-          <button class="icon-button" type="button" (click)="go(1)" [disabled]="date() >= today" aria-label="Next day">›</button>
+          <button class="icon-button" type="button" (click)="go(-1)" [attr.aria-label]="'nutrition.previousDay' | translate"><span class="flip-rtl">‹</span></button>
+          <h1>{{ date() === today ? ('nutrition.today' | translate) : (date() | localDate: 'EEE d MMM') }}</h1>
+          <button class="icon-button" type="button" (click)="go(1)" [disabled]="date() >= today" [attr.aria-label]="'nutrition.nextDay' | translate"><span class="flip-rtl">›</span></button>
         </div>
-        @if (day()?.plan; as plan) { <p>{{ plan.nameEn }} · version {{ plan.versionNumber }}</p> }
-        @else if (day()) { <p>No diet plan for this day. You can still log what you eat.</p> }
+        @if (day()?.plan; as plan) { <p>{{ 'nutrition.planVersion' | translate: { name: (plan | localName), version: plan.versionNumber } }}</p> }
+        @else if (day()) { <p>{{ 'nutrition.noPlan' | translate }}</p> }
       </div>
     </section>
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
-    @if (loading() && !day()) { <p class="table-message">Loading…</p> }
+    @if (loading() && !day()) { <p class="table-message">{{ 'common.loading' | translate }}</p> }
 
     @if (day(); as d) {
-      <section class="card workbench summary-card" aria-label="Daily summary">
+      <section class="card workbench summary-card" [attr.aria-label]="'nutrition.summary' | translate">
         <div class="kcal-line">
-          <div><small class="muted">Consumed</small><strong>{{ d.summary.consumed.calories | number: '1.0-0' }}</strong></div>
-          <div><small class="muted">Target</small><strong>{{ d.summary.target ? (d.summary.target.calories | number: '1.0-0') : '–' }}</strong></div>
-          <div><small class="muted">Remaining</small>
-            <strong [class.over]="(d.summary.remaining?.calories ?? 0) < 0">{{ d.summary.remaining ? (d.summary.remaining.calories | number: '1.0-0') : '–' }}</strong></div>
+          <div><small class="muted">{{ 'nutrition.consumed' | translate }}</small><strong>{{ d.summary.consumed.calories | localNumber: '1.0-0' }}</strong></div>
+          <div><small class="muted">{{ 'nutrition.target' | translate }}</small><strong>{{ d.summary.target ? (d.summary.target.calories | localNumber: '1.0-0') : '–' }}</strong></div>
+          <div><small class="muted">{{ 'nutrition.remaining' | translate }}</small>
+            <strong [class.over]="(d.summary.remaining?.calories ?? 0) < 0">{{ d.summary.remaining ? (d.summary.remaining.calories | localNumber: '1.0-0') : '–' }}</strong></div>
         </div>
-        <div class="bar" role="progressbar" [attr.aria-valuenow]="bar(d.summary.consumed.calories, d.summary.target?.calories)" aria-valuemin="0" aria-valuemax="100" aria-label="Calories">
+        <div class="bar" role="progressbar" [attr.aria-valuenow]="bar(d.summary.consumed.calories, d.summary.target?.calories)" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'nutrition.calories' | translate">
           <span [style.width.%]="bar(d.summary.consumed.calories, d.summary.target?.calories)"></span>
         </div>
         <div class="macro-grid">
           @for (m of macros; track m.key) {
             <div>
-              <small class="muted">{{ m.label }}</small>
-              <span>{{ d.summary.consumed[m.key] | number: '1.0-0' }} / {{ d.summary.target ? (d.summary.target[m.key] | number: '1.0-0') : '–' }} g</span>
+              <small class="muted">{{ m.label | translate }}</small>
+              <span>{{ d.summary.consumed[m.key] | localNumber: '1.0-0' }} / {{ d.summary.target ? (d.summary.target[m.key] | localNumber: '1.0-0') : '–' }} {{ 'unit.g' | translate }}</span>
               <div class="bar thin"><span [style.width.%]="bar(d.summary.consumed[m.key], d.summary.target?.[m.key])"></span></div>
             </div>
           }
         </div>
         <p class="muted stats-line">
-          Meals {{ d.summary.completedMeals }}/{{ d.summary.plannedMeals }}
-          @if (d.summary.mealCompletionPercent !== null) { ({{ d.summary.mealCompletionPercent }}%) }
-          · Adherence {{ d.summary.adherencePercent !== null ? d.summary.adherencePercent + '%' : '–' }}
-          · {{ d.summary.entryCount }} logged
+          {{ 'nutrition.meals' | translate: { done: d.summary.completedMeals, planned: d.summary.plannedMeals } }}
+          @if (d.summary.mealCompletionPercent !== null) { ({{ d.summary.mealCompletionPercent | localNumber }}%) }
+          · {{ 'nutrition.adherence' | translate: { value: d.summary.adherencePercent !== null ? (d.summary.adherencePercent | localNumber) + '%' : '–' } }}
+          · {{ 'nutrition.logged' | translate: { count: d.summary.entryCount } }}
         </p>
       </section>
 
       @if (d.plan; as plan) {
         @if (plan.variants.length > 1) {
-          <label class="variant-picker"><span>Today's plan</span>
+          <label class="variant-picker"><span>{{ 'nutrition.todaysPlan' | translate }}</span>
             <select [ngModel]="plan.variantId" (ngModelChange)="chooseVariant($event)" name="variant">
-              @for (v of plan.variants; track v.id) { <option [ngValue]="v.id">{{ v.nameEn }}</option> }
+              @for (v of plan.variants; track v.id) { <option [ngValue]="v.id">{{ v | localName }}</option> }
             </select>
           </label>
         }
-        <h2 class="section-title">Planned meals</h2>
+        <h2 class="section-title">{{ 'nutrition.plannedMeals' | translate }}</h2>
         @for (meal of plan.meals; track meal.id) {
           <article class="card workbench meal-card">
             <div class="meal-top">
-              <div><strong>{{ meal.nameEn }}</strong><small class="muted"> · {{ meal.totals.calories | number: '1.0-0' }} kcal</small></div>
-              @if (meal.isLogged) { <span class="logged">✓ Logged</span> }
-              @else if (writable) { <button class="button button-secondary" type="button" [disabled]="busy()" (click)="logMeal(meal)">Log meal</button> }
+              <div><strong translate="no">{{ meal | localName }}</strong><small class="muted"> · {{ 'nutrition.kcal' | translate: { value: (meal.totals.calories | localNumber: '1.0-0') } }}</small></div>
+              @if (meal.isLogged) { <span class="logged">{{ 'nutrition.mealLogged' | translate }}</span> }
+              @else if (writable) { <button class="button button-secondary" type="button" [disabled]="busy()" (click)="logMeal(meal)">{{ 'nutrition.logMeal' | translate }}</button> }
             </div>
             @if (meal.options.length) {
-              <div class="option-chips" role="radiogroup" [attr.aria-label]="meal.nameEn + ' options'">
+              <div class="option-chips" role="radiogroup" [attr.aria-label]="'nutrition.mealOptions' | translate: { meal: (meal | localName) }">
                 @for (o of meal.options; track o.id) {
                   <button type="button" role="radio" [attr.aria-checked]="o.id === meal.chosenOptionId" [class.active]="o.id === meal.chosenOptionId"
-                    [disabled]="!writable || busy()" (click)="chooseOption(meal, o.id)">{{ o.nameEn }} · {{ o.totals.calories | number: '1.0-0' }}</button>
+                    [disabled]="!writable || busy()" (click)="chooseOption(meal, o.id)"><span translate="no">{{ o | localName }}</span> · {{ o.totals.calories | localNumber: '1.0-0' }}</button>
                 }
               </div>
             }
@@ -89,22 +91,22 @@ import {
               @for (food of meal.foods; track food.id) {
                 <li>
                   <div class="food-line">
-                    <span>{{ food.nameEn }}</span>
-                    <small class="muted">{{ food.quantity | number: '1.0-2' }} {{ food.unitLabel }} · {{ food.totals.calories | number: '1.0-0' }} kcal</small>
+                    <span translate="no">{{ food | localName }}</span>
+                    <small class="muted">{{ food.quantity | localNumber: '1.0-2' }} <span translate="no">{{ food | localUnitLabel }}</span> · {{ 'nutrition.kcal' | translate: { value: (food.totals.calories | localNumber: '1.0-0') } }}</small>
                     @if (food.alternativeCount > 0 && writable) {
-                      <button class="link-button" type="button" (click)="toggleAlternatives(meal, food)">{{ openFood() === food.id ? 'Close' : 'Change food' }}</button>
+                      <button class="link-button" type="button" (click)="toggleAlternatives(meal, food)">{{ (openFood() === food.id ? 'nutrition.close' : 'nutrition.changeFood') | translate }}</button>
                     }
                   </div>
                   @if (openFood() === food.id) {
-                    <ul class="alternatives" aria-label="Permitted alternatives">
+                    <ul class="alternatives" [attr.aria-label]="'nutrition.alternatives' | translate">
                       @for (a of alternatives(); track a.optionId) {
                         <li>
-                          <span>{{ a.nameEn }}</span>
-                          <input type="number" min="0.01" step="any" [(ngModel)]="a.quantity" [name]="'alt' + a.optionId" aria-label="Quantity" />
-                          <small class="muted">{{ a.unitLabel }}{{ a.isCalculated ? ' (matched)' : '' }}</small>
-                          <button class="button button-primary" type="button" [disabled]="busy() || !a.quantity" (click)="logSwap(meal, food, a)">Ate this</button>
+                          <span translate="no">{{ a | localName }}</span>
+                          <input type="number" min="0.01" step="any" [(ngModel)]="a.quantity" [name]="'alt' + a.optionId" [attr.aria-label]="'nutrition.quantity' | translate" />
+                          <small class="muted"><span translate="no">{{ a | localUnitLabel }}</span>@if (a.isCalculated) {{{ 'nutrition.matched' | translate }}}</small>
+                          <button class="button button-primary" type="button" [disabled]="busy() || !a.quantity" (click)="logSwap(meal, food, a)">{{ 'nutrition.ateThis' | translate }}</button>
                         </li>
-                      } @empty { <li class="muted">Loading alternatives…</li> }
+                      } @empty { <li class="muted">{{ 'nutrition.loadingAlternatives' | translate }}</li> }
                     </ul>
                   }
                 </li>
@@ -114,24 +116,24 @@ import {
         }
       }
 
-      <h2 class="section-title">Food diary</h2>
+      <h2 class="section-title">{{ 'nutrition.diary' | translate }}</h2>
       @for (slot of slots; track slot) {
         @if (entriesFor(d, slot); as entries) {
           @if (entries.length) {
             <section class="card workbench diary-slot">
-              <strong>{{ slot }}</strong>
+              <strong>{{ slot | enumLabel: 'mealType' }}</strong>
               <ul class="food-list">
                 @for (e of entries; track e.id) {
                   <li class="food-line">
-                    <span>{{ e.nameEn }} @if (e.source !== 'Planned') { <small class="badge">{{ e.source === 'Swap' ? 'Swapped' : 'Extra' }}</small> }</span>
+                    <span><span translate="no">{{ e | localName }}</span> @if (e.source !== 'Planned') { <small class="badge">{{ e.source | enumLabel: 'foodLogSource' }}</small> }</span>
                     @if (editing() === e.id) {
-                      <input type="number" min="0.01" step="any" [(ngModel)]="editQuantity" name="editQuantity" aria-label="Quantity" />
-                      <button class="link-button" type="button" (click)="saveEdit(e)">Save</button>
+                      <input type="number" min="0.01" step="any" [(ngModel)]="editQuantity" name="editQuantity" [attr.aria-label]="'nutrition.quantity' | translate" />
+                      <button class="link-button" type="button" (click)="saveEdit(e)">{{ 'nutrition.save' | translate }}</button>
                     } @else {
-                      <small class="muted">{{ e.quantity !== null ? (e.quantity | number: '1.0-2') + ' ' + e.unitLabel + ' · ' : '' }}{{ e.nutrients.calories | number: '1.0-0' }} kcal</small>
+                      <small class="muted">@if (e.quantity !== null) {{{ e.quantity | localNumber: '1.0-2' }} <span translate="no">{{ e | localUnitLabel }}</span> · }{{ 'nutrition.kcal' | translate: { value: (e.nutrients.calories | localNumber: '1.0-0') } }}</small>
                       @if (writable) {
-                        @if (!e.isCustom) { <button class="link-button" type="button" (click)="startEdit(e)">Edit</button> }
-                        <button class="link-button danger" type="button" [disabled]="busy()" (click)="remove(e)">Delete</button>
+                        @if (!e.isCustom) { <button class="link-button" type="button" (click)="startEdit(e)">{{ 'nutrition.edit' | translate }}</button> }
+                        <button class="link-button danger" type="button" [disabled]="busy()" (click)="remove(e)">{{ 'nutrition.delete' | translate }}</button>
                       }
                     }
                   </li>
@@ -141,44 +143,44 @@ import {
           }
         }
       }
-      @if (!d.entries.length) { <p class="muted">Nothing logged yet.</p> }
+      @if (!d.entries.length) { <p class="muted">{{ 'nutrition.nothingLogged' | translate }}</p> }
 
       @if (writable) {
-        <section class="card workbench add-food" aria-label="Add food">
-          <div class="section-heading"><h2>Add food</h2>
-            <button class="link-button" type="button" (click)="custom.set(!custom())">{{ custom() ? 'Search foods' : 'Not in the list?' }}</button></div>
-          <label><span>Meal</span>
-            <select [(ngModel)]="slot" name="slot">@for (s of slots; track s) { <option [ngValue]="s">{{ s }}</option> }</select></label>
+        <section class="card workbench add-food" [attr.aria-label]="'nutrition.addFood' | translate">
+          <div class="section-heading"><h2>{{ 'nutrition.addFood' | translate }}</h2>
+            <button class="link-button" type="button" (click)="custom.set(!custom())">{{ (custom() ? 'nutrition.searchFoods' : 'nutrition.notInList') | translate }}</button></div>
+          <label><span>{{ 'nutrition.meal' | translate }}</span>
+            <select [(ngModel)]="slot" name="slot">@for (s of slots; track s) { <option [ngValue]="s">{{ s | enumLabel: 'mealType' }}</option> }</select></label>
           @if (!custom()) {
             <form class="search-row" (ngSubmit)="search()">
-              <input type="search" [(ngModel)]="term" name="term" placeholder="Search foods" aria-label="Search foods" />
-              <button class="button button-secondary" type="submit" [disabled]="!term().trim()">Search</button>
+              <input type="search" [(ngModel)]="term" name="term" [placeholder]="'nutrition.searchFoods' | translate" [attr.aria-label]="'nutrition.searchFoods' | translate" />
+              <button class="button button-secondary" type="submit" [disabled]="!term().trim()">{{ 'nutrition.search' | translate }}</button>
             </form>
             <ul class="food-list">
               @for (f of results(); track f.id) {
-                <li class="food-line"><span>{{ f.nameEn }}</span><button class="link-button" type="button" (click)="pick(f)">Choose</button></li>
+                <li class="food-line"><span translate="no">{{ f | localName }}</span><button class="link-button" type="button" (click)="pick(f)">{{ 'nutrition.choose' | translate }}</button></li>
               }
             </ul>
             @if (picked(); as f) {
               <div class="pick-row">
-                <strong>{{ f.nameEn }}</strong>
-                <input type="number" min="0.01" step="any" [(ngModel)]="quantity" name="quantity" aria-label="Quantity" />
-                <select [(ngModel)]="unitId" name="unit" aria-label="Unit">
-                  <option [ngValue]="null">{{ f.baseUnitLabel }}</option>
-                  @for (u of f.units; track u.id) { <option [ngValue]="u.id">{{ u.nameEn }}</option> }
+                <strong translate="no">{{ f | localName }}</strong>
+                <input type="number" min="0.01" step="any" [(ngModel)]="quantity" name="quantity" [attr.aria-label]="'nutrition.quantity' | translate" />
+                <select [(ngModel)]="unitId" name="unit" [attr.aria-label]="'nutrition.unit' | translate">
+                  <option [ngValue]="null">{{ baseUnit(f) }}</option>
+                  @for (u of f.units; track u.id) { <option [ngValue]="u.id">{{ u | localName }}</option> }
                 </select>
-                <button class="button button-primary" type="button" [disabled]="busy() || !quantity()" (click)="addPicked()">Add</button>
+                <button class="button button-primary" type="button" [disabled]="busy() || !quantity()" (click)="addPicked()">{{ 'nutrition.add' | translate }}</button>
               </div>
             }
           } @else {
             <div class="custom-grid">
-              <label class="wide"><span>Name</span><input [(ngModel)]="customFood().nameEn" name="customName" maxlength="255" /></label>
-              <label><span>kcal</span><input type="number" min="0" [(ngModel)]="customFood().calories" name="customKcal" /></label>
-              <label><span>Protein g</span><input type="number" min="0" [(ngModel)]="customFood().protein" name="customProtein" /></label>
-              <label><span>Carbs g</span><input type="number" min="0" [(ngModel)]="customFood().carbohydrates" name="customCarbs" /></label>
-              <label><span>Fat g</span><input type="number" min="0" [(ngModel)]="customFood().fat" name="customFat" /></label>
+              <label class="wide"><span>{{ 'nutrition.name' | translate }}</span><input [(ngModel)]="customFood().nameEn" name="customName" maxlength="255" /></label>
+              <label><span>{{ 'nutrition.kcalLabel' | translate }}</span><input type="number" min="0" [(ngModel)]="customFood().calories" name="customKcal" /></label>
+              <label><span>{{ 'nutrition.proteinG' | translate }}</span><input type="number" min="0" [(ngModel)]="customFood().protein" name="customProtein" /></label>
+              <label><span>{{ 'nutrition.carbsG' | translate }}</span><input type="number" min="0" [(ngModel)]="customFood().carbohydrates" name="customCarbs" /></label>
+              <label><span>{{ 'nutrition.fatG' | translate }}</span><input type="number" min="0" [(ngModel)]="customFood().fat" name="customFat" /></label>
             </div>
-            <button class="button button-primary" type="button" [disabled]="busy() || !customFood().nameEn.trim()" (click)="addCustom()">Add</button>
+            <button class="button button-primary" type="button" [disabled]="busy() || !customFood().nameEn.trim()" (click)="addCustom()">{{ 'nutrition.add' | translate }}</button>
           }
         </section>
       }
@@ -224,10 +226,10 @@ import {
 })
 export class MyNutritionComponent implements OnInit {
   readonly slots = mealTypes;
-  readonly macros = [
-    { key: 'protein' as const, label: 'Protein' },
-    { key: 'carbohydrates' as const, label: 'Carbs' },
-    { key: 'fat' as const, label: 'Fat' },
+  readonly macros: { key: 'protein' | 'carbohydrates' | 'fat'; label: TranslationKey }[] = [
+    { key: 'protein', label: 'nutrition.protein' },
+    { key: 'carbohydrates', label: 'nutrition.carbs' },
+    { key: 'fat', label: 'nutrition.fat' },
   ];
   readonly today = isoDate(new Date());
   readonly bar = progress;
@@ -249,7 +251,13 @@ export class MyNutritionComponent implements OnInit {
   readonly unitId = signal<string | null>(null);
   readonly customFood = signal({ nameEn: '', calories: 0, protein: 0, carbohydrates: 0, fat: 0 });
 
-  constructor(private readonly api: NutritionTrackingService) {}
+  constructor(private readonly api: NutritionTrackingService, private readonly i18n: I18nService) {}
+
+  /** A food's base unit ("g", "ml") in the interface language. */
+  baseUnit(food: DiaryFood): string {
+    const key: TranslationKey | null = food.baseUnitLabel === 'g' ? 'unit.g' : food.baseUnitLabel === 'ml' ? 'unit.ml' : null;
+    return key ? this.i18n.translate(key) : food.baseUnitLabel;
+  }
 
   /** The diary takes today and earlier days; the server enforces the same. */
   get writable(): boolean {

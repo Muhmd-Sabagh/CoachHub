@@ -1,5 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
 import { environment } from '../../../environments/environment';
 import { PagedResult } from '../../shared/models/paged-result';
 
@@ -91,6 +93,31 @@ export function cutOffText(test: Pick<TestDefinition, 'higherIsBetter' | 'goodTh
   return test.higherIsBetter
     ? `${direction} · Good from ${test.goodThreshold} ${unit} · Poor below ${test.poorThreshold} ${unit}`
     : `${direction} · Good up to ${test.goodThreshold} ${unit} · Poor above ${test.poorThreshold} ${unit}`;
+}
+
+/** A test unit's short label in the interface language (P19), for example "kg" / "كغ". */
+export function localUnit(unit: TestUnit, i18n: I18nService): string {
+  return i18n.translate(unitKeys[unit]);
+}
+
+const unitKeys: Record<TestUnit, TranslationKey> = {
+  Kilograms: 'unit.kg', Repetitions: 'unit.reps', Seconds: 'unit.s', Meters: 'unit.m', Centimeters: 'unit.cm',
+  Degrees: 'unit.degrees', Points: 'unit.points', BeatsPerMinute: 'unit.bpm',
+};
+
+/** cutOffText in the interface language (P19, client area); the staff screens move to it in P21. */
+export function localCutOffText(test: Pick<TestDefinition, 'higherIsBetter' | 'goodThreshold' | 'poorThreshold' | 'unit'>, i18n: I18nService): string {
+  const direction = i18n.translate(test.higherIsBetter ? 'tests.higherBetter' : 'tests.lowerBetter');
+  if (test.goodThreshold === null || test.poorThreshold === null) return i18n.translate('tests.classifiedByCoach', { direction });
+  return i18n.translate(test.higherIsBetter ? 'tests.cutOffsHigher' : 'tests.cutOffsLower',
+    { direction, good: test.goodThreshold, poor: test.poorThreshold, unit: localUnit(test.unit, i18n) });
+}
+
+/** "+3 reps" in the interface language (P19); null when there is nothing to compare. */
+export function localChangeText(change: number | null, unit: TestUnit, i18n: I18nService): string | null {
+  if (change === null || change === undefined) return null;
+  const rounded = Math.round(change * 100) / 100;
+  return `${rounded > 0 ? '+' : ''}${i18n.formatNumber(rounded, '1.0-2')} ${localUnit(unit, i18n)}`;
 }
 
 /** The test library (§34–§36) and a client's tests: the coach under /clients/{id}, the client under /me. */

@@ -168,18 +168,22 @@ public sealed class ChatMessageSentHandler(
         await realtime.PublishAsync(coaches.Concat(clients).Select(x => x.UserId).Distinct().ToArray(),
             RealtimeEvents.ChatMessage, ChatService.Map(message), cancellationToken);
 
-        var preview = message.Text is { } text ? (text.Length > 140 ? text[..140] + "…" : text) : "Sent a file.";
+        var preview = message.Text is { } text
+            ? NoticeText.Verbatim(text.Length > 140 ? text[..140] + "…" : text)
+            : NoticeText.Of("notice.sentFile");
         var key = $"chat:{domainEvent.ConversationId}";
         if (domainEvent.Sender == ChatParticipant.Coach)
         {
             await center.NotifyClientAsync(new EventNotice(NotificationEvent.NewMessage, domainEvent.CoachId, domainEvent.ClientId,
-                "New message from your coach", preview, "/app/chat", key, OnlyWhileUnread: true), cancellationToken);
+                NoticeText.Of("notice.messageFromCoach.title"), preview, "/app/chat", key, OnlyWhileUnread: true), cancellationToken);
         }
         else
         {
-            var name = await directory.ClientNameAsync(domainEvent.ClientId, cancellationToken) ?? "your client";
+            var name = await directory.ClientNameAsync(domainEvent.ClientId, cancellationToken) is { } clientName
+                ? (object)clientName
+                : NoticeText.Of("notice.yourClient");
             await center.NotifyCoachAsync(new EventNotice(NotificationEvent.NewMessage, domainEvent.CoachId, domainEvent.ClientId,
-                $"New message from {name}", preview, $"/messages?client={domainEvent.ClientId}", key, OnlyWhileUnread: true), cancellationToken);
+                NoticeText.Of("notice.messageFromClient.title", name), preview, $"/messages?client={domainEvent.ClientId}", key, OnlyWhileUnread: true), cancellationToken);
         }
     }
 }

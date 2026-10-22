@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { isoDate } from '../nutrition-tracking/nutrition-tracking.service';
 import { FormQuestion, MyFormsService, PublishedForm, UploadedMedia, hasAnswer } from './my-forms.service';
@@ -10,19 +11,19 @@ import { FormQuestion, MyFormsService, PublishedForm, UploadedMedia, hasAnswer }
 @Component({
   selector: 'app-my-form',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TranslatePipe],
   template: `
-    <a class="link-button" routerLink="/app/forms">← All forms</a>
+    <a class="link-button" routerLink="/app/forms">{{ 'form.allForms' | translate }}</a>
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     @if (done()) {
-      <section class="card workbench" role="status"><h1>Thank you</h1><p>Your coach has your answers.</p>
-        <a class="button button-primary" routerLink="/app">Back home</a></section>
+      <section class="card workbench" role="status"><h1>{{ 'form.thanks' | translate }}</h1><p>{{ 'form.thanksText' | translate }}</p>
+        <a class="button button-primary" routerLink="/app">{{ 'form.backHome' | translate }}</a></section>
     } @else if (form(); as f) {
-      <section class="dashboard-hero"><div><p class="eyebrow">{{ progress() }}% answered</p><h1>{{ f.name }}</h1></div></section>
+      <section class="dashboard-hero"><div><p class="eyebrow">{{ 'form.answered' | translate: { percent: progress() } }}</p><h1 translate="no">{{ f.name }}</h1></div></section>
       <form class="question-list" (ngSubmit)="submit()">
         @for (question of ordered(); track question.id) {
           <fieldset class="card workbench" [id]="'question-' + question.id" [class.invalid]="touched.has(question.id) && invalid(question)">
-            <legend><strong>{{ question.text }}</strong>@if (question.isRequired) { <span aria-label="required"> *</span> }</legend>
+            <legend><strong translate="no">{{ question.text }}</strong>@if (question.isRequired) { <span [attr.aria-label]="'form.required' | translate"> *</span> }</legend>
             @switch (question.questionType) {
               @case ('ShortText') { <input [name]="question.id" [(ngModel)]="answers[question.id]" maxlength="1000" (blur)="touch(question.id)" /> }
               @case ('LongText') { <textarea [name]="question.id" rows="4" [(ngModel)]="answers[question.id]" maxlength="10000" (blur)="touch(question.id)"></textarea> }
@@ -30,33 +31,33 @@ import { FormQuestion, MyFormsService, PublishedForm, UploadedMedia, hasAnswer }
               @case ('Date') { <input type="date" [name]="question.id" [(ngModel)]="answers[question.id]" (blur)="touch(question.id)" /> }
               @case ('Boolean') {
                 <div class="choice-row">
-                  <label><input type="radio" [name]="question.id" [value]="true" [(ngModel)]="answers[question.id]" (change)="touch(question.id)" /> Yes</label>
-                  <label><input type="radio" [name]="question.id" [value]="false" [(ngModel)]="answers[question.id]" (change)="touch(question.id)" /> No</label>
+                  <label><input type="radio" [name]="question.id" [value]="true" [(ngModel)]="answers[question.id]" (change)="touch(question.id)" /> {{ 'form.yes' | translate }}</label>
+                  <label><input type="radio" [name]="question.id" [value]="false" [(ngModel)]="answers[question.id]" (change)="touch(question.id)" /> {{ 'form.no' | translate }}</label>
                 </div>
               }
               @case ('SingleChoice') {
                 <div class="choice-list">@for (option of question.options; track option.id) {
-                  <label><input type="radio" [name]="question.id" [value]="option.value" [(ngModel)]="answers[question.id]" (change)="touch(question.id)" /> {{ option.label }}</label>
+                  <label><input type="radio" [name]="question.id" [value]="option.value" [(ngModel)]="answers[question.id]" (change)="touch(question.id)" /> <span translate="no">{{ option.label }}</span></label>
                 }</div>
               }
               @case ('MultipleChoice') {
                 <div class="choice-list">@for (option of question.options; track option.id) {
-                  <label><input type="checkbox" [checked]="isChosen(question.id, option.value)" (change)="toggle(question.id, option.value, $any($event.target).checked)" /> {{ option.label }}</label>
+                  <label><input type="checkbox" [checked]="isChosen(question.id, option.value)" (change)="toggle(question.id, option.value, $any($event.target).checked)" /> <span translate="no">{{ option.label }}</span></label>
                 }</div>
               }
               @case ('MediaUpload') {
-                <label class="button button-secondary">{{ media()[question.id] ? 'Replace photo' : 'Add photo or file' }}
+                <label class="button button-secondary">{{ (media()[question.id] ? 'form.replaceFile' : 'form.addFile') | translate }}
                   <input type="file" accept="image/*,application/pdf" hidden (change)="upload(question, $event)" /></label>
-                @if (uploading()[question.id]) { <small class="muted">Uploading…</small> }
-                @if (media()[question.id]; as m) { <small class="muted">{{ m.originalFileName }}</small> }
+                @if (uploading()[question.id]) { <small class="muted">{{ 'form.uploading' | translate }}</small> }
+                @if (media()[question.id]; as m) { <small class="muted" translate="no">{{ m.originalFileName }}</small> }
               }
             }
-            @if (touched.has(question.id) && invalid(question)) { <small class="form-error">This answer is required.</small> }
+            @if (touched.has(question.id) && invalid(question)) { <small class="form-error">{{ 'form.answerRequired' | translate }}</small> }
           </fieldset>
         }
-        <button class="button button-primary button-block" type="submit" [disabled]="saving()">{{ saving() ? 'Sending…' : 'Send to my coach' }}</button>
+        <button class="button button-primary button-block" type="submit" [disabled]="saving()">{{ (saving() ? 'form.sending' : 'form.send') | translate }}</button>
       </form>
-    } @else if (!error()) { <p class="table-message">Loading…</p> }
+    } @else if (!error()) { <p class="table-message">{{ 'common.loading' | translate }}</p> }
   `,
   styles: [`.question-list { display: grid; gap: 12px; }
     fieldset { border: 1px solid var(--gray-200); margin: 0; }

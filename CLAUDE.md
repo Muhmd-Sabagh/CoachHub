@@ -163,12 +163,26 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - CSV goes through `Csv` (UTF-8 BOM, RFC 4180 quoting, formula-injection guard). Exports run under the tenant filters and are recorded in the audit trail (`DataExport`). Platform exports are AdminOnly.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
+- **Localisation (P19)** — see `docs/product/phases/P19_LOCALISATION.md` and the terms in `docs/design/ARABIC_GLOSSARY.md`.
+  - **Bilingual delivery.** Every screen, message, notification, email and PDF a phase adds or changes ships in English and Arabic. The client area is done (P19); P21 translates the staff screens.
+  - **Angular.**
+    - Texts are keys in `core/i18n/translations/<area>.ts` (`defineTranslations`), so a missing or misspelt key fails the build.
+    - Templates use the standalone `I18N_PIPES`: `translate` (parameters and Arabic plural forms), `localDate`, `localNumber`, `localName` (`nameAr` in Arabic), `localUnitLabel` and `enumLabel`.
+    - Add new enum values to `core/i18n/enum-labels.ts` and `translations/enums.ts`.
+    - Never show enum names or English literals.
+    - Mark names and user text `translate="no"`; the smoke test flags any other English on an Arabic page.
+  - **Server.**
+    - `Accept-Language` (sent by `languageInterceptor`) sets the request's UI culture only.
+    - Messages people read live in `Application/Common/Localization/messages.json` (code, English, Arabic). Thrown messages are matched there, so keep the English text and the catalog in step (`MessagesTests` fails on a stale entry).
+    - Text the code builds itself (notifications, access refusals, calendar titles) uses `Messages.Text(code, language, …)`.
+    - Notifications are written in each recipient's language (`NoticeText`).
+  - **Formats.** Arabic uses Western digits and the Gregorian calendar (`UiCulture.Formatting`, Angular's `ar` locale). Write Arabic counts as "label: number" unless a plural entry covers them.
 
 ## Current state vs target
 
 The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P18. Known gaps against REQUIREMENTS.md:
 
-- product phases P0–P18, P10A and P18A (cleanup) are delivered. The completion phases P19–P23 in the roadmap close the rest: Arabic for every screen (P19, P21), units, uploaded videos, tests in the dashboard and reports, check-in search and photo privacy (P20), tracking fixes (P22), and the release with the owner's production sign-off on staging (P23, `docs/deployment/PRODUCTION_SIGNOFF.md`).
+- product phases P0–P18, P10A, P18A (cleanup) and P19 (localisation; the client area in Arabic) are delivered. The completion phases P20–P23 in the roadmap close the rest: the staff screens in Arabic (P21), units, uploaded videos, tests in the dashboard and reports, check-in search and photo privacy (P20), tracking fixes (P22), and the release with the owner's production sign-off on staging (P23, `docs/deployment/PRODUCTION_SIGNOFF.md`).
 - Scale-out (more than one API instance) is backlog: SignalR has no backplane and the workers are not coordinated.
 
 Treat these as planned rework, not conventions to preserve.

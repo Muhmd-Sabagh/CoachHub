@@ -1,87 +1,33 @@
-export type Language = 'en' | 'ar';
-export const translations: Record<Language, Record<string, string>> = {
-  en: {
-    'nav.audit': 'Audit trail',
-    'nav.operations': 'Operations',
-    'common.search': 'Search',
-    'auth.eyebrow': 'Coaching operations, simplified',
-    'auth.title': 'Welcome back',
-    'auth.subtitle': 'Sign in to manage your clients, plans, and daily coaching work.',
-    'auth.login': 'Email or user name',
-    'nav.coaches': 'Coaches',
-    'auth.password': 'Password',
-    'auth.togglePassword': 'Show or hide password',
-    'auth.signIn': 'Sign in',
-    'auth.signingIn': 'Signing in…',
-    'auth.error': 'We could not sign you in. Check your credentials and try again.',
-    'shell.menu': 'Menu',
-    'shell.theme': 'Switch color theme',
-    'shell.toggle': 'Toggle navigation',
-    'shell.logout': 'Sign out',
-    'shell.account': 'My account',
-    'shell.language': 'العربية',
-    'nav.dashboard': 'Dashboard',
-    'nav.clients': 'Clients',
-    'nav.subscriptions': 'Subscriptions',
-    'nav.assessments': 'Assessments',
-    'nav.checkIns': 'Check-ins',
-    'nav.messages': 'Messages',
-    'nav.calendar': 'Calendar',
-    'nav.fitnessTests': 'Tests',
-    'nav.nutrition': 'Nutrition',
-    'nav.training': 'Training',
-    'nav.plans': 'Plans',
-    'nav.settings': 'Settings',
-    'dashboard.eyebrow': 'Today’s workspace',
-    'dashboard.title': 'Good to see you',
-    'dashboard.subtitle': 'Keep every client moving forward from one focused coaching workspace.',
-    'dashboard.findClient': 'Find a client',
-    'dashboard.searchPlaceholder': 'Search by client name or phone',
-    'dashboard.quickActions': 'Quick actions',
-    'dashboard.addClient': 'Add a new client',
-    'dashboard.reviewAssessments': 'Review assessments',
-    'dashboard.buildPlan': 'Build a client plan',
-  },
-  ar: {
-    'nav.audit': '\u0633\u062c\u0644 \u0627\u0644\u062a\u062f\u0642\u064a\u0642',
-    'nav.operations': 'Operations',
-    'common.search': 'بحث',
-    'auth.eyebrow': 'إدارة التدريب ببساطة',
-    'auth.title': 'مرحباً بعودتك',
-    'auth.subtitle': 'سجّل الدخول لإدارة العملاء والخطط وأعمال التدريب اليومية.',
-    'auth.login': 'البريد الإلكتروني أو اسم المستخدم',
-    'nav.coaches': 'المدربون',
-    'auth.password': 'كلمة المرور',
-    'auth.togglePassword': 'إظهار أو إخفاء كلمة المرور',
-    'auth.signIn': 'تسجيل الدخول',
-    'auth.signingIn': 'جارٍ تسجيل الدخول…',
-    'auth.error': 'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.',
-    'shell.menu': 'القائمة',
-    'shell.theme': 'تغيير نمط الألوان',
-    'shell.toggle': 'فتح أو إغلاق التنقل',
-    'shell.logout': 'تسجيل الخروج',
-    'shell.account': 'حسابي',
-    'shell.language': 'English',
-    'nav.dashboard': 'لوحة التحكم',
-    'nav.clients': 'العملاء',
-    'nav.subscriptions': 'الاشتراكات',
-    'nav.assessments': 'التقييمات',
-    'nav.checkIns': 'المتابعات',
-    'nav.messages': 'الرسائل',
-    'nav.calendar': 'التقويم',
-    'nav.fitnessTests': 'الاختبارات',
-    'nav.nutrition': 'التغذية',
-    'nav.training': 'التدريب',
-    'nav.plans': 'الخطط',
-    'nav.settings': 'الإعدادات',
-    'dashboard.eyebrow': 'مساحة عمل اليوم',
-    'dashboard.title': 'سعداء بعودتك',
-    'dashboard.subtitle': 'تابع تقدم كل عميل من مساحة تدريب واحدة ومركزة.',
-    'dashboard.findClient': 'ابحث عن عميل',
-    'dashboard.searchPlaceholder': 'ابحث باسم العميل أو رقم الهاتف',
-    'dashboard.quickActions': 'إجراءات سريعة',
-    'dashboard.addClient': 'إضافة عميل جديد',
-    'dashboard.reviewAssessments': 'مراجعة التقييمات',
-    'dashboard.buildPlan': 'إنشاء خطة للعميل',
-  },
+import { Entry, Language } from './define';
+import { account } from './translations/account';
+import { calendar } from './translations/calendar';
+import { chat } from './translations/chat';
+import { client } from './translations/client';
+import { core } from './translations/core';
+import { enums } from './translations/enums';
+import { files } from './translations/files';
+import { forms } from './translations/forms';
+import { notifications } from './translations/notifications';
+import { progress } from './translations/progress';
+import { nutrition } from './translations/nutrition';
+import { reports } from './translations/reports';
+import { tests } from './translations/tests';
+import { training } from './translations/training';
+import { units } from './translations/units';
+
+export type { Language } from './define';
+
+/** Every area's table (P19). Add a new area here and in both spreads below; a key may appear in only one area. */
+export const tables = [core, enums, units, client, forms, calendar, chat, files, tests, notifications, reports, account, nutrition, training, progress] as const;
+
+export const translations = {
+  en: { ...core.en, ...enums.en, ...units.en, ...client.en, ...forms.en, ...calendar.en, ...chat.en, ...files.en, ...tests.en, ...notifications.en, ...reports.en, ...account.en, ...nutrition.en, ...training.en, ...progress.en },
+  ar: { ...core.ar, ...enums.ar, ...units.ar, ...client.ar, ...forms.ar, ...calendar.ar, ...chat.ar, ...files.ar, ...tests.ar, ...notifications.ar, ...reports.ar, ...account.ar, ...nutrition.ar, ...training.ar, ...progress.ar },
 };
+
+export type TranslationKey = keyof typeof translations.en;
+
+/** The entry for a key, typed loosely for the service's lookups. */
+export function entryOf(language: Language, key: string): Entry | undefined {
+  return (translations[language] as Record<string, Entry>)[key];
+}

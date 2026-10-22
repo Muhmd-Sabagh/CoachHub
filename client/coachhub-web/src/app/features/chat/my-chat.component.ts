@@ -1,6 +1,6 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { ArchivedConversation, ChatService } from './chat.service';
 import { ChatThreadComponent } from './chat-thread.component';
@@ -12,25 +12,25 @@ import { ChatThreadComponent } from './chat-thread.component';
 @Component({
   selector: 'app-my-chat',
   standalone: true,
-  imports: [CommonModule, RouterLink, ChatThreadComponent],
+  imports: [RouterLink, ChatThreadComponent, ...I18N_PIPES],
   template: `
-    <section class="dashboard-hero"><div><p class="eyebrow">Chat</p><h1>Your coach</h1>
-      <p>Ask questions and send photos or files. <a routerLink="/app/files">Files from your coach</a></p></div></section>
+    <section class="dashboard-hero"><div><p class="eyebrow">{{ 'chat.eyebrow' | translate }}</p><h1>{{ 'chat.title' | translate }}</h1>
+      <p>{{ 'chat.intro' | translate }} <a routerLink="/app/files">{{ 'chat.filesLink' | translate }}</a></p></div></section>
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     @if (viewing(); as archived) {
-      <div class="line"><strong>With {{ archived.coachName }} (ended {{ archived.archivedAt | date: 'd MMM y' }})</strong>
-        <button type="button" class="link-button" (click)="viewing.set(null)">Back to current chat</button></div>
+      <div class="line"><strong>{{ 'chat.archivedWith' | translate: { name: archived.coachName, date: (archived.archivedAt | localDate: 'd MMM y') } }}</strong>
+        <button type="button" class="link-button" (click)="viewing.set(null)">{{ 'chat.backToCurrent' | translate }}</button></div>
       <app-chat-thread [archivedId]="archived.id" />
     } @else {
       <app-chat-thread />
     }
     @if (archived().length) {
       <section class="card workbench earlier">
-        <h2>Earlier conversations</h2>
+        <h2>{{ 'chat.earlier' | translate }}</h2>
         <ul>
           @for (a of archived(); track a.id) {
-            <li><button type="button" class="link-button" (click)="viewing.set(a)">{{ a.coachName }}</button>
-              <small class="muted">ended {{ a.archivedAt | date: 'd MMM y' }}</small></li>
+            <li><button type="button" class="link-button" (click)="viewing.set(a)" translate="no">{{ a.coachName }}</button>
+              <small class="muted">{{ 'chat.ended' | translate: { date: (a.archivedAt | localDate: 'd MMM y') } }}</small></li>
           }
         </ul>
       </section>

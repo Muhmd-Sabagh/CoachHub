@@ -1,4 +1,5 @@
 using CoachHub.Application.Common.Exceptions;
+using CoachHub.Application.Common.Localization;
 using CoachHub.Application.Settings;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Settings;
@@ -15,7 +16,8 @@ public sealed record MyAccessResponse(
     IReadOnlyList<FeatureAccessResponse> Features);
 
 /// <summary>Whether a request to a client feature may go ahead, and why not.</summary>
-public sealed record AccessDecision(bool Allowed, string? Message);
+/// <summary>Whether the client may use a feature; a refusal carries its message (in the request's language) and catalog code.</summary>
+public sealed record AccessDecision(bool Allowed, string? Message, string? Code = null);
 
 /// <summary>
 /// Applies the Administrator's access rules (§47, §57) to the client area. Reading needs Full or Read-only access;
@@ -45,24 +47,20 @@ public sealed class SubscriptionAccessService(IClientRepository clients, Setting
         {
             FeatureAccess.Full => new AccessDecision(true, null),
             FeatureAccess.ReadOnly when !write => new AccessDecision(true, null),
-            FeatureAccess.ReadOnly => new AccessDecision(false, $"{Describe(status)} {Name(feature)} is read-only: your history stays visible, but nothing new can be added."),
-            _ => new AccessDecision(false, $"{Describe(status)} {Name(feature)} is not available.")
+            FeatureAccess.ReadOnly => Refusal("access.readOnly", status, feature),
+            _ => Refusal("access.unavailable", status, feature)
         };
     }
 
-    private static string Describe(SubscriptionStatus status) => status switch
+    private static AccessDecision Refusal(string code, SubscriptionStatus status, ClientFeature feature)
     {
-        SubscriptionStatus.Expired => "Your subscription has ended, so",
-        SubscriptionStatus.Suspended => "Your subscription is suspended, so",
-        SubscriptionStatus.Pending => "Your subscription has not started yet, so",
-        _ => "Without a subscription,"
-    };
-
-    private static string Name(ClientFeature feature) => feature switch
-    {
-        ClientFeature.FormsAndCheckIns => "forms and check-ins",
-        _ => feature.ToString().ToLowerInvariant()
-    };
+        var language = UiCulture.Current;
+        var reason = status is SubscriptionStatus.Expired or SubscriptionStatus.Suspended or SubscriptionStatus.Pending
+            ? status.ToString()
+            : nameof(SubscriptionStatus.Inactive);
+        return new AccessDecision(false, Messages.Text(code, language,
+            Messages.Text($"access.status.{reason}", language), Messages.Text($"access.feature.{feature}", language)), code);
+    }
 
     private DateOnly Today() => DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
 }

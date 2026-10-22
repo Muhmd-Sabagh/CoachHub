@@ -1,10 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { NotificationPreferencesComponent } from '../notifications/notification-preferences.component';
 import { AccountService, MyProfile, PreferredLanguage, UserSession } from './account.service';
@@ -13,7 +13,7 @@ import { AccountService, MyProfile, PreferredLanguage, UserSession } from './acc
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NotificationPreferencesComponent],
+  imports: [FormsModule, RouterLink, NotificationPreferencesComponent, ...I18N_PIPES],
   templateUrl: './account.component.html',
   styles: [`
     .account-page { display: grid; gap: 16px; }
@@ -64,19 +64,19 @@ export class AccountComponent implements OnInit, OnDestroy {
         this.show(profile);
         this.auth.updateDisplayName(profile.displayName);
         if (profile.preferredLanguage) this.i18n.setLanguage(profile.preferredLanguage);
-        this.message.set('Your details were saved.');
+        this.message.set(this.i18n.translate('account.saved'));
       },
       error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   changePassword(): void {
-    if (this.password().next !== this.password().confirm) { this.error.set('The new passwords do not match.'); return; }
+    if (this.password().next !== this.password().confirm) { this.error.set(this.i18n.translate('account.passwordsDiffer')); return; }
     this.begin();
     this.account.changePassword(this.password().current, this.password().next).pipe(finalize(() => (this.saving.set(false)))).subscribe({
       next: () => {
         this.password.set({ current: '', next: '', confirm: '' });
-        this.message.set('Password changed. Your other devices were signed out.');
+        this.message.set(this.i18n.translate('account.passwordChanged'));
         this.loadSessions();
       },
       error: e => (this.error.set(apiErrorMessage(e))),
@@ -90,7 +90,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     if (!file) return;
     this.begin();
     this.account.setAvatar(file).pipe(finalize(() => (this.saving.set(false)))).subscribe({
-      next: media => { const profile = this.profile(); if (profile) this.show({ ...profile, avatarMediaId: media.id }); this.message.set('Profile picture updated.'); },
+      next: media => { const profile = this.profile(); if (profile) this.show({ ...profile, avatarMediaId: media.id }); this.message.set(this.i18n.translate('account.pictureUpdated')); },
       error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
@@ -98,7 +98,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   removeAvatar(): void {
     this.begin();
     this.account.removeAvatar().pipe(finalize(() => (this.saving.set(false)))).subscribe({
-      next: () => { const profile = this.profile(); if (profile) this.show({ ...profile, avatarMediaId: null }); this.message.set('Profile picture removed.'); },
+      next: () => { const profile = this.profile(); if (profile) this.show({ ...profile, avatarMediaId: null }); this.message.set(this.i18n.translate('account.pictureRemoved')); },
       error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
@@ -106,7 +106,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   revoke(session: UserSession): void {
     this.begin();
     this.account.revokeSession(session.id).pipe(finalize(() => (this.saving.set(false)))).subscribe({
-      next: () => { this.message.set('The device was signed out.'); this.loadSessions(); },
+      next: () => { this.message.set(this.i18n.translate('account.deviceSignedOut')); this.loadSessions(); },
       error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
@@ -114,12 +114,12 @@ export class AccountComponent implements OnInit, OnDestroy {
   revokeOthers(): void {
     this.begin();
     this.account.revokeOtherSessions().pipe(finalize(() => (this.saving.set(false)))).subscribe({
-      next: () => { this.message.set('All other devices were signed out.'); this.loadSessions(); },
+      next: () => { this.message.set(this.i18n.translate('account.othersDone')); this.loadSessions(); },
       error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
-  device(session: UserSession): string { return describeDevice(session.userAgent); }
+  device(session: UserSession): string { return describeDevice(session.userAgent, this.i18n); }
 
   get initial(): string { return (this.profile()?.displayName || this.profile()?.email || '?').charAt(0).toUpperCase(); }
 
@@ -151,12 +151,15 @@ export class AccountComponent implements OnInit, OnDestroy {
   }
 }
 
-/** A readable device label from a user agent, e.g. "Chrome on Android". */
-export function describeDevice(userAgent: string | null): string {
-  if (!userAgent) return 'Unknown device';
+/** A readable device label from a user agent, e.g. "Chrome on Android"; in the interface language when given i18n. */
+export function describeDevice(userAgent: string | null, i18n?: I18nService): string {
+  if (!userAgent) return i18n ? i18n.translate('account.unknownDevice') : 'Unknown device';
   const browser = /Edg\//.test(userAgent) ? 'Edge' : /Firefox\//.test(userAgent) ? 'Firefox'
-    : /Chrome\//.test(userAgent) ? 'Chrome' : /Safari\//.test(userAgent) ? 'Safari' : 'Browser';
+    : /Chrome\//.test(userAgent) ? 'Chrome' : /Safari\//.test(userAgent) ? 'Safari' : null;
   const system = /Android/.test(userAgent) ? 'Android' : /iPhone|iPad/.test(userAgent) ? 'iOS'
     : /Windows/.test(userAgent) ? 'Windows' : /Mac OS X/.test(userAgent) ? 'macOS' : /Linux/.test(userAgent) ? 'Linux' : '';
-  return system ? `${browser} on ${system}` : browser === 'Browser' ? userAgent.slice(0, 60) : browser;
+  if (!browser && !system) return userAgent.slice(0, 60);
+  const name = browser ?? (i18n ? i18n.translate('account.browser') : 'Browser');
+  if (!system) return name;
+  return i18n ? i18n.translate('account.deviceOn', { browser: name, system }) : `${name} on ${system}`;
 }

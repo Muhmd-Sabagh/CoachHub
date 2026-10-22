@@ -1,6 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { enumLabelKey } from '../../core/i18n/enum-labels';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { PhotoPose, ProgressPhoto, ProgressTrackingService, beforeAfter, photoPoses } from './progress-tracking.service';
 
 /**
@@ -10,52 +12,52 @@ import { PhotoPose, ProgressPhoto, ProgressTrackingService, beforeAfter, photoPo
 @Component({
   selector: 'app-photo-compare',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, ...I18N_PIPES],
   template: `
     @if (photos.length) {
-      <section class="compare" aria-label="Compare photos">
+      <section class="compare" [attr.aria-label]="'photos.compare' | translate">
         <div class="compare-controls">
-          <label><span>Before</span>
+          <label><span>{{ 'photos.before' | translate }}</span>
             <select [ngModel]="beforeId()" (ngModelChange)="choose('before', $event)" name="before">
-              @for (p of chronological(); track p.id) { <option [ngValue]="p.id">{{ p.date | date: 'd MMM y' }} · {{ poseName(p) }}</option> }
+              @for (p of chronological(); track p.id) { <option [ngValue]="p.id">{{ p.date | localDate: 'd MMM y' }} · {{ poseName(p) }}</option> }
             </select></label>
-          <label><span>After</span>
+          <label><span>{{ 'photos.after' | translate }}</span>
             <select [ngModel]="afterId()" (ngModelChange)="choose('after', $event)" name="after">
-              @for (p of chronological(); track p.id) { <option [ngValue]="p.id">{{ p.date | date: 'd MMM y' }} · {{ poseName(p) }}</option> }
+              @for (p of chronological(); track p.id) { <option [ngValue]="p.id">{{ p.date | localDate: 'd MMM y' }} · {{ poseName(p) }}</option> }
             </select></label>
-          <div class="segmented" role="group" aria-label="Comparison view">
-            <button type="button" [class.active]="mode() === 'side'" (click)="mode.set('side')">Side by side</button>
-            <button type="button" [class.active]="mode() === 'slider'" (click)="mode.set('slider')">Slider</button>
+          <div class="segmented" role="group" [attr.aria-label]="'photos.view' | translate">
+            <button type="button" [class.active]="mode() === 'side'" (click)="mode.set('side')">{{ 'photos.sideBySide' | translate }}</button>
+            <button type="button" [class.active]="mode() === 'slider'" (click)="mode.set('slider')">{{ 'photos.slider' | translate }}</button>
           </div>
         </div>
         @if (mode() === 'side') {
           <div class="side-by-side">
-            <figure>@if (url(beforeId()); as src) { <img [src]="src" alt="Before" /> }<figcaption>{{ caption(beforeId()) }}</figcaption></figure>
-            <figure>@if (url(afterId()); as src) { <img [src]="src" alt="After" /> }<figcaption>{{ caption(afterId()) }}</figcaption></figure>
+            <figure>@if (url(beforeId()); as src) { <img [src]="src" [alt]="'photos.before' | translate" /> }<figcaption>{{ caption(beforeId()) }}</figcaption></figure>
+            <figure>@if (url(afterId()); as src) { <img [src]="src" [alt]="'photos.after' | translate" /> }<figcaption>{{ caption(afterId()) }}</figcaption></figure>
           </div>
         } @else {
           <div class="slider-frame">
-            @if (url(beforeId()); as src) { <img class="base" [src]="src" alt="Before" /> }
-            @if (url(afterId()); as src) { <img class="overlay" [src]="src" alt="After" [style.clip-path]="'inset(0 0 0 ' + split() + '%)'" /> }
+            @if (url(beforeId()); as src) { <img class="base" [src]="src" [alt]="'photos.before' | translate" /> }
+            @if (url(afterId()); as src) { <img class="overlay" [src]="src" [alt]="'photos.after' | translate" [style.clip-path]="'inset(0 0 0 ' + split() + '%)'" /> }
             <span class="divider" [style.left.%]="split()" aria-hidden="true"></span>
           </div>
           <label class="slider-control"><span class="muted">{{ caption(beforeId()) }}</span>
-            <input type="range" min="0" max="100" [ngModel]="split()" (ngModelChange)="split.set($event)" name="split" aria-label="Before and after" />
+            <input type="range" min="0" max="100" [ngModel]="split()" (ngModelChange)="split.set($event)" name="split" [attr.aria-label]="'photos.beforeAndAfter' | translate" />
             <span class="muted">{{ caption(afterId()) }}</span></label>
         }
       </section>
 
-      <h3>Timeline</h3>
+      <h3>{{ 'photos.timeline' | translate }}</h3>
       <ul class="timeline">
         @for (p of photos; track p.id) {
           <li>
             @if (url(p.id); as src) { <img [src]="src" [alt]="poseName(p) + ' ' + p.date" loading="lazy" /> } @else { <span class="placeholder"></span> }
-            <small>{{ p.date | date: 'd MMM y' }} · {{ poseName(p) }}</small>
-            @if (deletable) { <button class="link-button danger" type="button" (click)="remove(p)">Delete</button> }
+            <small>{{ p.date | localDate: 'd MMM y' }} · {{ poseName(p) }}</small>
+            @if (deletable) { <button class="link-button danger" type="button" (click)="remove(p)">{{ 'photos.delete' | translate }}</button> }
           </li>
         }
       </ul>
-    } @else { <p class="muted">No progress photos yet.</p> }
+    } @else { <p class="muted">{{ 'photos.none' | translate }}</p> }
   `,
   styles: [`
     .compare { display: grid; gap: 10px; margin-bottom: 16px; }
@@ -88,7 +90,7 @@ export class PhotoCompareComponent implements OnChanges, OnDestroy {
   private readonly urls = signal<Record<string, string>>({});
   private requested = new Set<string>();
 
-  constructor(private readonly api: ProgressTrackingService) {}
+  constructor(private readonly api: ProgressTrackingService, private readonly i18n: I18nService) {}
 
   ngOnChanges(): void {
     const ids = new Set(this.photos.map(x => x.id));
@@ -120,11 +122,13 @@ export class PhotoCompareComponent implements OnChanges, OnDestroy {
 
   caption(photoId: string | null): string {
     const photo = this.photos.find(x => x.id === photoId);
-    return photo ? `${photo.date} · ${this.poseName(photo)}` : '';
+    return photo ? `${this.i18n.formatDate(photo.date, 'd MMM y')} · ${this.poseName(photo)}` : '';
   }
 
   poseName(photo: ProgressPhoto): string {
-    return photo.pose === 'Custom' && photo.label ? photo.label : photo.pose;
+    if (photo.pose === 'Custom' && photo.label) return photo.label;
+    const key = enumLabelKey('photoPose', photo.pose);
+    return key ? this.i18n.translate(key) : photo.pose;
   }
 
   remove(photo: ProgressPhoto): void {

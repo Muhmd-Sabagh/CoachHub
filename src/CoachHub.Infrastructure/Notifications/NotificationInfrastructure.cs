@@ -67,11 +67,11 @@ public sealed class RecipientDirectory(CoachHubDbContext dbContext) : IRecipient
 {
     public async Task<IReadOnlyList<NotificationRecipient>> ClientAsync(Guid clientId, CancellationToken cancellationToken) =>
         await dbContext.Set<User>().AsNoTracking().Where(x => x.ClientId == clientId && x.IsActive)
-            .Select(x => new NotificationRecipient(x.Id, x.Email)).ToArrayAsync(cancellationToken);
+            .Select(x => new NotificationRecipient(x.Id, x.Email, x.PreferredLanguage)).ToArrayAsync(cancellationToken);
 
     public async Task<IReadOnlyList<NotificationRecipient>> CoachAsync(Guid coachId, CancellationToken cancellationToken) =>
         await dbContext.Set<User>().AsNoTracking().Where(x => x.CoachId == coachId && x.ClientId == null && x.IsActive)
-            .Select(x => new NotificationRecipient(x.Id, x.Email)).ToArrayAsync(cancellationToken);
+            .Select(x => new NotificationRecipient(x.Id, x.Email, x.PreferredLanguage)).ToArrayAsync(cancellationToken);
 
     public Task<string?> ClientNameAsync(Guid clientId, CancellationToken cancellationToken) =>
         dbContext.Set<Client>().Where(x => x.Id == clientId).Select(x => (string?)x.Name).SingleOrDefaultAsync(cancellationToken);

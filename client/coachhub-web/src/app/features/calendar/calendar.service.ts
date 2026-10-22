@@ -38,11 +38,6 @@ export interface CalendarEventInput {
 }
 export interface CalendarEvent extends CalendarEventInput { id: string; clientName: string | null; isDone: boolean; notes: string | null; }
 
-export const entryLabels: Record<CalendarEntryKind, string> = {
-  WorkoutDay: 'Workout', RestDay: 'Rest', CheckInDue: 'Check-in due', CheckIn: 'Check-in', ProgramStart: 'Program start',
-  ProgramEnd: 'Program end', Event: 'Event', FollowUp: 'Follow-up',
-};
-
 /** The month grid around a month: Monday of the first week to Sunday of the last (at most 42 days). */
 export function monthGrid(month: Date): { from: string; to: string; days: string[] } {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);

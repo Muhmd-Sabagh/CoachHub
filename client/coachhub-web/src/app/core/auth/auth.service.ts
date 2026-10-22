@@ -3,6 +3,7 @@ import { Injectable, computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { I18nService } from '../i18n/i18n.service';
 import { LoginRequest, LoginResult, Role } from './auth.models';
 
 const storageKey = 'coachhub.session';
@@ -21,10 +22,14 @@ export class AuthService {
   readonly currentUser = this.session.asReadonly();
   readonly isAuthenticated = computed(() => this.isSessionValid(this.session()));
 
-  constructor(private readonly http: HttpClient, private readonly router: Router) {}
+  constructor(private readonly http: HttpClient, private readonly router: Router, private readonly i18n: I18nService) {}
 
   login(request: LoginRequest): Observable<LoginResult> {
-    return this.http.post<LoginResult>(`${environment.apiBaseUrl}/auth/login`, request).pipe(tap(result => this.store(result)));
+    // Signing in applies the account's saved language (P19); a refresh keeps whatever the user switched to since.
+    return this.http.post<LoginResult>(`${environment.apiBaseUrl}/auth/login`, request).pipe(tap(result => {
+      this.store(result);
+      this.i18n.applyPreference(result.preferredLanguage);
+    }));
   }
 
   /** Exchanges the refresh cookie for a new access token. Concurrent callers share one request. */

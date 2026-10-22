@@ -1,12 +1,13 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { isoDate } from '../nutrition-tracking/nutrition-tracking.service';
 import { TrendChartComponent } from '../progress-tracking/trend-chart.component';
-import { ClientTest, FitnessTestsService, TestResult, changeText, classificationLabels, cutOffText, unitLabels } from './fitness-tests.service';
+import { ClientTest, FitnessTestsService, TestDefinition, TestResult, TestUnit, localChangeText, localCutOffText, localUnit } from './fitness-tests.service';
 
 interface Draft { testId: string; resultId: string | null; date: string; value: number | null; notes: string; }
 
@@ -18,55 +19,55 @@ interface Draft { testId: string; resultId: string | null; date: string; value: 
 @Component({
   selector: 'app-my-tests',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TrendChartComponent],
+  imports: [FormsModule, RouterLink, TrendChartComponent, ...I18N_PIPES],
   template: `
-    <section class="dashboard-hero"><div><p class="eyebrow"><a routerLink="/app/progress">Progress</a></p><h1>My tests</h1>
-      <p>Mobility, strength and endurance tests from your coach.</p></div></section>
+    <section class="dashboard-hero"><div><p class="eyebrow"><a routerLink="/app/progress">{{ 'tests.progressLink' | translate }}</a></p><h1>{{ 'tests.title' | translate }}</h1>
+      <p>{{ 'tests.intro' | translate }}</p></div></section>
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     @if (data(); as d) {
       @for (t of d.tests; track t.testDefinitionId) {
         <section class="card workbench test">
           <div class="line">
-            <div><p class="eyebrow">{{ t.kind }}</p><h2>{{ t.nameEn }}</h2></div>
-            @if (t.results[0]?.classification; as c) { <span class="badge" [class.ok]="c === 'Good'" [class.alert]="c === 'Poor'">{{ labels[c] }}</span> }
+            <div><p class="eyebrow">{{ t.kind | enumLabel: 'testKind' }}</p><h2 translate="no">{{ t | localName }}</h2></div>
+            @if (t.results[0]?.classification; as c) { <span class="badge" [class.ok]="c === 'Good'" [class.alert]="c === 'Poor'">{{ c | enumLabel: 'testClassification' }}</span> }
           </div>
           @if (t.definition; as def) {
-            @if (def.instructionsEn) { <p class="instructions">{{ def.instructionsEn }}</p> }
+            @if (instructions(def); as text) { <p class="instructions" translate="no">{{ text }}</p> }
             <small class="muted">{{ cutOffs(def) }}</small>
-            @if (def.youTubeUrl) { <a [href]="def.youTubeUrl" target="_blank" rel="noopener">Watch how to do it</a> }
+            @if (def.youTubeUrl) { <a [href]="def.youTubeUrl" target="_blank" rel="noopener">{{ 'tests.watch' | translate }}</a> }
           }
           @if (t.progress.current; as current) {
             <div class="stats">
-              <div><small>Latest</small><strong>{{ current.value }} {{ unitLabel[t.unit] }}</strong><small class="muted">{{ current.date | date: 'd MMM' }}</small></div>
-              <div><small>Change</small><strong>{{ change(t.progress.changeFromPrevious, t) ?? '–' }}</strong>
-                <small class="muted">{{ t.progress.trend === 'Improved' ? 'better' : t.progress.trend === 'Declined' ? 'worse' : t.progress.trend ? 'same' : 'first result' }}</small></div>
-              <div><small>Best</small><strong>{{ t.progress.best?.value }} {{ unitLabel[t.unit] }}</strong><small class="muted">{{ t.progress.best?.date | date: 'd MMM y' }}</small></div>
+              <div><small>{{ 'tests.latest' | translate }}</small><strong>{{ current.value | localNumber: '1.0-2' }} {{ unit(t.unit) }}</strong><small class="muted">{{ current.date | localDate: 'd MMM' }}</small></div>
+              <div><small>{{ 'tests.change' | translate }}</small><strong>{{ change(t.progress.changeFromPrevious, t) ?? '–' }}</strong>
+                <small class="muted">{{ (t.progress.trend === 'Improved' ? 'tests.better' : t.progress.trend === 'Declined' ? 'tests.worse' : t.progress.trend ? 'tests.same' : 'tests.first') | translate }}</small></div>
+              <div><small>{{ 'tests.best' | translate }}</small><strong>{{ t.progress.best?.value | localNumber: '1.0-2' }} {{ unit(t.unit) }}</strong><small class="muted">{{ t.progress.best?.date | localDate: 'd MMM y' }}</small></div>
             </div>
           }
           @if (draft()?.testId === t.testDefinitionId) {
               <form class="record" (ngSubmit)="save(t)">
-                <label><span>Result ({{ unitLabel[t.unit] }})</span><input type="number" inputmode="decimal" min="0" step="0.01" [(ngModel)]="draft()!.value" name="value" required /></label>
-                <label><span>Date</span><input type="date" [(ngModel)]="draft()!.date" name="date" required /></label>
-                <label class="wide"><span>Notes</span><input [(ngModel)]="draft()!.notes" name="notes" maxlength="1000" /></label>
+                <label><span>{{ 'tests.result' | translate: { unit: unit(t.unit) } }}</span><input type="number" inputmode="decimal" min="0" step="0.01" [(ngModel)]="draft()!.value" name="value" required /></label>
+                <label><span>{{ 'tests.date' | translate }}</span><input type="date" [(ngModel)]="draft()!.date" name="date" required /></label>
+                <label class="wide"><span>{{ 'tests.notes' | translate }}</span><input [(ngModel)]="draft()!.notes" name="notes" maxlength="1000" /></label>
                 <div class="actions">
-                  <button type="submit" class="button button-primary" [disabled]="draft()!.value === null || busy()">Save</button>
-                  <button type="button" class="button button-secondary" (click)="draft.set(null)">Cancel</button>
+                  <button type="submit" class="button button-primary" [disabled]="draft()!.value === null || busy()">{{ 'tests.save' | translate }}</button>
+                  <button type="button" class="button button-secondary" (click)="draft.set(null)">{{ 'tests.cancel' | translate }}</button>
                 </div>
               </form>
-          } @else if (canRecord(t)) { <button type="button" class="button button-primary" (click)="start(t)">Record a result</button> }
-          @if (t.results.length > 1) { <app-trend-chart [points]="points(t)" [series]="t.nameEn" [unit]="unitLabel[t.unit]" [label]="t.nameEn + ' over time'" /> }
+          } @else if (canRecord(t)) { <button type="button" class="button button-primary" (click)="start(t)">{{ 'tests.record' | translate }}</button> }
+          @if (t.results.length > 1) { <app-trend-chart [points]="points(t)" [series]="t | localName" [unit]="unit(t.unit)" [label]="'tests.overTime' | translate: { name: (t | localName) }" /> }
           @if (t.results.length) {
             <ul class="history">
               @for (r of t.results; track r.id) {
                 <li>
-                  <span><strong>{{ r.value }} {{ unitLabel[r.unit] }}</strong> · {{ r.date | date: 'd MMM y' }}
-                    @if (r.classification) { · {{ labels[r.classification] }} }
-                    @if (r.recordedBy === 'Coach') { <small class="muted">· by your coach</small> }</span>
-                  @if (r.notes) { <small class="muted block">{{ r.notes }}</small> }
+                  <span><strong>{{ r.value | localNumber: '1.0-2' }} {{ unit(r.unit) }}</strong> · {{ r.date | localDate: 'd MMM y' }}
+                    @if (r.classification) { · {{ r.classification | enumLabel: 'testClassification' }} }
+                    @if (r.recordedBy === 'Coach') { <small class="muted">{{ 'tests.byCoach' | translate }}</small> }</span>
+                  @if (r.notes) { <small class="muted block" translate="no">{{ r.notes }}</small> }
                   @if (r.recordedBy === 'Client') {
                     <span class="actions">
-                      <button type="button" class="link-button" (click)="editResult(t, r)">Edit</button>
-                      <button type="button" class="link-button danger" (click)="remove(r)">Delete</button>
+                      <button type="button" class="link-button" (click)="editResult(t, r)">{{ 'tests.edit' | translate }}</button>
+                      <button type="button" class="link-button danger" (click)="remove(r)">{{ 'tests.delete' | translate }}</button>
                     </span>
                   }
                 </li>
@@ -74,7 +75,7 @@ interface Draft { testId: string; resultId: string | null; date: string; value: 
             </ul>
           }
         </section>
-      } @empty { <section class="card workbench"><p class="muted">Your coach has not assigned any tests yet.</p></section> }
+      } @empty { <section class="card workbench"><p class="muted">{{ 'tests.none' | translate }}</p></section> }
     }
   `,
   styles: [`
@@ -99,15 +100,19 @@ interface Draft { testId: string; resultId: string | null; date: string; value: 
   `],
 })
 export class MyTestsComponent implements OnInit {
-  readonly unitLabel = unitLabels;
-  readonly labels = classificationLabels;
-  readonly cutOffs = cutOffText;
   readonly data = signal<{ tests: ClientTest[] } | null>(null);
   readonly draft = signal<Draft | null>(null);
   readonly busy = signal(false);
   readonly error = signal('');
 
-  constructor(private readonly api: FitnessTestsService) {}
+  constructor(private readonly api: FitnessTestsService, private readonly i18n: I18nService) {}
+
+  unit(unit: TestUnit): string { return localUnit(unit, this.i18n); }
+  cutOffs(test: TestDefinition): string { return localCutOffText(test, this.i18n); }
+  /** The coach's instructions in Arabic when they wrote some, else in English. */
+  instructions(test: TestDefinition): string | null {
+    return (this.i18n.language() === 'ar' && test.instructionsAr?.trim()) ? test.instructionsAr : test.instructionsEn;
+  }
 
   ngOnInit(): void { this.load(); }
 
@@ -121,7 +126,7 @@ export class MyTestsComponent implements OnInit {
 
   canRecord(test: ClientTest): boolean { return test.isAssigned && !!test.definition?.isActive; }
 
-  change(value: number | null, test: ClientTest): string | null { return changeText(value, test.unit); }
+  change(value: number | null, test: ClientTest): string | null { return localChangeText(value, test.unit, this.i18n); }
 
   points(test: ClientTest) { return [...test.results].reverse().map(r => ({ date: r.date, value: r.value })); }
 
@@ -141,7 +146,7 @@ export class MyTestsComponent implements OnInit {
   }
 
   remove(result: TestResult): void {
-    if (!confirm('Delete this result?')) return;
+    if (!confirm(this.i18n.translate('tests.confirmDelete'))) return;
     this.run(this.api.deleteResult(result.id));
   }
 

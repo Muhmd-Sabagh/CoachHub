@@ -1,7 +1,9 @@
 import { Component, HostListener, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { RealtimeService } from '../../core/realtime/realtime.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { InboxItem, InboxService, ago } from './inbox.service';
 
 /**
@@ -11,32 +13,33 @@ import { InboxItem, InboxService, ago } from './inbox.service';
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
+  imports: [TranslatePipe],
   template: `
     <div class="bell">
-      <button type="button" class="icon-button" [attr.aria-label]="'Notifications, ' + unread() + ' unread'" [attr.aria-expanded]="open()"
+      <button type="button" class="icon-button" [attr.aria-label]="'notifications.unread' | translate: { count: unread() }" [attr.aria-expanded]="open()"
         (click)="toggle($event)">
         <span aria-hidden="true">🔔</span>
         @if (unread() > 0) { <span class="count">{{ unread() > 99 ? '99+' : unread() }}</span> }
       </button>
       @if (open()) {
-        <section class="panel card" role="dialog" aria-label="Notifications" (click)="$event.stopPropagation()">
+        <section class="panel card" role="dialog" [attr.aria-label]="'notifications.title' | translate" (click)="$event.stopPropagation()">
           <div class="panel-head">
-            <strong>Notifications</strong>
-            @if (unread() > 0) { <button type="button" class="link-button" (click)="readAll()">Mark all read</button> }
+            <strong>{{ 'notifications.title' | translate }}</strong>
+            @if (unread() > 0) { <button type="button" class="link-button" (click)="readAll()">{{ 'notifications.markAllRead' | translate }}</button> }
           </div>
           @if (items().length) {
             <ul>
               @for (n of items(); track n.id) {
                 <li>
                   <button type="button" class="item" [class.unread]="!n.readAt" (click)="openItem(n)">
-                    <strong>{{ n.title }}</strong>
-                    <span>{{ n.body }}</span>
+                    <strong translate="no">{{ n.title }}</strong>
+                    <span translate="no">{{ n.body }}</span>
                     <small class="muted">{{ when(n.createdAt) }}</small>
                   </button>
                 </li>
               }
             </ul>
-          } @else { <p class="muted empty">You're all caught up.</p> }
+          } @else { <p class="muted empty">{{ 'notifications.caughtUp' | translate }}</p> }
         </section>
       }
     </div>
@@ -63,7 +66,12 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   readonly open = signal(false);
   private live?: Subscription;
 
-  constructor(private readonly inbox: InboxService, private readonly realtime: RealtimeService, private readonly router: Router) {}
+  constructor(
+    private readonly inbox: InboxService,
+    private readonly realtime: RealtimeService,
+    private readonly router: Router,
+    private readonly i18n: I18nService,
+  ) {}
 
   ngOnInit(): void {
     this.refresh();
@@ -91,7 +99,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     if (this.open()) this.refresh();
   }
 
-  when(iso: string): string { return ago(iso); }
+  when(iso: string): string { return ago(iso, this.i18n); }
 
   openItem(item: InboxItem): void {
     this.open.set(false);

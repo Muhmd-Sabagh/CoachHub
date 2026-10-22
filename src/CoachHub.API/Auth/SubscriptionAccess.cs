@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Clients;
+using CoachHub.Application.Common.Localization;
 using CoachHub.Domain.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
@@ -38,8 +39,15 @@ public sealed class SubscriptionAccessHandler : AuthorizationHandler<Subscriptio
         var decision = await http.RequestServices.GetRequiredService<SubscriptionAccessService>()
             .CheckAsync(clientId, feature.Feature, write, http.RequestAborted);
         if (decision.Allowed) context.Succeed(requirement);
-        else context.Fail(new AuthorizationFailureReason(this, decision.Message!));
+        else context.Fail(new SubscriptionAccessFailure(this, decision.Message!, decision.Code!));
     }
+}
+
+/// <summary>A refusal by the access rules: its message is in the request's language, and its catalog code (P19).</summary>
+public sealed class SubscriptionAccessFailure(IAuthorizationHandler handler, string message, string code)
+    : AuthorizationFailureReason(handler, message)
+{
+    public string Code { get; } = code;
 }
 
 /// <summary>Answers a request refused by the access rules with a 403 that says why, so the client can show it.</summary>
@@ -49,18 +57,20 @@ public sealed class SubscriptionAccessResultHandler : IAuthorizationMiddlewareRe
 
     public async Task HandleAsync(RequestDelegate next, HttpContext context, AuthorizationPolicy policy, PolicyAuthorizationResult authorizeResult)
     {
-        var reason = authorizeResult.AuthorizationFailure?.FailureReasons.FirstOrDefault(x => x.Handler is SubscriptionAccessHandler);
+        var reason = authorizeResult.AuthorizationFailure?.FailureReasons.OfType<SubscriptionAccessFailure>().FirstOrDefault();
         if (authorizeResult.Forbidden && reason is not null)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            var problem = new ProblemDetails
             {
                 Status = StatusCodes.Status403Forbidden,
-                Title = "Not available with your subscription",
+                Title = Messages.Text("problem.subscriptionAccess", UiCulture.Current),
                 Detail = reason.Message,
                 Type = "https://coachhub/problems/subscription-access",
                 Instance = context.Request.Path
-            }, options: null, contentType: "application/problem+json");
+            };
+            problem.Extensions["code"] = reason.Code;
+            await context.Response.WriteAsJsonAsync(problem, options: null, contentType: "application/problem+json");
             return;
         }
         await fallback.HandleAsync(next, context, policy, authorizeResult);

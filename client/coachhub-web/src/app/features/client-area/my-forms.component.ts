@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { MyCheckInsComponent } from '../check-ins/my-check-ins.component';
 import { MyForms, MyFormsService } from './my-forms.service';
@@ -8,22 +9,22 @@ import { MyForms, MyFormsService } from './my-forms.service';
 @Component({
   selector: 'app-my-forms',
   standalone: true,
-  imports: [RouterLink, MyCheckInsComponent],
+  imports: [RouterLink, MyCheckInsComponent, TranslatePipe],
   template: `
-    <section class="dashboard-hero"><div><p class="eyebrow">Forms</p><h1>Your forms</h1>
-      <p>Answer what your coach asked for. Your answers go straight to them.</p></div></section>
+    <section class="dashboard-hero"><div><p class="eyebrow">{{ 'client.forms.eyebrow' | translate }}</p><h1>{{ 'client.forms.title' | translate }}</h1>
+      <p>{{ 'client.forms.intro' | translate }}</p></div></section>
     <app-my-check-ins />
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
-    @if (loading()) { <p class="table-message">Loading…</p> }
+    @if (loading()) { <p class="table-message">{{ 'common.loading' | translate }}</p> }
     @if (forms(); as list) {
       <ul class="form-list">
         @for (form of list.eligibleForms; track form.id) {
           <li><a class="card workbench" [routerLink]="['/app/forms', form.id]">
-            <strong>{{ form.name }}</strong>
-            <small class="muted">{{ form.formType === 'InitialAssessment' ? 'Starting assessment' : form.formType === 'CheckIn' ? 'Check-in' : 'Progress update' }}</small>
+            <strong translate="no">{{ form.name }}</strong>
+            <small class="muted">{{ (form.formType === 'InitialAssessment' ? 'client.forms.initial' : form.formType === 'CheckIn' ? 'client.forms.checkIn' : 'client.forms.update') | translate }}</small>
           </a></li>
         } @empty {
-          <li class="muted">Nothing to fill in right now.</li>
+          <li class="muted">{{ 'client.forms.nothing' | translate }}</li>
         }
       </ul>
     }

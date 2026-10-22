@@ -1,7 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { Component, EventEmitter, Input, OnChanges, Output, computed } from '@angular/core';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { isoDate } from '../nutrition-tracking/nutrition-tracking.service';
-import { CalendarEntry, entryLabels, monthGrid, timeText } from './calendar.service';
+import { CalendarEntry, monthGrid, timeText } from './calendar.service';
 
 interface Cell { date: string; inMonth: boolean; today: boolean; entries: CalendarEntry[]; }
 
@@ -12,38 +14,38 @@ interface Cell { date: string; inMonth: boolean; today: boolean; entries: Calend
 @Component({
   selector: 'app-calendar-month',
   standalone: true,
-  imports: [CommonModule],
+  imports: [NgClass, ...I18N_PIPES],
   template: `
     <div class="head">
-      <button type="button" class="button button-secondary" (click)="move(-1)" aria-label="Previous month">‹</button>
-      <h2>{{ month | date: 'MMMM y' }}</h2>
-      <button type="button" class="button button-secondary" (click)="move(1)" aria-label="Next month">›</button>
-      <button type="button" class="link-button" (click)="today()">Today</button>
+      <button type="button" class="button button-secondary" (click)="move(-1)" [attr.aria-label]="'calendar.previousMonth' | translate"><span class="flip-rtl">‹</span></button>
+      <h2>{{ month | localDate: 'MMMM y' }}</h2>
+      <button type="button" class="button button-secondary" (click)="move(1)" [attr.aria-label]="'calendar.nextMonth' | translate"><span class="flip-rtl">›</span></button>
+      <button type="button" class="link-button" (click)="today()">{{ 'calendar.today' | translate }}</button>
     </div>
-    <div class="grid" role="grid" aria-label="Month">
-      @for (d of weekdays; track d) { <div class="weekday" role="columnheader">{{ d }}</div> }
+    <div class="grid" role="grid" [attr.aria-label]="'calendar.month' | translate">
+      @for (d of weekdays(); track d) { <div class="weekday" role="columnheader">{{ d }}</div> }
       @for (cell of cells; track cell.date) {
         <div class="cell" role="gridcell" [class.out]="!cell.inMonth" [class.today]="cell.today">
           <span class="number">{{ cell.date.slice(8) }}</span>
           @for (e of cell.entries.slice(0, 4); track $index) {
-            <button type="button" class="chip" [ngClass]="classOf(e)" (click)="select.emit(e)" [title]="describe(e)">{{ short(e) }}</button>
+            <button type="button" class="chip" [ngClass]="classOf(e)" (click)="select.emit(e)" [title]="describe(e)" translate="no">{{ short(e) }}</button>
           }
-          @if (cell.entries.length > 4) { <small class="muted">+{{ cell.entries.length - 4 }} more</small> }
+          @if (cell.entries.length > 4) { <small class="muted">{{ 'calendar.more' | translate: { count: cell.entries.length - 4 } }}</small> }
         </div>
       }
     </div>
     <ol class="agenda">
       @for (cell of agenda; track cell.date) {
         <li [class.today]="cell.today">
-          <strong>{{ cell.date | date: 'EEE d MMM' }}</strong>
+          <strong>{{ cell.date | localDate: 'EEE d MMM' }}</strong>
           <ul>
             @for (e of cell.entries; track $index) {
               <li><button type="button" class="row" [ngClass]="classOf(e)" (click)="select.emit(e)">
-                <span class="tag">{{ labels[e.kind] }}</span> {{ describe(e) }}</button></li>
+                <span class="tag">{{ e.kind | enumLabel: 'calendarEntryKind' }}</span> <span translate="no">{{ describe(e) }}</span></button></li>
             }
           </ul>
         </li>
-      } @empty { <li class="muted">Nothing this month.</li> }
+      } @empty { <li class="muted">{{ 'calendar.nothing' | translate }}</li> }
     </ol>
   `,
   styles: [`
@@ -81,8 +83,8 @@ export class CalendarMonthComponent implements OnChanges {
   @Input() agendaSkipsRest = true;
   @Output() monthChange = new EventEmitter<Date>();
   @Output() select = new EventEmitter<CalendarEntry>();
-  readonly weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  readonly labels = entryLabels;
+  /** Monday-first short weekday names in the interface language (19–25 Oct 2026 runs Monday to Sunday). */
+  readonly weekdays = computed(() => [19, 20, 21, 22, 23, 24, 25].map(day => this.i18n.formatDate(new Date(2026, 9, day), 'EEE')));
   cells: Cell[] = [];
   agenda: Cell[] = [];
 
@@ -103,13 +105,15 @@ export class CalendarMonthComponent implements OnChanges {
       .filter(cell => cell.entries.length);
   }
 
+  constructor(private readonly i18n: I18nService) {}
+
   move(months: number): void { this.monthChange.emit(new Date(this.month.getFullYear(), this.month.getMonth() + months, 1)); }
   today(): void { const now = new Date(); this.monthChange.emit(new Date(now.getFullYear(), now.getMonth(), 1)); }
 
   short(entry: CalendarEntry): string {
     const time = timeText(entry);
     const who = entry.clientName && entry.kind !== 'WorkoutDay' && entry.kind !== 'RestDay' ? `${entry.clientName}: ` : '';
-    return `${time ? time + ' ' : ''}${who}${entry.kind === 'RestDay' ? 'Rest' : entry.title}`;
+    return `${time ? time + ' ' : ''}${who}${entry.title}`;
   }
 
   describe(entry: CalendarEntry): string {
@@ -117,8 +121,8 @@ export class CalendarMonthComponent implements OnChanges {
     if (entry.clientName) parts.push(entry.clientName);
     if (timeText(entry)) parts.push(timeText(entry));
     if (entry.detail) parts.push(entry.detail);
-    if (entry.kind === 'WorkoutDay' && entry.done !== null) parts.push(entry.done ? 'done' : 'missed');
-    if (entry.kind === 'FollowUp' && entry.done) parts.push('done');
+    if (entry.kind === 'WorkoutDay' && entry.done !== null) parts.push(this.i18n.translate(entry.done ? 'calendar.done' : 'calendar.missed'));
+    if (entry.kind === 'FollowUp' && entry.done) parts.push(this.i18n.translate('calendar.done'));
     return parts.join(' · ');
   }
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\CoachHub.Domain\CoachHub.Domain.csproj" />
@@ -14,4 +14,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The message catalog (P19), loaded by Common/Localization/Messages.cs. -->
+    <EmbeddedResource Include="Common/Localization/messages.json" LogicalName="CoachHub.Application.Common.Localization.messages.json" />
+  </ItemGroup>
 </Project>

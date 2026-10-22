@@ -1,80 +1,80 @@
 <div class="account-page">
   <section class="dashboard-hero">
     <div>
-      <p class="eyebrow">My account</p>
-      <h1>{{ profile()?.displayName || 'Your account' }}</h1>
-      <p>Your details, profile picture, password and the devices you are signed in on.</p>
+      <p class="eyebrow">{{ 'account.eyebrow' | translate }}</p>
+      @if (profile()?.displayName; as name) { <h1 translate="no">{{ name }}</h1> } @else { <h1>{{ 'account.fallbackName' | translate }}</h1> }
+      <p>{{ 'account.intro' | translate }}</p>
     </div>
-    <a class="button button-secondary" [routerLink]="backLink">Back</a>
+    <a class="button button-secondary" [routerLink]="backLink">{{ 'account.back' | translate }}</a>
   </section>
   @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
   @if (message()) { <p class="success-message" role="status">{{ message() }}</p> }
 
   <section class="card workbench">
-    <div class="section-heading"><h2>Profile picture</h2></div>
+    <div class="section-heading"><h2>{{ 'account.picture' | translate }}</h2></div>
     <div class="avatar-row">
-      @if (avatarUrl()) { <img class="avatar-large" [src]="avatarUrl()" alt="Your profile picture" /> }
+      @if (avatarUrl()) { <img class="avatar-large" [src]="avatarUrl()" [alt]="'account.pictureAlt' | translate" /> }
       @else { <span class="avatar-large" aria-hidden="true">{{ initial }}</span> }
       <label class="button button-secondary">
-        Upload picture
+        {{ 'account.upload' | translate }}
         <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="uploadAvatar($event)" [disabled]="saving()" />
       </label>
       @if (profile()?.avatarMediaId) {
-        <button class="link-button danger" type="button" (click)="removeAvatar()" [disabled]="saving()">Remove</button>
+        <button class="link-button danger" type="button" (click)="removeAvatar()" [disabled]="saving()">{{ 'account.remove' | translate }}</button>
       }
     </div>
-    <p class="muted">JPEG, PNG or WebP, up to 5 MB.</p>
+    <p class="muted">{{ 'account.pictureHint' | translate }}</p>
   </section>
 
   <section class="card workbench">
-    <div class="section-heading"><h2>Personal information</h2></div>
+    <div class="section-heading"><h2>{{ 'account.personal' | translate }}</h2></div>
     <form class="form-grid" (ngSubmit)="saveProfile()">
-      <label><span>Display name *</span><input name="displayName" [(ngModel)]="editor().displayName" required maxlength="200" autocomplete="name" /></label>
-      <label><span>Phone</span><input name="phoneNumber" type="tel" [(ngModel)]="editor().phoneNumber" maxlength="30" autocomplete="tel" /></label>
-      <label><span>Language</span>
+      <label><span>{{ 'account.displayName' | translate }}</span><input name="displayName" [(ngModel)]="editor().displayName" required maxlength="200" autocomplete="name" /></label>
+      <label><span>{{ 'account.phone' | translate }}</span><input name="phoneNumber" type="tel" [(ngModel)]="editor().phoneNumber" maxlength="30" autocomplete="tel" /></label>
+      <label><span>{{ 'account.language' | translate }}</span>
         <select name="preferredLanguage" [(ngModel)]="editor().preferredLanguage">
-          <option value="">Same as this browser</option>
+          <option value="">{{ 'account.sameAsBrowser' | translate }}</option>
           <option value="en">English</option>
           <option value="ar">العربية</option>
         </select>
       </label>
-      <label><span>Sign-in</span><input [value]="profile()?.userName || profile()?.email || ''" disabled /></label>
-      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving() || !profile()">Save details</button></div>
+      <label><span>{{ 'account.signIn' | translate }}</span><input [value]="profile()?.userName || profile()?.email || ''" disabled /></label>
+      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving() || !profile()">{{ 'account.saveDetails' | translate }}</button></div>
     </form>
   </section>
 
   <section class="card workbench">
-    <div class="section-heading"><h2>Change password</h2><span>Other devices are signed out</span></div>
+    <div class="section-heading"><h2>{{ 'account.changePassword' | translate }}</h2><span>{{ 'account.othersSignedOut' | translate }}</span></div>
     <form class="form-grid" (ngSubmit)="changePassword()">
-      <label><span>Current password *</span><input type="password" name="current" [(ngModel)]="password().current" required autocomplete="current-password" /></label>
-      <label><span>New password *</span><input type="password" name="next" [(ngModel)]="password().next" required minlength="12" autocomplete="new-password" /></label>
-      <label><span>Repeat new password *</span><input type="password" name="confirm" [(ngModel)]="password().confirm" required autocomplete="new-password" /></label>
-      <p class="muted">At least 12 characters with upper and lower case letters, a digit and a symbol.</p>
-      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving() || !password().current || !password().next">Change password</button></div>
+      <label><span>{{ 'account.currentPassword' | translate }}</span><input type="password" name="current" [(ngModel)]="password().current" required autocomplete="current-password" /></label>
+      <label><span>{{ 'account.newPassword' | translate }}</span><input type="password" name="next" [(ngModel)]="password().next" required minlength="12" autocomplete="new-password" /></label>
+      <label><span>{{ 'account.repeatPassword' | translate }}</span><input type="password" name="confirm" [(ngModel)]="password().confirm" required autocomplete="new-password" /></label>
+      <p class="muted">{{ 'account.passwordRules' | translate }}</p>
+      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving() || !password().current || !password().next">{{ 'account.changePassword' | translate }}</button></div>
     </form>
   </section>
 
   <section class="card workbench">
     <div class="section-heading toolbar">
-      <h2>Signed-in devices</h2>
+      <h2>{{ 'account.devices' | translate }}</h2>
       @if (sessions().length > 1) {
-        <button class="button button-secondary" type="button" (click)="revokeOthers()" [disabled]="saving()">Sign out all other devices</button>
+        <button class="button button-secondary" type="button" (click)="revokeOthers()" [disabled]="saving()">{{ 'account.signOutOthers' | translate }}</button>
       }
     </div>
     <ul class="session-list">
       @for (session of sessions(); track session.id) {
         <li>
           <div>
-            <strong>{{ device(session) }} @if (session.isCurrent) { <span class="muted">· This device</span> }</strong>
-            <small class="muted">Last active {{ session.lastSeenAt | date: 'medium' }} · Signed in {{ session.createdAt | date: 'mediumDate' }}</small>
-            @if (session.ipAddress) { <small class="muted">IP {{ session.ipAddress }}</small> }
+            <strong><span translate="no">{{ device(session) }}</span> @if (session.isCurrent) { <span class="muted">{{ 'account.thisDevice' | translate }}</span> }</strong>
+            <small class="muted">{{ 'account.lastActive' | translate: { lastSeen: (session.lastSeenAt | localDate: 'medium'), signedIn: (session.createdAt | localDate: 'mediumDate') } }}</small>
+            @if (session.ipAddress) { <small class="muted">{{ 'account.ip' | translate: { address: session.ipAddress } }}</small> }
           </div>
           @if (!session.isCurrent) {
-            <button class="link-button danger" type="button" (click)="revoke(session)" [disabled]="saving()">Sign out</button>
+            <button class="link-button danger" type="button" (click)="revoke(session)" [disabled]="saving()">{{ 'account.signOut' | translate }}</button>
           }
         </li>
       } @empty {
-        <li class="muted">No active sessions.</li>
+        <li class="muted">{{ 'account.noSessions' | translate }}</li>
       }
     </ul>
   </section>

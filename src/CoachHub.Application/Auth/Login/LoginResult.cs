@@ -8,4 +8,6 @@ public sealed record LoginResult(
     string DisplayName,
     IReadOnlyList<string> Roles,
     Guid? CoachId,
-    Guid? ClientId);
+    Guid? ClientId,
+    // The account's saved interface language, applied by the app at sign-in (P19); null when none is saved.
+    string? PreferredLanguage = null);

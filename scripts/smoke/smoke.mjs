@@ -85,6 +85,37 @@ function accessibility(language) {
   return [...new Set(issues)];
 }
 
+/**
+ * English left on an Arabic page (P19): visible text and labels with Latin words, outside elements marked
+ * translate="no" (names, user text and other data). Product names, units and abbreviations are allowed.
+ */
+function untranslated() {
+  const allowed = /\b(RPE|RIR|e1RM|1RM|PDF|CSV|ZIP|JPEG|PNG|WebP|Word|Excel|PowerPoint|IP|YouTube|Apple Health|Health Connect|English|CoachHub|EN|kg|ml|cm|bpm|Chrome|Firefox|Edge|Safari|Windows|Android|iOS|macOS|Linux)\b/g;
+  const english = (text) => /[A-Za-z]{3,}/.test(text.replace(allowed, ' '));
+  const visible = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; };
+  const exempt = (el) => !el || el.closest('[translate="no"], script, style, noscript, option, svg, code');
+  const found = new Set();
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.textContent.trim();
+    if (text && english(text) && !exempt(node.parentElement) && visible(node.parentElement)) found.add(text.slice(0, 60));
+  }
+  for (const el of document.querySelectorAll('[aria-label], [placeholder], [title], img[alt]')) {
+    if (exempt(el) || !visible(el)) continue;
+    for (const name of ['aria-label', 'placeholder', 'title', 'alt']) {
+      const value = (el.getAttribute(name) ?? '').trim();
+      if (value && english(value)) found.add(`${name}="${value.slice(0, 50)}"`);
+    }
+  }
+  return [...found];
+}
+
+/** "Loading…" in either language: a screen still showing it after the wait is stuck (P10A). */
+const loading = /^\s*(Loading|جارٍ التحميل)/i;
+
+/** Roles whose screens must be fully Arabic (P19: the client area; P21 adds the staff roles). */
+const translatedRoles = (process.env.SMOKE_TRANSLATED_ROLES ?? 'client').split(',').map((x) => x.trim());
+
 async function visit(page, role, viewport, path, results) {
   const errors = [];
   const failed = [];
@@ -97,7 +128,7 @@ async function visit(page, role, viewport, path, results) {
     await page.goto(web + path, { waitUntil: 'networkidle', timeout: 30000 });
     // No user input: a screen must show its data on its own (P10A).
     await page.waitForTimeout(1500);
-    stuck = await page.getByText(/^\s*Loading/i).first().isVisible().catch(() => false);
+    stuck = await page.getByText(loading).first().isVisible().catch(() => false);
   } catch (error) {
     errors.push(`navigation: ${error.message.split('\n')[0]}`);
   }
@@ -105,6 +136,7 @@ async function visit(page, role, viewport, path, results) {
   await page.screenshot({ path: `${out}/${file}`, fullPage: true }).catch(() => undefined);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1).catch(() => false);
   const a11y = await page.evaluate(accessibility, page.language).catch(() => []);
+  const english = page.language === 'ar' && translatedRoles.includes(role) ? await page.evaluate(untranslated).catch(() => []) : [];
   // The client area is mobile first (P18): on a phone its tables must fit, not scroll sideways inside their card.
   if (role === 'client' && viewport === 'phone') {
     const wide = await page.evaluate(() => [...document.querySelectorAll('.table-scroll')]
@@ -112,7 +144,7 @@ async function visit(page, role, viewport, path, results) {
     if (wide) a11y.push(`${wide} table(s) scroll sideways on a phone`);
   }
   page.off('console', onConsole); page.off('pageerror', onError); page.off('response', onResponse);
-  results.push({ role, language: page.language, viewport, path, stuck, overflow, a11y, errors, failed, screenshot: file });
+  results.push({ role, language: page.language, viewport, path, stuck, overflow, a11y, english, errors, failed, screenshot: file });
 }
 
 async function signIn(page, who) {
@@ -147,16 +179,16 @@ for (const language of languages) for (const { role, who, pages } of roles.filte
       await page.goto(`${web}/clients/${seeded.clientId}`, { waitUntil: 'networkidle' });
       for (const tab of profileTabs) {
         const button = page.getByRole('tab', { name: tab, exact: true }).first();
-        if (!(await button.isVisible().catch(() => false))) { results.push({ role, language, viewport, path: `profile tab ${tab}`, stuck: false, overflow: false, a11y: [], errors: ['tab not found'], failed: [], screenshot: '' }); continue; }
+        if (!(await button.isVisible().catch(() => false))) { results.push({ role, language, viewport, path: `profile tab ${tab}`, stuck: false, overflow: false, a11y: [], english: [], errors: ['tab not found'], failed: [], screenshot: '' }); continue; }
         await button.click();
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(1200);
-        const stuck = await page.getByText(/^\s*Loading/i).first().isVisible().catch(() => false);
+        const stuck = await page.getByText(loading).first().isVisible().catch(() => false);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
         const a11y = await page.evaluate(accessibility, language).catch(() => []);
         const file = `${role}-${language}-${viewport}-profile-${tab.replace(/\W+/g, '_')}.png`;
         await page.screenshot({ path: `${out}/${file}`, fullPage: true });
-        results.push({ role, language, viewport, path: `profile tab ${tab}`, stuck, overflow, a11y, errors: [], failed: [], screenshot: file });
+        results.push({ role, language, viewport, path: `profile tab ${tab}`, stuck, overflow, a11y, english: [], errors: [], failed: [], screenshot: file });
       }
     }
     await context.close();
@@ -164,7 +196,7 @@ for (const language of languages) for (const { role, who, pages } of roles.filte
 }
 await browser.close();
 
-const problems = results.filter((x) => x.stuck || x.overflow || x.a11y.length || x.errors.length || x.failed.length);
+const problems = results.filter((x) => x.stuck || x.overflow || x.a11y.length || x.english.length || x.errors.length || x.failed.length);
 await writeFile(`${out}/results.json`, JSON.stringify({ seeded: { clientId: seeded.clientId, tag }, results }, null, 2));
 console.log(`Visited ${results.length} pages; ${problems.length} with findings.`);
-for (const p of problems) console.log(`- ${p.role} ${p.language} ${p.viewport} ${p.path}: ${[p.stuck && 'stuck on Loading', p.overflow && 'horizontal scroll', ...p.a11y, ...p.errors, ...p.failed].filter(Boolean).join(' | ')}`);
+for (const p of problems) console.log(`- ${p.role} ${p.language} ${p.viewport} ${p.path}: ${[p.stuck && 'stuck on Loading', p.overflow && 'horizontal scroll', ...p.a11y, ...p.english.map((x) => `English: ${x}`), ...p.errors, ...p.failed].filter(Boolean).join(' | ')}`);

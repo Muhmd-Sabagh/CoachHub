@@ -1,4 +1,5 @@
 using CoachHub.Application.Common.Exceptions;
+using CoachHub.Application.Common.Localization;
 using CoachHub.Application.Common.Tenancy;
 using CoachHub.Application.WorkoutTracking;
 using CoachHub.Domain.Calendar;
@@ -48,7 +49,7 @@ public sealed class CalendarService(ICalendarRepository repository, ICurrentUser
                         Done: date < today ? false : null, PlanKind: PlanKind.Workout));
             }
             else if (done.Length == 0)
-                entries.Add(new CalendarEntry(date, CalendarEntryKind.RestDay, "Rest day", clientId, client.Name, plan.PlanId, PlanKind: PlanKind.Workout));
+                entries.Add(new CalendarEntry(date, CalendarEntryKind.RestDay, Messages.Text("calendar.restDay", UiCulture.Current), clientId, client.Name, plan.PlanId, PlanKind: PlanKind.Workout));
         }
 
         entries.AddRange(await CheckInEntriesAsync(clientId, from, to, cancellationToken));
@@ -138,7 +139,7 @@ public sealed class CalendarService(ICalendarRepository repository, ICurrentUser
         var sent = checkIns.Select(x => (x.ClientId, x.DueOn)).ToHashSet();
         foreach (var checkIn in checkIns)
         {
-            entries.Add(new CalendarEntry(checkIn.DueOn, CalendarEntryKind.CheckIn, "Check-in", checkIn.ClientId, checkIn.ClientName, checkIn.Id,
+            entries.Add(new CalendarEntry(checkIn.DueOn, CalendarEntryKind.CheckIn, Messages.Text("calendar.checkIn", UiCulture.Current), checkIn.ClientId, checkIn.ClientName, checkIn.Id,
                 Done: checkIn.Status == CheckInStatus.Approved, Detail: checkIn.Status + (checkIn.IsLate ? " · late" : "")));
         }
         foreach (var scheduled in await repository.SchedulesAsync(clientId, cancellationToken))
@@ -146,7 +147,7 @@ public sealed class CalendarService(ICalendarRepository repository, ICurrentUser
             foreach (var due in scheduled.Schedule.DueDatesBetween(from, to))
             {
                 if (sent.Contains((scheduled.ClientId, due))) continue;
-                entries.Add(new CalendarEntry(due, CalendarEntryKind.CheckInDue, "Check-in due", scheduled.ClientId, scheduled.ClientName,
+                entries.Add(new CalendarEntry(due, CalendarEntryKind.CheckInDue, Messages.Text("calendar.checkInDue", UiCulture.Current), scheduled.ClientId, scheduled.ClientName,
                     scheduled.Schedule.Id, Done: due < Today() ? false : null));
             }
         }
@@ -157,11 +158,12 @@ public sealed class CalendarService(ICalendarRepository repository, ICurrentUser
     {
         foreach (var plan in plans)
         {
-            var noun = plan.Kind == PlanKind.Diet ? "Diet plan" : "Workout plan";
+            // Generated titles are in the request's language (P19); the plan's own name is shown as written.
+            var kind = plan.Kind == PlanKind.Diet ? "diet" : "workout";
             if (plan.StartDate is { } start && start >= from && start <= to)
-                yield return new CalendarEntry(start, CalendarEntryKind.ProgramStart, $"{noun} starts: {plan.Name}", plan.ClientId, plan.ClientName, plan.PlanId, PlanKind: plan.Kind);
+                yield return new CalendarEntry(start, CalendarEntryKind.ProgramStart, Messages.Text($"calendar.{kind}Starts", UiCulture.Current, plan.Name), plan.ClientId, plan.ClientName, plan.PlanId, PlanKind: plan.Kind);
             if (plan.EndDate is { } end && end >= from && end <= to)
-                yield return new CalendarEntry(end, CalendarEntryKind.ProgramEnd, $"{noun} ends: {plan.Name}", plan.ClientId, plan.ClientName, plan.PlanId, PlanKind: plan.Kind);
+                yield return new CalendarEntry(end, CalendarEntryKind.ProgramEnd, Messages.Text($"calendar.{kind}Ends", UiCulture.Current, plan.Name), plan.ClientId, plan.ClientName, plan.PlanId, PlanKind: plan.Kind);
         }
     }
 

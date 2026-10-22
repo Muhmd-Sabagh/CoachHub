@@ -1,3 +1,4 @@
+using CoachHub.Application.Auth;
 using CoachHub.Application.Settings;
 using CoachHub.Domain.Communications;
 
@@ -6,6 +7,7 @@ namespace CoachHub.Application.Notifications;
 /// <summary>
 /// Creates event notifications (§42). Every recipient gets the in-app notification, pushed live; an email copy goes
 /// through the existing outbox when the account wants that event by email and the platform's email switch is on.
+/// Each recipient's copy is written in their own language, else the platform's default language (P19).
 /// </summary>
 public sealed class NotificationCenter(
     IInboxRepository inbox,
@@ -36,13 +38,17 @@ public sealed class NotificationCenter(
         if (targets.Count == 0) return;
 
         var now = timeProvider.GetUtcNow();
-        var emailOn = (await settings.PlatformAsync(cancellationToken)).EmailNotificationsEnabled;
+        var platform = await settings.PlatformAsync(cancellationToken);
+        var emailOn = platform.EmailNotificationsEnabled;
         var preferences = await inbox.EmailPreferencesAsync(targets.Select(x => x.UserId).ToArray(), cancellationToken);
         var created = new List<Notification>();
         foreach (var recipient in targets)
         {
+            var language = UiLanguages.Normalize(recipient.Language) ?? UiLanguages.Normalize(platform.DefaultLanguage) ?? UiLanguages.English;
+            var title = notice.Title.Render(language);
+            var body = notice.Body.Render(language);
             var inApp = Notification.ForEvent(notice.CoachId, notice.ClientId, recipient.UserId, NotificationChannel.InApp,
-                recipient.UserId.ToString(), notice.Event, notice.Title, notice.Body, notice.Link, notice.EventKey, now);
+                recipient.UserId.ToString(), notice.Event, title, body, notice.Link, notice.EventKey, now);
             inbox.Add(inApp);
             created.Add(inApp);
             var wanted = preferences.TryGetValue(recipient.UserId, out var events) ? events : NotificationPreference.Defaults;
@@ -50,7 +56,7 @@ public sealed class NotificationCenter(
             {
                 var link = links.Absolute(notice.Link);
                 inbox.Add(Notification.ForEvent(notice.CoachId, notice.ClientId, recipient.UserId, NotificationChannel.Email,
-                    recipient.Email!, notice.Event, notice.Title, link is null ? notice.Body : $"{notice.Body}\n\n{link}",
+                    recipient.Email!, notice.Event, title, link is null ? body : $"{body}\n\n{link}",
                     notice.Link, notice.EventKey, now));
             }
         }

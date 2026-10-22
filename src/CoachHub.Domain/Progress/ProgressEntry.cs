@@ -69,7 +69,9 @@ public abstract class ProgressEntry : Entity, ITenantOwned
     protected static decimal Measure(decimal value, decimal minimum, decimal maximum, int decimals, string name, string unit)
     {
         if (value < minimum || value > maximum || decimal.Round(value, decimals) != value)
-            throw new ArgumentException($"Enter {minimum}–{maximum} {unit} with at most {decimals} decimal{(decimals == 1 ? "" : "s")}.", name);
+            throw new ArgumentException(decimals == 1
+                ? $"Enter {minimum}–{maximum} {unit} with at most 1 decimal."
+                : $"Enter {minimum}–{maximum} {unit} with at most {decimals} decimals.", name);
         return value;
     }
 

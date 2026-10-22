@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { BrandingService, brandInitials } from '../../core/branding/branding.service';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { NotificationBellComponent } from '../notifications/notification-bell.component';
 import { AccessBannerComponent } from './access-banner.component';
 
@@ -13,27 +14,27 @@ import { AccessBannerComponent } from './access-banner.component';
 @Component({
   selector: 'app-client-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, AccessBannerComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, AccessBannerComponent, TranslatePipe],
   template: `
     <div class="client-shell">
       <header class="client-topbar">
         @if (branding.brand().logoUrl; as logo) { <img class="brand-logo" [src]="logo" [alt]="branding.brand().brandName" /> }
         @else { <span class="brand-mark">{{ initials(branding.brand().brandName) }}</span> }
-        <strong>{{ branding.brand().brandName }}</strong>
+        <strong translate="no">{{ branding.brand().brandName }}</strong>
         <span class="topbar-spacer"></span>
         <app-notification-bell />
-        <a class="icon-link" routerLink="/app/account" aria-label="Account">☺</a>
-        <button class="language-button" type="button" (click)="i18n.toggle()">{{ i18n.language() === 'en' ? 'ع' : 'EN' }}</button>
-        <button class="link-button" type="button" (click)="auth.logout()">Sign out</button>
+        <a class="icon-link" routerLink="/app/account" [attr.aria-label]="'client.nav.account' | translate">☺</a>
+        <button class="language-button" type="button" (click)="i18n.toggle()" [attr.aria-label]="'client.nav.language' | translate">{{ i18n.language() === 'en' ? 'ع' : 'EN' }}</button>
+        <button class="link-button" type="button" (click)="auth.logout()">{{ 'client.nav.signOut' | translate }}</button>
       </header>
       <main class="client-content"><app-access-banner /><router-outlet /></main>
-      <nav class="client-tabbar" aria-label="Client navigation">
-        <a routerLink="/app" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><span aria-hidden="true">⌂</span>Home</a>
-        <a routerLink="/app/training" routerLinkActive="active"><span aria-hidden="true">⚑</span>Training</a>
-        <a routerLink="/app/nutrition" routerLinkActive="active"><span aria-hidden="true">◔</span>Nutrition</a>
-        <a routerLink="/app/progress" routerLinkActive="active"><span aria-hidden="true">↗</span>Progress</a>
-        <a routerLink="/app/forms" routerLinkActive="active"><span aria-hidden="true">✎</span>Forms</a>
-        <a routerLink="/app/chat" routerLinkActive="active"><span aria-hidden="true">✉</span>Chat</a>
+      <nav class="client-tabbar" [attr.aria-label]="'client.nav.label' | translate">
+        <a routerLink="/app" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><span aria-hidden="true">⌂</span>{{ 'client.nav.home' | translate }}</a>
+        <a routerLink="/app/training" routerLinkActive="active"><span aria-hidden="true">⚑</span>{{ 'client.nav.training' | translate }}</a>
+        <a routerLink="/app/nutrition" routerLinkActive="active"><span aria-hidden="true">◔</span>{{ 'client.nav.nutrition' | translate }}</a>
+        <a routerLink="/app/progress" routerLinkActive="active"><span aria-hidden="true">↗</span>{{ 'client.nav.progress' | translate }}</a>
+        <a routerLink="/app/forms" routerLinkActive="active"><span aria-hidden="true">✎</span>{{ 'client.nav.forms' | translate }}</a>
+        <a routerLink="/app/chat" routerLinkActive="active"><span aria-hidden="true">✉</span>{{ 'client.nav.chat' | translate }}</a>
       </nav>
     </div>
   `,

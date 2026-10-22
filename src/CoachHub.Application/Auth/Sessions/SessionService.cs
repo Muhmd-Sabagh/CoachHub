@@ -133,7 +133,8 @@ public sealed class SessionService(
                 user.DisplayName,
                 user.Roles,
                 user.CoachId,
-                user.ClientId),
+                user.ClientId,
+                user.PreferredLanguage),
             refreshToken,
             session.ExpiresAt);
     }
