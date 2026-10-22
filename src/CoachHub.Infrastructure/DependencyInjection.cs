@@ -170,6 +170,9 @@ public static class DependencyInjection
         services.AddScoped<IClientFileRepository, ClientFileRepository>();
         services.AddScoped<ICalendarRepository, CalendarRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
+        // P17: reports (PDF) and data export (CSV).
+        services.AddSingleton<Application.Reports.IReportPdfRenderer, Pdf.QuestReportPdfRenderer>();
+        services.AddScoped<Application.Exports.IExportRepository, Exports.ExportRepository>();
         services.AddScoped<IFormRepository, FormRepository>();
         services.AddScoped<IFormImportRepository, FormImportRepository>();
         services.AddSingleton<IAssessmentWorkbookParser, XlsxAssessmentWorkbookParser>();

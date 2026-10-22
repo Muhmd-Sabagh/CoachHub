@@ -1,6 +1,6 @@
 # P16 — Subscriptions and access control v2
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P16 · **Branch:** `phase/p16-subscriptions-access` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P16 · **Branch:** `phase/p16-subscriptions-access` · **Status:** Merged (PR #18).
 **Covers:** §47, §57, D2, D5, D7.
 
 ## Purpose

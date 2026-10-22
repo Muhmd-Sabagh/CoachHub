@@ -42,6 +42,7 @@
       ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
     </form>
     <button class="button button-primary" (click)="create()">Add client</button>
+    <button class="button button-secondary" type="button" (click)="exportList()">Export CSV</button>
   </div>
   @if (error) {
     <p class="form-error">{{ error }}</p>

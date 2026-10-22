@@ -7,6 +7,7 @@ import { apiErrorMessage } from '../../shared/services/api-error';
 import { Coach, CoachesService } from '../coaches/coaches.service';
 import { ReferenceDataService, ReferenceRecord } from '../settings/reference-data.service';
 import { Client, ClientDetail, ClientsService, Subscription } from './clients.service';
+import { ReportsService, saveFile } from '../reports/reports.service';
 @Component({ selector: 'app-clients', templateUrl: './clients.component.html', standalone: false })
 export class ClientsComponent implements OnInit {
   readonly subscriptionsWorkspace: boolean;
@@ -43,6 +44,7 @@ export class ClientsComponent implements OnInit {
     private readonly refs: ReferenceDataService,
     private readonly coachDirectory: CoachesService,
     auth: AuthService,
+    private readonly reports: ReportsService,
   ) {
     this.isAdmin = auth.isAdmin();
     this.subscriptionsWorkspace = route.snapshot.data['workspace'] === 'subscriptions';
@@ -248,6 +250,10 @@ export class ClientsComponent implements OnInit {
     NoInvoice: 'No invoice', Unpaid: 'Unpaid', PartiallyPaid: 'Partially paid', Paid: 'Paid', Refunded: 'Refunded',
   };
   durationPresets: number[] = [1, 3, 6, 12];
+  /** The client list as CSV (§51); administrators get every coach's clients. */
+  exportList(): void {
+    this.reports.clientList().subscribe({ next: (file) => saveFile(file), error: (e) => (this.error = apiErrorMessage(e)) });
+  }
   removeSubscription(s: Subscription): void {
     if (this.detail && confirm('Delete this subscription?'))
       this.data

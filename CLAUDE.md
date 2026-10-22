@@ -146,14 +146,17 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - `Subscription.StatusOn` and `Client.GetSubscriptionStatus` (Active, Suspended, Pending, Expired, else Inactive) have an SQL twin, `ClientRepository.WithSubscriptionStatus`; keep them identical. Payment status comes from the linked invoices (`SubscriptionPayments`).
   - Every client controller declares its `[ClientFeature]`. The `ClientOnly` policy carries `SubscriptionAccessRequirement`: reads need Full or Read-only access, writes need Full, from `PlatformSettings.AccessFor` (defaults in `SubscriptionAccessDefaults`). New client endpoints must declare a feature unless they must never be restricted (account, notifications, access summary).
   - Access rules restrict; they never delete or hide data permanently.
+- **Reports and data export (§44, §51)** — implemented in P17; see `docs/product/phases/P17_REPORTS_EXPORT.md`.
+  - Reports are the progress dashboard (`ProgressDashboardService`) for a Monday–Sunday week or a calendar month (`ReportPeriods`) plus the period's check-ins, never private notes; PDF through `IReportPdfRenderer` (QuestPDF, `PdfFonts`) with the coach's brand.
+  - CSV goes through `Csv` (UTF-8 BOM, RFC 4180 quoting, formula-injection guard). Exports run under the tenant filters and are recorded in the audit trail (`DataExport`). Platform exports are AdminOnly.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P16. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P17. Known gaps against REQUIREMENTS.md:
 
-- no reports or data export yet (tracking exists since P8–P11, check-ins since P12, fitness tests since P13, chat, notifications and shared files since P14, calendars and dashboards since P15, subscription access rules since P16).
+- the product phases P0–P17 are delivered; P10A (client UI refresh and browser smoke test) and P18 (hardening and release) remain.
 
 Treat these as planned rework, not conventions to preserve.
 
