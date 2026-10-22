@@ -1,6 +1,8 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
-@Component({ selector: 'app-search-filter', templateUrl: './search-filter.component.html', standalone: false })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-search-filter', templateUrl: './search-filter.component.html', standalone: false })
 export class SearchFilterComponent {
   @Input() label = 'Search';
   @Input() placeholder = '';

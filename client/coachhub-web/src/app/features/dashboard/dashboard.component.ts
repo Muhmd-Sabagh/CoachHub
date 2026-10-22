@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -6,7 +6,9 @@ import { apiErrorMessage } from '../../shared/services/api-error';
 import { AdminDashboard, AdvancedReport, CoachDashboard, DashboardService, OperationalReport } from './dashboard.service';
 import { PlatformExport, ReportsService, platformExports, saveFile } from '../reports/reports.service';
 
-@Component({ selector: 'app-dashboard', templateUrl: './dashboard.component.html', standalone: false })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-dashboard', templateUrl: './dashboard.component.html', standalone: false })
 export class DashboardComponent implements OnInit {
   from = this.isoDate(-29);
   to = this.isoDate(0);

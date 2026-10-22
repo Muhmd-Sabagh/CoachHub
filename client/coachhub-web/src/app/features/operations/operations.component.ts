@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { Account, Invoice, Notification, OperationsService } from './operations.service';
 
-@Component({ selector: 'app-operations', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './operations.component.html' })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-operations', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './operations.component.html' })
 export class OperationsComponent implements OnInit {
   accounts: Account[] = []; invoices: Invoice[] = []; notifications: Notification[] = []; loading = false; error = ''; message = '';
   account = { email: '', userName: '', displayName: '', password: '', clientId: '', role: 'Client' };

@@ -1,0 +1,12 @@
+{
+  "name": "coachhub-smoke",
+  "private": true,
+  "description": "Browser smoke test of the CoachHub web app (P10A). Not part of the app build; see README.md.",
+  "type": "module",
+  "scripts": {
+    "smoke": "node smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.59.1"
+  }
+}

@@ -48,7 +48,7 @@ import { CheckInsService, MyCheckIns, cadenceText, dueStateLabels, statusLabels 
                 <strong>{{ c.dueOn | date: 'd MMM y' }}</strong>
                 <span class="badge" [class.ok]="c.status === 'Approved'" [class.alert]="c.status === 'ChangesRequested'">{{ statuses[c.status] }}</span>
               </div>
-              <small class="muted">Sent {{ c.submittedAt | date: 'EEE d MMM, shortTime' }}{{ c.isLate ? ' · late' : '' }}{{ c.submissions.length > 1 ? ' · resubmitted' : '' }}</small>
+              <small class="muted">Sent {{ c.submittedAt | date: 'EEE d MMM, HH:mm' }}{{ c.isLate ? ' · late' : '' }}{{ c.submissions.length > 1 ? ' · resubmitted' : '' }}</small>
               @for (r of c.replies; track r.id) {
                 <p class="reply"><span class="muted">{{ r.authorName || 'Your coach' }}:</span> {{ r.text }}</p>
               }

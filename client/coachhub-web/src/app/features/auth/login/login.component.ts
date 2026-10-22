@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -6,7 +6,9 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { BrandingService, brandInitials } from '../../../core/branding/branding.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 
-@Component({ selector: 'app-login', templateUrl: './login.component.html', standalone: false })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-login', templateUrl: './login.component.html', standalone: false })
 export class LoginComponent {
   showPassword = false;
   submitting = false;

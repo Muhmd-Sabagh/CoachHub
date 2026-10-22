@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { BrandingService, brandInitials } from '../branding/branding.service';
 import { AppConfigService } from '../config/app-config.service';
@@ -9,7 +9,9 @@ import { Role } from '../auth/auth.models';
 
 interface NavItem { route: string; label: string; icon: string; roles: Role[]; }
 const staff: Role[] = ['Administrator', 'Coach'];
-@Component({ selector: 'app-shell', templateUrl: './shell.component.html', standalone: false })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-shell', templateUrl: './shell.component.html', standalone: false })
 export class ShellComponent implements OnInit {
   sidebarOpen = false;
   private readonly allNavItems: NavItem[] = [

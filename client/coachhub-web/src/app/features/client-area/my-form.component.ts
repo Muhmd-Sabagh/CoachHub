@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -8,6 +8,8 @@ import { FormQuestion, MyFormsService, PublishedForm, UploadedMedia, hasAnswer }
 
 /** Fill in one form, signed in (D5). One question per row, large controls for phones. */
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-my-form',
   standalone: true,
   imports: [FormsModule, RouterLink],

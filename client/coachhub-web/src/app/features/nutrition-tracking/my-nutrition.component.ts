@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, finalize } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -14,6 +14,8 @@ import {
  * options and permitted alternatives (§7), and the food diary. Mobile first.
  */
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-my-nutrition',
   standalone: true,
   imports: [CommonModule, FormsModule],

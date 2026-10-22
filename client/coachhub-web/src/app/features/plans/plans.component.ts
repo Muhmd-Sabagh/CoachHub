@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize, forkJoin } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
@@ -37,7 +37,9 @@ import {
   toEditorInput,
 } from './plans.service';
 const id = () => crypto.randomUUID();
-@Component({ selector: 'app-plans', templateUrl: './plans.component.html', standalone: false })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-plans', templateUrl: './plans.component.html', standalone: false })
 export class PlansComponent implements OnInit, OnDestroy {
   page: PagedResult<SavedPlan> = emptyPage();
   search = '';

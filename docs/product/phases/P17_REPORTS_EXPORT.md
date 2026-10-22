@@ -1,6 +1,6 @@
 # P17 — Reports and data export
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P17 · **Branch:** `phase/p17-reports-export` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P17 · **Branch:** `phase/p17-reports-export` · **Status:** Merged (PR #19).
 **Covers:** §44, §51, D2, D6, §58.
 
 ## Purpose

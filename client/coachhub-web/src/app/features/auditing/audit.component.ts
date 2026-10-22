@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
@@ -7,6 +7,8 @@ import { apiErrorMessage } from '../../shared/services/api-error';
 import { AuditRecord, AuditService } from './audit.service';
 
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-audit',
   templateUrl: './audit.component.html',
   standalone: true,

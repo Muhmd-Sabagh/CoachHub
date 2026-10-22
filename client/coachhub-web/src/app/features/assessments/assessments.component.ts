@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -10,6 +10,8 @@ import {
   Question,
   SubmissionSummary, QuestionMetric, questionMetrics } from './assessments.service';
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-assessments',
   templateUrl: './assessments.component.html',
   standalone: false,

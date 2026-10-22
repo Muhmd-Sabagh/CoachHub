@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -17,6 +17,8 @@ interface ResultDraft { testDefinitionId: string; date: string; value: number | 
  * and override their classification, and follow each test's previous-against-current progress over time.
  */
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-client-tests',
   standalone: true,
   imports: [CommonModule, FormsModule, TrendChartComponent],

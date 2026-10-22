@@ -1524,3 +1524,9 @@ textarea:focus {
 
 /* P17: platform export buttons on the administrator dashboard. */
 .quick-exports { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+/* P10A smoke-test fixes: hero actions wrap below the heading on phones; long metric values wrap in their tile. */
+.dashboard-hero { flex-wrap: wrap; gap: 16px; }
+.dashboard-hero > .button, .dashboard-hero > .hero-actions { position: relative; z-index: 1; }
+.report-metrics strong { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .report-metrics strong { font-size: 24px; } }

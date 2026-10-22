@@ -34,7 +34,7 @@ import { ChatThreadComponent } from './chat-thread.component';
                 <span class="line"><strong>{{ c.clientName }}</strong>
                   @if (c.unreadCount) { <span class="badge">{{ c.unreadCount }}</span> }</span>
                 <span class="muted preview">{{ c.lastSender === 'Coach' ? 'You: ' : '' }}{{ c.lastMessagePreview }}</span>
-                <small class="muted">{{ c.lastMessageAt | date: 'd MMM, shortTime' }}</small>
+                <small class="muted">{{ c.lastMessageAt | date: 'd MMM, HH:mm' }}</small>
               </button>
             </li>
           } @empty { <li class="muted empty">No conversations yet.</li> }

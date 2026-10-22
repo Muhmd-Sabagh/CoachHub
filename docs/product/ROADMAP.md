@@ -323,6 +323,8 @@ Then:
 
 ### P10A: Client UI refresh and local release gate (S), covering §53, §60
 
+**Delivered 2026-10-22** (see `docs/product/phases/P10A_UI_REFRESH_GATE.md`).
+
 Added 2026-10-21 after P10. These are issues found outside P10's scope, collected here so they are fixed deliberately rather than in passing.
 
 - **Zoneless change detection.**

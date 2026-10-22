@@ -43,9 +43,9 @@ import {
               <td>{{ r.progress.nutrition.loggedDays }} / {{ r.progress.nutrition.days }} days logged</td></tr>
             <tr><th scope="row">Training</th><td>{{ r.progress.training.summary.completedSessions }} / {{ r.progress.training.summary.scheduledSessions }} workouts</td>
               <td>{{ r.progress.training.summary.volumeKg | number: '1.0-0' }} kg volume</td></tr>
-            <tr><th scope="row">Steps</th><td>{{ r.progress.lifestyle.averageSteps ?? '–' }} a day</td><td>{{ r.progress.lifestyle.stepsGoalDays }} days on target</td></tr>
-            <tr><th scope="row">Sleep</th><td>{{ r.progress.lifestyle.averageSleepHours ?? '–' }} h a night</td><td>{{ r.progress.lifestyle.sleepGoalNights }} nights on target</td></tr>
-            <tr><th scope="row">Water</th><td>{{ r.progress.lifestyle.averageWaterMl ?? '–' }} ml a day</td><td>{{ r.progress.lifestyle.waterGoalDays }} days on target</td></tr>
+            <tr><th scope="row">Steps</th><td>{{ r.progress.lifestyle.averageSteps !== null ? r.progress.lifestyle.averageSteps + ' a day' : '–' }}</td><td>{{ r.progress.lifestyle.stepsGoalDays }} days on target</td></tr>
+            <tr><th scope="row">Sleep</th><td>{{ r.progress.lifestyle.averageSleepHours !== null ? r.progress.lifestyle.averageSleepHours + ' h a night' : '–' }}</td><td>{{ r.progress.lifestyle.sleepGoalNights }} nights on target</td></tr>
+            <tr><th scope="row">Water</th><td>{{ r.progress.lifestyle.averageWaterMl !== null ? r.progress.lifestyle.averageWaterMl + ' ml a day' : '–' }}</td><td>{{ r.progress.lifestyle.waterGoalDays }} days on target</td></tr>
             <tr><th scope="row">Adherence</th><td>{{ r.progress.adherence.overallPercent !== null ? r.progress.adherence.overallPercent + '%' : '–' }}</td><td></td></tr>
             <tr><th scope="row">Check-ins</th><td>{{ r.checkIns.length }} sent</td><td>{{ r.progress.checkIn.adherence.completed }} / {{ r.progress.checkIn.adherence.due }} due</td></tr>
           </tbody>
@@ -67,7 +67,7 @@ import {
     .reports h2, .reports h3 { margin: 0; font-size: 1.05rem; }
     .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
     .controls label { display: grid; gap: 4px; }
-    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
     .actions .button { min-height: 44px; }
     th[scope="row"] { text-align: start; }
   `],

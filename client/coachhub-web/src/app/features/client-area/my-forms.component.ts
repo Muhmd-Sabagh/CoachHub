@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -7,6 +7,8 @@ import { MyForms, MyFormsService } from './my-forms.service';
 
 /** The forms the coach asked the client to fill in: assessments, and check-ins while one is open (P12). */
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-my-forms',
   standalone: true,
   imports: [RouterLink, MyCheckInsComponent],

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewChecked, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild, signal } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription, concatMap, from, map, toArray } from 'rxjs';
 import { RealtimeService } from '../../core/realtime/realtime.service';
@@ -29,7 +29,7 @@ import {
             @for (a of m.attachments; track a.mediaId) {
               <button type="button" class="attachment" (click)="openFile(a)">📎 {{ a.fileName }} <small>{{ size(a.sizeBytes) }}</small></button>
             }
-            <small class="meta">{{ m.sentAt | date: 'd MMM, shortTime' }}@if (m.sender === me()) { · {{ m.readAt ? 'Read' : 'Sent' }} }</small>
+            <small class="meta">{{ m.sentAt | date: 'd MMM, HH:mm' }}@if (m.sender === me()) { · {{ m.readAt ? 'Read' : 'Sent' }} }</small>
           </div>
         } @empty { <p class="muted empty">{{ archivedId ? 'No messages.' : 'No messages yet. Say hello!' }}</p> }
       </div>
@@ -66,7 +66,7 @@ import {
     .file-button input { position: absolute; width: 1px; height: 1px; opacity: 0; }
   `],
 })
-export class ChatThreadComponent implements OnChanges, OnDestroy, AfterViewChecked {
+export class ChatThreadComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   /** The coach's view of this client; unset for the signed-in client. */
   @Input() clientId?: string;
   /** A previous coach's conversation (client view only), read-only. */
@@ -89,7 +89,13 @@ export class ChatThreadComponent implements OnChanges, OnDestroy, AfterViewCheck
   me(): ChatParticipant { return this.clientId ? 'Coach' : 'Client'; }
   otherName(): string { return this.clientId ? this.thread()?.clientName ?? 'client' : 'your coach'; }
 
+  private loaded = false;
+
+  /** Without bound inputs (the client's own chat) ngOnChanges never runs, so the first load happens here. */
+  ngOnInit(): void { if (!this.loaded) this.ngOnChanges(); }
+
   ngOnChanges(): void {
+    this.loaded = true;
     this.live.forEach(x => x.unsubscribe());
     this.messages.set([]);
     this.error.set('');

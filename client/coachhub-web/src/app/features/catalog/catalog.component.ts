@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -11,7 +11,9 @@ import {
 } from '../settings/reference-data.service';
 import { CatalogItem, exerciseDifficulties } from './catalog.models';
 import { CatalogKind, CatalogService } from './catalog.service';
-@Component({ selector: 'app-catalog', templateUrl: './catalog.component.html', standalone: false })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-catalog', templateUrl: './catalog.component.html', standalone: false })
 export class CatalogComponent implements OnInit {
   readonly kind: CatalogKind;
   readonly title: string;

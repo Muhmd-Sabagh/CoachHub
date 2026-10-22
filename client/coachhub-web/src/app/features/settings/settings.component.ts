@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppConfigService } from '../../core/config/app-config.service';
@@ -14,6 +14,8 @@ interface Resource {
   owner: 'coach' | 'platform';
 }
 @Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   standalone: false,

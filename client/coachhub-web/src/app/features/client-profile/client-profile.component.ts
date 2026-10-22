@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
@@ -27,7 +27,9 @@ type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progres
 interface TabItem { id: Tab; label: string; arrivesIn?: string; }
 
 /** Everything about one client in one place (§40), starting with the structured profile (§3). */
-@Component({ selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent, ClientTestsComponent, ChatThreadComponent, ClientFilesComponent, CoachCalendarComponent, ClientReportsComponent], templateUrl: './client-profile.component.html' })
+@Component({
+  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent, ClientTestsComponent, ChatThreadComponent, ClientFilesComponent, CoachCalendarComponent, ClientReportsComponent], templateUrl: './client-profile.component.html' })
 export class ClientProfileComponent implements OnInit {
   readonly tabs: TabItem[] = [
     { id: 'overview', label: 'Overview' }, { id: 'profile', label: 'Profile' },

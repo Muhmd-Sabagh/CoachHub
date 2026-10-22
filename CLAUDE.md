@@ -37,7 +37,7 @@ dotnet test tests/<Project> --filter "FullyQualifiedName~<Name>"
 dotnet run --project src/CoachHub.API --launch-profile https   # https://localhost:7131, needs SQL Server on localhost
 dotnet ef migrations add <Name> --project src/CoachHub.Infrastructure   # requires global dotnet-ef
 dotnet ef database update --project src/CoachHub.Infrastructure        # never auto-applied at startup
-./scripts/Verify-Release.ps1 [-SkipRestore]       # full gate, identical to CI
+./scripts/Verify-Release.ps1 [-SkipRestore]       # full gate, identical to CI; Windows PowerShell 5.1 and PowerShell 7
 ```
 
 Angular commands, run from `client/coachhub-web`:
@@ -156,7 +156,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P17. Known gaps against REQUIREMENTS.md:
 
-- the product phases P0–P17 are delivered; P10A (client UI refresh and browser smoke test) and P18 (hardening and release) remain.
+- the product phases P0–P17 and P10A are delivered; P18 (hardening and release) remains.
 
 Treat these as planned rework, not conventions to preserve.
 
@@ -190,6 +190,8 @@ Treat these as planned rework, not conventions to preserve.
 - NgModule-based app. Feature folders live under `src/app/features`, each with a `*.service.ts` per API area.
 - Visual language comes from TailAdmin through CSS custom properties; see `docs/design/TAILADMIN_ANGULAR_ADAPTATION.md`. Per-coach branding (D1) must override these tokens at runtime, so never hard-code colors in features.
 - Charts use ApexCharts (pinned exactly, P8), imported lazily inside the chart component. Series colors come from the theme tokens at render time, one y-axis per chart, and a table carries the same numbers.
+- **Change detection (P10A):** the app is zoneless and Angular 22 makes components OnPush by default. New screens keep asynchronous state in signals and stay OnPush. Older screens that set plain fields from HTTP callbacks declare `ChangeDetectionStrategy.Eager` (as do `App` and both shells), and `viewRefreshInterceptor` checks the app from its root after each response. Never set plain fields from callbacks in a new screen.
+- **Browser smoke test (P10A):** `scripts/smoke` (Playwright, outside the app build) signs in as every role at phone and desktop widths and flags screens stuck on "Loading", horizontal scrolling, console errors and API failures. Run it after UI changes; see its README.
 - The access token lives in `sessionStorage`; the refresh token is an HttpOnly cookie that scripts never see. `AuthService` refreshes silently (interceptor, guards, app initializer). The API is the authorization boundary; route guards are UX only.
 
 ## Workflow
