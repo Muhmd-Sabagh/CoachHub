@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { InboxService, ago } from './inbox.service';
 
 describe('InboxService (§42: event notifications)', () => {
@@ -37,8 +38,13 @@ describe('InboxService (§42: event notifications)', () => {
 
   it('says how long ago', () => {
     const now = Date.parse('2026-10-22T12:00:00Z');
-    expect(ago('2026-10-22T11:59:40Z', now)).toBe('just now');
-    expect(ago('2026-10-22T11:45:00Z', now)).toBe('15 min ago');
-    expect(ago('2026-10-22T09:00:00Z', now)).toBe('3 h ago');
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    expect(ago('2026-10-22T11:59:40Z', i18n, now)).toBe('just now');
+    expect(ago('2026-10-22T11:45:00Z', i18n, now)).toBe('15 min ago');
+    expect(ago('2026-10-22T09:00:00Z', i18n, now)).toBe('3 h ago');
+    i18n.setLanguage('ar');
+    expect(ago('2026-10-22T11:45:00Z', i18n, now)).toBe('قبل 15 د');
+    i18n.setLanguage('en');
   });
 });

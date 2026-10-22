@@ -30,6 +30,7 @@ export const enumValues = {
   planLanguage: ['English', 'Arabic'],
   checkInDueState: ['Upcoming', 'Pending', 'Overdue'],
   weekday: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  notificationEvent: ['NewWorkout', 'NewDiet', 'NewProgram', 'ProgramUpdated', 'CheckInRequired', 'CheckInReviewed', 'NewMessage', 'SubscriptionExpired'],
 } as const;
 
 export type EnumName = keyof typeof enumValues;

@@ -1,11 +1,7 @@
-import { registerLocaleData } from '@angular/common';
-import localeAr from '@angular/common/locales/ar';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { enumLabelKey, enumValues } from './enum-labels';
 import { I18nService } from './i18n.service';
 import { tables, translations } from './translations';
-
-registerLocaleData(localeAr, 'ar');
 
 describe('I18nService', () => {
   beforeEach(() => {

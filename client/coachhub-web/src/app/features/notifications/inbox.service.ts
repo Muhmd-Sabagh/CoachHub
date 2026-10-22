@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { environment } from '../../../environments/environment';
 import { PagedResult } from '../../shared/models/paged-result';
 
@@ -9,17 +10,6 @@ export type NotificationEvent =
 export const notificationEvents: NotificationEvent[] = [
   'NewWorkout', 'NewDiet', 'NewProgram', 'ProgramUpdated', 'CheckInRequired', 'CheckInReviewed', 'NewMessage', 'SubscriptionExpired',
 ];
-
-export const eventLabels: Record<NotificationEvent, string> = {
-  NewWorkout: 'New workout plan',
-  NewDiet: 'New diet plan',
-  NewProgram: 'New program version',
-  ProgramUpdated: 'Program updated',
-  CheckInRequired: 'Check-in required',
-  CheckInReviewed: 'Check-in reviewed',
-  NewMessage: 'New message',
-  SubscriptionExpired: 'Subscription expired',
-};
 
 export interface InboxItem {
   id: string;
@@ -34,13 +24,13 @@ export interface InboxItem {
 export interface NotificationPreferences { emailEvents: NotificationEvent[]; emailEnabledOnPlatform: boolean; }
 
 /** "5 min ago", "3 h ago", or the date for older items. */
-export function ago(iso: string, now = Date.now()): string {
+export function ago(iso: string, i18n: I18nService, now = Date.now()): string {
   const minutes = Math.floor((now - new Date(iso).getTime()) / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1) return i18n.translate('notifications.justNow');
+  if (minutes < 60) return i18n.translate('notifications.minutesAgo', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
-  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  if (hours < 24) return i18n.translate('notifications.hoursAgo', { count: hours });
+  return i18n.formatDate(iso, 'd MMM');
 }
 
 /** The signed-in account's in-app notifications and email preferences (§42). */

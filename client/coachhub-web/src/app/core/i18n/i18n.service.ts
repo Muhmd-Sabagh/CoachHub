@@ -1,7 +1,12 @@
-import { DOCUMENT, formatDate, formatNumber } from '@angular/common';
+import { DOCUMENT, formatDate, formatNumber, registerLocaleData } from '@angular/common';
+import localeAr from '@angular/common/locales/ar';
 import { Inject, Injectable, computed, signal } from '@angular/core';
 import { Entry } from './define';
 import { Language, TranslationKey, entryOf } from './translations';
+
+// Arabic dates and numbers, registered wherever the service is used; Angular's "ar" data writes Western digits
+// (owner decision 2026-10-22).
+registerLocaleData(localeAr, 'ar');
 
 export type TranslationParams = Record<string, string | number | null | undefined>;
 

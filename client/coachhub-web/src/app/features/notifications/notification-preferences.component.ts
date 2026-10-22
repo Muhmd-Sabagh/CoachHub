@@ -1,23 +1,25 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { apiErrorMessage } from '../../shared/services/api-error';
-import { InboxService, NotificationEvent, eventLabels, notificationEvents } from './inbox.service';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
+import { InboxService, NotificationEvent, notificationEvents } from './inbox.service';
 
 /** Which notifications the account also receives by email (§42); in-app notifications always arrive. */
 @Component({
   selector: 'app-notification-preferences',
   standalone: true,
+  imports: [...I18N_PIPES],
   template: `
     <section class="card workbench preferences">
-      <h2>Email notifications</h2>
-      <p class="muted">You always see notifications in the app. Choose which ones you also want by email.</p>
-      @if (!platformEmail()) { <p class="muted" role="status">Email is turned off for the platform right now.</p> }
+      <h2>{{ 'notifications.email' | translate }}</h2>
+      <p class="muted">{{ 'notifications.emailIntro' | translate }}</p>
+      @if (!platformEmail()) { <p class="muted" role="status">{{ 'notifications.emailOff' | translate }}</p> }
       @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
       <ul>
         @for (e of events; track e) {
-          <li><label><input type="checkbox" [checked]="selected().has(e)" (change)="toggle(e)" [disabled]="busy()" /> {{ labels[e] }}</label></li>
+          <li><label><input type="checkbox" [checked]="selected().has(e)" (change)="toggle(e)" [disabled]="busy()" /> {{ e | enumLabel: 'notificationEvent' }}</label></li>
         }
       </ul>
-      @if (saved()) { <p class="success-message" role="status">Saved.</p> }
+      @if (saved()) { <p class="success-message" role="status">{{ 'notifications.saved' | translate }}</p> }
     </section>
   `,
   styles: [`
@@ -29,7 +31,6 @@ import { InboxService, NotificationEvent, eventLabels, notificationEvents } from
 })
 export class NotificationPreferencesComponent implements OnInit {
   readonly events = notificationEvents;
-  readonly labels = eventLabels;
   readonly selected = signal(new Set<NotificationEvent>());
   readonly platformEmail = signal(true);
   readonly busy = signal(false);
