@@ -60,6 +60,7 @@ export class ClientsComponent implements OnInit {
       this.currencies = x.currencies.items;
       this.accounts = x.accounts.items;
     });
+    this.data.durationPresets().subscribe({ next: (x) => (this.durationPresets = x.durationPresets), error: () => undefined });
     if (this.isAdmin) {
       this.coachDirectory.list({ pageSize: 100, isActive: true }).subscribe((p) => (this.coaches = p.items));
     }
@@ -231,6 +232,22 @@ export class ClientsComponent implements OnInit {
         error: (e) => (this.error = apiErrorMessage(e)),
       });
   }
+  suspendSubscription(s: Subscription): void {
+    if (!this.detail) return;
+    const reason = prompt('Why is the subscription suspended? The client sees the access rules for suspended subscriptions.');
+    if (!reason?.trim()) return;
+    this.data.suspendSubscription(this.detail.client.id, s.id, reason.trim())
+      .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error = apiErrorMessage(e)) });
+  }
+  resumeSubscription(s: Subscription): void {
+    if (!this.detail) return;
+    this.data.resumeSubscription(this.detail.client.id, s.id)
+      .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error = apiErrorMessage(e)) });
+  }
+  readonly paymentLabels: Record<string, string> = {
+    NoInvoice: 'No invoice', Unpaid: 'Unpaid', PartiallyPaid: 'Partially paid', Paid: 'Paid', Refunded: 'Refunded',
+  };
+  durationPresets: number[] = [1, 3, 6, 12];
   removeSubscription(s: Subscription): void {
     if (this.detail && confirm('Delete this subscription?'))
       this.data

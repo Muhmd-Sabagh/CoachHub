@@ -88,6 +88,8 @@ public static class DependencyInjection
         // P15: calendars and dashboards.
         services.AddScoped<CalendarService>();
         services.AddScoped<DashboardService>();
+        // P16: subscription access rules on the client area.
+        services.AddScoped<SubscriptionAccessService>();
         services.AddScoped<ClientFileService>();
         services.AddScoped<InboxService>();
         services.AddScoped<NotificationCenter>();

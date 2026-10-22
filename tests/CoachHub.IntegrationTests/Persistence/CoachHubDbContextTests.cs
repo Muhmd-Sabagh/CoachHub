@@ -83,6 +83,7 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.Communications.NotificationPreference), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Calendar.TrainingDays), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Calendar.CalendarEvent), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.Settings.SubscriptionAccessRule), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietPlanNote), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementGroup), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.DietPlanning.DietReplacementOption), entityTypes);

@@ -137,4 +137,11 @@ public sealed record SubscriptionResponse(
     Guid? PaymentAccountId,
     int RenewalCount,
     bool IsActive,
-    IReadOnlyList<SubscriptionRenewalResponse> Renewals);
+    IReadOnlyList<SubscriptionRenewalResponse> Renewals,
+    SubscriptionStatus Status = SubscriptionStatus.Active,
+    SubscriptionPaymentStatus PaymentStatus = SubscriptionPaymentStatus.NoInvoice,
+    DateTimeOffset? SuspendedAt = null,
+    string? SuspensionReason = null);
+
+/// <summary>Why the coach pauses the subscription (§57 Suspended).</summary>
+public sealed record SubscriptionSuspendInput(string Reason);

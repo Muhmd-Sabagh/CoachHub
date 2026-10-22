@@ -1,3 +1,4 @@
+using CoachHub.Domain.Settings;
 using System.Security.Claims;
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Routing;
@@ -19,6 +20,7 @@ namespace CoachHub.API.Me;
 [ApiController]
 [Authorize(Policy = AuthPolicies.ClientOnly)]
 [Route(ApiRoutes.V1 + "/me/progress")]
+[ClientFeature(ClientFeature.Progress)]
 public sealed class MyProgressController(ProgressService progress, ProgressDashboardService dashboard, AdherenceService adherence) : ControllerBase
 {
     /// <summary>Body, nutrition, training and lifestyle for the range (at most 366 days).</summary>

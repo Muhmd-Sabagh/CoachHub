@@ -1,3 +1,5 @@
+using CoachHub.Domain.Settings;
+using CoachHub.API.Auth;
 using System.Security.Claims;
 using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
@@ -17,6 +19,7 @@ namespace CoachHub.API.Me;
 [ApiController]
 [Authorize(Policy = AuthPolicies.ClientOnly)]
 [Route(ApiRoutes.V1 + "/me/fitness-tests")]
+[ClientFeature(ClientFeature.Progress)]
 public sealed class MyFitnessTestsController(FitnessTestService tests) : ControllerBase
 {
     [HttpGet]

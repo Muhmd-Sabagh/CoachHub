@@ -1,6 +1,6 @@
 # P15 — Calendars and dashboards
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P15 · **Branch:** `phase/p15-calendars-dashboards` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P15 · **Branch:** `phase/p15-calendars-dashboards` · **Status:** Merged (PR #17).
 **Covers:** §38, §45, §46, §48, D6, D7.
 
 ## Purpose

@@ -1,3 +1,5 @@
+using CoachHub.Domain.Settings;
+using CoachHub.API.Auth;
 using System.Security.Claims;
 using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
@@ -56,6 +58,7 @@ public sealed class ClientCalendarController(CalendarService calendar) : Control
 [ApiController]
 [Authorize(Policy = AuthPolicies.ClientOnly)]
 [Route(ApiRoutes.V1 + "/me/calendar")]
+[ClientFeature(ClientFeature.Calendar)]
 public sealed class MyCalendarController(CalendarService calendar) : ControllerBase
 {
     [HttpGet]

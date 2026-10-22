@@ -1,3 +1,4 @@
+using CoachHub.Domain.Settings;
 using System.Security.Claims;
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Routing;
@@ -17,6 +18,7 @@ namespace CoachHub.API.Me;
 [ApiController]
 [Authorize(Policy = AuthPolicies.ClientOnly)]
 [Route(ApiRoutes.V1 + "/me/forms")]
+[ClientFeature(ClientFeature.FormsAndCheckIns)]
 public sealed class MyFormsController(FormSubmissionService forms, MediaService media) : ControllerBase
 {
     [HttpGet]

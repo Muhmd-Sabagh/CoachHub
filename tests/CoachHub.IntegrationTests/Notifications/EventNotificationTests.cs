@@ -110,6 +110,12 @@ public sealed class EventNotificationTests(CoachHubSqlApiFactory factory) : ICla
         var coach = await InboxAsync(s.Coach);
         Assert.Equal($"/clients/{s.ClientId}", Assert.Single(coach, x => x.Event == NotificationEvent.SubscriptionExpired).Link);
 
+        // Expired subscriptions make forms read-only (P16); a new subscription opens them again.
+        Assert.Equal(HttpStatusCode.Forbidden, (await s.Portal.PostAsJsonAsync($"/api/v1/me/forms/{form.DefinitionId}/submissions",
+            new MyFormSubmissionInput([new AnswerInput(question.Id, JsonSerializer.SerializeToElement(7), null)], Today))).StatusCode);
+        (await s.Coach.PostAsJsonAsync($"/api/v1/clients/{s.ClientId}/subscriptions",
+            new SubscriptionInput(package.Id, Today, 1, 100, currency.Id, null, 0))).EnsureSuccessStatusCode();
+
         // The client checks in; the coach's approval notifies them.
         (await s.Portal.PostAsJsonAsync($"/api/v1/me/forms/{form.DefinitionId}/submissions", new MyFormSubmissionInput(
             [new AnswerInput(question.Id, JsonSerializer.SerializeToElement(7), null)], Today))).EnsureSuccessStatusCode();

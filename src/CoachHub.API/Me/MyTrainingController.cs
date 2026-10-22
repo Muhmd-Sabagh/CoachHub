@@ -1,3 +1,5 @@
+using CoachHub.Domain.Settings;
+using CoachHub.API.Auth;
 using System.Security.Claims;
 using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
@@ -17,6 +19,7 @@ namespace CoachHub.API.Me;
 [ApiController]
 [Authorize(Policy = AuthPolicies.ClientOnly)]
 [Route(ApiRoutes.V1 + "/me/training")]
+[ClientFeature(ClientFeature.Training)]
 public sealed class MyTrainingController(WorkoutTrackingService tracking, ExerciseService exercises) : ControllerBase
 {
     /// <summary>"Today's Workout": the workout in progress, the plan's rotation with the suggested day, and the week.</summary>

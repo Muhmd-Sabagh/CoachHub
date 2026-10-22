@@ -158,3 +158,18 @@ internal static class BrandDefaults
     public const string PrimaryColor = "#465fff";
     public const string SecondaryColor = "#12b76a";
 }
+
+/// <summary>One access rule (§57): a feature's access for a subscription status other than Active.</summary>
+public sealed record SubscriptionAccessRuleItem(
+    CoachHub.Domain.Clients.SubscriptionStatus Status,
+    ClientFeature Feature,
+    FeatureAccess Access,
+    bool IsDefault = false);
+
+/// <summary>
+/// The subscription settings (§47, §57): duration presets in months, and access per status and feature. The
+/// response lists every cell, marking those that use the default.
+/// </summary>
+public sealed record SubscriptionSettingsResponse(IReadOnlyList<int> DurationPresets, IReadOnlyList<SubscriptionAccessRuleItem> Rules);
+
+public sealed record SubscriptionSettingsInput(IReadOnlyList<int> DurationPresets, IReadOnlyList<SubscriptionAccessRuleItem> Rules);

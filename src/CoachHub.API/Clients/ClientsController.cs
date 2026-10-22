@@ -123,4 +123,13 @@ public sealed class ClientsController(
         await subscriptionService.DeleteAsync(clientId, id, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>Pauses the subscription (§57 Suspended); the end date stays, and the access rules apply.</summary>
+    [HttpPost("{clientId:guid}/subscriptions/{id:guid}/suspend")]
+    public Task<SubscriptionResponse> SuspendSubscription(Guid clientId, Guid id, SubscriptionSuspendInput input, CancellationToken cancellationToken) =>
+        subscriptionService.SuspendAsync(clientId, id, input, cancellationToken);
+
+    [HttpPost("{clientId:guid}/subscriptions/{id:guid}/resume")]
+    public Task<SubscriptionResponse> ResumeSubscription(Guid clientId, Guid id, CancellationToken cancellationToken) =>
+        subscriptionService.ResumeAsync(clientId, id, cancellationToken);
 }

@@ -53,18 +53,8 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         if (query.JoinDateTo.HasValue)
             clients = clients.Where(client => client.JoinDate <= query.JoinDateTo.Value);
         if (query.Status is { } status) clients = WithStatus(clients, status, today);
-        if (query.SubscriptionStatus.HasValue)
-        {
-            clients = query.SubscriptionStatus.Value switch
-            {
-                SubscriptionStatus.Active => clients.Where(client => client.Subscriptions.Any(
-                    subscription => subscription.StartDate <= today && subscription.EndDate > today)),
-                SubscriptionStatus.Expired => clients.Where(client =>
-                    client.Subscriptions.Any() && !client.Subscriptions.Any(
-                        subscription => subscription.StartDate <= today && subscription.EndDate > today)),
-                _ => clients.Where(client => !client.Subscriptions.Any())
-            };
-        }
+        if (query.SubscriptionStatus is { } subscriptionStatus)
+            clients = WithSubscriptionStatus(clients, subscriptionStatus, today);
 
         IOrderedQueryable<Client> sorted = query.SortBy switch
         {
@@ -118,6 +108,38 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
     /// otherwise Inactive, SubscriptionExpired, NeedsReview (a plan or a check-in awaits review), CheckInOverdue (P12)
     /// or OnTrack.
     /// </summary>
+    /// <summary>
+    /// <see cref="Client.GetSubscriptionStatus"/> in SQL (P16): Active (started, not ended, not suspended), else
+    /// Suspended (not ended, paused), else Pending (not started), else Expired; Inactive without subscriptions.
+    /// </summary>
+    internal static IQueryable<Client> WithSubscriptionStatus(IQueryable<Client> clients, SubscriptionStatus status, DateOnly today) => status switch
+    {
+        SubscriptionStatus.Active => clients.Where(client => client.Subscriptions.Any(s =>
+            s.StartDate <= today && s.EndDate > today && s.SuspendedAt == null)),
+        SubscriptionStatus.Suspended => clients.Where(client =>
+            !client.Subscriptions.Any(s => s.StartDate <= today && s.EndDate > today && s.SuspendedAt == null) &&
+            client.Subscriptions.Any(s => s.EndDate > today && s.SuspendedAt != null)),
+        SubscriptionStatus.Pending => clients.Where(client =>
+            !client.Subscriptions.Any(s => s.EndDate > today && (s.SuspendedAt != null || s.StartDate <= today)) &&
+            client.Subscriptions.Any(s => s.StartDate > today)),
+        SubscriptionStatus.Expired => clients.Where(client =>
+            client.Subscriptions.Any() && !client.Subscriptions.Any(s => s.EndDate > today)),
+        _ => clients.Where(client => !client.Subscriptions.Any())
+    };
+
+    public async Task<IReadOnlyDictionary<Guid, SubscriptionPaymentStatus>> SubscriptionPaymentsAsync(
+        IReadOnlyCollection<Guid> subscriptionIds, CancellationToken cancellationToken)
+    {
+        if (subscriptionIds.Count == 0) return new Dictionary<Guid, SubscriptionPaymentStatus>();
+        var invoices = await dbContext.Set<Invoice>().AsNoTracking()
+            .Where(invoice => invoice.SubscriptionId != null && subscriptionIds.Contains(invoice.SubscriptionId.Value))
+            .Select(invoice => new { SubscriptionId = invoice.SubscriptionId!.Value, invoice.Total, invoice.Paid, invoice.Status })
+            .ToArrayAsync(cancellationToken);
+        var bySubscription = invoices.ToLookup(x => x.SubscriptionId);
+        return subscriptionIds.Distinct().ToDictionary(id => id,
+            id => SubscriptionPayments.Status(bySubscription[id].Select(x => (x.Total, x.Paid, x.Status))));
+    }
+
     internal static IQueryable<Client> WithStatus(IQueryable<Client> clients, ClientStatus status, DateOnly today) => status switch
     {
         ClientStatus.Inactive => clients.Where(client =>
@@ -128,13 +150,13 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
             (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
                 ? client.StatusOverride == status
                 : client.IsActive && client.Subscriptions.Any() &&
-                  !client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)),
+                  !client.Subscriptions.Any(subscription => subscription.EndDate > today)),
         ClientStatus.NeedsReview => clients.Where(client =>
             (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
                 ? client.StatusOverride == status
                 : client.IsActive &&
                   (!client.Subscriptions.Any() ||
-                   client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)) &&
+                   client.Subscriptions.Any(subscription => subscription.EndDate > today)) &&
                   (client.DietStatus == PlanWorkflowStatus.ReviewRequired || client.WorkoutStatus == PlanWorkflowStatus.ReviewRequired ||
                    client.CheckInAwaitingReview)),
         ClientStatus.CheckInOverdue => clients.Where(client =>
@@ -142,7 +164,7 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 ? client.StatusOverride == status
                 : client.IsActive &&
                   (!client.Subscriptions.Any() ||
-                   client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)) &&
+                   client.Subscriptions.Any(subscription => subscription.EndDate > today)) &&
                   client.DietStatus != PlanWorkflowStatus.ReviewRequired && client.WorkoutStatus != PlanWorkflowStatus.ReviewRequired &&
                   !client.CheckInAwaitingReview && client.CheckInDueOn != null && client.CheckInDueOn < today),
         ClientStatus.OnTrack => clients.Where(client =>
@@ -150,7 +172,7 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 ? client.StatusOverride == status
                 : client.IsActive &&
                   (!client.Subscriptions.Any() ||
-                   client.Subscriptions.Any(subscription => subscription.StartDate <= today && subscription.EndDate > today)) &&
+                   client.Subscriptions.Any(subscription => subscription.EndDate > today)) &&
                   client.DietStatus != PlanWorkflowStatus.ReviewRequired && client.WorkoutStatus != PlanWorkflowStatus.ReviewRequired &&
                   !client.CheckInAwaitingReview && (client.CheckInDueOn == null || client.CheckInDueOn >= today)),
         _ => clients.Where(client =>

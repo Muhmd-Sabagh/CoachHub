@@ -25,12 +25,13 @@ public sealed class SubscriptionStatusTests
     }
 
     [Fact]
-    public void Client_with_only_past_or_future_subscription_is_expired_by_business_rule()
+    public void Client_with_only_a_future_subscription_is_pending()
     {
+        // P16 (§57): a subscription that has not started is Pending, no longer Expired.
         var client = CreateClient();
         client.AddSubscription(CreateSubscription(client.Id, Today.AddMonths(1), 1));
 
-        Assert.Equal(SubscriptionStatus.Expired, client.GetSubscriptionStatus(Today));
+        Assert.Equal(SubscriptionStatus.Pending, client.GetSubscriptionStatus(Today));
     }
 
     private static readonly Guid CoachId = Guid.NewGuid();

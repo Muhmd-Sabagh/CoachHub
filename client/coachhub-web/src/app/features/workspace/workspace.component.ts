@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { SubscriptionAccessComponent } from './subscription-access.component';
 import { Observable, finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { BrandingService } from '../../core/branding/branding.service';
@@ -15,7 +16,7 @@ import {
  * Branding (§63) and settings (§49). A coach edits their own brand and calculation defaults; an
  * Administrator edits the platform brand and settings, or any coach's brand, hosts and defaults.
  */
-@Component({ selector: 'app-workspace', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './workspace.component.html' })
+@Component({ selector: 'app-workspace', standalone: true, imports: [CommonModule, FormsModule, SubscriptionAccessComponent], templateUrl: './workspace.component.html' })
 export class WorkspaceComponent implements OnInit {
   readonly isAdmin: boolean;
   readonly images: { kind: BrandImage; label: string }[] = [

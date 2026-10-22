@@ -69,6 +69,11 @@ export interface Subscription {
   renewalCount: number;
   isActive: boolean;
   renewals: SubscriptionRenewal[];
+  /** P16 (§57): Active, Expired, Suspended or Pending, and the payment status from its invoices. */
+  status: 'Active' | 'Expired' | 'Suspended' | 'Pending';
+  paymentStatus: 'NoInvoice' | 'Unpaid' | 'PartiallyPaid' | 'Paid' | 'Refunded';
+  suspendedAt: string | null;
+  suspensionReason: string | null;
 }
 export interface ClientDetail {
   client: Client;
@@ -130,5 +135,16 @@ export class ClientsService {
   }
   deleteSubscription(clientId: string, id: string) {
     return this.http.delete<void>(`${this.url}/${clientId}/subscriptions/${id}`);
+  }
+  /** Pauses a subscription (§57); the end date does not move. */
+  suspendSubscription(clientId: string, id: string, reason: string) {
+    return this.http.post<Subscription>(`${this.url}/${clientId}/subscriptions/${id}/suspend`, { reason });
+  }
+  resumeSubscription(clientId: string, id: string) {
+    return this.http.post<Subscription>(`${this.url}/${clientId}/subscriptions/${id}/resume`, null);
+  }
+  /** The subscription lengths offered as quick choices (§47). */
+  durationPresets() {
+    return this.http.get<{ durationPresets: number[] }>(`${environment.apiBaseUrl}/settings/subscriptions`);
   }
 }

@@ -1517,3 +1517,7 @@ textarea:focus {
 .activity-bars { display: flex; align-items: flex-end; gap: 3px; height: 96px; margin: 8px 0 12px; }
 .activity-bars span { flex: 1; min-height: 2px; border-radius: 3px 3px 0 0; background: var(--brand); }
 @media (max-width: 760px) { .report-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* P16: subscription status details and duration presets. */
+.block { display: block; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }

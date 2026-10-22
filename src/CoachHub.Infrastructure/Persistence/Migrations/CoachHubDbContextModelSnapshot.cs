@@ -1307,6 +1307,13 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
+                    b.Property<DateTimeOffset?>("SuspendedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SuspensionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CoachId");
@@ -3584,6 +3591,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
 
+                    b.Property<string>("DurationPresetList")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<bool>("EmailNotificationsEnabled")
                         .HasColumnType("bit");
 
@@ -3605,6 +3617,37 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PlatformSettings", (string)null);
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Settings.SubscriptionAccessRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Access")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Feature")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("PlatformSettingsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlatformSettingsId", "Status", "Feature")
+                        .IsUnique();
+
+                    b.ToTable("SubscriptionAccessRules", (string)null);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Training.Exercise", b =>
@@ -5505,6 +5548,15 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CoachHub.Domain.Settings.SubscriptionAccessRule", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Settings.PlatformSettings", null)
+                        .WithMany("AccessRules")
+                        .HasForeignKey("PlatformSettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CoachHub.Domain.Training.Exercise", b =>
                 {
                     b.HasOne("CoachHub.Domain.Coaches.Coach", null)
@@ -5823,6 +5875,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoachHub.Domain.Nutrition.FoodItem", b =>
                 {
                     b.Navigation("Units");
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.Settings.PlatformSettings", b =>
+                {
+                    b.Navigation("AccessRules");
                 });
 
             modelBuilder.Entity("CoachHub.Domain.Training.Exercise", b =>

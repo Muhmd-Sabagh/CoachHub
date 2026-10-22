@@ -99,6 +99,7 @@ public sealed class SubscriptionConfiguration : IEntityTypeConfiguration<Subscri
         builder.ToTable("Subscriptions");
         builder.HasKey(subscription => subscription.Id);
         builder.Property(subscription => subscription.Price).HasPrecision(18, 2).IsRequired();
+        builder.Property(subscription => subscription.SuspensionReason).HasMaxLength(Subscription.MaximumReasonLength);
         builder.HasIndex(subscription => new
         {
             subscription.ClientId,

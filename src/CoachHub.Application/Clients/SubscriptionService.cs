@@ -37,7 +37,7 @@ public sealed class SubscriptionService(
             input.PaymentAccountId,
             input.RenewalCount);
         await repository.AddSubscriptionAsync(subscription, cancellationToken);
-        return Map(subscription, Today());
+        return await MapAsync(subscription, cancellationToken);
     }
 
     public async Task<SubscriptionResponse> UpdateAsync(
@@ -68,7 +68,7 @@ public sealed class SubscriptionService(
             input.PaymentAccountId,
             input.RenewalCount);
         await repository.SaveChangesAsync(cancellationToken);
-        return Map(subscription, Today());
+        return await MapAsync(subscription, cancellationToken);
     }
 
     public async Task<SubscriptionResponse> RenewAsync(
@@ -92,7 +92,45 @@ public sealed class SubscriptionService(
             input.PaymentAccountId,
             timeProvider.GetUtcNow());
         await repository.AddRenewalAsync(renewal, cancellationToken);
-        return Map(subscription, Today());
+        return await MapAsync(subscription, cancellationToken);
+    }
+
+    /// <summary>Pauses the subscription (§57 Suspended); its end date does not move, and no data is touched.</summary>
+    public async Task<SubscriptionResponse> SuspendAsync(Guid clientId, Guid id, SubscriptionSuspendInput input, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        var subscription = await FindRequiredAsync(clientId, id, cancellationToken);
+        try
+        {
+            DomainValidation.Run(() => subscription.Suspend(input.Reason, Today(), timeProvider.GetUtcNow()), "reason");
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new ConflictException(exception.Message);
+        }
+        await repository.SaveChangesAsync(cancellationToken);
+        return await MapAsync(subscription, cancellationToken);
+    }
+
+    public async Task<SubscriptionResponse> ResumeAsync(Guid clientId, Guid id, CancellationToken cancellationToken)
+    {
+        var subscription = await FindRequiredAsync(clientId, id, cancellationToken);
+        try
+        {
+            subscription.Resume();
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new ConflictException(exception.Message);
+        }
+        await repository.SaveChangesAsync(cancellationToken);
+        return await MapAsync(subscription, cancellationToken);
+    }
+
+    private async Task<SubscriptionResponse> MapAsync(Subscription subscription, CancellationToken cancellationToken)
+    {
+        var payments = await repository.SubscriptionPaymentsAsync([subscription.Id], cancellationToken);
+        return Map(subscription, Today(), payments.GetValueOrDefault(subscription.Id, SubscriptionPaymentStatus.NoInvoice));
     }
 
     public async Task DeleteAsync(Guid clientId, Guid id, CancellationToken cancellationToken)
@@ -106,7 +144,7 @@ public sealed class SubscriptionService(
         await repository.DeleteSubscriptionAsync(subscription, cancellationToken);
     }
 
-    internal static SubscriptionResponse Map(Subscription subscription, DateOnly today) => new(
+    internal static SubscriptionResponse Map(Subscription subscription, DateOnly today, SubscriptionPaymentStatus payment) => new(
         subscription.Id,
         subscription.ClientId,
         subscription.PackageId,
@@ -130,7 +168,11 @@ public sealed class SubscriptionService(
                 renewal.CurrencyId,
                 renewal.PaymentAccountId,
                 renewal.RecordedAt))
-            .ToArray());
+            .ToArray(),
+        subscription.StatusOn(today),
+        payment,
+        subscription.SuspendedAt,
+        subscription.SuspensionReason);
 
     private async Task<Subscription> FindRequiredAsync(
         Guid clientId,

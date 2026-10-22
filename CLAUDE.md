@@ -142,14 +142,18 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Calendar entries are derived on read (`CalendarService`): the workout rotation on the coach's `TrainingDays` (`TrainingCalendar`, pure), check-in due dates from `CheckInSchedule`, plan start and end dates, plus `CalendarEvent`s. Only coaches create events; clients never see follow-ups or events not shared with them.
   - Revenue (D6) is settled payments minus refunds recorded in the period, per currency (`RevenueQuery` rows, `RevenueCalculator`). Every dashboard and report uses it; never report subscription prices as revenue.
   - The coach dashboard's status counts reuse `ClientRepository.WithStatus`, so they match the client list filter.
+- **Subscriptions and access control (§47, §57)** — implemented in P16; see `docs/product/phases/P16_SUBSCRIPTION_ACCESS.md`.
+  - `Subscription.StatusOn` and `Client.GetSubscriptionStatus` (Active, Suspended, Pending, Expired, else Inactive) have an SQL twin, `ClientRepository.WithSubscriptionStatus`; keep them identical. Payment status comes from the linked invoices (`SubscriptionPayments`).
+  - Every client controller declares its `[ClientFeature]`. The `ClientOnly` policy carries `SubscriptionAccessRequirement`: reads need Full or Read-only access, writes need Full, from `PlatformSettings.AccessFor` (defaults in `SubscriptionAccessDefaults`). New client endpoints must declare a feature unless they must never be restricted (account, notifications, access summary).
+  - Access rules restrict; they never delete or hide data permanently.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P15. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P16. Known gaps against REQUIREMENTS.md:
 
-- no reports, data export or subscription access rules yet (tracking exists since P8–P11, check-ins since P12, fitness tests since P13, chat, notifications and shared files since P14, calendars and dashboards since P15).
+- no reports or data export yet (tracking exists since P8–P11, check-ins since P12, fitness tests since P13, chat, notifications and shared files since P14, calendars and dashboards since P15, subscription access rules since P16).
 
 Treat these as planned rework, not conventions to preserve.
 
