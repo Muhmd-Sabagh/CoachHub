@@ -93,6 +93,12 @@ The owner confirmed these readings of the source text on 2026-10-12. They are bi
 - **§2** asks for "Username / Password or Email / Password". Both login identifiers are supported.
 - **§47** lists 1/3/6/12-month plans. These are defaults; durations stay configurable.
 
+The owner settled these on 2026-10-22. They are binding too:
+
+- **§2 "Role-based permissions" and §49 "Roles / Permissions".** For this release the roles are fixed: Administrator, Coach and Client. There are no configurable roles or permissions.
+- **§62 "unless the Admin grants permission".** There is no cross-coach access. A coach never sees another coach's clients or their data, and the Administrator cannot grant it. Moving a client to another coach remains a transfer (§56).
+- **§1, §49 Language.** Every screen is bilingual (English and Arabic, right to left). Arabic text uses Western digits (0–9). The terms are in `docs/design/ARABIC_GLOSSARY.md`.
+
 ---
 
 # Requirements
@@ -980,7 +986,7 @@ Unnecessary data duplication must be avoided, with clear IDs and relationships b
 ## 62. Data Ownership & Isolation
 
 - A client cannot access another client's data.
-- A coach cannot access another coach's clients unless the Admin grants permission.
+- A coach cannot access another coach's clients unless the Admin grants permission. (Settled 2026-10-22: no such grant exists; see *Confirmed clarifications*.)
 - The Admin has full administrative permissions.
 - Files, photos, and progress data are protected by the same permission system.
 - Every API endpoint must verify the user's permissions before returning data.

@@ -418,6 +418,8 @@ Removes what the legacy migration (phases 0–21) and the product phases left be
 
 ### P19: Localisation foundation and the client area in Arabic (L), covering §1, §49 (Language), §53, §63
 
+**Delivered 2026-10-23** (see `docs/product/phases/P19_LOCALISATION.md`).
+
 The client area comes first because clients mostly use their phones (§53).
 
 - **Translation structure.**
@@ -551,4 +553,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22. The next phase is **P19** on branch `phase/p19-localisation`, beginning with its own short plan-mode refinement.
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. The next phase is **P20** on branch `phase/p20-completion`, beginning with its own short plan-mode refinement.
