@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MyAccessService, restrictionText } from '../client-area/access-banner.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ClientsService } from '../clients/clients.service';
 import { SubscriptionSettingsService, parsePresets } from './subscription-access.component';
 
@@ -40,10 +41,17 @@ describe('Subscriptions and access control (§47, §57)', () => {
   });
 
   it('describes the restrictions and reads presets', () => {
-    expect(restrictionText({ subscriptionStatus: 'Expired', startsOn: null, endsOn: null, features: [
-      { feature: 'Nutrition', access: 'ReadOnly' }, { feature: 'Chat', access: 'Blocked' }, { feature: 'Files', access: 'Full' },
-    ] })).toBe('Read-only: Nutrition. Not available: Chat.');
-    expect(restrictionText({ subscriptionStatus: 'Active', startsOn: null, endsOn: null, features: [{ feature: 'Chat', access: 'Full' }] })).toBeNull();
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const expired = { subscriptionStatus: 'Expired' as const, startsOn: null, endsOn: null, features: [
+      { feature: 'Nutrition' as const, access: 'ReadOnly' as const }, { feature: 'Chat' as const, access: 'Blocked' as const },
+      { feature: 'Training' as const, access: 'ReadOnly' as const }, { feature: 'Files' as const, access: 'Full' as const },
+    ] };
+    expect(restrictionText(expired, i18n)).toBe('Read-only: Nutrition, Training. Not available: Chat.');
+    i18n.setLanguage('ar');
+    expect(restrictionText(expired, i18n)).toBe('للقراءة فقط: التغذية، التمارين. غير متاح: المحادثة.');
+    i18n.setLanguage('en');
+    expect(restrictionText({ subscriptionStatus: 'Active', startsOn: null, endsOn: null, features: [{ feature: 'Chat', access: 'Full' }] }, i18n)).toBeNull();
     expect(parsePresets(' 1, 3,6 ,12 ')).toEqual([1, 3, 6, 12]);
   });
 });

@@ -96,7 +96,7 @@ public static partial class Messages
     }
 
     /// <summary>Code prefixes of entries used only through <see cref="Text"/>.</summary>
-    public static readonly string[] RenderedOnly = ["notice.", "access."];
+    public static readonly string[] RenderedOnly = ["notice.", "access.", "calendar.restDay", "calendar.checkIn", "calendar.diet", "calendar.workout"];
 
     private static Regex Pattern(string template)
     {

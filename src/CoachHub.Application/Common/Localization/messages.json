@@ -153,6 +153,13 @@
   "notifications.unknownEvent": { "en": "Unknown event.", "ar": "حدث غير معروف." },
 
   "calendar.rangeDays": { "en": "A calendar covers at most {0} days.", "ar": "لا يغطي التقويم أكثر من {0} يومًا." },
+  "calendar.restDay": { "en": "Rest day", "ar": "يوم راحة" },
+  "calendar.checkIn": { "en": "Check-in", "ar": "متابعة" },
+  "calendar.checkInDue": { "en": "Check-in due", "ar": "موعد متابعة" },
+  "calendar.dietStarts": { "en": "Diet plan starts: {0}", "ar": "بداية النظام الغذائي: {0}" },
+  "calendar.dietEnds": { "en": "Diet plan ends: {0}", "ar": "نهاية النظام الغذائي: {0}" },
+  "calendar.workoutStarts": { "en": "Workout plan starts: {0}", "ar": "بداية خطة التمارين: {0}" },
+  "calendar.workoutEnds": { "en": "Workout plan ends: {0}", "ar": "نهاية خطة التمارين: {0}" },
   "reports.choosePeriod": { "en": "Choose a week or a month.", "ar": "اختر أسبوعًا أو شهرًا." },
 
   "access.readOnly": { "en": "{0} {1} is read-only: your history stays visible, but nothing new can be added.", "ar": "{0} أصبح قسم {1} للقراءة فقط: يبقى سجلك ظاهرًا، لكن لا يمكن إضافة جديد." },

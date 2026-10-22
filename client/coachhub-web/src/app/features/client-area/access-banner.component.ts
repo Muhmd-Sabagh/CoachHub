@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, Injectable, OnInit, computed, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { ClientFeature, FeatureAccess, featureLabels } from '../settings/subscription-access.component';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { enumLabelKey } from '../../core/i18n/enum-labels';
+import { ClientFeature, FeatureAccess } from '../settings/subscription-access.component';
 
 export type SubscriptionStatus = 'Inactive' | 'Active' | 'Expired' | 'Suspended' | 'Pending';
 export interface MyAccess {
@@ -19,11 +20,18 @@ export class MyAccessService {
   get() { return this.http.get<MyAccess>(`${environment.apiBaseUrl}/me/access`); }
 }
 
-/** "Read-only: Nutrition, Chat"; null when everything is open. */
-export function restrictionText(access: MyAccess): string | null {
-  const readOnly = access.features.filter(x => x.access === 'ReadOnly').map(x => featureLabels[x.feature]);
-  const blocked = access.features.filter(x => x.access === 'Blocked').map(x => featureLabels[x.feature]);
-  const parts = [readOnly.length ? `Read-only: ${readOnly.join(', ')}` : '', blocked.length ? `Not available: ${blocked.join(', ')}` : ''].filter(Boolean);
+/** "Read-only: Nutrition, Chat", in the interface language; null when everything is open. */
+export function restrictionText(access: MyAccess, i18n: I18nService): string | null {
+  const separator = i18n.language() === 'ar' ? '، ' : ', ';
+  const names = (level: FeatureAccess) => access.features.filter(x => x.access === level)
+    .map(x => { const key = enumLabelKey('clientFeature', x.feature); return key ? i18n.translate(key) : x.feature; })
+    .join(separator);
+  const readOnly = names('ReadOnly');
+  const blocked = names('Blocked');
+  const parts = [
+    readOnly ? i18n.translate('client.access.readOnly', { features: readOnly }) : '',
+    blocked ? i18n.translate('client.access.blocked', { features: blocked }) : '',
+  ].filter(Boolean);
   return parts.length ? parts.join('. ') + '.' : null;
 }
 
@@ -34,12 +42,11 @@ export function restrictionText(access: MyAccess): string | null {
 @Component({
   selector: 'app-access-banner',
   standalone: true,
-  imports: [CommonModule],
   template: `
     @if (message(); as text) {
       <div class="access-banner" role="status">
         <strong>{{ headline() }}</strong>
-        <span>{{ text }} Your data is kept; contact your coach to renew.</span>
+        <span>{{ text }} {{ kept() }}</span>
       </div>
     }
   `,
@@ -50,18 +57,20 @@ export function restrictionText(access: MyAccess): string | null {
 })
 export class AccessBannerComponent implements OnInit {
   readonly access = signal<MyAccess | null>(null);
-  readonly message = computed(() => (this.access() ? restrictionText(this.access()!) : null));
+  readonly message = computed(() => { const access = this.access(); return access ? restrictionText(access, this.i18n) : null; });
+  readonly kept = computed(() => this.i18n.translate('client.access.kept'));
   readonly headline = computed(() => {
     const access = this.access();
+    const date = (value: string | null | undefined) => this.i18n.formatDate(value, 'd MMMM y');
     switch (access?.subscriptionStatus) {
-      case 'Expired': return `Your subscription ended${access.endsOn ? ' on ' + access.endsOn : ''}.`;
-      case 'Suspended': return 'Your subscription is suspended.';
-      case 'Pending': return `Your subscription starts${access.startsOn ? ' on ' + access.startsOn : ' soon'}.`;
-      default: return 'You have no active subscription.';
+      case 'Expired': return access.endsOn ? this.i18n.translate('client.access.ended', { date: date(access.endsOn) }) : this.i18n.translate('client.access.endedNoDate');
+      case 'Suspended': return this.i18n.translate('client.access.suspended');
+      case 'Pending': return access.startsOn ? this.i18n.translate('client.access.starts', { date: date(access.startsOn) }) : this.i18n.translate('client.access.startsSoon');
+      default: return this.i18n.translate('client.access.none');
     }
   });
 
-  constructor(private readonly api: MyAccessService) {}
+  constructor(private readonly api: MyAccessService, private readonly i18n: I18nService) {}
 
   ngOnInit(): void { this.api.get().subscribe({ next: x => this.access.set(x), error: () => undefined }); }
 }

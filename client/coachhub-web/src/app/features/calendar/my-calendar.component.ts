@@ -1,6 +1,6 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { CalendarMonthComponent } from './calendar-month.component';
 import { CalendarEntry, CalendarService, monthGrid } from './calendar.service';
@@ -9,13 +9,13 @@ import { CalendarEntry, CalendarService, monthGrid } from './calendar.service';
 @Component({
   selector: 'app-my-calendar',
   standalone: true,
-  imports: [CommonModule, CalendarMonthComponent],
+  imports: [CalendarMonthComponent, TranslatePipe],
   template: `
-    <section class="dashboard-hero"><div><p class="eyebrow">Calendar</p><h1>My month</h1>
-      <p>Your training days, check-ins, plans and events from your coach.</p></div></section>
+    <section class="dashboard-hero"><div><p class="eyebrow">{{ 'calendar.eyebrow' | translate }}</p><h1>{{ 'calendar.myMonth' | translate }}</h1>
+      <p>{{ 'calendar.intro' | translate }}</p></div></section>
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
-    @if (!training() && loaded()) { <p class="muted" role="status">Your coach has not set your training days yet, so workouts are not on the calendar.</p> }
-    @else if (loaded() && !hasWorkouts()) { <p class="muted" role="status">No workouts this month: they appear here while you have a workout plan from your coach.</p> }
+    @if (!training() && loaded()) { <p class="muted" role="status">{{ 'calendar.noTrainingDays' | translate }}</p> }
+    @else if (loaded() && !hasWorkouts()) { <p class="muted" role="status">{{ 'calendar.noWorkouts' | translate }}</p> }
     <section class="card workbench">
       <app-calendar-month [month]="month()" [entries]="entries()" (monthChange)="go($event)" (select)="open($event)" />
     </section>

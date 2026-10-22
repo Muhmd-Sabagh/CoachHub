@@ -44,7 +44,7 @@ public sealed partial class MessagesTests
         Assert.NotEmpty(used);
         var computed = Enum.GetNames<ClientFeature>().Select(name => $"access.feature.{name}")
             .Concat(new[] { "Expired", "Suspended", "Pending", "Inactive" }.Select(name => $"access.status.{name}"))
-            .Concat(new[] { "diet", "workout" }.SelectMany(noun => new[] { $"notice.newVersion.{noun}", $"notice.updated.{noun}" }))
+            .Concat(new[] { "diet", "workout" }.SelectMany(noun => new[] { $"notice.newVersion.{noun}", $"notice.updated.{noun}", $"calendar.{noun}Starts", $"calendar.{noun}Ends" }))
             .Concat(new[] { "notice.checkInApproved", "notice.checkInChanges", "notice.checkInReply" }.SelectMany(code => new[] { code + ".title", code + ".body" }));
         var missing = used.Concat(computed).Where(code => !Messages.Entries.ContainsKey(code)).ToArray();
         Assert.True(missing.Length == 0, "Missing catalog entries: " + string.Join(", ", missing));

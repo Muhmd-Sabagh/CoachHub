@@ -26,6 +26,10 @@ export const enumValues = {
   calendarEntryKind: ['WorkoutDay', 'RestDay', 'CheckInDue', 'CheckIn', 'ProgramStart', 'ProgramEnd', 'Event', 'FollowUp'],
   planType: ['Diet', 'Workout'],
   difficulty: ['Beginner', 'Intermediate', 'Advanced'],
+  invoiceStatus: ['Draft', 'Issued', 'PartiallyPaid', 'Paid', 'Voided', 'Refunded'],
+  planLanguage: ['English', 'Arabic'],
+  checkInDueState: ['Upcoming', 'Pending', 'Overdue'],
+  weekday: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
 } as const;
 
 export type EnumName = keyof typeof enumValues;
