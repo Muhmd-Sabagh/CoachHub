@@ -389,17 +389,16 @@ Added 2026-10-22. P0–P18 delivered every requirement section, but comparing th
 
 Removes what the legacy migration (phases 0–21) and the product phases left behind, before P19 starts translating screens. The rule for this phase: **no behaviour a user relies on changes** unless the owner confirms it at phase start; everything else is removal, renaming or consolidation, proven by the existing tests.
 
-- **Legacy plan workflow status.** `Client.DietStatus` / `WorkoutStatus` (`PlanWorkflowStatus`) are still edited and filtered on, although P5's computed `ClientStatus` and P6's plan versions replaced them. Remove them from the domain, the API, the client list filters and the UI, with a migration. *Owner to confirm at phase start* (recommended: remove).
+- **Legacy plan workflow status.** `Client.DietStatus` / `WorkoutStatus` (`PlanWorkflowStatus`) are still edited and filtered on, although P5's computed `ClientStatus` and P6's plan versions replaced them. Remove them from the domain, the API, the client list filters and the UI, with a migration (owner decision, 2026-10-22).
 - **Two reporting stacks.**
   - The legacy `Reporting` area (`ReportingService`, `AdvancedReportingService`, `ReportingController`, the `/operations` screen) runs beside P15's `Dashboards` and P17's `Reports`.
-  - Move anything still needed into those two, keeping D6 revenue (`RevenueCalculator`) as the only money figure. Delete the rest and its translation keys.
-  - *Owner to confirm* which `/operations` figures stay.
+  - Remove the legacy stack entirely: its services, repositories, controller, the `/operations` screen and nav entry, the dashboard calls to it, its tests and its translation keys (owner decision, 2026-10-22). No figure moves across; P15's dashboards and P17's reports remain, with D6 revenue (`RevenueCalculator`) as the only money figure.
 - **Settings screens.** Branding and coach defaults live in `/workspace` ("Branding & defaults"), other settings in `/settings`. Merge them into one settings area, with sections per role.
 - **Naming.**
   - The client home is still called `client-portal`: the Angular feature and `ClientPortalController` at `/client-portal/overview`. Rename both to the client area (`client-area`, `/me/home`), and remove the `/portal` redirects.
   - Rename leftovers that still say "staff" or describe retired flows.
 - **Retired-flow leftovers (D5).** Remove dead code, settings and tests that only existed for the code-based forms. Keep the regression test proving the old anonymous routes are gone.
-- **Google Forms import.** P5 kept it, with the client matched by `ClientCode`. *Owner to confirm at phase start* whether it stays. If it does, keep `ClientCode` as the import key only. If not, remove the importer, its profiles and the field.
+- **Google Forms import and `ClientCode`.** Remove the Google Forms / Excel importer (its service, import profiles, endpoints, UI and tests) and `Client.ClientCode` everywhere it remains (client list and search, saved-plans filter, exports, PDFs), with a migration (owner decision, 2026-10-22). Submissions already imported stay readable as ordinary submissions.
 - **Dead code.**
   - **.NET:** turn on the unused-code analyzers (unused private members and parameters, unused usings), and delete what they find. Remove DI registrations without consumers.
   - **Angular:** find unused components, services, exports and translation keys with a dead-code tool (for example `knip`), and delete them.
@@ -544,4 +543,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. The next phase is **P18A** on branch `phase/p18a-cleanup`, beginning with its own short plan-mode refinement and the owner decisions it lists.
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. The next phase is **P18A** on branch `phase/p18a-cleanup`, beginning with its own short plan-mode refinement. Its owner decisions were taken on 2026-10-22.
