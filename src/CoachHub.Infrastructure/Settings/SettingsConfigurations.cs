@@ -44,6 +44,24 @@ public sealed class PlatformSettingsConfiguration : IEntityTypeConfiguration<Pla
         builder.Property(settings => settings.DefaultLanguage).HasMaxLength(5).IsRequired();
         builder.Property(settings => settings.Units).HasConversion<string>().HasMaxLength(20);
         builder.Property(settings => settings.EmailSenderName).HasMaxLength(100);
+        builder.Property(settings => settings.DurationPresetList).HasMaxLength(100).IsRequired();
+        // The access rules (P16) are read on every client request, so they always load with the settings.
+        builder.HasMany(settings => settings.AccessRules).WithOne().HasForeignKey(rule => rule.PlatformSettingsId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(settings => settings.AccessRules).AutoInclude().UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+public sealed class SubscriptionAccessRuleConfiguration : IEntityTypeConfiguration<SubscriptionAccessRule>
+{
+    public void Configure(EntityTypeBuilder<SubscriptionAccessRule> builder)
+    {
+        builder.ToTable("SubscriptionAccessRules");
+        builder.HasKey(rule => rule.Id);
+        builder.Property(rule => rule.Id).ValueGeneratedNever();
+        builder.Property(rule => rule.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(rule => rule.Feature).HasConversion<string>().HasMaxLength(30).IsRequired();
+        builder.Property(rule => rule.Access).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.HasIndex(rule => new { rule.PlatformSettingsId, rule.Status, rule.Feature }).IsUnique();
     }
 }
 

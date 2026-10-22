@@ -46,6 +46,34 @@ public sealed class SettingsService(
         return Map(target, true);
     }
 
+    /// <summary>Duration presets and access rules (§47, §57); coaches read them, the Administrator sets them.</summary>
+    public async Task<SubscriptionSettingsResponse> GetSubscriptionsAsync(CancellationToken cancellationToken) =>
+        MapSubscriptions(await PlatformAsync(cancellationToken));
+
+    /// <summary>Saves the presets and rules; a rule equal to its default is not stored, so later defaults still apply.</summary>
+    public async Task<SubscriptionSettingsResponse> UpdateSubscriptionsAsync(SubscriptionSettingsInput input, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        var stored = await settings.FindPlatformAsync(cancellationToken);
+        var target = stored ?? PlatformSettings.CreateDefault(timeProvider.GetUtcNow());
+        var rules = (input.Rules ?? []).Select(x => (x.Status, x.Feature, x.Access)).ToArray();
+        if (rules.Select(x => (x.Status, x.Feature)).Distinct().Count() != rules.Length)
+            throw new ValidationException(new Dictionary<string, string[]> { ["rules"] = ["Each status and feature has one rule."] });
+        DomainValidation.Run(() => target.SetSubscriptionRules(input.DurationPresets ?? [],
+            rules.Where(x => SubscriptionAccessDefaults.RestrictableStatuses.Contains(x.Status) ? x.Access != SubscriptionAccessDefaults.For(x.Status) : true).ToArray(),
+            timeProvider.GetUtcNow()), "rules");
+        if (stored is null) settings.Add(target);
+        await settings.SaveChangesAsync(cancellationToken);
+        return MapSubscriptions(target);
+    }
+
+    private static SubscriptionSettingsResponse MapSubscriptions(PlatformSettings platform) => new(
+        platform.DurationPresets,
+        SubscriptionAccessDefaults.RestrictableStatuses
+            .SelectMany(status => Enum.GetValues<ClientFeature>().Select(feature => new SubscriptionAccessRuleItem(status, feature,
+                platform.AccessFor(status, feature), !platform.AccessRules.Any(x => x.Status == status && x.Feature == feature))))
+            .ToArray());
+
     /// <summary>A coach reads their own defaults; an Administrator names the coach.</summary>
     public async Task<CoachSettingsResponse> GetCoachAsync(Guid? coachId, CancellationToken cancellationToken)
     {

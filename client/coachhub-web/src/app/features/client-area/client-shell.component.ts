@@ -4,6 +4,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { BrandingService, brandInitials } from '../../core/branding/branding.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { NotificationBellComponent } from '../notifications/notification-bell.component';
+import { AccessBannerComponent } from './access-banner.component';
 
 /**
  * The client area (§53): mobile first, branded with the client's coach (§63), with a bottom
@@ -12,7 +13,7 @@ import { NotificationBellComponent } from '../notifications/notification-bell.co
 @Component({
   selector: 'app-client-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, AccessBannerComponent],
   template: `
     <div class="client-shell">
       <header class="client-topbar">
@@ -25,7 +26,7 @@ import { NotificationBellComponent } from '../notifications/notification-bell.co
         <button class="language-button" type="button" (click)="i18n.toggle()">{{ i18n.language() === 'en' ? 'ع' : 'EN' }}</button>
         <button class="link-button" type="button" (click)="auth.logout()">Sign out</button>
       </header>
-      <main class="client-content"><router-outlet /></main>
+      <main class="client-content"><app-access-banner /><router-outlet /></main>
       <nav class="client-tabbar" aria-label="Client navigation">
         <a routerLink="/app" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><span aria-hidden="true">⌂</span>Home</a>
         <a routerLink="/app/training" routerLinkActive="active"><span aria-hidden="true">⚑</span>Training</a>

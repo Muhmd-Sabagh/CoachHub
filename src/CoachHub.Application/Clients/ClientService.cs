@@ -33,11 +33,13 @@ public sealed class ClientService(
     {
         var client = await FindRequiredAsync(id, cancellationToken);
         var today = Today();
+        var payments = await repository.SubscriptionPaymentsAsync(client.Subscriptions.Select(x => x.Id).ToArray(), cancellationToken);
         return new ClientDetailResponse(
             Map(client, today),
             client.Subscriptions
                 .OrderByDescending(subscription => subscription.StartDate)
-                .Select(subscription => SubscriptionService.Map(subscription, today))
+                .Select(subscription => SubscriptionService.Map(subscription, today,
+                    payments.GetValueOrDefault(subscription.Id, SubscriptionPaymentStatus.NoInvoice)))
                 .ToArray(),
             await accounts.GetAsync(client.Id, cancellationToken));
     }

@@ -333,7 +333,7 @@ Added 2026-10-21 after P10. These are issues found outside P10's scope, collecte
 - **Local release gate on Windows PowerShell 5.1.**
   - **Problem.** `scripts/Verify-Release.ps1` sets `$ErrorActionPreference = 'Stop'`. Under Windows PowerShell 5.1 the `npm warn deprecated …` lines that `npm ci` prints on stderr become terminating errors, so the gate fails locally even though CI passes (CI uses PowerShell 7).
   - **Fix.** Make native-command stderr non-fatal in the script (rely on exit codes), or require `pwsh` and say so in CLAUDE.md.
-- **Browser smoke test of P8–P15.** P8 to P15 were verified by build and tests only. Click through as Admin, Coach A, Coach B and a Client, at phone and desktop widths:
+- **Browser smoke test of P8–P16.** P8 to P16 were verified by build and tests only. Click through as Admin, Coach A, Coach B and a Client, at phone and desktop widths:
   - the food diary and nutrition analytics;
   - the exercise library and the structured workout builder;
   - workout logging, the rest timer, PRs and training analytics;
@@ -341,7 +341,8 @@ Added 2026-10-21 after P10. These are issues found outside P10's scope, collecte
   - check-in forms with measures, schedules, the review and resubmission, and adherence;
   - the test library, assigning tests, recording results on both sides and the coach's classification;
   - chat on both sides (live delivery, files, read status, the archived chat after a transfer), shared files including video playback, and the notification bell and email preferences;
-  - the coach calendar, the client calendar (training days, rest days, check-ins, program dates, events) at phone and desktop widths, and the coach and administrator dashboards.
+  - the coach calendar, the client calendar (training days, rest days, check-ins, program dates, events) at phone and desktop widths, and the coach and administrator dashboards;
+  - subscription suspend/resume and payment status, the Administrator's access rules, and the client's banner and refused actions with an expired subscription.
 
   Record the results in the phase doc.
 - **Done when:** the screens refresh after loading without interaction, the full gate passes in both PowerShell editions, and the smoke-test findings are fixed or tracked.

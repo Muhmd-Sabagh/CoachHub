@@ -152,15 +152,16 @@ public sealed class Client : Entity, ITenantOwned
         }
         _subscriptions.Add(subscription);
     }
+    /// <summary>
+    /// The best of the client's subscriptions on a day: Active, then Suspended, Pending, Expired; Inactive without
+    /// any. <c>ClientRepository.WithSubscriptionStatus</c> computes the same in SQL.
+    /// </summary>
     public SubscriptionStatus GetSubscriptionStatus(DateOnly today)
     {
-        if (_subscriptions.Any(subscription => subscription.IsActiveOn(today)))
-        {
-            return SubscriptionStatus.Active;
-        }
-        return _subscriptions.Count > 0
-            ? SubscriptionStatus.Expired
-            : SubscriptionStatus.Inactive;
+        var statuses = _subscriptions.Select(subscription => subscription.StatusOn(today)).ToHashSet();
+        foreach (var status in new[] { SubscriptionStatus.Active, SubscriptionStatus.Suspended, SubscriptionStatus.Pending, SubscriptionStatus.Expired })
+            if (statuses.Contains(status)) return status;
+        return SubscriptionStatus.Inactive;
     }
 
     private static string Code(string value, int minimumLength, int maximumLength, string parameterName)

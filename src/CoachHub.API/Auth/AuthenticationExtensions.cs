@@ -72,9 +72,13 @@ public static class AuthenticationExtensions
         {
             options.AddPolicy(AuthPolicies.AdminOnly, policy => policy.RequireRole(AuthRoles.Administrator));
             options.AddPolicy(AuthPolicies.CoachOrAdmin, policy => policy.RequireRole(AuthRoles.Administrator, AuthRoles.Coach));
-            options.AddPolicy(AuthPolicies.ClientOnly, policy => policy.RequireRole(AuthRoles.Client));
+            // The client area also follows the subscription access rules (P16, §57).
+            options.AddPolicy(AuthPolicies.ClientOnly, policy => policy.RequireRole(AuthRoles.Client)
+                .AddRequirements(new SubscriptionAccessRequirement()));
             options.AddPolicy(AuthPolicies.AnyRole, policy => policy.RequireRole(AuthRoles.All));
         });
+        services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, SubscriptionAccessHandler>();
+        services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler, SubscriptionAccessResultHandler>();
         return services;
     }
 }

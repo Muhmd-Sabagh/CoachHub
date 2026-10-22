@@ -128,6 +128,8 @@ public sealed class ClientServiceTests
         public Task<bool> HasProtectedHistoryAsync(Client client, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task TransferAsync(Client client, Guid toCoachId, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<Subscription?> FindSubscriptionAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Subscription?>(null);
+        public Task<IReadOnlyDictionary<Guid, SubscriptionPaymentStatus>> SubscriptionPaymentsAsync(IReadOnlyCollection<Guid> subscriptionIds, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, SubscriptionPaymentStatus>>(new Dictionary<Guid, SubscriptionPaymentStatus>());
         public Task AddSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddRenewalAsync(SubscriptionRenewal renewal, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken) => Task.CompletedTask;

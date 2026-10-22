@@ -201,6 +201,7 @@
             <tr>
               <th>Package</th>
               <th>Dates</th>
+              <th>Status</th>
               <th>Price</th>
               <th>Renewals</th>
               <th></th>
@@ -211,10 +212,17 @@
               <tr>
                 <td>{{ nameOf(packages, s.packageId) }}</td>
                 <td>{{ s.startDate }} to {{ s.endDate }}</td>
+                <td><app-status-badge [value]="s.status" /><small class="block">{{ paymentLabels[s.paymentStatus] }}</small>
+                  @if (s.suspensionReason) { <small class="block muted">{{ s.suspensionReason }}</small> }</td>
                 <td>{{ s.price }} {{ nameOf(currencies, s.currencyId) }}</td>
                 <td>{{ s.renewalCount }}</td>
                 <td class="actions">
                   <button class="link-button" (click)="openRenewal(s)">Renew</button>
+                  @if (s.status === 'Suspended') {
+                    <button class="link-button" (click)="resumeSubscription(s)">Resume</button>
+                  } @else if (s.status !== 'Expired') {
+                    <button class="link-button" (click)="suspendSubscription(s)">Suspend</button>
+                  }
                   @if (!s.renewals.length) {
                     <button class="link-button" (click)="editSubscription(s)">Edit</button>
                     <button class="link-button danger" (click)="removeSubscription(s)">Delete</button>
@@ -225,7 +233,7 @@
               </tr>
               @if (s.renewals.length) {
                 <tr>
-                  <td colspan="5">
+                  <td colspan="6">
                     <div class="detail-grid">
                       @for (renewal of s.renewals; track renewal.id) {
                         <div>
@@ -244,7 +252,7 @@
             }
             @if (!detail.subscriptions.length) {
               <tr>
-                <td colspan="5" class="table-message">No subscriptions yet.</td>
+                <td colspan="6" class="table-message">No subscriptions yet.</td>
               </tr>
             }
           </tbody>
@@ -278,7 +286,8 @@
             type="number"
             min="1"
             name="duration"
-            [(ngModel)]="subscription.durationMonths" /></label
+            [(ngModel)]="subscription.durationMonths" />
+          <span class="presets">@for (m of durationPresets; track m) { <button type="button" class="link-button" (click)="subscription.durationMonths = m">{{ m }} mo</button> }</span></label
         ><label
           ><span>Price *</span
           ><input type="number" min="0" name="price" [(ngModel)]="subscription.price" /></label

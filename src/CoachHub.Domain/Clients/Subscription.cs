@@ -19,7 +19,12 @@ public sealed class Subscription : Entity, ITenantOwned
     public Guid CurrencyId { get; private set; }
     public Guid? PaymentAccountId { get; private set; }
     public int RenewalCount { get; private set; }
+    /// <summary>When the coach paused the subscription (§57 Suspended); null when it runs.</summary>
+    public DateTimeOffset? SuspendedAt { get; private set; }
+    public string? SuspensionReason { get; private set; }
     public IReadOnlyCollection<SubscriptionRenewal> Renewals => _renewals;
+
+    public const int MaximumReasonLength = 500;
 
     public static Subscription Create(
         Guid coachId,
@@ -103,5 +108,32 @@ public sealed class Subscription : Entity, ITenantOwned
         return renewal;
     }
 
-    public bool IsActiveOn(DateOnly date) => date >= StartDate && date < EndDate;
+    /// <summary>Running on the day: started, not ended and not suspended.</summary>
+    public bool IsActiveOn(DateOnly date) => StatusOn(date) == SubscriptionStatus.Active;
+
+    /// <summary>The subscription's own status on a day; see <see cref="SubscriptionStatus"/>.</summary>
+    public SubscriptionStatus StatusOn(DateOnly date) =>
+        date >= EndDate ? SubscriptionStatus.Expired
+        : SuspendedAt is not null ? SubscriptionStatus.Suspended
+        : date < StartDate ? SubscriptionStatus.Pending
+        : SubscriptionStatus.Active;
+
+    /// <summary>Pauses the subscription by hand (owner decision 2026-10-22: the end date does not move).</summary>
+    public void Suspend(string reason, DateOnly today, DateTimeOffset now)
+    {
+        if (StatusOn(today) == SubscriptionStatus.Expired) throw new InvalidOperationException("An ended subscription cannot be suspended.");
+        if (SuspendedAt is not null) throw new InvalidOperationException("The subscription is already suspended.");
+        if (string.IsNullOrWhiteSpace(reason)) throw new ArgumentException("Give a reason.", nameof(reason));
+        var text = reason.Trim();
+        if (text.Length > MaximumReasonLength) throw new ArgumentException($"A reason has at most {MaximumReasonLength} characters.", nameof(reason));
+        SuspendedAt = now;
+        SuspensionReason = text;
+    }
+
+    public void Resume()
+    {
+        if (SuspendedAt is null) throw new InvalidOperationException("The subscription is not suspended.");
+        SuspendedAt = null;
+        SuspensionReason = null;
+    }
 }
