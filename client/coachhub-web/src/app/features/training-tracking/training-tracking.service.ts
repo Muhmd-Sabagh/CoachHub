@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { PagedResult } from '../../shared/models/paged-result';
 import { PrescribedSet, SetType, WorkoutBlock } from '../plans/workout-math';
-import { OneRepMaxFormula } from '../workspace/workspace.service';
+import { OneRepMaxFormula } from '../settings/settings.service';
 
 export type WorkoutSessionStatus = 'InProgress' | 'Completed';
 export type LoggedSetStatus = 'Completed' | 'Skipped';

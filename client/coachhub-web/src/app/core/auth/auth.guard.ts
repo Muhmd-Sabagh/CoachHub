@@ -4,15 +4,10 @@ import { map } from 'rxjs';
 import { Role } from './auth.models';
 import { AuthService } from './auth.service';
 
-/** UX only: the API is the authorization boundary. Refreshes an expired access token first. */
-export const authGuard: CanActivateFn = (_route, state) => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-  return auth.ensureSession().pipe(map(signedIn =>
-    signedIn ? true : router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } })));
-};
-
-/** UX only: the API enforces roles. Sends signed-in users without the role to their landing page. */
+/**
+ * UX only: the API is the authorization boundary and enforces roles. Refreshes an expired access token first, sends
+ * signed-out users to the login page and signed-in users without the role to their landing page.
+ */
 export const roleGuard = (...roles: Role[]): CanActivateFn => (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);

@@ -1,5 +1,4 @@
 using CoachHub.Domain.Chat;
-using CoachHub.Domain.CheckIns;
 using CoachHub.Domain.ClientFiles;
 using CoachHub.Domain.Common;
 using CoachHub.Domain.Communications;

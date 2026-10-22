@@ -8,29 +8,28 @@ import { ThemeService } from '../theme/theme.service';
 import { Role } from '../auth/auth.models';
 
 interface NavItem { route: string; label: string; icon: string; roles: Role[]; }
-const staff: Role[] = ['Administrator', 'Coach'];
+const coachOrAdmin: Role[] = ['Administrator', 'Coach'];
 @Component({
   // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
   changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-shell', templateUrl: './shell.component.html', standalone: false })
 export class ShellComponent implements OnInit {
   sidebarOpen = false;
   private readonly allNavItems: NavItem[] = [
-    { route: '/dashboard', label: 'nav.dashboard', icon: 'DB', roles: staff },
+    { route: '/dashboard', label: 'nav.dashboard', icon: 'DB', roles: coachOrAdmin },
     { route: '/coaches', label: 'nav.coaches', icon: 'CO', roles: ['Administrator'] },
-    { route: '/clients', label: 'nav.clients', icon: 'CL', roles: staff },
-    { route: '/subscriptions', label: 'nav.subscriptions', icon: 'SB', roles: staff },
-    { route: '/assessments', label: 'nav.assessments', icon: 'AS', roles: staff },
-    { route: '/calendar', label: 'nav.calendar', icon: 'CA', roles: staff },
-    { route: '/messages', label: 'nav.messages', icon: 'MS', roles: staff },
-    { route: '/check-ins', label: 'nav.checkIns', icon: 'CI', roles: staff },
-    { route: '/fitness-tests', label: 'nav.fitnessTests', icon: 'FT', roles: staff },
-    { route: '/nutrition', label: 'nav.nutrition', icon: 'NU', roles: staff },
-    { route: '/training', label: 'nav.training', icon: 'TR', roles: staff },
-    { route: '/plans', label: 'nav.plans', icon: 'PL', roles: staff },
-    { route: '/operations', label: 'nav.operations', icon: 'OP', roles: staff },
-    { route: '/audit', label: 'nav.audit', icon: 'AU', roles: staff },
-    { route: '/settings', label: 'nav.settings', icon: 'ST', roles: staff },
-    { route: '/workspace', label: 'nav.workspace', icon: 'BR', roles: staff }
+    { route: '/clients', label: 'nav.clients', icon: 'CL', roles: coachOrAdmin },
+    { route: '/subscriptions', label: 'nav.subscriptions', icon: 'SB', roles: coachOrAdmin },
+    { route: '/assessments', label: 'nav.assessments', icon: 'AS', roles: coachOrAdmin },
+    { route: '/calendar', label: 'nav.calendar', icon: 'CA', roles: coachOrAdmin },
+    { route: '/messages', label: 'nav.messages', icon: 'MS', roles: coachOrAdmin },
+    { route: '/check-ins', label: 'nav.checkIns', icon: 'CI', roles: coachOrAdmin },
+    { route: '/fitness-tests', label: 'nav.fitnessTests', icon: 'FT', roles: coachOrAdmin },
+    { route: '/nutrition', label: 'nav.nutrition', icon: 'NU', roles: coachOrAdmin },
+    { route: '/training', label: 'nav.training', icon: 'TR', roles: coachOrAdmin },
+    { route: '/plans', label: 'nav.plans', icon: 'PL', roles: coachOrAdmin },
+    { route: '/operations', label: 'nav.operations', icon: 'OP', roles: coachOrAdmin },
+    { route: '/audit', label: 'nav.audit', icon: 'AU', roles: coachOrAdmin },
+    { route: '/settings', label: 'nav.settings', icon: 'ST', roles: coachOrAdmin }
   ];
   get navItems(): NavItem[] {
     return this.allNavItems.filter(item => item.roles.some(role => this.auth.hasRole(role)));

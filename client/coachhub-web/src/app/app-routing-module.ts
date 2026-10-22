@@ -8,7 +8,7 @@ import { CatalogComponent } from './features/catalog/catalog.component';
 import { ClientsComponent } from './features/clients/clients.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { PlansComponent } from './features/plans/plans.component';
-import { SettingsComponent } from './features/settings/settings.component';
+import { ReferenceDataComponent } from './features/settings/reference-data.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -57,8 +57,16 @@ const routes: Routes = [
         loadComponent: () =>
           import('./features/auditing/audit.component').then((module) => module.AuditComponent),
       },
-      { path: 'settings', component: SettingsComponent },
-      { path: 'workspace', loadComponent: () => import('./features/workspace/workspace.component').then(m => m.WorkspaceComponent) },
+      {
+        path: 'settings',
+        loadComponent: () => import('./features/settings/settings-shell.component').then(m => m.SettingsShellComponent),
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'branding' },
+          { path: 'branding', loadComponent: () => import('./features/settings/branding-defaults.component').then(m => m.BrandingDefaultsComponent) },
+          { path: 'reference-data', component: ReferenceDataComponent },
+        ],
+      },
+      { path: 'workspace', redirectTo: 'settings/branding' },
       { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

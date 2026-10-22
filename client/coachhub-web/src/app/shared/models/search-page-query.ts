@@ -1,1 +1,0 @@
-export interface SearchPageQuery { searchTerm?: string; page: number; pageSize: number; }

@@ -3,7 +3,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using CoachHub.Application.Assessments;
-using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Clients;
 using CoachHub.Domain.Assessments;
 using CoachHub.Domain.Clients;

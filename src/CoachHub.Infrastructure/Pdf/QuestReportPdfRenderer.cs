@@ -6,7 +6,6 @@ using CoachHub.Application.Progress;
 using CoachHub.Application.Reports;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
 
 namespace CoachHub.Infrastructure.Pdf;
 

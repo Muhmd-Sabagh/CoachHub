@@ -63,7 +63,7 @@ export interface PlatformSettings {
 
 /** Branding (§63) and settings (§49) for the platform (Administrator) or a coach. */
 @Injectable({ providedIn: 'root' })
-export class WorkspaceService {
+export class SettingsService {
   private readonly branding = `${environment.apiBaseUrl}/branding`;
   private readonly settings = `${environment.apiBaseUrl}/settings`;
   constructor(private readonly http: HttpClient) {}

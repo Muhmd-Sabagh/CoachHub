@@ -51,7 +51,7 @@ public sealed class ChatService(
     }
 
     /// <summary>
-    /// Older messages of a conversation. Staff read only the open conversation; the client also reads their archived
+    /// Older messages of a conversation. Coaches and administrators read only the open conversation; the client also reads their archived
     /// ones (owner decision 2026-10-22).
     /// </summary>
     public async Task<ChatMessagesPage> MessagesAsync(

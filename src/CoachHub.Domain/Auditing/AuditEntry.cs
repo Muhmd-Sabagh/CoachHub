@@ -19,7 +19,10 @@ public enum AuditActorKind
     Coach,
     Client,
 
-    /// <summary>An anonymous client using the legacy code-based forms (retired in P5).</summary>
+    /// <summary>
+    /// An anonymous client using the legacy code-based forms (retired in P5). Nothing records it now; it stays so
+    /// earlier audit rows, which are append-only, remain readable.
+    /// </summary>
     PublicClient,
 
     /// <summary>Background work such as the notification dispatcher.</summary>

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, Injectable, OnInit, computed, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { ClientFeature, FeatureAccess, featureLabels } from '../workspace/subscription-access.component';
+import { ClientFeature, FeatureAccess, featureLabels } from '../settings/subscription-access.component';
 
 export type SubscriptionStatus = 'Inactive' | 'Active' | 'Expired' | 'Suspended' | 'Pending';
 export interface MyAccess {

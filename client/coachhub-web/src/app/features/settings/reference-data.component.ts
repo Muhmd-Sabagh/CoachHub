@@ -16,11 +16,11 @@ interface Resource {
 @Component({
   // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
   changeDetection: ChangeDetectionStrategy.Eager,
-  selector: 'app-settings',
-  templateUrl: './settings.component.html',
+  selector: 'app-reference-data',
+  templateUrl: './reference-data.component.html',
   standalone: false,
 })
-export class SettingsComponent implements OnInit {
+export class ReferenceDataComponent implements OnInit {
   readonly resources: Resource[] = [
     { key: 'packages', label: 'Packages', kind: 'package', owner: 'coach' },
     { key: 'currencies', label: 'Currencies', kind: 'currency', owner: 'platform' },

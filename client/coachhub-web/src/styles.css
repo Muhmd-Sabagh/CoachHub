@@ -805,7 +805,8 @@ input[type='radio'] {
   background: var(--gray-100);
   border-radius: 10px;
 }
-.resource-tabs button {
+.resource-tabs button,
+.resource-tabs a {
   white-space: nowrap;
   border: 0;
   background: transparent;
@@ -815,7 +816,11 @@ input[type='radio'] {
   cursor: pointer;
   font-weight: 600;
 }
-.resource-tabs button.active {
+.resource-tabs a {
+  text-decoration: none;
+}
+.resource-tabs button.active,
+.resource-tabs a.active {
   color: var(--gray-900);
   background: white;
   box-shadow: var(--shadow-xs);
@@ -1369,7 +1374,8 @@ textarea:focus {
 .dark .resource-tabs {
   background: #1d2939;
 }
-.dark .resource-tabs button.active {
+.dark .resource-tabs button.active,
+.dark .resource-tabs a.active {
   color: white;
   background: #344054;
 }

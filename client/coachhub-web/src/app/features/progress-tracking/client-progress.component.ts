@@ -88,7 +88,7 @@ import { TrendChartComponent } from './trend-chart.component';
             <label><span>Sleep (hours)</span><input type="number" min="3" max="14" step="0.25" [(ngModel)]="draft.sleepHours" name="tSleep"
               [placeholder]="t.coachDefaults.sleepHours ? 'default ' + t.coachDefaults.sleepHours : 'none'" /></label>
           </div>
-          <p class="muted">Leave a target empty to use your default from Workspace settings.</p>
+          <p class="muted">Leave a target empty to use your default from Settings › Branding &amp; defaults.</p>
           <button class="button button-primary" type="button" [disabled]="busy()" (click)="saveTargets()">Save targets</button>
         }
       </section>

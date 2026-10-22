@@ -7,7 +7,6 @@ using CoachHub.Application.FitnessTests;
 using CoachHub.Domain.FitnessTests;
 using CoachHub.Infrastructure.FitnessTests;
 using CoachHub.IntegrationTests.Auth;
-using CoachHub.IntegrationTests.Me;
 using CoachHub.IntegrationTests.Persistence;
 
 namespace CoachHub.IntegrationTests.FitnessTests;

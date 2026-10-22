@@ -15,7 +15,7 @@ import { CatalogComponent } from './features/catalog/catalog.component';
 import { ClientsComponent } from './features/clients/clients.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { PlansComponent } from './features/plans/plans.component';
-import { SettingsComponent } from './features/settings/settings.component';
+import { ReferenceDataComponent } from './features/settings/reference-data.component';
 import { PaginationComponent } from './shared/components/pagination/pagination.component';
 import { SearchFilterComponent } from './shared/components/search-filter/search-filter.component';
 import { StatusBadgeComponent } from './shared/components/status-badge/status-badge.component';
@@ -28,7 +28,7 @@ import { viewRefreshInterceptor } from './core/http/view-refresh.interceptor';
     ShellComponent,
     LoginComponent,
     DashboardComponent,
-    SettingsComponent,
+    ReferenceDataComponent,
     CatalogComponent,
     ClientsComponent,
     AssessmentsComponent,

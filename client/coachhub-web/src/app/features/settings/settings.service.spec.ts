@@ -2,16 +2,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { clean } from './workspace.component';
-import { WorkspaceService, weightTotal } from './workspace.service';
+import { clean } from './branding-defaults.component';
+import { SettingsService, weightTotal } from './settings.service';
 
-describe('WorkspaceService', () => {
-  let service: WorkspaceService;
+describe('SettingsService', () => {
+  let service: SettingsService;
   let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
-    service = TestBed.inject(WorkspaceService);
+    service = TestBed.inject(SettingsService);
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());

@@ -3,7 +3,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Domain.Assessments;
-using CoachHub.Domain.Billing;
 using CoachHub.Domain.CheckIns;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.FoodTracking;

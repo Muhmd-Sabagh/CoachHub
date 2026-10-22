@@ -4,7 +4,6 @@ using CoachHub.Application.Auditing;
 using CoachHub.Application.Clients;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.WorkoutPlanning;
-using CoachHub.Domain.Clients;
 using CoachHub.IntegrationTests.Auth;
 using CoachHub.IntegrationTests.Persistence;
 

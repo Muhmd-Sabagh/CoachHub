@@ -9,8 +9,8 @@ import { isHexColor } from '../../core/theme/theme.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { Coach, CoachesService } from '../coaches/coaches.service';
 import {
-  BrandImage, BrandInput, BrandRecord, CoachDefaults, MacroMode, OneRepMaxFormula, PlatformSettings, ReplacementRule, Scope, WorkspaceService, weightTotal,
-} from './workspace.service';
+  BrandImage, BrandInput, BrandRecord, CoachDefaults, MacroMode, OneRepMaxFormula, PlatformSettings, ReplacementRule, Scope, SettingsService, weightTotal,
+} from './settings.service';
 
 /**
  * Branding (§63) and settings (§49). A coach edits their own brand and calculation defaults; an
@@ -18,8 +18,8 @@ import {
  */
 @Component({
   // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-workspace', standalone: true, imports: [CommonModule, FormsModule, SubscriptionAccessComponent], templateUrl: './workspace.component.html' })
-export class WorkspaceComponent implements OnInit {
+  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-branding-defaults', standalone: true, imports: [CommonModule, FormsModule, SubscriptionAccessComponent], templateUrl: './branding-defaults.component.html' })
+export class BrandingDefaultsComponent implements OnInit {
   readonly isAdmin: boolean;
   readonly images: { kind: BrandImage; label: string }[] = [
     { kind: 'Logo', label: 'Logo' }, { kind: 'Favicon', label: 'Favicon' }, { kind: 'DefaultAvatar', label: 'Default profile image' },
@@ -50,7 +50,7 @@ export class WorkspaceComponent implements OnInit {
   message = '';
 
   constructor(
-    private readonly data: WorkspaceService,
+    private readonly data: SettingsService,
     private readonly branding: BrandingService,
     private readonly coachDirectory: CoachesService,
     auth: AuthService,
