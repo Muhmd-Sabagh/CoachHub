@@ -1,6 +1,6 @@
 # CoachHub Product Roadmap: Phases to Implement docs/product/REQUIREMENTS.md
 
-**Status:** Approved by the owner on 2026-10-12. P0–P18 and P10A are delivered. Extended on 2026-10-22 with **P19–P23** ([Completion](#completion-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
+**Status:** Approved by the owner on 2026-10-12. P0–P18 and P10A are delivered. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
 
 ## Context
 
@@ -59,7 +59,8 @@ Progress                                P5 → P11 → P12 → P13
 Engagement   P14 (after P5)   P15 (after P8, P10, P12)   P16 (hook from P1)   P17 (after P11)
 Hardening    P18 (last of the first release plan)
 Fixes        P10A (any time before P18; recommended before P11)
-Completion   P19 → P20 → P22 → P23
+Cleanup      P18A (first; before P19 so legacy screens are removed rather than translated)
+Completion   P18A → P19 → P20 → P22 → P23
              P19 → P21 (may run alongside P20 and P22; must finish before P23)
 ```
 
@@ -373,7 +374,7 @@ Added 2026-10-21 after P10. These are issues found outside P10's scope, collecte
 
 ---
 
-## Completion (P19–P23)
+## Completion (P18A, P19–P23)
 
 Added 2026-10-22. P0–P18 delivered every requirement section, but comparing the product with REQUIREMENTS.md left gaps inside sections, known limitations no phase picked up, and the release work. These phases close them.
 
@@ -383,6 +384,36 @@ Added 2026-10-22. P0–P18 delivered every requirement section, but comparing th
 - **Key coverage.** The English and Arabic key sets stay identical (a spec test fails otherwise), and the smoke test's Arabic runs stay clean (P19 adds the check).
 - **Terminology.** Arabic text follows the glossary started in P19. The owner (or a reviewer they name) approves new glossary terms before the phase merges.
 - **Catalog names.** Screens show `NameAr` in Arabic when it is set, otherwise `NameEn`.
+
+### P18A: Cleanup (M), covering §60, §61
+
+Removes what the legacy migration (phases 0–21) and the product phases left behind, before P19 starts translating screens. The rule for this phase: **no behaviour a user relies on changes** unless the owner confirms it at phase start; everything else is removal, renaming or consolidation, proven by the existing tests.
+
+- **Legacy plan workflow status.** `Client.DietStatus` / `WorkoutStatus` (`PlanWorkflowStatus`) are still edited and filtered on, although P5's computed `ClientStatus` and P6's plan versions replaced them. Remove them from the domain, the API, the client list filters and the UI, with a migration. *Owner to confirm at phase start* (recommended: remove).
+- **Two reporting stacks.**
+  - The legacy `Reporting` area (`ReportingService`, `AdvancedReportingService`, `ReportingController`, the `/operations` screen) runs beside P15's `Dashboards` and P17's `Reports`.
+  - Move anything still needed into those two, keeping D6 revenue (`RevenueCalculator`) as the only money figure. Delete the rest and its translation keys.
+  - *Owner to confirm* which `/operations` figures stay.
+- **Settings screens.** Branding and coach defaults live in `/workspace` ("Branding & defaults"), other settings in `/settings`. Merge them into one settings area, with sections per role.
+- **Naming.**
+  - The client home is still called `client-portal`: the Angular feature and `ClientPortalController` at `/client-portal/overview`. Rename both to the client area (`client-area`, `/me/home`), and remove the `/portal` redirects.
+  - Rename leftovers that still say "staff" or describe retired flows.
+- **Retired-flow leftovers (D5).** Remove dead code, settings and tests that only existed for the code-based forms. Keep the regression test proving the old anonymous routes are gone.
+- **Google Forms import.** P5 kept it, with the client matched by `ClientCode`. *Owner to confirm at phase start* whether it stays. If it does, keep `ClientCode` as the import key only. If not, remove the importer, its profiles and the field.
+- **Dead code.**
+  - **.NET:** turn on the unused-code analyzers (unused private members and parameters, unused usings), and delete what they find. Remove DI registrations without consumers.
+  - **Angular:** find unused components, services, exports and translation keys with a dead-code tool (for example `knip`), and delete them.
+  - **API:** list endpoints the web client no longer calls. Keep those meant for future clients (§60) and document why; remove the rest.
+- **Change detection.** Move older screens that still use `ChangeDetectionStrategy.Eager` to signals, where the screen is otherwise left as is by P19–P22. Remove `viewRefreshInterceptor` once none remain.
+- **Docs.**
+  - Move `docs/migration/PHASE_*.md` to `docs/archive/migration/`, behind a short index that says what they are.
+  - Fold what still holds in `docs/architecture/FOUNDATION_CONVENTIONS.md` into CLAUDE.md, or mark the rest superseded.
+  - Bring `README.md` up to date.
+  - Mark the known limitations in phase docs P1–P17 that later phases closed (for example "No manual browser smoke test yet"), so the open list is accurate.
+- **Done when:**
+  - the dead-code checks are clean and part of `Verify-Release.ps1`;
+  - every test still passes, and the browser smoke test is clean;
+  - the phase doc lists each removal and the owner's decisions.
 
 ### P19: Localisation foundation and the client area in Arabic (L), covering §1, §49 (Language), §53, §63
 
@@ -513,4 +544,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. The next phase is **P19** on branch `phase/p19-localisation`, beginning with its own short plan-mode refinement.
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. The next phase is **P18A** on branch `phase/p18a-cleanup`, beginning with its own short plan-mode refinement and the owner decisions it lists.
