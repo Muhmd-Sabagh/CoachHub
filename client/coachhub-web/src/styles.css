@@ -1521,3 +1521,6 @@ textarea:focus {
 /* P16: subscription status details and duration presets. */
 .block { display: block; }
 .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+/* P17: platform export buttons on the administrator dashboard. */
+.quick-exports { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }

@@ -20,22 +20,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
     private const string Ink = "#101828";
     private const string Muted = "#667085";
     private const string Border = "#E4E7EC";
-    private static readonly object FontLock = new();
-    private static bool _initialized;
-
-    public QuestPlanPdfRenderer()
-    {
-        lock (FontLock)
-        {
-            if (_initialized) return;
-            QuestPDF.Settings.License = LicenseType.Community;
-            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(
-                "CoachHub.Infrastructure.Pdf.Fonts.NotoSansArabic.ttf")
-                ?? throw new InvalidOperationException("Embedded PDF font was not found.");
-            FontManager.RegisterFont(stream);
-            _initialized = true;
-        }
-    }
+    public QuestPlanPdfRenderer() => PdfFonts.Ensure();
 
     public byte[] RenderDiet(DietPlanResponse plan, PdfClientInfo? client, PlanPdfLanguage language) =>
         Document.Create(document => document.Page(page =>
@@ -370,4 +355,26 @@ internal static class PdfDirectionExtensions
     public static TextBlockDescriptor DirectionAuto(
         this TextBlockDescriptor text, PlanPdfLanguage language) =>
         language == PlanPdfLanguage.Arabic ? text.DirectionFromRightToLeft() : text;
+}
+
+/// <summary>The QuestPDF licence and the embedded Noto Sans Arabic font, set up once for every renderer.</summary>
+internal static class PdfFonts
+{
+    public const string Family = "Noto Sans Arabic";
+    private static readonly object Lock = new();
+    private static bool _initialized;
+
+    public static void Ensure()
+    {
+        lock (Lock)
+        {
+            if (_initialized) return;
+            QuestPDF.Settings.License = LicenseType.Community;
+            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(
+                "CoachHub.Infrastructure.Pdf.Fonts.NotoSansArabic.ttf")
+                ?? throw new InvalidOperationException("Embedded PDF font was not found.");
+            FontManager.RegisterFont(stream);
+            _initialized = true;
+        }
+    }
 }

@@ -4,6 +4,7 @@ import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { AdminDashboard, AdvancedReport, CoachDashboard, DashboardService, OperationalReport } from './dashboard.service';
+import { PlatformExport, ReportsService, platformExports, saveFile } from '../reports/reports.service';
 
 @Component({ selector: 'app-dashboard', templateUrl: './dashboard.component.html', standalone: false })
 export class DashboardComponent implements OnInit {
@@ -24,6 +25,7 @@ export class DashboardComponent implements OnInit {
     readonly auth: AuthService,
     private readonly router: Router,
     private readonly data: DashboardService,
+    private readonly reports: ReportsService,
   ) {}
 
   ngOnInit(): void {
@@ -53,6 +55,13 @@ export class DashboardComponent implements OnInit {
   activityText(item: CoachDashboard['recentActivity'][number]): string {
     const verb = item.operation === 'Create' ? 'added' : item.operation === 'Delete' ? 'removed' : 'updated';
     return `${item.actor} ${verb} ${item.entityType.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()}`;
+  }
+
+  readonly platformExports = platformExports;
+
+  /** Platform CSV exports (§51); revenue follows the selected period. */
+  exportPlatform(dataset: PlatformExport): void {
+    this.reports.platformExport(dataset, this.from, this.to).subscribe({ next: file => saveFile(file), error: e => (this.error = apiErrorMessage(e)) });
   }
 
   maxActive(): number { return Math.max(1, ...(this.admin()?.userActivity.map(x => x.activeUsers) ?? [1])); }

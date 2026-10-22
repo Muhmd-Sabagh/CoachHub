@@ -12,6 +12,7 @@ import {
   bodyFatNotice, changeText, hoursText, measurementSites, percentText, photoPoses,
 } from './progress-tracking.service';
 import { TrendChartComponent } from './trend-chart.component';
+import { ClientReportsComponent } from '../reports/client-reports.component';
 
 type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
 
@@ -23,10 +24,11 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
 @Component({
   selector: 'app-my-progress',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent, ClientReportsComponent],
   template: `
     <section class="dashboard-hero"><div><p class="eyebrow">Progress</p><h1>My progress</h1></div>
       <a class="button button-secondary" routerLink="/app/tests">My tests</a></section>
+    <app-client-reports />
     <nav class="segmented sections" role="tablist" aria-label="Progress sections">
       @for (s of sections; track s.id) {
         <button type="button" role="tab" [class.active]="section() === s.id" [attr.aria-selected]="section() === s.id" (click)="open(s.id)">{{ s.label }}</button>

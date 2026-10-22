@@ -79,6 +79,10 @@
         </tbody></table></div>
       </section>
     </div>
+    <div class="section-heading"><h3>Platform exports (CSV)</h3><span>Revenue covers {{ a.from }} to {{ a.to }}</span></div>
+    <div class="quick-exports">
+      @for (e of platformExports; track e.id) { <button type="button" class="button button-secondary" (click)="exportPlatform(e.id)">{{ e.label }}</button> }
+    </div>
     <div class="section-heading"><h3>User activity</h3><span>Active accounts per day</span></div>
     <div class="activity-bars" role="img" [attr.aria-label]="'Active users per day, up to ' + maxActive()">
       @for (d of a.userActivity; track d.date) { <span [style.height.%]="(d.activeUsers / maxActive()) * 100" [title]="d.date + ': ' + d.activeUsers + ' users, ' + d.changes + ' changes'"></span> }

@@ -90,6 +90,9 @@ public static class DependencyInjection
         services.AddScoped<DashboardService>();
         // P16: subscription access rules on the client area.
         services.AddScoped<SubscriptionAccessService>();
+        // P17: reports and data export.
+        services.AddScoped<CoachHub.Application.Reports.ReportService>();
+        services.AddScoped<CoachHub.Application.Exports.ExportService>();
         services.AddScoped<ClientFileService>();
         services.AddScoped<InboxService>();
         services.AddScoped<NotificationCenter>();
