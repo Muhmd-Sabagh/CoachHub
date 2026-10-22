@@ -1,6 +1,6 @@
 # CoachHub Product Roadmap: Phases to Implement docs/product/REQUIREMENTS.md
 
-**Status:** Approved by the owner on 2026-10-12. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
+**Status:** Approved by the owner on 2026-10-12. P0–P18 and P10A are delivered. Extended on 2026-10-22 with **P19–P23** ([Completion](#completion-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
 
 ## Context
 
@@ -24,6 +24,14 @@ Owner decisions that shape this plan (2026-10-12):
 - **`Staff` is removed.** Roles become **Administrator, Coach, Client** only.
 - **Nutrition is built first** after the foundation phases, then Training, then Progress.
 - **The client UI lives in the same Angular app**, as a separate lazy-loaded, mobile-first client area.
+
+Owner decisions for the completion phases (2026-10-22):
+
+- **Fixed roles for this release.** The roles are Administrator, Coach and Client, with no configurable roles or permissions. This settles §2 "Role-based permissions" and §49 "Roles / Permissions" for version 1.
+- **No cross-coach access.** A coach never sees another coach's clients or data, and the Administrator cannot grant such access. This replaces the §62 clause "unless the Admin grants permission"; moving a client to another coach stays a transfer (§56).
+- **Western digits in Arabic.** Arabic screens, PDFs and exports show numbers with Western digits (0–9).
+- **Recording these decisions.** P19 starts by adding the fixed roles and the no-cross-coach-access rule to REQUIREMENTS.md *Confirmed clarifications*.
+- **Arabic is part of every phase from P19 on.** Each phase ships the screens and server text it creates or touches in English and Arabic. P19 builds the localisation foundation and translates the client area; P21 translates the remaining staff screens.
 
 ## Conventions for every phase
 
@@ -49,8 +57,10 @@ Nutrition                               P6 → P7 → P8
 Training                                P6 → P9 → P10
 Progress                                P5 → P11 → P12 → P13
 Engagement   P14 (after P5)   P15 (after P8, P10, P12)   P16 (hook from P1)   P17 (after P11)
-Hardening    P18 (last)
+Hardening    P18 (last of the first release plan)
 Fixes        P10A (any time before P18; recommended before P11)
+Completion   P19 → P20 → P22 → P23
+             P19 → P21 (may run alongside P20 and P22; must finish before P23)
 ```
 
 ---
@@ -363,6 +373,121 @@ Added 2026-10-21 after P10. These are issues found outside P10's scope, collecte
 
 ---
 
+## Completion (P19–P23)
+
+Added 2026-10-22. P0–P18 delivered every requirement section, but comparing the product with REQUIREMENTS.md left gaps inside sections, known limitations no phase picked up, and the release work. These phases close them.
+
+### Conventions added for P19 onwards
+
+- **Bilingual delivery.** Every screen a phase creates or changes ships in English and Arabic: its UI strings, enum labels, validation and error text it adds, and its notification, email and PDF text. A phase that only touches part of an older screen translates the whole screen.
+- **Key coverage.** The English and Arabic key sets stay identical (a spec test fails otherwise), and the smoke test's Arabic runs stay clean (P19 adds the check).
+- **Terminology.** Arabic text follows the glossary started in P19. The owner (or a reviewer they name) approves new glossary terms before the phase merges.
+- **Catalog names.** Screens show `NameAr` in Arabic when it is set, otherwise `NameEn`.
+
+### P19: Localisation foundation and the client area in Arabic (L), covering §1, §49 (Language), §53, §63
+
+The client area comes first because clients mostly use their phones (§53).
+
+- **Translation structure.**
+  - Split `core/i18n/translations.ts` into per-area files (core plus one per feature), each with an English and an Arabic table.
+  - Use typed keys, so a missing key fails the build.
+  - Add a signal-aware `t` pipe for templates.
+  - Add a spec test that the two languages have identical key sets.
+- **Enum labels.** One label map per public enum the UI shows: statuses, measurement sites, photo poses, meal types, set and block types, difficulty, test kinds and classifications, subscription and payment states. It replaces the enum names on screen today.
+- **Formatting.** Register Angular's `ar` locale data. Dates, numbers and decimals go through locale-aware pipes, with **Western digits** in Arabic (owner decision, 2026-10-22).
+- **Catalog names.** Add one `localName` helper for foods, exercises, muscle groups, equipment, categories and tests. This closes the P10 limitation where exercise names show in English.
+- **Language on the server.**
+  - Return the account's preferred language with the sign-in result (the P2 limitation).
+  - The interceptor sends `Accept-Language`, and the API sets the request culture from it.
+  - Add a resource mechanism in Application for messages the user sees. Error responses keep their field keys, and add a stable `code` the UI can translate.
+  - Notifications and emails are rendered in the **recipient's** preferred language, not the sender's.
+- **Translate the client area (`/app`).** Home, nutrition (diary, Change Food, dashboard), training (today's workout, logging, rest timer, history, records, analytics), progress (body, lifestyle, photos), forms and check-ins, tests, chat, files, calendar, reports, notifications and account.
+- **Decisions.** Add the 2026-10-22 owner decisions (fixed roles, no cross-coach access) to REQUIREMENTS.md *Confirmed clarifications*.
+- **Glossary.** Add `docs/design/ARABIC_GLOSSARY.md` with nutrition, training and coaching terms, for owner approval.
+- **Smoke test.** In Arabic runs, flag visible text that is Latin script only. An allowlist covers brand names, units, numbers and user-entered data.
+- **Done when:** a client completes every flow in Arabic at phone width with no English interface text, and the key-coverage test and the Arabic smoke runs are clean.
+
+### P20: Units and requirement completion (M), covering §17, §26, §34, §37, §44, §49 (Units), §50, §51, §52
+
+- **Units (§49).**
+  - Storage stays metric. Pure, unit-tested conversion functions handle body weight and loads (kg ↔ lb), height and measurements (cm ↔ in) and water (ml ↔ fl oz).
+  - Each account gets a units preference that defaults to the platform setting.
+  - Applies to entry and display in tracking, workout logging and builder loads, the profile, check-in measures, dashboards, reports and PDFs.
+  - CSV exports keep metric values with explicit unit columns, so the files stay comparable.
+  - Food quantities keep their catalog units.
+- **Uploaded videos (§17, §34).**
+  - Exercises and test definitions accept an uploaded video (media) as well as a YouTube link.
+  - Platform entries reference platform media, and a coach's entries reference the coach library.
+  - Video uses the P14 upload policy and plays through `/media/{id}`.
+  - This closes the P9 and P13 deferrals.
+- **Tests in progress and reports (§37, §44, §51).**
+  - Fitness test results (latest, previous, progress and classification) join the progress dashboard's training section, the weekly and monthly reports and their PDF.
+  - A test results CSV export is added.
+  - All of it reuses `TestProgressCalculator`.
+- **Check-in search (§50).** Server-side search by client name and form, a due and submitted date range, and status and due-state filters on the coach's check-in lists.
+- **Photo privacy (§26, §52).**
+  - Uploaded images (progress photos, avatars, chat and shared images, brand images) are stripped of metadata such as EXIF location.
+  - The pipeline also normalises orientation and caps the dimensions.
+  - It sits behind an `IImageProcessor` port in Infrastructure. The library is chosen at phase start (recommended: a permissively licensed one).
+  - Existing images are not rewritten.
+- **Arabic** for every screen touched.
+
+### P21: Arabic for staff screens (L), covering §1, §44, §49 (Language), §51, §53
+
+- **Screens.** Translate the Administrator and Coach screens from P4–P17 area by area: clients and profile tabs, plans and the builders, catalogs, check-ins, tests, chat and files, calendar, dashboards, subscriptions and billing, settings and branding, audit, reports.
+- **Server text.** Translate the remaining validation and error messages through the P19 mechanism.
+- **Documents.**
+  - Report and plan PDFs use the requester's language for every label (the P17 limitation).
+  - CSV headers follow the requester's language. Values stay machine-readable: dates in ISO format and enums as their names.
+- **Done when:** the Arabic smoke runs are clean for every role at both widths, and the owner has approved the glossary and a review sample of each area.
+- **Order.** P21 depends only on P19 and may run alongside P20 and P22, but it must finish before P23.
+
+### P22: Tracking correctness and operational fixes (M), covering §9, §21, §29, §30, §47, §57
+
+These close the known limitations recorded in earlier phase docs.
+
+- **Mid-day new plan version (P8).** Diet rows keep a stable lineage key across versions. A client's day choices and logged meals then map to the new version's rows, so they stay counted.
+- **Check-in schedule history (P12).** Make schedules effective-dated, so adherence uses the schedule in force on each date.
+- **Check-in measures (P12).** A submission and the typed entries its measures write are saved in one transaction.
+- **e1RM formula change (P10).** Changing the coach's formula rebuilds stored records for the coach's clients, as an audited bulk operation.
+- **Saved-plans totals after a transfer (P7).** Include the previous coach's foods through a deliberate standalone read.
+- **Subscriptions (P16).**
+  - Add a scheduled resume date.
+  - Add optional automatic suspension of overdue invoices, as an Administrator rule that is off by default.
+  - Media opened by ID (`/media/{id}`) follows the subscription access rules of the feature that owns it (owner decision, 2026-10-22), closing the P16 limitation.
+- **Arabic** for every screen touched.
+
+### P23: Release readiness and production sign-off (M), covering §52, §53, §60
+
+- **Dependencies.** Fix or accept the `npm audit` findings (P14). Require the ASP.NET Core 10.0.13+ runtime in the deployment docs and the gate.
+- **Re-verify.** Run P18's security review and volume query plans again on the code as changed by P19–P22.
+- **Staging.**
+  - Deploy to staging.
+  - Run the legacy catalog import (foods and exercises).
+  - Run the full EN/AR smoke test and the manual staging pass for every role, including Arabic and imperial units.
+  - Complete `PRODUCTION_SIGNOFF.md` with the owner.
+- **Docs.** Update CLAUDE.md "Current state vs target" and the deployment runbook.
+
+### Backlog (not scheduled)
+
+These are recorded but not planned. Each needs an owner decision before it becomes a phase.
+
+- **Scale-out.** Running more than one API instance needs:
+  - a SignalR backplane;
+  - coordinated workers (outbox, hourly scanner) with unique event keys in the database;
+  - a domain-event outbox.
+
+  Version 1 runs one instance.
+- **Native mobile apps (§54, §60).** A refresh-token transport that does not use cookies.
+- **Per-coach email sender address (§63).** Needs domain verification (SPF/DKIM) per coach domain.
+- **Calendar.** Recurring events, time zones and iCal export (P15).
+- **Fitness tests.** Age- and sex-specific norms (P13).
+- **Notifications.** WhatsApp copies of events and phone push notifications (P14).
+- **Reports.** Scheduled or emailed reports, charts in the PDF, and streamed exports for very large histories (P17).
+- **Health providers.** The first `IHealthDataProvider` implementation (§31, §32, §54).
+
+---
+
 ## Existing code to reuse (not rewrite)
 
 - **Layering and patterns:** service/repository pattern, `PagedRequest`/`PagedResult<T>`, the exception → ProblemDetails mapping, and the append-only guard style in `CoachHubDbContext`.
@@ -384,7 +509,8 @@ Added 2026-10-21 after P10. These are issues found outside P10's scope, collecte
    - **`ControllerAuthorizationTests`** kept in sync with any change to the anonymous surface.
 5. **Manual smoke** against the local SQL Server: `dotnet ef database update --project src/CoachHub.Infrastructure`, then run the API and `npm start`. Exercise the phase's flows as Admin, Coach A, Coach B and a Client, at phone and desktop widths.
 6. **Phase doc** `docs/product/phases/PNN_*.md` with evidence, then the PR.
+7. **From P19:** the English/Arabic key-coverage test passes, and the smoke test's Arabic runs show no untranslated interface text on the screens the phase touched.
 
-## First step after approval
+## Next step
 
-Start **P0** on branch `phase/p00-groundwork`, beginning with its own short plan-mode refinement.
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. The next phase is **P19** on branch `phase/p19-localisation`, beginning with its own short plan-mode refinement.
