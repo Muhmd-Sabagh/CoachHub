@@ -109,6 +109,8 @@
 - **Enum serialization (pre-existing, fixed in P5).** The API writes enums as numbers. Some older Angular screens compare enum fields to strings (for example `status === 'Draft'` in assessments). Those comparisons look broken and should be verified separately.
 - **Email sender address.** Only the display name is branded. The sending address stays the configured `Communications:FromEmail`, because a per-coach address needs domain verification (SPF/DKIM).
 
+**Status after P18A (2026-10-22).** Closed: enum serialization (P5). Open: unit conversion (P20), per-coach sender address (backlog); host DNS/TLS is deployment work (P23).
+
 ## Verification
 
 | Check | Result |

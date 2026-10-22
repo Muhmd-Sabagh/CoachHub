@@ -127,6 +127,8 @@
 - **Subscription access rules** (for example "logging blocked when expired") arrive in P16.
 - **No manual UI smoke test yet.** The UI was checked by build and tests only, not run against a live API in a browser for this phase.
 
+**Status after P18A (2026-10-22).** Closed: subscription access rules (P16), browser smoke test (P10A, P18). Open: choices and logged meals after a mid-day new version (P22).
+
 ## Verification
 
 | Check | Result |

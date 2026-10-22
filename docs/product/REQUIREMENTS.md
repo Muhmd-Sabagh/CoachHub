@@ -8,9 +8,9 @@
 
 1. **Decisions D1–D7** (this section) win over everything else, including the requirement text they refine.
 2. **Requirements §1–§63** (below) define the target product.
-3. **`docs/migration/PHASE_*.md`, `docs/architecture`, `docs/deployment`** describe how the current system was built. Where they conflict with 1 or 2, they are historical context, not constraints. Update or annotate them when the affected area is reworked.
+3. **`docs/archive/` (the legacy migration phases and first conventions) and `docs/deployment`** describe how the system was built and is deployed. Where they conflict with 1 or 2, they are historical context, not constraints. Update or annotate them when the affected area is reworked.
 
-Anything not covered here keeps the existing conventions in `docs/architecture/FOUNDATION_CONVENTIONS.md`.
+Anything not covered here keeps the engineering conventions in `CLAUDE.md`.
 
 ---
 

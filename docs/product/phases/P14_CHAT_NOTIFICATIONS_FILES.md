@@ -155,6 +155,8 @@ The outbox list (`GET /api/v1/notifications`) leaves in-app rows out.
 - **Pre-existing npm audit findings.** They are in `@angular/router` (SSR-only issues; the app has no SSR) and `jest-editor-support`'s dependencies, not in SignalR; they are left for a dependency pass.
 - **No manual browser smoke test yet** (P10A now covers P8–P14 screens).
 
+**Status after P18A (2026-10-22).** Closed: browser smoke test (P10A, P18); the `jest-editor-support` audit findings (the package was removed in P18A). Open: the SSR-only `@angular/router` advisories and the 10.0.13 runtime (P23), scale-out and WhatsApp copies (backlog).
+
 ## Verification
 
 | Check | Result |

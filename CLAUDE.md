@@ -15,7 +15,7 @@ CoachHub is a multi-coach online coaching platform: a .NET 10 modular monolith A
 | **D5** | Clients log in. **Code-based public forms are retired.** |
 | **D6** | Dashboards report **revenue** (per currency, with a defined recognition rule). |
 
-**[docs/product/ROADMAP.md](docs/product/ROADMAP.md)** sets the approved phase order (P0–P18) and per-phase scope. Work one phase at a time on a `phase/pNN-<slug>` branch and record each phase in `docs/product/phases/PNN_<NAME>.md`.
+**[docs/product/ROADMAP.md](docs/product/ROADMAP.md)** sets the approved phase order (P0–P18, then P18A and P19–P23) and per-phase scope. Work one phase at a time on a `phase/pNN-<slug>` branch and record each phase in `docs/product/phases/PNN_<NAME>.md`.
 
 The owner settled these on 2026-10-12, in addition to D1–D6:
 
@@ -24,7 +24,13 @@ The owner settled these on 2026-10-12, in addition to D1–D6:
 - Nutrition is built first after the foundation phases.
 - The client UI is a mobile-first area inside the same Angular app.
 
-`docs/migration/PHASE_*.md` records how the *current* code was built. Use it for context. Where it conflicts with REQUIREMENTS.md, the requirements win. Update or annotate the phase doc when you rework that area.
+And on 2026-10-22:
+
+- The roles stay fixed (Administrator, Coach, Client) for this release; there are no configurable roles or permissions.
+- No cross-coach access: a coach never sees another coach's clients or data, and the Administrator cannot grant it. This replaces the §62 clause "unless the Admin grants permission"; moving a client stays a transfer (§56).
+- Arabic is part of every phase from P19 on, with Western digits.
+
+`docs/archive/` holds the legacy migration-phase docs and the first conventions (P18A). They are history; where they conflict with REQUIREMENTS.md, the roadmap or this file, the current documents win.
 
 When a requirement is ambiguous, or a change would contradict D1–D6, stop and ask. Don't pick an interpretation silently.
 
@@ -47,7 +53,11 @@ npm ci
 npm start                    # port 65194, proxies /api
 npm test -- --watch=false    # Vitest
 npm run build
+npm run knip                 # dead code: unused files, exports, dependencies (P18A)
+npm run check:translations   # every translation key used and present in both languages (P18A)
 ```
+
+Dead code fails the gate on both sides: the .NET build treats unused usings, private members, parameters and assignments as errors (`.editorconfig`), and `Verify-Release.ps1` runs the two npm checks above.
 
 Running locally needs these values, supplied through environment variables (never committed):
 
@@ -69,7 +79,8 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - No EF or ASP.NET references.
 - **Application**
   - Concrete `*Service` classes, `I*Repository` ports, and record DTOs.
-  - Throw `ValidationException` (field-keyed), `ForbiddenException`, `NotFoundException`, or `ConflictException`. `GlobalExceptionHandler` maps them to 400/403/404/409.
+  - Throw `ValidationException` (field-keyed), `ForbiddenException`, `NotFoundException`, or `ConflictException`. `GlobalExceptionHandler` maps them to 400/403/404/409 and hides the details of unexpected exceptions.
+  - Options are bound from configuration and validated at startup.
 - **Infrastructure**
   - One `CoachHubDbContext`, with no `DbSet` properties: use `Set<T>()`.
   - Every entity gets an `IEntityTypeConfiguration<T>` in its module folder; these are auto-discovered.
@@ -105,7 +116,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 - **Client access (D5):**
   - Do not add anonymous endpoints.
   - The only approved anonymous surface is authentication: login, session refresh, password reset, and the login page's branding (`/branding/public` and `/branding/assets/{id}`, which serves brand images only).
-  - The code-based public forms are retired (P5). Clients submit at `/api/v1/me/forms` (ClientOnly); the client always comes from the token.
+  - The code-based public forms are retired (P5), and so are client codes and the Google Forms / Excel import (P18A). Clients submit at `/api/v1/me/forms` (ClientOnly); the client always comes from the token. The client area's home is `/api/v1/me/home`.
   - Client logins come from invitations: a 7-day set-password link through the password-reset page. Deactivating a client disables the login and ends its sessions.
 - **Audit (D2)** — implemented in P3; see `docs/product/phases/P03_AUDIT.md`.
   - `CoachHubDbContext` captures every tracked change automatically (`Infrastructure/Auditing/AuditCapture.cs`): real actor role, coach, affected client, and previous/new values. Do not write audit rows by hand except for operations that bypass change tracking (`ExecuteUpdate`/`ExecuteDelete`): record those with `CoachHubDbContext.RecordAudit`.
@@ -136,7 +147,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 - **Chat, notifications and files (§41–§43)** — implemented in P14; see `docs/product/phases/P14_CHAT_NOTIFICATIONS_FILES.md`.
   - Domain events: entities `Raise` an `IDomainEvent`; `CoachHubDbContext` dispatches them after a successful `SaveChangesAsync` to `IDomainEventHandler<T>` registrations (`IDomainEventDispatcher`). Handlers are side effects: a failure is logged, never fails the save.
   - Event notifications go through `NotificationCenter`: an `InApp` `Notification` per recipient account (pushed live), plus an email copy through the outbox when the account's `NotificationPreference` wants it. `EventKey` makes an occurrence notify once. Time-based events come from `EventNotificationScanner` (hourly worker).
-  - Chat: one open `Conversation` per client; on transfer it is archived (client-only, read-only) and the new coach starts a new one. Staff endpoints never return archived conversations; administrators read but do not write.
+  - Chat: one open `Conversation` per client; on transfer it is archived (client-only, read-only) and the new coach starts a new one. Coach and administrator endpoints never return archived conversations; administrators read but do not write.
   - Live delivery is the SignalR `RealtimeHub` at `/api/v1/realtime` (AnyRole), behind `IRealtimePublisher`. It only pushes; all writes stay on REST endpoints. Only that path accepts the access token from the query string.
   - Shared files (`ClientFile`) and chat attachments use `MediaUploadPolicy.Shared` (also video, Office documents, text; 50 MB). Other uploads keep images and PDF at 20 MB. Delete chats and shared files before a client's media.
 - **Calendars and dashboards (§38, §45, §46, §48, D6)** — implemented in P15; see `docs/product/phases/P15_CALENDARS_DASHBOARDS.md`.
@@ -157,7 +168,8 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P18. Known gaps against REQUIREMENTS.md:
 
-- all product phases (P0–P18, P10A) are delivered. What remains is the owner's production sign-off on staging (`docs/deployment/PRODUCTION_SIGNOFF.md`) and the scale-out work it names (one API instance until SignalR has a backplane and the workers are coordinated).
+- product phases P0–P18, P10A and P18A (cleanup) are delivered. The completion phases P19–P23 in the roadmap close the rest: Arabic for every screen (P19, P21), units, uploaded videos, tests in the dashboard and reports, check-in search and photo privacy (P20), tracking fixes (P22), and the release with the owner's production sign-off on staging (P23, `docs/deployment/PRODUCTION_SIGNOFF.md`).
+- Scale-out (more than one API instance) is backlog: SignalR has no backplane and the workers are not coordinated.
 
 Treat these as planned rework, not conventions to preserve.
 
@@ -192,7 +204,7 @@ Treat these as planned rework, not conventions to preserve.
 - NgModule-based app. Feature folders live under `src/app/features`, each with a `*.service.ts` per API area.
 - Visual language comes from TailAdmin through CSS custom properties; see `docs/design/TAILADMIN_ANGULAR_ADAPTATION.md`. Per-coach branding (D1) must override these tokens at runtime, so never hard-code colors in features.
 - Charts use ApexCharts (pinned exactly, P8), imported lazily inside the chart component. Series colors come from the theme tokens at render time, one y-axis per chart, and a table carries the same numbers.
-- **Change detection (P10A):** the app is zoneless and Angular 22 makes components OnPush by default. New screens keep asynchronous state in signals and stay OnPush. Older screens that set plain fields from HTTP callbacks declare `ChangeDetectionStrategy.Eager` (as do `App` and both shells), and `viewRefreshInterceptor` checks the app from its root after each response. Never set plain fields from callbacks in a new screen.
+- **Change detection (P10A, P18A):** the app is zoneless and every component is OnPush (Angular 22's default). Keep asynchronous state in signals: a value set in an HTTP callback, timer or subscription must be a signal, and a record changed there must be replaced (`update(x => ({ ...x, … }))`), never mutated. Plain fields are fine only for values changed by the user's own events (form models). Never declare `ChangeDetectionStrategy.Eager`; P18A moved the last such screens to signals and removed the refresh interceptor.
 - **Browser smoke test (P10A, P18):** `scripts/smoke` (Playwright, outside the app build) signs in as every role at phone and desktop widths, in English and Arabic (RTL), and flags screens stuck on "Loading", horizontal scrolling, client tables that scroll sideways on a phone, accessibility gaps (unlabelled controls, unnamed buttons, images without alt, wrong `lang`/`dir`), console errors and API failures. Run it after UI changes; see its README.
 - **Phone tables (P18):** tables default to 760 px and scroll inside `.table-scroll`; short tables on client screens use `.compact-table`. Checkboxes and radios keep their own size; use logical properties (`margin-inline-*`) so RTL works.
 - The access token lives in `sessionStorage`; the refresh token is an HttpOnly cookie that scripts never see. `AuthService` refreshes silently (interceptor, guards, app initializer). The API is the authorization boundary; route guards are UX only.

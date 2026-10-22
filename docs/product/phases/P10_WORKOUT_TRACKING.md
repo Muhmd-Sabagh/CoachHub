@@ -143,6 +143,8 @@ All of the following are pure and unit-tested:
 - **Zoneless change detection (observed, outside P10).** The app runs without zone.js. Older screens assign plain fields inside HTTP subscriptions, which Angular does not re-render until the next event. P10's screens use signals. Tracked as roadmap phase **P10A**, together with the local release gate on Windows PowerShell 5.1.
 - **No manual browser smoke test yet.** The UI was checked by build and tests only.
 
+**Status after P18A (2026-10-22).** Closed: calendar placement (P15), subscription rules (P16), zoneless change detection (P10A, P18A), browser smoke test (P10A, P18). Open: e1RM rebuild on a formula change (P22), Arabic exercise names (P19), coach notifications of PRs (backlog).
+
 ## Verification
 
 | Check | Result |

@@ -102,6 +102,8 @@
 - **Replacement quantities** are still base-unit quantities. Equivalent-quantity calculation and flexible alternatives arrive in P8.
 - **Client-facing nutrition screens** (diary, dashboard) arrive in P8.
 
+**Status after P18A (2026-10-22).** Closed: replacement quantities and client screens (P8). Open: saved-plans totals after a transfer (P22).
+
 ## Verification
 
 | Check | Result |

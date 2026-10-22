@@ -106,6 +106,8 @@
 - **Media opened by ID** (`/media/{id}`) isn't restricted by these rules. The tenant rules still apply, and the lists that reveal IDs are restricted.
 - **No manual browser smoke test yet** (P10A now covers P8–P16 screens).
 
+**Status after P18A (2026-10-22).** Closed: browser smoke test (P10A, P18). Open: scheduled resume, optional automatic suspension, and `/media/{id}` under the access rules (P22).
+
 ## Verification
 
 | Check | Result |

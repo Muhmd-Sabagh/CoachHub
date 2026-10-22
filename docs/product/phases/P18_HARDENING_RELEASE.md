@@ -1,6 +1,6 @@
 # P18 — Hardening and release
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P18 · **Branch:** `phase/p18-hardening-release` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P18 · **Branch:** `phase/p18-hardening-release` · **Status:** Delivered (merged in PR #21).
 **Covers:** §53 (responsive), §54 (future-ready), §55 (AI-ready), §60 (API-first). The last product phase.
 
 ## Scope

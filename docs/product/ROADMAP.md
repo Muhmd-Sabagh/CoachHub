@@ -36,7 +36,7 @@ Owner decisions for the completion phases (2026-10-22):
 ## Conventions for every phase
 
 - **Branch** `phase/pNN-<slug>` from `master` → PR → CI `Release readiness` must pass before merge.
-- **Phase doc** `docs/product/phases/PNN_<NAME>.md` records scope, the § and decisions covered, decisions taken, and verification evidence. Annotate any superseded `docs/migration/PHASE_*.md`.
+- **Phase doc** `docs/product/phases/PNN_<NAME>.md` records scope, the § and decisions covered, decisions taken, and verification evidence. (The legacy migration-phase docs were archived to `docs/archive/` in P18A.)
 - Each phase starts with a short plan-mode pass to refine details against the code at that point; this roadmap fixes scope and order only.
 - **Every phase must:**
   - follow CLAUDE.md layering;
@@ -387,6 +387,8 @@ Added 2026-10-22. P0–P18 delivered every requirement section, but comparing th
 
 ### P18A: Cleanup (M), covering §60, §61
 
+**Delivered 2026-10-22** (see `docs/product/phases/P18A_CLEANUP.md`).
+
 Removes what the legacy migration (phases 0–21) and the product phases left behind, before P19 starts translating screens. The rule for this phase: **no behaviour a user relies on changes** unless the owner confirms it at phase start; everything else is removal, renaming or consolidation, proven by the existing tests.
 
 - **Legacy plan workflow status.** `Client.DietStatus` / `WorkoutStatus` (`PlanWorkflowStatus`) are still edited and filtered on, although P5's computed `ClientStatus` and P6's plan versions replaced them. Remove them from the domain, the API, the client list filters and the UI, with a migration (owner decision, 2026-10-22).
@@ -515,6 +517,12 @@ These are recorded but not planned. Each needs an owner decision before it becom
 - **Notifications.** WhatsApp copies of events and phone push notifications (P14).
 - **Reports.** Scheduled or emailed reports, charts in the PDF, and streamed exports for very large histories (P17).
 - **Health providers.** The first `IHealthDataProvider` implementation (§31, §32, §54).
+- **Found in P18A, not covered by P19–P23:**
+  - **Billing screens.** Voiding invoices and recording refunds exist only in the API. The `/operations` screen still takes raw IDs (client, invoice, currency) instead of pickers.
+  - **The Administrator's coach picker** for packages and payment accounts; the API already accepts `coachId` (P1).
+  - **The previous coach's view** of a transferred client's commercial history (D7, P1).
+  - **A client history tab** on the client profile, from the audit trail (§58, P3).
+  - **Coach notifications** of personal records and completed workouts (P10). §42 doesn't list them.
 
 ---
 
@@ -543,4 +551,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. The next phase is **P18A** on branch `phase/p18a-cleanup`, beginning with its own short plan-mode refinement. Its owner decisions were taken on 2026-10-22.
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22. The next phase is **P19** on branch `phase/p19-localisation`, beginning with its own short plan-mode refinement.

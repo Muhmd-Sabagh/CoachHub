@@ -76,6 +76,8 @@ It replaces the Phase 20A metadata-only trail. It is tenant-isolated, so a coach
 - **No client history tab yet.** The client profile has no history tab. P5's client profile can use `clientId=`.
 - **Dispatcher status changes.** Notification delivery attempts are audited as `System` status changes, with the body omitted.
 
+**Status after P18A (2026-10-22).** Open: a client history tab on the client profile (roadmap backlog).
+
 ## Verification
 
 | Check | Result |

@@ -107,6 +107,8 @@ Coaches are **independent businesses** (recorded in [REQUIREMENTS.md](../REQUIRE
 - **No coach picker for Admin-created packages.** The settings UI does not let an administrator create packages or payment accounts for a coach; the API supports it with `coachId`. This is P4 settings work.
 - **Legacy code-based forms.** They remain until P5 (D5).
 
+**Status after P18A (2026-10-22).** Closed: transfer auditing (P3), legacy forms (P5); the stale-claim window is 15 minutes since P2. Still open (roadmap backlog): the previous coach's view of a transferred client's commercial history, and the Administrator's coach picker for packages and payment accounts.
+
 ## Verification
 
 | Check | Result |

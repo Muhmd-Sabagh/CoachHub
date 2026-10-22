@@ -133,6 +133,8 @@
 - **Imported submissions** (Google Forms) never create check-ins.
 - **No manual browser smoke test yet** (P10A covers P8–P12 screens).
 
+**Status after P18A (2026-10-22).** Closed: notifications (P14), calendar entries (P15), browser smoke test (P10A, P18); imported submissions no longer exist (the importer was removed in P18A). Open: schedule history and measures in one transaction (P22).
+
 ## Verification
 
 | Check | Result |
