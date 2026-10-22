@@ -159,7 +159,7 @@ public sealed class CheckInWorkflowTests(CoachHubSqlApiFactory factory) : IClass
         Assert.Equal(HttpStatusCode.NotFound, (await setup.OtherCoach.GetAsync(SchedulePath(setup))).StatusCode);
         Assert.DoesNotContain((await setup.OtherCoach.GetFromJsonAsync<PagedResult<CheckInSummary>>("/api/v1/check-ins?pageSize=100"))!.Items, x => x.Id == checkIn.Id);
         var sibling = await ReadAsync<ClientResponse>(await setup.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput("Sibling " + setup.Tag, null, null, null)));
-        var siblingPortal = factory.CreateClientPortalClient(setup.CoachId, sibling.Id);
+        var siblingPortal = factory.CreateClientAreaClient(setup.CoachId, sibling.Id);
         Assert.Equal(HttpStatusCode.NotFound, (await siblingPortal.GetAsync($"/api/v1/me/check-ins/{checkIn.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await portal.GetAsync("/api/v1/check-ins")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await setup.Coach.GetAsync("/api/v1/me/check-ins")).StatusCode);

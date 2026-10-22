@@ -3,7 +3,6 @@ using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Coaches;
 using CoachHub.Application.Settings;
 using CoachHub.Domain.Clients;
-using CoachHub.Domain.Nutrition;
 using CoachHub.Domain.Settings;
 
 namespace CoachHub.Application.DietPlanning;

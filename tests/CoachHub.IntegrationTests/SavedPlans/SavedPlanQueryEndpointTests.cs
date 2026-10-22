@@ -1,7 +1,5 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Clients;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.DietPlanning;
@@ -64,9 +62,9 @@ public sealed class SavedPlanQueryEndpointTests : IClassFixture<CoachHubApiFacto
         Assert.Equal(30m, dietSummary.TotalCarbohydrates);
         Assert.Equal(7.5m, dietSummary.TotalFat);
         Assert.Null(dietSummary.WorkoutDayCount);
-        Assert.Equal(client.ClientCode, dietSummary.ClientCode);
+        Assert.Equal(client.Id, dietSummary.ClientId);
 
-        var workoutPage = await GetAsync("clientName=Query&clientCode=" + client.ClientCode + "&planType=Workout&minWorkoutDays=2&maxWorkoutDays=2");
+        var workoutPage = await GetAsync("clientName=Query&clientId=" + client.Id + "&planType=Workout&minWorkoutDays=2&maxWorkoutDays=2");
         var workoutSummary = Assert.Single(workoutPage.Items);
         Assert.Equal(workout.Id, workoutSummary.Id);
         Assert.Equal(2, workoutSummary.WorkoutDayCount);

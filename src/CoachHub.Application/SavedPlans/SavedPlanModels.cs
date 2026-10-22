@@ -13,7 +13,7 @@ public sealed record SavedPlanQuery
     public int PageSize { get; init; } = 20;
     public string? PlanName { get; init; }
     public string? ClientName { get; init; }
-    public string? ClientCode { get; init; }
+    public Guid? ClientId { get; init; }
     public DateTimeOffset? CreatedFrom { get; init; }
     public DateTimeOffset? CreatedTo { get; init; }
     public SavedPlanType? PlanType { get; init; }
@@ -34,7 +34,7 @@ public sealed record SavedPlanQuery
     public SavedPlanQuery Normalize() => this with
     {
         PageNumber = Math.Max(1, PageNumber), PageSize = Math.Clamp(PageSize, 1, 100),
-        PlanName = Clean(PlanName), ClientName = Clean(ClientName), ClientCode = Clean(ClientCode),
+        PlanName = Clean(PlanName), ClientName = Clean(ClientName),
         SortBy = Clean(SortBy)?.ToLowerInvariant()
     };
 
@@ -43,7 +43,7 @@ public sealed record SavedPlanQuery
 
 public sealed record SavedPlanSummary(
     Guid Id, SavedPlanType PlanType, string NameEn, string? NameAr,
-    Guid? ClientId, string? ClientName, string? ClientCode, DateTimeOffset CreatedAt,
+    Guid? ClientId, string? ClientName, DateTimeOffset CreatedAt,
     decimal? TotalWeight, decimal? TotalCalories, decimal? TotalProtein,
     decimal? TotalCarbohydrates, decimal? TotalFat, int? WorkoutDayCount,
     int? VersionNumber = null, PlanRevisionStatus? VersionStatus = null, DateOnly? StartDate = null, DateOnly? EndDate = null);

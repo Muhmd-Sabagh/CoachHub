@@ -8,30 +8,30 @@
     <label class="filter-row"><span>Editing</span>
       <select name="target" [(ngModel)]="target" (ngModelChange)="load()">
         <option value="">Platform</option>
-        @for (coach of coaches; track coach.id) { <option [value]="coach.id">{{ coach.displayName }}</option> }
+        @for (coach of coaches(); track coach.id) { <option [value]="coach.id">{{ coach.displayName }}</option> }
       </select>
     </label>
   }
 </section>
-@if (error) { <p class="form-error" role="alert">{{ error }}</p> }
-@if (message) { <p class="success-message" role="status">{{ message }}</p> }
+@if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+@if (message()) { <p class="success-message" role="status">{{ message() }}</p> }
 
 <section class="card workbench">
-  <div class="section-heading"><h2>Brand</h2><span>{{ brand?.isSaved ? 'Saved' : 'Not customised yet' }}</span></div>
+  <div class="section-heading"><h2>Brand</h2><span>{{ brand()?.isSaved ? 'Saved' : 'Not customised yet' }}</span></div>
   <form class="form-grid" (ngSubmit)="saveBrand()">
-    <label><span>Brand name *</span><input name="brandName" [(ngModel)]="brandForm.brandName" required maxlength="100" /></label>
+    <label><span>Brand name *</span><input name="brandName" [(ngModel)]="brandForm().brandName" required maxlength="100" /></label>
     <label><span>Primary color</span>
-      <span class="filter-row"><input type="color" name="primaryPicker" [ngModel]="colorValue(brandForm.primaryColor, '#465fff')" (ngModelChange)="brandForm.primaryColor = $event" />
-      <input name="primaryColor" [(ngModel)]="brandForm.primaryColor" placeholder="#465fff" maxlength="7" /></span></label>
+      <span class="filter-row"><input type="color" name="primaryPicker" [ngModel]="colorValue(brandForm().primaryColor, '#465fff')" (ngModelChange)="brandForm().primaryColor = $event" />
+      <input name="primaryColor" [(ngModel)]="brandForm().primaryColor" placeholder="#465fff" maxlength="7" /></span></label>
     <label><span>Secondary color</span>
-      <span class="filter-row"><input type="color" name="secondaryPicker" [ngModel]="colorValue(brandForm.secondaryColor, '#12b76a')" (ngModelChange)="brandForm.secondaryColor = $event" />
-      <input name="secondaryColor" [(ngModel)]="brandForm.secondaryColor" placeholder="#12b76a" maxlength="7" /></span></label>
-    <label><span>Login headline</span><input name="loginHeadline" [(ngModel)]="brandForm.loginHeadline" maxlength="150" /></label>
-    <label class="span-2"><span>Login message</span><textarea name="loginMessage" [(ngModel)]="brandForm.loginMessage" maxlength="500" rows="2"></textarea></label>
-    <label class="span-2"><span>Dashboard welcome (shown to clients)</span><textarea name="dashboardWelcome" [(ngModel)]="brandForm.dashboardWelcome" maxlength="500" rows="2"></textarea></label>
-    <label><span>Email header</span><textarea name="emailHeader" [(ngModel)]="brandForm.emailHeader" maxlength="500" rows="2"></textarea></label>
-    <label><span>Email footer</span><textarea name="emailFooter" [(ngModel)]="brandForm.emailFooter" maxlength="500" rows="2"></textarea></label>
-    <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving || !brandForm.brandName.trim()">Save brand</button></div>
+      <span class="filter-row"><input type="color" name="secondaryPicker" [ngModel]="colorValue(brandForm().secondaryColor, '#12b76a')" (ngModelChange)="brandForm().secondaryColor = $event" />
+      <input name="secondaryColor" [(ngModel)]="brandForm().secondaryColor" placeholder="#12b76a" maxlength="7" /></span></label>
+    <label><span>Login headline</span><input name="loginHeadline" [(ngModel)]="brandForm().loginHeadline" maxlength="150" /></label>
+    <label class="span-2"><span>Login message</span><textarea name="loginMessage" [(ngModel)]="brandForm().loginMessage" maxlength="500" rows="2"></textarea></label>
+    <label class="span-2"><span>Dashboard welcome (shown to clients)</span><textarea name="dashboardWelcome" [(ngModel)]="brandForm().dashboardWelcome" maxlength="500" rows="2"></textarea></label>
+    <label><span>Email header</span><textarea name="emailHeader" [(ngModel)]="brandForm().emailHeader" maxlength="500" rows="2"></textarea></label>
+    <label><span>Email footer</span><textarea name="emailFooter" [(ngModel)]="brandForm().emailFooter" maxlength="500" rows="2"></textarea></label>
+    <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving() || !brandForm().brandName.trim()">Save brand</button></div>
   </form>
 </section>
 
@@ -43,8 +43,8 @@
         <strong>{{ image.label }}</strong>
         <div class="filter-row">
           @if (imageUrl(image.kind); as url) { <img class="brand-logo large" [src]="url" [alt]="image.label" /> }
-          <label class="button button-secondary">Upload<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden (change)="upload(image.kind, $event)" [disabled]="saving" /></label>
-          @if (imageUrl(image.kind)) { <button class="link-button danger" type="button" (click)="removeImage(image.kind)" [disabled]="saving">Remove</button> }
+          <label class="button button-secondary">Upload<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden (change)="upload(image.kind, $event)" [disabled]="saving()" /></label>
+          @if (imageUrl(image.kind)) { <button class="link-button danger" type="button" (click)="removeImage(image.kind)" [disabled]="saving()">Remove</button> }
         </div>
       </div>
     }
@@ -55,14 +55,14 @@
   <section class="card workbench">
     <div class="section-heading"><h2>Hosts</h2><span>For future coach domains (§63)</span></div>
     <form class="form-grid" (ngSubmit)="saveHosts()">
-      <label><span>Subdomain</span><input name="subdomain" [(ngModel)]="hosts.subdomain" placeholder="coacha" maxlength="63" /></label>
-      <label><span>Custom domain</span><input name="customDomain" [(ngModel)]="hosts.customDomain" placeholder="www.coacha.com" maxlength="253" /></label>
-      <div class="form-actions"><button class="button button-secondary" type="submit" [disabled]="saving">Save hosts</button></div>
+      <label><span>Subdomain</span><input name="subdomain" [(ngModel)]="hosts().subdomain" placeholder="coacha" maxlength="63" /></label>
+      <label><span>Custom domain</span><input name="customDomain" [(ngModel)]="hosts().customDomain" placeholder="www.coacha.com" maxlength="253" /></label>
+      <div class="form-actions"><button class="button button-secondary" type="submit" [disabled]="saving()">Save hosts</button></div>
     </form>
   </section>
 }
 
-@if (defaults; as d) {
+@if (defaults(); as d) {
   <section class="card workbench">
     <div class="section-heading"><h2>Coaching defaults</h2><span>{{ d.isSaved ? 'Saved' : 'Using the standard defaults' }}</span></div>
     <form class="form-grid" (ngSubmit)="saveDefaults()">
@@ -105,12 +105,12 @@
           <label><span>Sleep</span><input type="number" min="0" max="100" name="wSleep" [(ngModel)]="d.adherenceWeights.sleep" /></label>
         </div>
       </fieldset>
-      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving || weightsTotal !== 100">Save defaults</button></div>
+      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving() || weightsTotal !== 100">Save defaults</button></div>
     </form>
   </section>
 }
 
-@if (platform; as p) {
+@if (platform(); as p) {
   <section class="card workbench">
     <div class="section-heading"><h2>Platform settings</h2></div>
     <form class="form-grid" (ngSubmit)="savePlatform()">
@@ -120,9 +120,9 @@
       <label><span><input type="checkbox" name="email" [(ngModel)]="p.emailNotificationsEnabled" /> Coach email notifications</span></label>
       <label><span><input type="checkbox" name="whatsapp" [(ngModel)]="p.whatsAppNotificationsEnabled" /> Coach WhatsApp notifications</span></label>
       <p class="muted span-2">Account emails such as password resets are always sent.</p>
-      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving">Save settings</button></div>
+      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving()">Save settings</button></div>
     </form>
   </section>
 }
 
-@if (platform) { <app-subscription-access /> }
+@if (platform()) { <app-subscription-access /> }

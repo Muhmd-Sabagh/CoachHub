@@ -1,14 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { MyCheckInsComponent } from '../check-ins/my-check-ins.component';
 import { MyForms, MyFormsService } from './my-forms.service';
 
 /** The forms the coach asked the client to fill in: assessments, and check-ins while one is open (P12). */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-my-forms',
   standalone: true,
   imports: [RouterLink, MyCheckInsComponent],
@@ -16,9 +13,9 @@ import { MyForms, MyFormsService } from './my-forms.service';
     <section class="dashboard-hero"><div><p class="eyebrow">Forms</p><h1>Your forms</h1>
       <p>Answer what your coach asked for. Your answers go straight to them.</p></div></section>
     <app-my-check-ins />
-    @if (error) { <p class="form-error" role="alert">{{ error }}</p> }
-    @if (loading) { <p class="table-message">Loading…</p> }
-    @if (forms; as list) {
+    @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+    @if (loading()) { <p class="table-message">Loading…</p> }
+    @if (forms(); as list) {
       <ul class="form-list">
         @for (form of list.eligibleForms; track form.id) {
           <li><a class="card workbench" [routerLink]="['/app/forms', form.id]">
@@ -35,15 +32,15 @@ import { MyForms, MyFormsService } from './my-forms.service';
     .form-list a { display: grid; gap: 4px; min-height: 64px; }`],
 })
 export class MyFormsComponent implements OnInit {
-  forms: MyForms | null = null;
-  loading = false;
-  error = '';
+  readonly forms = signal<MyForms | null>(null);
+  readonly loading = signal(false);
+  readonly error = signal('');
   constructor(private readonly api: MyFormsService) {}
   ngOnInit(): void {
-    this.loading = true;
-    this.api.list().pipe(finalize(() => (this.loading = false))).subscribe({
-      next: forms => (this.forms = forms),
-      error: e => (this.error = apiErrorMessage(e)),
+    this.loading.set(true);
+    this.api.list().subscribe({
+      next: forms => { this.forms.set(forms); this.loading.set(false); },
+      error: e => { this.error.set(apiErrorMessage(e)); this.loading.set(false); },
     });
   }
 }

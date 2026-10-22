@@ -79,7 +79,7 @@ public sealed class CheckInTests
     public void Check_ins_drive_the_status_after_plans_and_before_on_track()
     {
         var today = new DateOnly(2026, 10, 21);
-        var client = Domain.Clients.Client.Create(Coach, "CLIENT01", "Sam", null, null, today);
+        var client = Domain.Clients.Client.Create(Coach, "Sam", null, null, today);
         Assert.Equal(ClientStatus.OnTrack, client.GetStatus(today));
 
         client.SetCheckInState(today.AddDays(-1), false);
@@ -93,10 +93,9 @@ public sealed class CheckInTests
         client.OverrideStatus(ClientStatus.OnTrack, null, today);
         Assert.Equal(ClientStatus.OnTrack, client.GetStatus(today));
 
-        // A check-in submission leaves the plans alone.
+        // Once reviewed and with no due date, the client is back on track.
         client.ClearStatusOverride();
         client.SetCheckInState(null, false);
-        client.RecordAssessmentSubmission(AssessmentFormType.CheckIn);
-        Assert.Equal((PlanWorkflowStatus.NotStarted, ClientStatus.OnTrack), (client.DietStatus, client.GetStatus(today)));
+        Assert.Equal(ClientStatus.OnTrack, client.GetStatus(today));
     }
 }

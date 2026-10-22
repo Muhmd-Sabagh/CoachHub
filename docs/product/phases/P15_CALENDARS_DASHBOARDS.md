@@ -108,6 +108,8 @@
 - **No time zones.** Calendar dates are the client's dates as stored; event times have no time zone.
 - **No manual browser smoke test yet** (P10A now covers P8–P15 screens).
 
+**Status after P18A (2026-10-22).** Closed: browser smoke test (P10A, P18). Open: recurring events, time zones and iCal (backlog).
+
 ## Verification
 
 | Check | Result |

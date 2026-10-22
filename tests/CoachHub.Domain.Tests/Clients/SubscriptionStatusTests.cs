@@ -37,7 +37,7 @@ public sealed class SubscriptionStatusTests
     private static readonly Guid CoachId = Guid.NewGuid();
 
     private static Client CreateClient() =>
-        Client.Create(CoachId, "A1B2C3D4", "Client", null, null, Today);
+        Client.Create(CoachId, "Client", null, null, Today);
 
     private static Subscription CreateSubscription(Guid clientId, DateOnly startDate, int months) =>
         Subscription.Create(

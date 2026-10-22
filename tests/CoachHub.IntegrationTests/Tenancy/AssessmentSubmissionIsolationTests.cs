@@ -32,7 +32,7 @@ public sealed class AssessmentSubmissionIsolationTests(CoachHubSqlApiFactory fac
         (await coachA.PostAsync($"/api/v1/assessment-forms/{form.DefinitionId}/publish", null)).EnsureSuccessStatusCode();
         var client = await ReadAsync<ClientResponse>(await coachA.PostAsJsonAsync("/api/v1/clients",
             new ClientCreateInput("Isolated client", null, null, null)));
-        var portal = factory.CreateClientPortalClient(coachAId, client.Id);
+        var portal = factory.CreateClientAreaClient(coachAId, client.Id);
         (await portal.PostAsJsonAsync($"/api/v1/me/forms/{form.DefinitionId}/submissions", new MyFormSubmissionInput(
             [new AnswerInput(question.Id, JsonSerializer.SerializeToElement("Good"), null)]))).EnsureSuccessStatusCode();
 

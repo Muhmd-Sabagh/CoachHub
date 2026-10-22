@@ -1,4 +1,3 @@
-using CoachHub.Application.Common.Tenancy;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Infrastructure.Persistence;

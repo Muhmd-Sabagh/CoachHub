@@ -95,6 +95,8 @@ Each version carries its own program dates (§4, §12). The old `DietPlanVersion
 - **Calendar entries** derived from program dates arrive in P15.
 - **Author names** come from the user's current display name. Test-only identities without a user row show no name.
 
+**Status after P18A (2026-10-22).** Closed: diet targets (P7), client screens (P8, P10), calendar entries (P15).
+
 ## Verification
 
 | Check | Result |

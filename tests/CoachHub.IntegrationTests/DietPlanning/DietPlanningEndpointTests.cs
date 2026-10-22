@@ -1,7 +1,5 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Clients;
 using CoachHub.Application.DietPlanning;
 using CoachHub.Domain.Settings;

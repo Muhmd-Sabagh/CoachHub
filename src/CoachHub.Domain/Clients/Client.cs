@@ -10,13 +10,10 @@ public sealed class Client : Entity, ITenantOwned
     private Client() { }
 
     public Guid CoachId { get; private set; }
-    public string ClientCode { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public string? Phone { get; private set; }
     public string? Email { get; private set; }
     public DateOnly JoinDate { get; private set; }
-    public PlanWorkflowStatus DietStatus { get; private set; }
-    public PlanWorkflowStatus WorkoutStatus { get; private set; }
     public bool IsActive { get; private set; } = true;
 
     /// <summary>A status the coach set by hand (§39), in force until <see cref="StatusOverrideUntil"/>.</summary>
@@ -34,7 +31,6 @@ public sealed class Client : Entity, ITenantOwned
 
     public static Client Create(
         Guid coachId,
-        string clientCode,
         string name,
         string? phone,
         string? email,
@@ -43,13 +39,10 @@ public sealed class Client : Entity, ITenantOwned
         var client = new Client
         {
             CoachId = TenantKey.Required(coachId),
-            ClientCode = Code(clientCode, 8, 50, nameof(clientCode)),
             JoinDate = joinDate,
-            DietStatus = PlanWorkflowStatus.NotStarted,
-            WorkoutStatus = PlanWorkflowStatus.NotStarted,
             IsActive = true
         };
-        client.Update(name, phone, email, client.DietStatus, client.WorkoutStatus, true);
+        client.Update(name, phone, email, true);
         return client;
     }
 
@@ -57,48 +50,25 @@ public sealed class Client : Entity, ITenantOwned
         string name,
         string? phone,
         string? email,
-        PlanWorkflowStatus dietStatus,
-        PlanWorkflowStatus workoutStatus,
         bool isActive)
     {
         Name = Required(name, 255, nameof(name));
         Phone = Optional(phone, 50, nameof(phone));
         Email = NormalizeEmail(email);
-        if (!Enum.IsDefined(dietStatus)) throw new ArgumentOutOfRangeException(nameof(dietStatus));
-        if (!Enum.IsDefined(workoutStatus)) throw new ArgumentOutOfRangeException(nameof(workoutStatus));
-        DietStatus = dietStatus;
-        WorkoutStatus = workoutStatus;
         IsActive = isActive;
     }
 
-    public void RecordAssessmentSubmission(CoachHub.Domain.Assessments.AssessmentFormType formType)
-    {
-        // A check-in waits for review on its own (CheckInAwaitingReview); it does not reopen the plans (P12).
-        if (formType == CoachHub.Domain.Assessments.AssessmentFormType.CheckIn) return;
-        if (formType == CoachHub.Domain.Assessments.AssessmentFormType.InitialAssessment)
-        {
-            if (DietStatus == PlanWorkflowStatus.NotStarted) DietStatus = PlanWorkflowStatus.WaitingForPlan;
-            if (WorkoutStatus == PlanWorkflowStatus.NotStarted) WorkoutStatus = PlanWorkflowStatus.WaitingForPlan;
-            return;
-        }
-
-        if (DietStatus is PlanWorkflowStatus.OnPlan or PlanWorkflowStatus.WaitingForPlan)
-            DietStatus = PlanWorkflowStatus.ReviewRequired;
-        if (WorkoutStatus is PlanWorkflowStatus.OnPlan or PlanWorkflowStatus.WaitingForPlan)
-            WorkoutStatus = PlanWorkflowStatus.ReviewRequired;
-    }
     /// <summary>
     /// The client's status (§39). A coach's override wins while it lasts; otherwise, in order:
-    /// Inactive, SubscriptionExpired, NeedsReview (a plan or a submitted check-in awaits the coach), CheckInOverdue (the
-    /// check-in due date has passed, P12), OnTrack.
+    /// Inactive, SubscriptionExpired, NeedsReview (a submitted check-in awaits the coach), CheckInOverdue (the
+    /// check-in due date has passed, P12), OnTrack. <c>ClientRepository.WithStatus</c> computes the same in SQL.
     /// </summary>
     public ClientStatus GetStatus(DateOnly today)
     {
         if (StatusOverride is { } manual && (StatusOverrideUntil is null || StatusOverrideUntil >= today)) return manual;
         if (!IsActive) return ClientStatus.Inactive;
         if (GetSubscriptionStatus(today) == SubscriptionStatus.Expired) return ClientStatus.SubscriptionExpired;
-        if (DietStatus == PlanWorkflowStatus.ReviewRequired || WorkoutStatus == PlanWorkflowStatus.ReviewRequired || CheckInAwaitingReview)
-            return ClientStatus.NeedsReview;
+        if (CheckInAwaitingReview) return ClientStatus.NeedsReview;
         if (CheckInDueOn is { } due && due < today) return ClientStatus.CheckInOverdue;
         return ClientStatus.OnTrack;
     }
@@ -162,16 +132,6 @@ public sealed class Client : Entity, ITenantOwned
         foreach (var status in new[] { SubscriptionStatus.Active, SubscriptionStatus.Suspended, SubscriptionStatus.Pending, SubscriptionStatus.Expired })
             if (statuses.Contains(status)) return status;
         return SubscriptionStatus.Inactive;
-    }
-
-    private static string Code(string value, int minimumLength, int maximumLength, string parameterName)
-    {
-        var code = Required(value, maximumLength, parameterName).ToUpperInvariant();
-        if (code.Length < minimumLength || code.Any(character => !char.IsAsciiLetterOrDigit(character)))
-        {
-            throw new ArgumentException("Codes must use uppercase ASCII letters and digits.", parameterName);
-        }
-        return code;
     }
 
     private static string? NormalizeEmail(string? value)

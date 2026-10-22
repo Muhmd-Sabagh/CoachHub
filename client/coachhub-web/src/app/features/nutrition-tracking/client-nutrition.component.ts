@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -14,13 +14,11 @@ import {
  * diary of one day (§8). Read-only; the client keeps the diary.
  */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-client-nutrition',
   standalone: true,
   imports: [CommonModule, FormsModule, CalorieChartComponent],
   template: `
-    @if (error) { <p class="form-error" role="alert">{{ error }}</p> }
+    @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     @if (view === 'analytics') {
       <section class="card workbench">
         <div class="section-heading"><h2>Nutrition</h2>
@@ -28,7 +26,7 @@ import {
             <select [(ngModel)]="range" (ngModelChange)="loadAnalytics()" name="range">
               <option [ngValue]="7">Last 7 days</option><option [ngValue]="30">Last 30 days</option><option [ngValue]="90">Last 90 days</option>
             </select></label></div>
-        @if (analytics; as a) {
+        @if (analytics(); as a) {
           <div class="report-metrics">
             <article><small>Average calories</small><strong>{{ a.summary.averageConsumed ? (a.summary.averageConsumed.calories | number: '1.0-0') : '–' }}</strong>
               <span>target {{ a.summary.averageTarget ? (a.summary.averageTarget.calories | number: '1.0-0') : '–' }}</span></article>
@@ -43,12 +41,12 @@ import {
           <app-calorie-chart [rows]="a.days" />
           <div class="section-heading"><h3>Target vs actual</h3>
             <div class="segmented" role="group" aria-label="Group by">
-              <button type="button" [class.active]="grouping === 'weeks'" (click)="grouping = 'weeks'">Weekly</button>
-              <button type="button" [class.active]="grouping === 'months'" (click)="grouping = 'months'">Monthly</button>
-              <button type="button" [class.active]="grouping === 'days'" (click)="grouping = 'days'">Daily</button>
+              <button type="button" [class.active]="grouping() === 'weeks'" (click)="grouping.set('weeks')">Weekly</button>
+              <button type="button" [class.active]="grouping() === 'months'" (click)="grouping.set('months')">Monthly</button>
+              <button type="button" [class.active]="grouping() === 'days'" (click)="grouping.set('days')">Daily</button>
             </div></div>
           <div class="table-scroll">
-            @if (grouping === 'days') {
+            @if (grouping() === 'days') {
               <table>
                 <thead><tr><th>Day</th><th>Target kcal</th><th>Eaten kcal</th><th>Protein g</th><th>Carbs g</th><th>Fat g</th><th>Meals</th><th>Adherence</th></tr></thead>
                 <tbody>
@@ -85,7 +83,7 @@ import {
               </table>
             }
           </div>
-        } @else if (loading) { <p class="table-message">Loading…</p> }
+        } @else if (loading()) { <p class="table-message">Loading…</p> }
       </section>
     } @else {
       <section class="card workbench">
@@ -93,9 +91,9 @@ import {
           <div class="day-nav">
             <button class="icon-button" type="button" (click)="shift(-1)" aria-label="Previous day">‹</button>
             <input type="date" [(ngModel)]="date" (ngModelChange)="loadDay()" name="date" [max]="today" aria-label="Day" />
-            <button class="icon-button" type="button" (click)="shift(1)" [disabled]="date >= today" aria-label="Next day">›</button>
+            <button class="icon-button" type="button" (click)="shift(1)" [disabled]="date() >= today" aria-label="Next day">›</button>
           </div></div>
-        @if (day; as d) {
+        @if (day(); as d) {
           <p>
             <strong>{{ d.summary.consumed.calories | number: '1.0-0' }}</strong> of
             {{ d.summary.target ? (d.summary.target.calories | number: '1.0-0') : '–' }} kcal
@@ -133,7 +131,7 @@ import {
               } @empty { <tr><td colspan="6" class="muted">Nothing logged.</td></tr> }
             </tbody>
           </table></div>
-        } @else if (loading) { <p class="table-message">Loading…</p> }
+        } @else if (loading()) { <p class="table-message">Loading…</p> }
       </section>
     }
   `,
@@ -150,13 +148,13 @@ export class ClientNutritionComponent implements OnChanges {
   @Input({ required: true }) clientId = '';
   @Input() view: 'analytics' | 'diary' = 'analytics';
   readonly today = isoDate(new Date());
-  range = 30;
-  grouping: 'weeks' | 'months' | 'days' = 'weeks';
-  date = this.today;
-  analytics: NutritionAnalytics | null = null;
-  day: NutritionDay | null = null;
-  loading = false;
-  error = '';
+  readonly range = signal(30);
+  readonly grouping = signal<'weeks' | 'months' | 'days'>('weeks');
+  readonly date = signal(this.today);
+  readonly analytics = signal<NutritionAnalytics | null>(null);
+  readonly day = signal<NutritionDay | null>(null);
+  readonly loading = signal(false);
+  readonly error = signal('');
 
   constructor(private readonly api: NutritionTrackingService) {}
 
@@ -166,31 +164,31 @@ export class ClientNutritionComponent implements OnChanges {
   }
 
   loadAnalytics(): void {
-    this.fetch(() => this.api.analytics(this.clientId, addDays(this.today, -(this.range - 1)), this.today)
-      .pipe(finalize(() => (this.loading = false))).subscribe({ next: a => (this.analytics = a), error: e => (this.error = apiErrorMessage(e)) }));
+    this.fetch(() => this.api.analytics(this.clientId, addDays(this.today, -(this.range() - 1)), this.today)
+      .pipe(finalize(() => (this.loading.set(false)))).subscribe({ next: a => (this.analytics.set(a)), error: e => (this.error.set(apiErrorMessage(e))) }));
   }
 
   loadDay(): void {
-    if (!this.date) return;
-    this.fetch(() => this.api.clientDay(this.clientId, this.date)
-      .pipe(finalize(() => (this.loading = false))).subscribe({ next: d => (this.day = d), error: e => (this.error = apiErrorMessage(e)) }));
+    if (!this.date()) return;
+    this.fetch(() => this.api.clientDay(this.clientId, this.date())
+      .pipe(finalize(() => (this.loading.set(false)))).subscribe({ next: d => (this.day.set(d)), error: e => (this.error.set(apiErrorMessage(e))) }));
   }
 
   openDay(date: string): void {
-    this.date = date;
+    this.date.set(date);
     this.view = 'diary';
     this.loadDay();
   }
 
   shift(days: number): void {
-    const next = addDays(this.date, days);
+    const next = addDays(this.date(), days);
     if (next > this.today) return;
-    this.date = next;
+    this.date.set(next);
     this.loadDay();
   }
 
   periods(analytics: NutritionAnalytics): NutritionPeriod[] {
-    return (this.grouping === 'weeks' ? analytics.weeks : analytics.months).slice().reverse();
+    return (this.grouping() === 'weeks' ? analytics.weeks : analytics.months).slice().reverse();
   }
 
   sorted(day: NutritionDay) {
@@ -210,8 +208,8 @@ export class ClientNutritionComponent implements OnChanges {
   }
 
   private fetch(start: () => void): void {
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
     start();
   }
 }

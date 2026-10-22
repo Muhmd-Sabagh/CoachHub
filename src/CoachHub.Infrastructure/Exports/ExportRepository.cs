@@ -90,9 +90,9 @@ public sealed class ExportRepository(CoachHubDbContext dbContext, ICurrentUser c
             join coach in dbContext.Set<Coach>().AsNoTracking() on subscription.CoachId equals coach.Id
             join package in dbContext.Set<Package>().AsNoTracking() on subscription.PackageId equals package.Id
             join currency in dbContext.Set<Currency>().AsNoTracking() on subscription.CurrencyId equals currency.Id
-            select new { subscription, ClientName = client.Name, client.ClientCode, CoachName = coach.DisplayName, PackageName = package.NameEn, currency.Code })
+            select new { subscription, ClientName = client.Name, CoachName = coach.DisplayName, PackageName = package.NameEn, currency.Code })
             .ToArrayAsync(cancellationToken);
-        return rows.Select(x => new ExportSubscription(x.subscription, x.ClientName, x.ClientCode, x.CoachName, x.PackageName, x.Code)).ToArray();
+        return rows.Select(x => new ExportSubscription(x.subscription, x.ClientName, x.CoachName, x.PackageName, x.Code)).ToArray();
     }
 
     public async Task<IReadOnlyDictionary<Guid, SubscriptionPaymentStatus>> SubscriptionPaymentsAsync(

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, finalize } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -14,8 +14,6 @@ import {
  * options and permitted alternatives (§7), and the food diary. Mobile first.
  */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-my-nutrition',
   standalone: true,
   imports: [CommonModule, FormsModule],
@@ -25,17 +23,17 @@ import {
         <p class="eyebrow">Nutrition</p>
         <div class="day-nav">
           <button class="icon-button" type="button" (click)="go(-1)" aria-label="Previous day">‹</button>
-          <h1>{{ date === today ? 'Today' : (date | date: 'EEE d MMM') }}</h1>
-          <button class="icon-button" type="button" (click)="go(1)" [disabled]="date >= today" aria-label="Next day">›</button>
+          <h1>{{ date() === today ? 'Today' : (date() | date: 'EEE d MMM') }}</h1>
+          <button class="icon-button" type="button" (click)="go(1)" [disabled]="date() >= today" aria-label="Next day">›</button>
         </div>
-        @if (day?.plan; as plan) { <p>{{ plan.nameEn }} · version {{ plan.versionNumber }}</p> }
-        @else if (day) { <p>No diet plan for this day. You can still log what you eat.</p> }
+        @if (day()?.plan; as plan) { <p>{{ plan.nameEn }} · version {{ plan.versionNumber }}</p> }
+        @else if (day()) { <p>No diet plan for this day. You can still log what you eat.</p> }
       </div>
     </section>
-    @if (error) { <p class="form-error" role="alert">{{ error }}</p> }
-    @if (loading && !day) { <p class="table-message">Loading…</p> }
+    @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+    @if (loading() && !day()) { <p class="table-message">Loading…</p> }
 
-    @if (day; as d) {
+    @if (day(); as d) {
       <section class="card workbench summary-card" aria-label="Daily summary">
         <div class="kcal-line">
           <div><small class="muted">Consumed</small><strong>{{ d.summary.consumed.calories | number: '1.0-0' }}</strong></div>
@@ -77,13 +75,13 @@ import {
             <div class="meal-top">
               <div><strong>{{ meal.nameEn }}</strong><small class="muted"> · {{ meal.totals.calories | number: '1.0-0' }} kcal</small></div>
               @if (meal.isLogged) { <span class="logged">✓ Logged</span> }
-              @else if (writable) { <button class="button button-secondary" type="button" [disabled]="busy" (click)="logMeal(meal)">Log meal</button> }
+              @else if (writable) { <button class="button button-secondary" type="button" [disabled]="busy()" (click)="logMeal(meal)">Log meal</button> }
             </div>
             @if (meal.options.length) {
               <div class="option-chips" role="radiogroup" [attr.aria-label]="meal.nameEn + ' options'">
                 @for (o of meal.options; track o.id) {
                   <button type="button" role="radio" [attr.aria-checked]="o.id === meal.chosenOptionId" [class.active]="o.id === meal.chosenOptionId"
-                    [disabled]="!writable || busy" (click)="chooseOption(meal, o.id)">{{ o.nameEn }} · {{ o.totals.calories | number: '1.0-0' }}</button>
+                    [disabled]="!writable || busy()" (click)="chooseOption(meal, o.id)">{{ o.nameEn }} · {{ o.totals.calories | number: '1.0-0' }}</button>
                 }
               </div>
             }
@@ -94,17 +92,17 @@ import {
                     <span>{{ food.nameEn }}</span>
                     <small class="muted">{{ food.quantity | number: '1.0-2' }} {{ food.unitLabel }} · {{ food.totals.calories | number: '1.0-0' }} kcal</small>
                     @if (food.alternativeCount > 0 && writable) {
-                      <button class="link-button" type="button" (click)="toggleAlternatives(meal, food)">{{ openFood === food.id ? 'Close' : 'Change food' }}</button>
+                      <button class="link-button" type="button" (click)="toggleAlternatives(meal, food)">{{ openFood() === food.id ? 'Close' : 'Change food' }}</button>
                     }
                   </div>
-                  @if (openFood === food.id) {
+                  @if (openFood() === food.id) {
                     <ul class="alternatives" aria-label="Permitted alternatives">
-                      @for (a of alternatives; track a.optionId) {
+                      @for (a of alternatives(); track a.optionId) {
                         <li>
                           <span>{{ a.nameEn }}</span>
                           <input type="number" min="0.01" step="any" [(ngModel)]="a.quantity" [name]="'alt' + a.optionId" aria-label="Quantity" />
                           <small class="muted">{{ a.unitLabel }}{{ a.isCalculated ? ' (matched)' : '' }}</small>
-                          <button class="button button-primary" type="button" [disabled]="busy || !a.quantity" (click)="logSwap(meal, food, a)">Ate this</button>
+                          <button class="button button-primary" type="button" [disabled]="busy() || !a.quantity" (click)="logSwap(meal, food, a)">Ate this</button>
                         </li>
                       } @empty { <li class="muted">Loading alternatives…</li> }
                     </ul>
@@ -126,14 +124,14 @@ import {
                 @for (e of entries; track e.id) {
                   <li class="food-line">
                     <span>{{ e.nameEn }} @if (e.source !== 'Planned') { <small class="badge">{{ e.source === 'Swap' ? 'Swapped' : 'Extra' }}</small> }</span>
-                    @if (editing === e.id) {
+                    @if (editing() === e.id) {
                       <input type="number" min="0.01" step="any" [(ngModel)]="editQuantity" name="editQuantity" aria-label="Quantity" />
                       <button class="link-button" type="button" (click)="saveEdit(e)">Save</button>
                     } @else {
                       <small class="muted">{{ e.quantity !== null ? (e.quantity | number: '1.0-2') + ' ' + e.unitLabel + ' · ' : '' }}{{ e.nutrients.calories | number: '1.0-0' }} kcal</small>
                       @if (writable) {
                         @if (!e.isCustom) { <button class="link-button" type="button" (click)="startEdit(e)">Edit</button> }
-                        <button class="link-button danger" type="button" [disabled]="busy" (click)="remove(e)">Delete</button>
+                        <button class="link-button danger" type="button" [disabled]="busy()" (click)="remove(e)">Delete</button>
                       }
                     }
                   </li>
@@ -148,20 +146,20 @@ import {
       @if (writable) {
         <section class="card workbench add-food" aria-label="Add food">
           <div class="section-heading"><h2>Add food</h2>
-            <button class="link-button" type="button" (click)="custom = !custom">{{ custom ? 'Search foods' : 'Not in the list?' }}</button></div>
+            <button class="link-button" type="button" (click)="custom.set(!custom())">{{ custom() ? 'Search foods' : 'Not in the list?' }}</button></div>
           <label><span>Meal</span>
             <select [(ngModel)]="slot" name="slot">@for (s of slots; track s) { <option [ngValue]="s">{{ s }}</option> }</select></label>
-          @if (!custom) {
+          @if (!custom()) {
             <form class="search-row" (ngSubmit)="search()">
               <input type="search" [(ngModel)]="term" name="term" placeholder="Search foods" aria-label="Search foods" />
-              <button class="button button-secondary" type="submit" [disabled]="!term.trim()">Search</button>
+              <button class="button button-secondary" type="submit" [disabled]="!term().trim()">Search</button>
             </form>
             <ul class="food-list">
-              @for (f of results; track f.id) {
+              @for (f of results(); track f.id) {
                 <li class="food-line"><span>{{ f.nameEn }}</span><button class="link-button" type="button" (click)="pick(f)">Choose</button></li>
               }
             </ul>
-            @if (picked; as f) {
+            @if (picked(); as f) {
               <div class="pick-row">
                 <strong>{{ f.nameEn }}</strong>
                 <input type="number" min="0.01" step="any" [(ngModel)]="quantity" name="quantity" aria-label="Quantity" />
@@ -169,18 +167,18 @@ import {
                   <option [ngValue]="null">{{ f.baseUnitLabel }}</option>
                   @for (u of f.units; track u.id) { <option [ngValue]="u.id">{{ u.nameEn }}</option> }
                 </select>
-                <button class="button button-primary" type="button" [disabled]="busy || !quantity" (click)="addPicked()">Add</button>
+                <button class="button button-primary" type="button" [disabled]="busy() || !quantity()" (click)="addPicked()">Add</button>
               </div>
             }
           } @else {
             <div class="custom-grid">
-              <label class="wide"><span>Name</span><input [(ngModel)]="customFood.nameEn" name="customName" maxlength="255" /></label>
-              <label><span>kcal</span><input type="number" min="0" [(ngModel)]="customFood.calories" name="customKcal" /></label>
-              <label><span>Protein g</span><input type="number" min="0" [(ngModel)]="customFood.protein" name="customProtein" /></label>
-              <label><span>Carbs g</span><input type="number" min="0" [(ngModel)]="customFood.carbohydrates" name="customCarbs" /></label>
-              <label><span>Fat g</span><input type="number" min="0" [(ngModel)]="customFood.fat" name="customFat" /></label>
+              <label class="wide"><span>Name</span><input [(ngModel)]="customFood().nameEn" name="customName" maxlength="255" /></label>
+              <label><span>kcal</span><input type="number" min="0" [(ngModel)]="customFood().calories" name="customKcal" /></label>
+              <label><span>Protein g</span><input type="number" min="0" [(ngModel)]="customFood().protein" name="customProtein" /></label>
+              <label><span>Carbs g</span><input type="number" min="0" [(ngModel)]="customFood().carbohydrates" name="customCarbs" /></label>
+              <label><span>Fat g</span><input type="number" min="0" [(ngModel)]="customFood().fat" name="customFat" /></label>
             </div>
-            <button class="button button-primary" type="button" [disabled]="busy || !customFood.nameEn.trim()" (click)="addCustom()">Add</button>
+            <button class="button button-primary" type="button" [disabled]="busy() || !customFood().nameEn.trim()" (click)="addCustom()">Add</button>
           }
         </section>
       }
@@ -233,29 +231,29 @@ export class MyNutritionComponent implements OnInit {
   ];
   readonly today = isoDate(new Date());
   readonly bar = progress;
-  date = this.today;
-  day: NutritionDay | null = null;
-  loading = false;
-  busy = false;
-  error = '';
-  openFood: string | null = null;
-  alternatives: FoodAlternative[] = [];
-  editing: string | null = null;
-  editQuantity: number | null = null;
-  slot: MealType = 'Snack';
-  custom = false;
-  term = '';
-  results: DiaryFood[] = [];
-  picked: DiaryFood | null = null;
-  quantity: number | null = null;
-  unitId: string | null = null;
-  customFood = { nameEn: '', calories: 0, protein: 0, carbohydrates: 0, fat: 0 };
+  readonly date = signal(this.today);
+  readonly day = signal<NutritionDay | null>(null);
+  readonly loading = signal(false);
+  readonly busy = signal(false);
+  readonly error = signal('');
+  readonly openFood = signal<string | null>(null);
+  readonly alternatives = signal<FoodAlternative[]>([]);
+  readonly editing = signal<string | null>(null);
+  readonly editQuantity = signal<number | null>(null);
+  readonly slot = signal<MealType>('Snack');
+  readonly custom = signal(false);
+  readonly term = signal('');
+  readonly results = signal<DiaryFood[]>([]);
+  readonly picked = signal<DiaryFood | null>(null);
+  readonly quantity = signal<number | null>(null);
+  readonly unitId = signal<string | null>(null);
+  readonly customFood = signal({ nameEn: '', calories: 0, protein: 0, carbohydrates: 0, fat: 0 });
 
   constructor(private readonly api: NutritionTrackingService) {}
 
   /** The diary takes today and earlier days; the server enforces the same. */
   get writable(): boolean {
-    return this.date <= this.today;
+    return this.date() <= this.today;
   }
 
   ngOnInit(): void {
@@ -263,10 +261,10 @@ export class MyNutritionComponent implements OnInit {
   }
 
   go(days: number): void {
-    const next = addDays(this.date, days);
+    const next = addDays(this.date(), days);
     if (next > this.today) return;
-    this.date = next;
-    this.openFood = null;
+    this.date.set(next);
+    this.openFood.set(null);
     this.load();
   }
 
@@ -275,44 +273,45 @@ export class MyNutritionComponent implements OnInit {
   }
 
   chooseVariant(variantId: string): void {
-    this.run(this.api.choose(this.date, { variantId }));
+    this.run(this.api.choose(this.date(), { variantId }));
   }
 
   chooseOption(meal: PlannedMeal, optionId: string): void {
     if (optionId === meal.chosenOptionId) return;
-    this.run(this.api.choose(this.date, { mealOptions: [{ mealId: meal.id, optionId }] }));
+    this.run(this.api.choose(this.date(), { mealOptions: [{ mealId: meal.id, optionId }] }));
   }
 
   logMeal(meal: PlannedMeal): void {
-    this.run(this.api.logMeal(this.date, meal.id));
+    this.run(this.api.logMeal(this.date(), meal.id));
   }
 
   toggleAlternatives(meal: PlannedMeal, food: PlannedFood): void {
-    if (this.openFood === food.id) { this.openFood = null; return; }
-    this.openFood = food.id;
-    this.alternatives = [];
-    this.api.alternatives(this.date, food.id).subscribe({
-      next: list => (this.alternatives = list),
-      error: e => (this.error = apiErrorMessage(e)),
+    if (this.openFood() === food.id) { this.openFood.set(null); return; }
+    this.openFood.set(food.id);
+    this.alternatives.set([]);
+    this.api.alternatives(this.date(), food.id).subscribe({
+      next: list => (this.alternatives.set(list)),
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   /** §7: the alternative is logged instead of the planned food, in the coach's (or the client's) quantity. */
   logSwap(meal: PlannedMeal, food: PlannedFood, alternative: FoodAlternative): void {
     this.run(this.api.log({
-      date: this.date, slot: meal.type, plannedMealFoodItemId: food.id, replacementOptionId: alternative.optionId,
+      date: this.date(), slot: meal.type, plannedMealFoodItemId: food.id, replacementOptionId: alternative.optionId,
       quantity: alternative.quantity, foodUnitId: alternative.foodUnitId,
-    }), () => (this.openFood = null));
+    }), () => (this.openFood.set(null)));
   }
 
   startEdit(entry: FoodLogEntry): void {
-    this.editing = entry.id;
-    this.editQuantity = entry.quantity;
+    this.editing.set(entry.id);
+    this.editQuantity.set(entry.quantity);
   }
 
   saveEdit(entry: FoodLogEntry): void {
-    if (!this.editQuantity) return;
-    this.run(this.api.update(entry.id, { quantity: this.editQuantity, foodUnitId: entry.foodUnitId }), () => (this.editing = null));
+    const editQuantity = this.editQuantity();
+    if (!editQuantity) return;
+    this.run(this.api.update(entry.id, { quantity: editQuantity, foodUnitId: entry.foodUnitId }), () => (this.editing.set(null)));
   }
 
   remove(entry: FoodLogEntry): void {
@@ -320,58 +319,60 @@ export class MyNutritionComponent implements OnInit {
   }
 
   search(): void {
-    const term = this.term.trim();
+    const term = this.term().trim();
     if (!term) return;
     this.api.searchFoods(term).subscribe({
-      next: page => (this.results = page.items),
-      error: e => (this.error = apiErrorMessage(e)),
+      next: page => (this.results.set(page.items)),
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   pick(food: DiaryFood): void {
-    this.picked = food;
-    this.quantity = food.servingSize;
-    this.unitId = null;
+    this.picked.set(food);
+    this.quantity.set(food.servingSize);
+    this.unitId.set(null);
   }
 
   addPicked(): void {
-    if (!this.picked || !this.quantity) return;
-    this.run(this.api.log({ date: this.date, slot: this.slot, foodItemId: this.picked.id, quantity: this.quantity, foodUnitId: this.unitId }), () => {
-      this.picked = null;
-      this.results = [];
-      this.term = '';
+    const picked = this.picked();
+    const quantity = this.quantity();
+    if (!picked || !quantity) return;
+    this.run(this.api.log({ date: this.date(), slot: this.slot(), foodItemId: picked.id, quantity, foodUnitId: this.unitId() }), () => {
+      this.picked.set(null);
+      this.results.set([]);
+      this.term.set('');
     });
   }
 
   addCustom(): void {
-    const values = this.customFood;
+    const values = this.customFood();
     this.run(this.api.log({
-      date: this.date, slot: this.slot,
+      date: this.date(), slot: this.slot(),
       custom: { nameEn: values.nameEn.trim(), calories: +values.calories || 0, protein: +values.protein || 0,
         carbohydrates: +values.carbohydrates || 0, fat: +values.fat || 0 },
-    }), () => (this.customFood = { nameEn: '', calories: 0, protein: 0, carbohydrates: 0, fat: 0 }));
+    }), () => (this.customFood.set({ nameEn: '', calories: 0, protein: 0, carbohydrates: 0, fat: 0 })));
   }
 
   private load(): void {
-    this.loading = true;
-    this.error = '';
-    this.api.myDay(this.date).pipe(finalize(() => (this.loading = false))).subscribe({
-      next: day => (this.day = day),
-      error: e => (this.error = apiErrorMessage(e)),
+    this.loading.set(true);
+    this.error.set('');
+    this.api.myDay(this.date()).pipe(finalize(() => (this.loading.set(false)))).subscribe({
+      next: day => (this.day.set(day)),
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   /** Runs a change, then shows the day as the server now sees it (its totals are authoritative). */
   private run(request: Observable<unknown>, after?: () => void): void {
-    this.busy = true;
-    this.error = '';
-    request.pipe(finalize(() => (this.busy = false))).subscribe({
+    this.busy.set(true);
+    this.error.set('');
+    request.pipe(finalize(() => (this.busy.set(false)))).subscribe({
       next: result => {
         after?.();
-        if (result && typeof result === 'object' && 'summary' in result) this.day = result as NutritionDay;
+        if (result && typeof result === 'object' && 'summary' in result) this.day.set(result as NutritionDay);
         else this.load();
       },
-      error: e => (this.error = apiErrorMessage(e)),
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 }

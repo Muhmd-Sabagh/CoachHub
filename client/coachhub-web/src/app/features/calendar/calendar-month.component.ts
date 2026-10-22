@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { isoDate } from '../nutrition-tracking/nutrition-tracking.service';
 import { CalendarEntry, entryLabels, monthGrid, timeText } from './calendar.service';
 
@@ -10,8 +10,6 @@ interface Cell { date: string; inMonth: boolean; today: boolean; entries: Calend
  * The parent loads the entries for <c>monthGrid(month)</c> and handles month changes and entry clicks.
  */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-calendar-month',
   standalone: true,
   imports: [CommonModule],

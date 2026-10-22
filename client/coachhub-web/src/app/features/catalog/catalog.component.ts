@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -12,31 +12,30 @@ import {
 import { CatalogItem, exerciseDifficulties } from './catalog.models';
 import { CatalogKind, CatalogService } from './catalog.service';
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-catalog', templateUrl: './catalog.component.html', standalone: false })
+  selector: 'app-catalog', templateUrl: './catalog.component.html', standalone: false })
 export class CatalogComponent implements OnInit {
   readonly kind: CatalogKind;
   readonly title: string;
   readonly categoryKey: ReferenceKey;
-  page: PagedResult<CatalogItem> = emptyPage();
-  categories: ReferenceRecord[] = [];
-  search = '';
-  appliedSearch = '';
-  categoryId = '';
-  active = '';
+  readonly page = signal<PagedResult<CatalogItem>>(emptyPage());
+  readonly categories = signal<ReferenceRecord[]>([]);
+  readonly search = signal('');
+  readonly appliedSearch = signal('');
+  readonly categoryId = signal('');
+  readonly active = signal('');
   /** Both catalogs, the platform's, or the coach's own (§5, §17). */
-  scope = '';
+  readonly scope = signal('');
   /** Exercises: training the group as primary or secondary muscle. */
-  muscleGroupId = '';
-  muscles: ReferenceRecord[] = [];
-  equipment: ReferenceRecord[] = [];
+  readonly muscleGroupId = signal('');
+  readonly muscles = signal<ReferenceRecord[]>([]);
+  readonly equipment = signal<ReferenceRecord[]>([]);
   readonly difficulties = exerciseDifficulties;
-  loading = false;
-  saving = false;
-  editorOpen = false;
-  editingId: string | null = null;
-  error = '';
-  editor = this.emptyEditor();
+  readonly loading = signal(false);
+  readonly saving = signal(false);
+  readonly editorOpen = signal(false);
+  readonly editingId = signal<string | null>(null);
+  readonly error = signal('');
+  readonly editor = signal(this.emptyEditor());
   readonly isAdmin: boolean;
   /** Administrators manage the platform catalogs; coaches add custom foods and exercises of their own (§5, §17). */
   readonly canCreate: boolean;
@@ -55,50 +54,50 @@ export class CatalogComponent implements OnInit {
   ngOnInit(): void {
     this.references
       .list(this.categoryKey, { pageSize: 100, isActive: true })
-      .subscribe((x) => (this.categories = x.items));
+      .subscribe((x) => (this.categories.set(x.items)));
     if (this.kind === 'exercises') {
-      this.references.list('muscle-groups', { pageSize: 100, isActive: true }).subscribe((x) => (this.muscles = x.items));
-      this.references.list('equipment', { pageSize: 100, isActive: true }).subscribe((x) => (this.equipment = x.items));
+      this.references.list('muscle-groups', { pageSize: 100, isActive: true }).subscribe((x) => (this.muscles.set(x.items)));
+      this.references.list('equipment', { pageSize: 100, isActive: true }).subscribe((x) => (this.equipment.set(x.items)));
     }
     this.load();
   }
   applySearch(): void {
-    this.appliedSearch = this.search.trim();
+    this.appliedSearch.set(this.search().trim());
     this.load(1);
   }
   reset(): void {
-    this.search = '';
-    this.appliedSearch = '';
-    this.categoryId = '';
-    this.active = '';
-    this.scope = '';
-    this.muscleGroupId = '';
+    this.search.set('');
+    this.appliedSearch.set('');
+    this.categoryId.set('');
+    this.active.set('');
+    this.scope.set('');
+    this.muscleGroupId.set('');
     this.load(1);
   }
-  load(pageNumber = this.page.pageNumber): void {
-    this.loading = true;
-    this.error = '';
+  load(pageNumber = this.page().pageNumber): void {
+    this.loading.set(true);
+    this.error.set('');
     this.data
       .list(this.kind, {
         pageNumber,
         pageSize: 10,
-        searchTerm: this.appliedSearch,
-        categoryId: this.categoryId,
-        isActive: this.active,
-        scope: this.scope,
-        muscleGroupId: this.kind === 'exercises' ? this.muscleGroupId : '',
+        searchTerm: this.appliedSearch(),
+        categoryId: this.categoryId(),
+        isActive: this.active(),
+        scope: this.scope(),
+        muscleGroupId: this.kind === 'exercises' ? this.muscleGroupId() : '',
       })
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({ next: (p) => (this.page = p), error: (e) => (this.error = apiErrorMessage(e)) });
+      .pipe(finalize(() => (this.loading.set(false))))
+      .subscribe({ next: (p) => (this.page.set(p)), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   create(): void {
-    this.editingId = null;
-    this.editor = this.emptyEditor();
-    this.editorOpen = true;
+    this.editingId.set(null);
+    this.editor.set(this.emptyEditor());
+    this.editorOpen.set(true);
   }
   edit(item: CatalogItem): void {
-    this.editingId = item.id;
-    this.editor = {
+    this.editingId.set(item.id);
+    this.editor.set({
       nameEn: item.nameEn,
       nameAr: item.nameAr ?? '',
       categoryId: item.foodCategoryId ?? item.exerciseCategoryId ?? '',
@@ -127,36 +126,37 @@ export class CatalogComponent implements OnInit {
       coachingCuesAr: item.coachingCuesAr ?? '',
       commonMistakesEn: item.commonMistakesEn ?? '',
       commonMistakesAr: item.commonMistakesAr ?? '',
-    };
-    this.editorOpen = true;
+    });
+    this.editorOpen.set(true);
   }
   close(): void {
-    this.editorOpen = false;
+    this.editorOpen.set(false);
   }
   save(): void {
+    const editingId = this.editingId();
     const common = {
-      nameEn: this.editor.nameEn,
-      nameAr: this.editor.nameAr || null,
-      mediaId: this.editor.mediaId || null,
-      isActive: this.editor.isActive,
+      nameEn: this.editor().nameEn,
+      nameAr: this.editor().nameAr || null,
+      mediaId: this.editor().mediaId || null,
+      isActive: this.editor().isActive,
     };
     const input =
       this.kind === 'foods'
         ? {
             ...common,
-            foodCategoryId: this.editor.categoryId,
-            baseUnit: this.editor.baseUnit,
-            pieceNameEn: this.editor.baseUnit === 'Piece' ? this.editor.pieceNameEn || null : null,
-            pieceNameAr: this.editor.baseUnit === 'Piece' ? this.editor.pieceNameAr || null : null,
-            servingSize: this.editor.servingSize,
-            caloriesPer100: this.editor.calories,
-            proteinPer100: this.editor.protein,
-            carbohydratesPer100: this.editor.carbs,
-            fatPer100: this.editor.fat,
-            fiberPer100: nullable(this.editor.fiber),
-            sugarPer100: nullable(this.editor.sugar),
-            sodiumMgPer100: nullable(this.editor.sodium),
-            units: this.editor.units.map((u: any) => ({
+            foodCategoryId: this.editor().categoryId,
+            baseUnit: this.editor().baseUnit,
+            pieceNameEn: this.editor().baseUnit === 'Piece' ? this.editor().pieceNameEn || null : null,
+            pieceNameAr: this.editor().baseUnit === 'Piece' ? this.editor().pieceNameAr || null : null,
+            servingSize: this.editor().servingSize,
+            caloriesPer100: this.editor().calories,
+            proteinPer100: this.editor().protein,
+            carbohydratesPer100: this.editor().carbs,
+            fatPer100: this.editor().fat,
+            fiberPer100: nullable(this.editor().fiber),
+            sugarPer100: nullable(this.editor().sugar),
+            sodiumMgPer100: nullable(this.editor().sodium),
+            units: this.editor().units.map((u: any) => ({
               id: u.id ?? null,
               nameEn: u.nameEn,
               nameAr: u.nameAr || null,
@@ -165,38 +165,38 @@ export class CatalogComponent implements OnInit {
           }
         : {
             ...common,
-            exerciseCategoryId: this.editor.categoryId,
-            youTubeUrl: this.editor.youTubeUrl || null,
-            difficulty: this.editor.difficulty || null,
-            primaryMuscleGroupId: this.editor.primaryMuscleGroupId || null,
-            secondaryMuscleGroupIds: [...this.editor.secondaryMuscleGroupIds].filter(
-              (x) => x !== this.editor.primaryMuscleGroupId,
+            exerciseCategoryId: this.editor().categoryId,
+            youTubeUrl: this.editor().youTubeUrl || null,
+            difficulty: this.editor().difficulty || null,
+            primaryMuscleGroupId: this.editor().primaryMuscleGroupId || null,
+            secondaryMuscleGroupIds: [...this.editor().secondaryMuscleGroupIds].filter(
+              (x) => x !== this.editor().primaryMuscleGroupId,
             ),
-            equipmentIds: [...this.editor.equipmentIds],
-            instructionsEn: this.editor.instructionsEn || null,
-            instructionsAr: this.editor.instructionsAr || null,
-            coachingCuesEn: this.editor.coachingCuesEn || null,
-            coachingCuesAr: this.editor.coachingCuesAr || null,
-            commonMistakesEn: this.editor.commonMistakesEn || null,
-            commonMistakesAr: this.editor.commonMistakesAr || null,
+            equipmentIds: [...this.editor().equipmentIds],
+            instructionsEn: this.editor().instructionsEn || null,
+            instructionsAr: this.editor().instructionsAr || null,
+            coachingCuesEn: this.editor().coachingCuesEn || null,
+            coachingCuesAr: this.editor().coachingCuesAr || null,
+            commonMistakesEn: this.editor().commonMistakesEn || null,
+            commonMistakesAr: this.editor().commonMistakesAr || null,
           };
-    this.saving = true;
-    const req = this.editingId
-      ? this.data.update(this.kind, this.editingId, input)
+    this.saving.set(true);
+    const req = editingId
+      ? this.data.update(this.kind, editingId, input)
       : this.data.create(this.kind, input);
-    req.pipe(finalize(() => (this.saving = false))).subscribe({
+    req.pipe(finalize(() => (this.saving.set(false)))).subscribe({
       next: () => {
         this.close();
         this.load();
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   remove(item: CatalogItem): void {
     if (confirm(`Delete ${item.nameEn}?`))
       this.data
         .delete(this.kind, item.id)
-        .subscribe({ next: () => this.load(), error: (e) => (this.error = apiErrorMessage(e)) });
+        .subscribe({ next: () => this.load(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   /** Administrators edit anything; a coach edits only their own custom foods and exercises. */
   canEdit(item: CatalogItem): boolean {
@@ -207,24 +207,24 @@ export class CatalogComponent implements OnInit {
     else set.add(id);
   }
   muscleName(id?: string | null): string {
-    return this.muscles.find((x) => x.id === id)?.nameEn ?? '—';
+    return this.muscles().find((x) => x.id === id)?.nameEn ?? '—';
   }
   addUnit(): void {
-    this.editor.units.push({ id: null, nameEn: '', nameAr: '', baseQuantity: 1 });
+    this.editor().units.push({ id: null, nameEn: '', nameAr: '', baseQuantity: 1 });
   }
   removeUnit(index: number): void {
-    this.editor.units.splice(index, 1);
+    this.editor().units.splice(index, 1);
   }
   /** What "per 100" means for the chosen base unit. */
   per100(): string {
-    return this.editor.baseUnit === 'Gram'
+    return this.editor().baseUnit === 'Gram'
       ? '100 g'
-      : this.editor.baseUnit === 'Milliliter'
+      : this.editor().baseUnit === 'Milliliter'
         ? '100 ml'
-        : `100 × ${this.editor.pieceNameEn || 'piece'}`;
+        : `100 × ${this.editor().pieceNameEn || 'piece'}`;
   }
   categoryName(id?: string): string {
-    return this.categories.find((x) => x.id === id)?.nameEn ?? '—';
+    return this.categories().find((x) => x.id === id)?.nameEn ?? '—';
   }
   private emptyEditor() {
     return {

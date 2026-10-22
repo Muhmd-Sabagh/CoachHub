@@ -136,6 +136,8 @@
 - **Arabic labels** for sites and poses are not in the UI yet. The API sends enum names.
 - **No manual browser smoke test yet** (P10A covers P8–P11 screens).
 
+**Status after P18A (2026-10-22).** Closed: the check-in section (P12), browser smoke test (P10A, P18). Open: photo metadata stripping (P20), Arabic labels (P19), health providers (backlog).
+
 ## Verification
 
 | Check | Result |

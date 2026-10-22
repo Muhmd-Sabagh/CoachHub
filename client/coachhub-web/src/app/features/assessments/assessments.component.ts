@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { finalize } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -10,27 +10,25 @@ import {
   Question,
   SubmissionSummary, QuestionMetric, questionMetrics } from './assessments.service';
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-assessments',
   templateUrl: './assessments.component.html',
   standalone: false,
 })
 export class AssessmentsComponent implements OnInit {
-  tab: 'forms' | 'submissions' = 'forms';
-  forms: PagedResult<FormSummary> = emptyPage();
-  submissions: PagedResult<SubmissionSummary> = emptyPage();
-  search = '';
-  appliedSearch = '';
-  loading = false;
-  error = '';
-  formEditor = false;
-  builder: FormVersion | null = null;
-  newForm = { name: '', formType: 'InitialAssessment' };
-  questionOpen = false;
-  editingQuestionId: string | null = null;
-  question = this.emptyQuestion();
-  section = { title: '', order: 0 };
+  readonly tab = signal<'forms' | 'submissions'>('forms');
+  readonly forms = signal<PagedResult<FormSummary>>(emptyPage());
+  readonly submissions = signal<PagedResult<SubmissionSummary>>(emptyPage());
+  readonly search = signal('');
+  readonly appliedSearch = signal('');
+  readonly loading = signal(false);
+  readonly error = signal('');
+  readonly formEditor = signal(false);
+  readonly builder = signal<FormVersion | null>(null);
+  readonly newForm = signal({ name: '', formType: 'InitialAssessment' });
+  readonly questionOpen = signal(false);
+  readonly editingQuestionId = signal<string | null>(null);
+  readonly question = signal(this.emptyQuestion());
+  readonly section = signal({ title: '', order: 0 });
   constructor(
     private data: AssessmentsService,
     readonly review: AssessmentReviewStore,
@@ -40,50 +38,50 @@ export class AssessmentsComponent implements OnInit {
     this.loadSubmissions();
   }
   searchNow() {
-    this.appliedSearch = this.search.trim();
-    this.tab === 'forms' ? this.loadForms(1) : this.loadSubmissions(1);
+    this.appliedSearch.set(this.search().trim());
+    this.tab() === 'forms' ? this.loadForms(1) : this.loadSubmissions(1);
   }
   reset() {
-    this.search = '';
-    this.appliedSearch = '';
+    this.search.set('');
+    this.appliedSearch.set('');
     this.searchNow();
   }
   loadForms(pageNumber = 1) {
-    this.loading = true;
+    this.loading.set(true);
     this.data
-      .listForms({ pageNumber, pageSize: 10, searchTerm: this.appliedSearch })
-      .pipe(finalize(() => (this.loading = false)))
+      .listForms({ pageNumber, pageSize: 10, searchTerm: this.appliedSearch() })
+      .pipe(finalize(() => (this.loading.set(false))))
       .subscribe({
-        next: (x) => (this.forms = x),
-        error: (e) => (this.error = apiErrorMessage(e)),
+        next: (x) => (this.forms.set(x)),
+        error: (e) => (this.error.set(apiErrorMessage(e))),
       });
   }
   loadSubmissions(pageNumber = 1) {
-    this.loading = true;
+    this.loading.set(true);
     this.data
-      .listSubmissions({ pageNumber, pageSize: 10, searchTerm: this.appliedSearch })
-      .pipe(finalize(() => (this.loading = false)))
+      .listSubmissions({ pageNumber, pageSize: 10, searchTerm: this.appliedSearch() })
+      .pipe(finalize(() => (this.loading.set(false))))
       .subscribe({
-        next: (x) => (this.submissions = x),
-        error: (e) => (this.error = apiErrorMessage(e)),
+        next: (x) => (this.submissions.set(x)),
+        error: (e) => (this.error.set(apiErrorMessage(e))),
       });
   }
   createForm() {
-    this.data.create(this.newForm).subscribe({
+    this.data.create(this.newForm()).subscribe({
       next: (x) => {
-        this.builder = x;
-        this.formEditor = false;
+        this.builder.set(x);
+        this.formEditor.set(false);
         this.loadForms();
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   openForm(f: FormSummary) {
     this.data
       .preview(f.id)
       .subscribe({
-        next: (x) => (this.builder = x),
-        error: (e) => (this.error = apiErrorMessage(e)),
+        next: (x) => (this.builder.set(x)),
+        error: (e) => (this.error.set(apiErrorMessage(e))),
       });
   }
   archive(f: FormSummary) {
@@ -92,31 +90,32 @@ export class AssessmentsComponent implements OnInit {
       .subscribe(() => this.loadForms());
   }
   publish() {
-    if (this.builder)
-      this.data.publish(this.builder.definitionId).subscribe((x) => (this.builder = x));
+    const builder = this.builder();
+    if (builder) this.data.publish(builder.definitionId).subscribe((x) => this.builder.set(x));
   }
   createDraft() {
-    if (this.builder)
-      this.data.draft(this.builder.definitionId).subscribe((x) => (this.builder = x));
+    const builder = this.builder();
+    if (builder) this.data.draft(builder.definitionId).subscribe((x) => this.builder.set(x));
   }
   addSection() {
-    if (this.builder)
+    const builder = this.builder();
+    if (builder)
       this.data
-        .addSection(this.builder.definitionId, {
-          ...this.section,
-          order: this.builder.sections.length,
+        .addSection(builder.definitionId, {
+          ...this.section(),
+          order: builder.sections.length,
         })
         .subscribe(() => this.refresh());
   }
   addQuestion() {
-    this.editingQuestionId = null;
-    this.question = this.emptyQuestion();
-    this.question.order = this.builder?.questions.length ?? 0;
-    this.questionOpen = true;
+    this.editingQuestionId.set(null);
+    this.question.set(this.emptyQuestion());
+    this.question().order = this.builder()?.questions.length ?? 0;
+    this.questionOpen.set(true);
   }
   editQuestion(q: Question) {
-    this.editingQuestionId = q.id;
-    this.question = {
+    this.editingQuestionId.set(q.id);
+    this.question.set({
       sectionId: q.sectionId ?? '',
       text: q.text,
       questionType: q.questionType,
@@ -124,44 +123,48 @@ export class AssessmentsComponent implements OnInit {
       order: q.order,
       options: q.options.map((x) => ({ value: x.value, label: x.label, order: x.order })),
       metric: q.metric ?? null,
-    };
-    this.questionOpen = true;
+    });
+    this.questionOpen.set(true);
   }
   saveQuestion() {
-    if (!this.builder) return;
-    const metric = this.metricsFor(this.question.questionType).some((x) => x.value === this.question.metric) ? this.question.metric : null;
-    const input = { ...this.question, sectionId: this.question.sectionId || null, metric };
-    const req = this.editingQuestionId
-      ? this.data.updateQuestion(this.builder.definitionId, this.editingQuestionId, input)
-      : this.data.addQuestion(this.builder.definitionId, input);
+    const editingQuestionId = this.editingQuestionId();
+    const builder = this.builder();
+    if (!builder) return;
+    const metric = this.metricsFor(this.question().questionType).some((x) => x.value === this.question().metric) ? this.question().metric : null;
+    const input = { ...this.question(), sectionId: this.question().sectionId || null, metric };
+    const req = editingQuestionId
+      ? this.data.updateQuestion(builder.definitionId, editingQuestionId, input)
+      : this.data.addQuestion(builder.definitionId, input);
     req.subscribe({
       next: () => {
-        this.questionOpen = false;
+        this.questionOpen.set(false);
         this.refresh();
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   removeQuestion(q: Question) {
-    if (this.builder && confirm('Delete this question?'))
-      this.data.deleteQuestion(this.builder.definitionId, q.id).subscribe(() => this.refresh());
+    const builder = this.builder();
+    if (builder && confirm('Delete this question?'))
+      this.data.deleteQuestion(builder.definitionId, q.id).subscribe(() => this.refresh());
   }
   move(q: Question, delta: number) {
-    if (!this.builder) return;
-    const items = [...this.builder.questions].sort((a, b) => a.order - b.order);
+    const builder = this.builder();
+    if (!builder) return;
+    const items = [...builder.questions].sort((a, b) => a.order - b.order);
     const i = items.findIndex((x) => x.id === q.id),
       j = i + delta;
     if (j < 0 || j >= items.length) return;
     [items[i], items[j]] = [items[j], items[i]];
     this.data
       .reorder(
-        this.builder.definitionId,
+        builder.definitionId,
         items.map((x) => x.id),
       )
       .subscribe(() => this.refresh());
   }
   addOption() {
-    this.question.options.push({ value: '', label: '', order: this.question.options.length });
+    this.question().options.push({ value: '', label: '', order: this.question().options.length });
   }
   reviewSubmission(s: SubmissionSummary) {
     this.data.getSubmission(s.id).subscribe((x) => this.review.open(x));
@@ -175,8 +178,8 @@ export class AssessmentsComponent implements OnInit {
     }
   }
   private refresh() {
-    if (this.builder)
-      this.data.preview(this.builder.definitionId).subscribe((x) => (this.builder = x));
+    const builder = this.builder();
+    if (builder) this.data.preview(builder.definitionId).subscribe((x) => this.builder.set(x));
   }
   private emptyQuestion() {
     return {

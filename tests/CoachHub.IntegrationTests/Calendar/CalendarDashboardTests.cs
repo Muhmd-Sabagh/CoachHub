@@ -131,8 +131,7 @@ public sealed class CalendarDashboardTests(CoachHubSqlApiFactory factory) : ICla
         await ReadAsync<WorkoutPlanResponse>(await s.Coach.PutAsJsonAsync($"/api/v1/workout-plans/{s.PlanId}/revisions/current",
             s.PlanInput with { BaseVersionNumber = 1, StartDate = Today.AddDays(-60), EndDate = Today.AddDays(-7) }));
         var inactive = await ReadAsync<ClientResponse>(await s.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput("Paused " + s.Tag, null, null, null)));
-        (await s.Coach.PutAsJsonAsync($"/api/v1/clients/{inactive.Id}", new ClientUpdateInput(inactive.Name, null, null,
-            PlanWorkflowStatus.NotStarted, PlanWorkflowStatus.NotStarted, false))).EnsureSuccessStatusCode();
+        (await s.Coach.PutAsJsonAsync($"/api/v1/clients/{inactive.Id}", new ClientUpdateInput(inactive.Name, null, null, false))).EnsureSuccessStatusCode();
 
         // Revenue: a payment of 900 and a refund of 100.
         var currency = await ReadAsync<CurrencyResponse>(await admin.PostAsJsonAsync("/api/v1/reference-data/currencies",

@@ -75,13 +75,9 @@ public sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
     {
         builder.ToTable("Clients");
         builder.HasKey(client => client.Id);
-        builder.Property(client => client.ClientCode).HasMaxLength(50).IsRequired();
-        builder.HasIndex(client => client.ClientCode).IsUnique();
         builder.Property(client => client.Name).HasMaxLength(255).IsRequired();
         builder.Property(client => client.Phone).HasMaxLength(50);
         builder.Property(client => client.Email).HasMaxLength(255);
-        builder.Property(client => client.DietStatus).HasConversion<string>().HasMaxLength(30).IsRequired();
-        builder.Property(client => client.WorkoutStatus).HasConversion<string>().HasMaxLength(30).IsRequired();
         builder.Property(client => client.IsActive).IsRequired();
         builder.Property(client => client.StatusOverride).HasConversion<string>().HasMaxLength(30);
         builder.HasIndex(client => client.JoinDate);

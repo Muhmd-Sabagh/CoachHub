@@ -8,7 +8,7 @@ import { CatalogComponent } from './features/catalog/catalog.component';
 import { ClientsComponent } from './features/clients/clients.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { PlansComponent } from './features/plans/plans.component';
-import { SettingsComponent } from './features/settings/settings.component';
+import { ReferenceDataComponent } from './features/settings/reference-data.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -20,7 +20,7 @@ const routes: Routes = [
     canActivate: [roleGuard('Client')],
     loadComponent: () => import('./features/client-area/client-shell.component').then(m => m.ClientShellComponent),
     children: [
-      { path: '', pathMatch: 'full', loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
+      { path: '', pathMatch: 'full', loadComponent: () => import('./features/client-area/my-home.component').then(m => m.MyHomeComponent) },
       { path: 'nutrition', loadComponent: () => import('./features/nutrition-tracking/my-nutrition.component').then(m => m.MyNutritionComponent) },
       { path: 'training', loadComponent: () => import('./features/training-tracking/my-training.component').then(m => m.MyTrainingComponent) },
       { path: 'progress', loadComponent: () => import('./features/progress-tracking/my-progress.component').then(m => m.MyProgressComponent) },
@@ -33,8 +33,6 @@ const routes: Routes = [
       { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
     ],
   },
-  { path: 'portal', redirectTo: 'app' },
-  { path: 'portal/account', redirectTo: 'app/account' },
   {
     path: '',
     component: ShellComponent,
@@ -59,8 +57,16 @@ const routes: Routes = [
         loadComponent: () =>
           import('./features/auditing/audit.component').then((module) => module.AuditComponent),
       },
-      { path: 'settings', component: SettingsComponent },
-      { path: 'workspace', loadComponent: () => import('./features/workspace/workspace.component').then(m => m.WorkspaceComponent) },
+      {
+        path: 'settings',
+        loadComponent: () => import('./features/settings/settings-shell.component').then(m => m.SettingsShellComponent),
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'branding' },
+          { path: 'branding', loadComponent: () => import('./features/settings/branding-defaults.component').then(m => m.BrandingDefaultsComponent) },
+          { path: 'reference-data', component: ReferenceDataComponent },
+        ],
+      },
+      { path: 'workspace', redirectTo: 'settings/branding' },
       { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

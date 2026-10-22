@@ -15,20 +15,19 @@ import { CatalogComponent } from './features/catalog/catalog.component';
 import { ClientsComponent } from './features/clients/clients.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { PlansComponent } from './features/plans/plans.component';
-import { SettingsComponent } from './features/settings/settings.component';
+import { ReferenceDataComponent } from './features/settings/reference-data.component';
 import { PaginationComponent } from './shared/components/pagination/pagination.component';
 import { SearchFilterComponent } from './shared/components/search-filter/search-filter.component';
 import { StatusBadgeComponent } from './shared/components/status-badge/status-badge.component';
 import { TranslatePipe } from './shared/pipes/translate.pipe';
 import { NotificationBellComponent } from './features/notifications/notification-bell.component';
-import { viewRefreshInterceptor } from './core/http/view-refresh.interceptor';
 @NgModule({
   declarations: [
     App,
     ShellComponent,
     LoginComponent,
     DashboardComponent,
-    SettingsComponent,
+    ReferenceDataComponent,
     CatalogComponent,
     ClientsComponent,
     AssessmentsComponent,
@@ -42,7 +41,7 @@ import { viewRefreshInterceptor } from './core/http/view-refresh.interceptor';
   providers: [
     provideBrowserGlobalErrorListeners(),
     // The view refresh runs outermost, after each response's own handlers (P10A: zoneless screens).
-    provideHttpClient(withInterceptors([viewRefreshInterceptor, authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor])),
     // A new tab, or a reload after the access token expired, signs in again from the refresh cookie.
     // Then the brand: the user's coach once signed in, otherwise the host's (D1, §63).
     provideAppInitializer(() => {

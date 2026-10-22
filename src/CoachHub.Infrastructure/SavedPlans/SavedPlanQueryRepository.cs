@@ -53,8 +53,7 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
             select new
             {
                 plan.Id, PlanType = SavedPlanType.Diet, plan.NameEn, plan.NameAr, plan.ClientId,
-                ClientName = (string?)client!.Name,
-                ClientCode = (string?)client.ClientCode, plan.CreatedAt,
+                ClientName = (string?)client!.Name, plan.CreatedAt,
                 TotalWeight = (decimal?)((decimal?)total!.Weight ?? 0m),
                 TotalCalories = (decimal?)((decimal?)total.Calories ?? 0m),
                 TotalProtein = (decimal?)((decimal?)total.Protein ?? 0m),
@@ -78,8 +77,7 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
             select new
             {
                 plan.Id, PlanType = SavedPlanType.Workout, plan.NameEn, plan.NameAr, plan.ClientId,
-                ClientName = (string?)client!.Name,
-                ClientCode = (string?)client.ClientCode, plan.CreatedAt,
+                ClientName = (string?)client!.Name, plan.CreatedAt,
                 TotalWeight = (decimal?)null, TotalCalories = (decimal?)null,
                 TotalProtein = (decimal?)null, TotalCarbohydrates = (decimal?)null,
                 TotalFat = (decimal?)null, WorkoutDayCount = (int?)((int?)count!.Count ?? 0)
@@ -89,7 +87,7 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
         IQueryable<SavedPlanRow> rows = dietRows.Concat(workoutRows).Select(x => new SavedPlanRow
         {
             Id = x.Id, PlanType = x.PlanType, NameEn = x.NameEn, NameAr = x.NameAr, ClientId = x.ClientId,
-            ClientName = x.ClientName, ClientCode = x.ClientCode, CreatedAt = x.CreatedAt,
+            ClientName = x.ClientName, CreatedAt = x.CreatedAt,
             TotalWeight = x.TotalWeight, TotalCalories = x.TotalCalories, TotalProtein = x.TotalProtein,
             TotalCarbohydrates = x.TotalCarbohydrates, TotalFat = x.TotalFat, WorkoutDayCount = x.WorkoutDayCount
         });
@@ -124,7 +122,7 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
     {
         if (query.PlanName is not null) rows = rows.Where(x => x.NameEn.Contains(query.PlanName) || (x.NameAr != null && x.NameAr.Contains(query.PlanName)));
         if (query.ClientName is not null) rows = rows.Where(x => x.ClientName != null && x.ClientName.Contains(query.ClientName));
-        if (query.ClientCode is not null) rows = rows.Where(x => x.ClientCode == query.ClientCode);
+        if (query.ClientId.HasValue) rows = rows.Where(x => x.ClientId == query.ClientId.Value);
         if (query.CreatedFrom.HasValue) rows = rows.Where(x => x.CreatedAt >= query.CreatedFrom.Value);
         if (query.CreatedTo.HasValue) rows = rows.Where(x => x.CreatedAt <= query.CreatedTo.Value);
         if (query.PlanType.HasValue) rows = rows.Where(x => x.PlanType == query.PlanType.Value);
@@ -162,7 +160,7 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
     }
 
     private static SavedPlanSummary Map(SavedPlanRow row, CurrentVersion? version) => new(
-        row.Id, row.PlanType, row.NameEn, row.NameAr, row.ClientId, row.ClientName, row.ClientCode,
+        row.Id, row.PlanType, row.NameEn, row.NameAr, row.ClientId, row.ClientName,
         row.CreatedAt, Round(row.TotalWeight), Round(row.TotalCalories), Round(row.TotalProtein),
         Round(row.TotalCarbohydrates), Round(row.TotalFat), row.WorkoutDayCount,
         version?.VersionNumber, version?.Status, version?.StartDate, version?.EndDate);
@@ -176,7 +174,6 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
         public string? NameAr { get; init; }
         public Guid? ClientId { get; init; }
         public string? ClientName { get; init; }
-        public string? ClientCode { get; init; }
         public DateTimeOffset CreatedAt { get; init; }
         public decimal? TotalWeight { get; init; }
         public decimal? TotalCalories { get; init; }

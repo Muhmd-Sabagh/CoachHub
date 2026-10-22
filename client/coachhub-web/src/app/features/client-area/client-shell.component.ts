@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { BrandingService, brandInitials } from '../../core/branding/branding.service';
@@ -11,8 +11,6 @@ import { AccessBannerComponent } from './access-banner.component';
  * navigation that thumbs can reach. Separate from the staff shell.
  */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-client-shell',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, AccessBannerComponent],

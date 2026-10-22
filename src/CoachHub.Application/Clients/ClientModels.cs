@@ -34,21 +34,16 @@ public sealed record ClientUpdateInput(
     string Name,
     string? Phone,
     string? Email,
-    PlanWorkflowStatus DietStatus,
-    PlanWorkflowStatus WorkoutStatus,
     bool IsActive);
 
 public sealed record ClientResponse(
     Guid Id,
     Guid CoachId,
-    string ClientCode,
     string Name,
     string? Phone,
     string? Email,
     DateOnly JoinDate,
     SubscriptionStatus SubscriptionStatus,
-    PlanWorkflowStatus DietStatus,
-    PlanWorkflowStatus WorkoutStatus,
     bool IsActive,
     int SubscriptionCount,
     ClientStatus Status,
@@ -81,8 +76,6 @@ public sealed record ClientQuery
     public int PageSize { get; init; } = 20;
     public string? SearchTerm { get; init; }
     public SubscriptionStatus? SubscriptionStatus { get; init; }
-    public PlanWorkflowStatus? DietStatus { get; init; }
-    public PlanWorkflowStatus? WorkoutStatus { get; init; }
     public ClientStatus? Status { get; init; }
     public bool? IsActive { get; init; }
     public DateOnly? JoinDateFrom { get; init; }

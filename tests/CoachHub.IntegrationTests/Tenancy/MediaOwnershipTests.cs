@@ -36,7 +36,7 @@ public sealed class MediaOwnershipTests(CoachHubSqlApiFactory factory) : IClassF
         var media = await UploadPlatformImageAsync(admin.Http);
         var coach = await factory.CreateCoachClientAsync();
         var client = await CreateClientAsync(coach);
-        var portal = factory.CreateClientPortalClient(client.CoachId, client.Id);
+        var portal = factory.CreateClientAreaClient(client.CoachId, client.Id);
 
         Assert.Equal(HttpStatusCode.OK, (await coach.GetAsync(MediaUrl(media.Id))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync(MediaUrl(media.Id))).StatusCode);
@@ -56,11 +56,11 @@ public sealed class MediaOwnershipTests(CoachHubSqlApiFactory factory) : IClassF
 
         Assert.Equal(HttpStatusCode.OK, (await coachA.Http.GetAsync(MediaUrl(avatar.Id))).StatusCode);
         Assert.Equal(HttpStatusCode.OK,
-            (await factory.CreateClientPortalClient(coachIdA, clientOfA.Id).GetAsync(MediaUrl(avatar.Id))).StatusCode);
+            (await factory.CreateClientAreaClient(coachIdA, clientOfA.Id).GetAsync(MediaUrl(avatar.Id))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await factory.CreateAdminClient().GetAsync(MediaUrl(avatar.Id))).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await coachB.GetAsync(MediaUrl(avatar.Id))).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
-            (await factory.CreateClientPortalClient(clientOfB.CoachId, clientOfB.Id).GetAsync(MediaUrl(avatar.Id))).StatusCode);
+            (await factory.CreateClientAreaClient(clientOfB.CoachId, clientOfB.Id).GetAsync(MediaUrl(avatar.Id))).StatusCode);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class MediaOwnershipTests(CoachHubSqlApiFactory factory) : IClassF
         Assert.Equal(HttpStatusCode.OK, (await x.Http.GetAsync(MediaUrl(avatar.Id))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await coachA.GetAsync(MediaUrl(avatar.Id))).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
-            (await factory.CreateClientPortalClient(clientY.CoachId, clientY.Id).GetAsync(MediaUrl(avatar.Id))).StatusCode);
+            (await factory.CreateClientAreaClient(clientY.CoachId, clientY.Id).GetAsync(MediaUrl(avatar.Id))).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await coachB.GetAsync(MediaUrl(avatar.Id))).StatusCode);
 
         using var scope = factory.Services.CreateScope();

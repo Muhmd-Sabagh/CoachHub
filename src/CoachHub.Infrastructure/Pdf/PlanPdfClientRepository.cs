@@ -9,6 +9,6 @@ public sealed class PlanPdfClientRepository(CoachHubDbContext dbContext) : IPlan
 {
     public Task<PdfClientInfo?> FindAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Set<Client>().AsNoTracking().Where(x => x.Id == id)
-            .Select(x => new PdfClientInfo(x.Name, x.ClientCode))
+            .Select(x => new PdfClientInfo(x.Name))
             .SingleOrDefaultAsync(cancellationToken);
 }

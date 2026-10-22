@@ -191,7 +191,7 @@ public sealed class WorkoutTrackingTests(CoachHubSqlApiFactory factory) : IClass
         // Another client of the same coach sees none of it and cannot change it.
         var sibling = await ReadAsync<ClientResponse>(await setup.Coach.PostAsJsonAsync("/api/v1/clients",
             new ClientCreateInput("Sibling " + setup.Tag, null, null, null)));
-        var siblingPortal = factory.CreateClientPortalClient(setup.CoachId, sibling.Id);
+        var siblingPortal = factory.CreateClientAreaClient(setup.CoachId, sibling.Id);
         Assert.Equal(HttpStatusCode.NotFound, (await siblingPortal.GetAsync($"{Me}/sessions/{session.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await siblingPortal.PutAsJsonAsync($"{Me}/sessions/{session.Id}/sets/{setId}",
             new LoggedSetInput(Reps: 1, WeightKg: 1))).StatusCode);
@@ -271,7 +271,7 @@ public sealed class WorkoutTrackingTests(CoachHubSqlApiFactory factory) : IClass
             new(legs, "Legs", null, null, null, 1, [new(Guid.NewGuid(), squat.Id, 0, null, TestWorkouts.Sets(3, 5, loadKg: 100))]),
         ]);
         var plan = await ReadAsync<WorkoutPlanResponse>(await coach.PostAsJsonAsync("/api/v1/workout-plans", input));
-        return new Setup(coachId, coach, otherCoachId, otherCoach, client.Id, factory.CreateClientPortalClient(coachId, client.Id),
+        return new Setup(coachId, coach, otherCoachId, otherCoach, client.Id, factory.CreateClientAreaClient(coachId, client.Id),
             plan, push, legs, bench, curl, otherExercise, tag);
     }
 

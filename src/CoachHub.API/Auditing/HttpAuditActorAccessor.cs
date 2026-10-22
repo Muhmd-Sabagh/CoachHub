@@ -1,4 +1,3 @@
-using CoachHub.API.Common.Routing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using CoachHub.Application.Auditing;

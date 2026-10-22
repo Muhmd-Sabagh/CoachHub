@@ -1,19 +1,19 @@
 <section class="page-heading">
   <p class="eyebrow">Administration</p>
-  <h1>Settings & reference data</h1>
-  <p>Maintain the shared choices used throughout CoachHub.</p>
+  <h1>Reference data</h1>
+  <p>Currencies, packages, payment accounts and categories used throughout CoachHub.</p>
 </section>
 <div class="settings-summary">
   <article class="card">
     <span>Product</span><strong>{{ config.settings().productName }}</strong>
   </article>
   <article class="card">
-    <span>Coach workspace</span><strong>{{ config.settings().coachName || 'Platform administration' }}</strong>
+    <span>Coach</span><strong>{{ config.settings().coachName || 'Platform administration' }}</strong>
   </article>
 </div>
 <div class="resource-tabs" role="tablist">
   @for (item of resources; track item.key) {
-    <button type="button" [class.active]="resource.key === item.key" (click)="select(item)">
+    <button type="button" [class.active]="resource().key === item.key" (click)="select(item)">
       {{ item.label }}
     </button>
   }
@@ -22,7 +22,7 @@
   <div class="toolbar">
     <form class="filter-row" (ngSubmit)="applySearch()">
       <label
-        ><span>Search {{ resource.label.toLowerCase() }}</span
+        ><span>Search {{ resource().label.toLowerCase() }}</span
         ><input name="search" [(ngModel)]="search" /></label
       ><label
         ><span>Status</span
@@ -36,12 +36,12 @@
     </form>
     @if (canCreate) {
       <button class="button button-primary" type="button" (click)="create()">
-        Add {{ resource.label }}
+        Add {{ resource().label }}
       </button>
     }
   </div>
-  @if (error) {
-    <p class="form-error" role="alert">{{ error }}</p>
+  @if (error()) {
+    <p class="form-error" role="alert">{{ error() }}</p>
   }
   <div class="table-scroll">
     <table>
@@ -54,12 +54,12 @@
         </tr>
       </thead>
       <tbody>
-        @if (loading) {
+        @if (loading()) {
           <tr>
             <td colspan="4" class="table-message">Loading…</td>
           </tr>
         }
-        @for (item of page.items; track item.id) {
+        @for (item of page().items; track item.id) {
           <tr>
             <td>
               <strong>{{ displayName(item) }}</strong>
@@ -79,7 +79,7 @@
             </td>
           </tr>
         }
-        @if (!loading && !page.items.length) {
+        @if (!loading() && !page().items.length) {
           <tr>
             <td colspan="4" class="table-message">No records match the applied filters.</td>
           </tr>
@@ -88,57 +88,57 @@
     </table>
   </div>
   <app-pagination
-    [page]="page.pageNumber"
-    [totalPages]="page.totalPages"
-    [totalCount]="page.totalCount"
+    [page]="page().pageNumber"
+    [totalPages]="page().totalPages"
+    [totalCount]="page().totalCount"
     (pageChange)="load($event)"
   />
 </section>
-@if (editorOpen) {
+@if (editorOpen()) {
   <div class="modal-backdrop">
     <section class="modal-card" role="dialog" aria-modal="true">
       <header>
         <div>
-          <p class="eyebrow">{{ editingId ? 'Edit' : 'New' }}</p>
-          <h2>{{ resource.label }}</h2>
+          <p class="eyebrow">{{ editingId() ? 'Edit' : 'New' }}</p>
+          <h2>{{ resource().label }}</h2>
         </div>
         <button class="icon-button" type="button" (click)="closeEditor()">×</button>
       </header>
       <form (ngSubmit)="save()" class="form-grid">
-        @if (resource.kind === 'currency') {
-          <label><span>Code *</span><input name="code" [(ngModel)]="editor.code" required /></label
-          ><label><span>Name *</span><input name="name" [(ngModel)]="editor.name" required /></label
-          ><label><span>Symbol</span><input name="symbol" [(ngModel)]="editor.symbol" /></label>
+        @if (resource().kind === 'currency') {
+          <label><span>Code *</span><input name="code" [(ngModel)]="editor().code" required /></label
+          ><label><span>Name *</span><input name="name" [(ngModel)]="editor().name" required /></label
+          ><label><span>Symbol</span><input name="symbol" [(ngModel)]="editor().symbol" /></label>
         }
-        @if (resource.kind === 'payment') {
+        @if (resource().kind === 'payment') {
           <label class="span-2"
-            ><span>Name *</span><input name="name" [(ngModel)]="editor.name" required /></label
+            ><span>Name *</span><input name="name" [(ngModel)]="editor().name" required /></label
           ><label class="span-2"
-            ><span>Details</span><textarea name="details" [(ngModel)]="editor.details"></textarea>
+            ><span>Details</span><textarea name="details" [(ngModel)]="editor().details"></textarea>
           </label>
         }
-        @if (resource.kind === 'package' || resource.kind === 'bilingual') {
+        @if (resource().kind === 'package' || resource().kind === 'bilingual') {
           <label
             ><span>English name *</span
-            ><input name="nameEn" [(ngModel)]="editor.nameEn" required /></label
+            ><input name="nameEn" [(ngModel)]="editor().nameEn" required /></label
           ><label
-            ><span>Arabic name</span><input name="nameAr" [(ngModel)]="editor.nameAr" dir="rtl"
+            ><span>Arabic name</span><input name="nameAr" [(ngModel)]="editor().nameAr" dir="rtl"
           /></label>
         }
-        @if (resource.kind === 'package') {
+        @if (resource().kind === 'package') {
           <label class="span-2"
             ><span>Description</span
-            ><textarea name="description" [(ngModel)]="editor.description"></textarea>
+            ><textarea name="description" [(ngModel)]="editor().description"></textarea>
           </label>
         }
         <label class="checkbox-row span-2"
-          ><input type="checkbox" name="isActive" [(ngModel)]="editor.isActive" /> Active</label
+          ><input type="checkbox" name="isActive" [(ngModel)]="editor().isActive" /> Active</label
         >
         <footer class="modal-actions span-2">
           <button class="button button-secondary" type="button" (click)="closeEditor()">
             Cancel</button
-          ><button class="button button-primary" type="submit" [disabled]="saving">
-            {{ saving ? 'Saving…' : 'Save' }}
+          ><button class="button button-primary" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : 'Save' }}
           </button>
         </footer>
       </form>

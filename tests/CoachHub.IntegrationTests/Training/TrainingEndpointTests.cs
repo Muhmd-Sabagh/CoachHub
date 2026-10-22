@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using CoachHub.Application.Auth.Login;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.Media;
 using CoachHub.Application.ReferenceData;
@@ -13,13 +12,11 @@ namespace CoachHub.IntegrationTests.Training;
 
 public sealed class TrainingEndpointTests : IClassFixture<CoachHubApiFactory>
 {
-    private readonly CoachHubApiFactory _factory;
     private readonly HttpClient _client;
     private readonly HttpClient _admin;
 
     public TrainingEndpointTests(CoachHubApiFactory factory)
     {
-        _factory = factory;
         _client = factory.CreateClient(new() { AllowAutoRedirect = false });
         _admin = factory.CreateAdminClient();
     }

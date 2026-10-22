@@ -36,7 +36,6 @@
           <option>Administrator</option>
           <option>Coach</option>
           <option>Client</option>
-          <option value="PublicClient">Public form</option>
           <option>System</option>
         </select>
       </label>
@@ -48,7 +47,7 @@
     </form>
   </div>
 
-  @if (error) { <p class="form-error">{{ error }}</p> }
+  @if (error()) { <p class="form-error">{{ error() }}</p> }
 
   <div class="table-scroll">
     <table>
@@ -63,10 +62,10 @@
         </tr>
       </thead>
       <tbody>
-        @if (loading) {
+        @if (loading()) {
           <tr><td colspan="6" class="table-message">Loading...</td></tr>
         }
-        @for (entry of page.items; track entry.id) {
+        @for (entry of page().items; track entry.id) {
           <tr>
             <td><strong>{{ entry.occurredAt | date: 'medium' }}</strong></td>
             <td><strong>{{ entry.operation }}</strong></td>
@@ -82,13 +81,13 @@
             </td>
             <td>
               @if (entry.changes.length) {
-                <button class="link-button" type="button" (click)="toggle(entry)" [attr.aria-expanded]="expanded === entry.id">
-                  {{ expanded === entry.id ? 'Hide' : 'Show' }} {{ entry.changes.length }} field(s)
+                <button class="link-button" type="button" (click)="toggle(entry)" [attr.aria-expanded]="expanded() === entry.id">
+                  {{ expanded() === entry.id ? 'Hide' : 'Show' }} {{ entry.changes.length }} field(s)
                 </button>
               } @else { — }
             </td>
           </tr>
-          @if (expanded === entry.id) {
+          @if (expanded() === entry.id) {
             <tr class="audit-diff">
               <td colspan="6">
                 <table>
@@ -103,19 +102,19 @@
             </tr>
           }
         }
-        @if (!loading && !page.items.length) {
+        @if (!loading() && !page().items.length) {
           <tr><td colspan="6" class="table-message">No audit entries match the applied filters.</td></tr>
         }
       </tbody>
     </table>
   </div>
 
-  <div class="pagination" [attr.aria-label]="'Pagination, ' + page.totalCount + ' audit entries'">
-    <span>{{ page.totalCount }} records</span>
+  <div class="pagination" [attr.aria-label]="'Pagination, ' + page().totalCount + ' audit entries'">
+    <span>{{ page().totalCount }} records</span>
     <div>
-      <button class="button button-secondary" type="button" (click)="previous()" [disabled]="page.pageNumber <= 1">Previous</button>
-      <span>Page {{ page.pageNumber }} of {{ page.totalPages || 1 }}</span>
-      <button class="button button-secondary" type="button" (click)="next()" [disabled]="page.pageNumber >= page.totalPages">Next</button>
+      <button class="button button-secondary" type="button" (click)="previous()" [disabled]="page().pageNumber <= 1">Previous</button>
+      <span>Page {{ page().pageNumber }} of {{ page().totalPages || 1 }}</span>
+      <button class="button button-secondary" type="button" (click)="next()" [disabled]="page().pageNumber >= page().totalPages">Next</button>
     </div>
   </div>
 </section>

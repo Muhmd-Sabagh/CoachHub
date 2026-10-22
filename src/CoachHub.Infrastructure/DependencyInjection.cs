@@ -1,6 +1,5 @@
 using CoachHub.Application.Auditing;
 using CoachHub.Application.Assessments;
-using CoachHub.Application.Assessments.Importing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Auth.Sessions;
 using CoachHub.Application.Billing;
@@ -14,7 +13,6 @@ using CoachHub.Application.Pdf;
 using CoachHub.Application.PlanDelivery;
 using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
-using CoachHub.Application.Reporting;
 using CoachHub.Application.SavedPlans;
 using CoachHub.Application.Settings;
 using CoachHub.Application.Training;
@@ -30,7 +28,6 @@ using CoachHub.Application.Progress;
 using CoachHub.Application.WorkoutTracking;
 using CoachHub.Infrastructure.Auditing;
 using CoachHub.Infrastructure.Assessments;
-using CoachHub.Infrastructure.Assessments.Importing;
 using CoachHub.Infrastructure.Auth;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Billing;
@@ -45,7 +42,6 @@ using CoachHub.Infrastructure.PlanDelivery;
 using CoachHub.Infrastructure.Persistence;
 using CoachHub.Infrastructure.Nutrition;
 using CoachHub.Infrastructure.ReferenceData;
-using CoachHub.Infrastructure.Reporting;
 using CoachHub.Infrastructure.SavedPlans;
 using CoachHub.Infrastructure.Settings;
 using CoachHub.Infrastructure.Training;
@@ -150,8 +146,6 @@ public static class DependencyInjection
         services.AddScoped<IWorkoutPlanRepository, WorkoutPlanRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IClientAccounts, ClientAccounts>();
-        services.AddScoped<IReportingRepository, ReportingRepository>();
-        services.AddScoped<IAdvancedReportingRepository, AdvancedReportingRepository>();
         services.AddScoped<IDietPlanRepository, DietPlanRepository>();
         services.AddScoped<IFoodTrackingRepository, FoodTrackingRepository>();
         services.AddScoped<IWorkoutTrackingRepository, WorkoutTrackingRepository>();
@@ -174,9 +168,6 @@ public static class DependencyInjection
         services.AddSingleton<Application.Reports.IReportPdfRenderer, Pdf.QuestReportPdfRenderer>();
         services.AddScoped<Application.Exports.IExportRepository, Exports.ExportRepository>();
         services.AddScoped<IFormRepository, FormRepository>();
-        services.AddScoped<IFormImportRepository, FormImportRepository>();
-        services.AddSingleton<IAssessmentWorkbookParser, XlsxAssessmentWorkbookParser>();
-        services.AddSingleton<IClientCodeGenerator, SecureClientCodeGenerator>();
         return services;
     }
 

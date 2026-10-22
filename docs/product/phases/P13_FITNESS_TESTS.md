@@ -112,6 +112,8 @@
 - **Paging.** The coach's test picker loads the first 100 active tests.
 - **No manual browser smoke test yet** (P10A now covers P8–P13 screens).
 
+**Status after P18A (2026-10-22).** Closed: browser smoke test (P10A, P18). Open: uploaded videos and tests in the dashboard and reports (P20); age- and sex-specific norms (backlog).
+
 ## Verification
 
 | Check | Result |

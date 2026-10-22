@@ -11,8 +11,17 @@
     <p class="eyebrow">{{ 'dashboard.findClient' | translate }}</p>
     <app-search-filter [label]="'dashboard.findClient' | translate" [placeholder]="'dashboard.searchPlaceholder' | translate" (search)="findClient($event)" />
   </article>
-  <article class="card ready-card"><span class="success-icon">OK</span><div><h2>Operational overview</h2><p>Live module data as of {{ report?.asOf || 'today' }}. Revenue is payments settled in the period minus refunds recorded in it, per currency.</p></div></article>
+  <article class="card period-card">
+    <form class="filter-row" (ngSubmit)="load()">
+      <label><span>From</span><input type="date" name="periodFrom" [(ngModel)]="from" required /></label>
+      <label><span>To</span><input type="date" name="periodTo" [(ngModel)]="to" required /></label>
+      <button class="button button-primary" [disabled]="loading()">Apply</button>
+    </form>
+    <p class="muted">Revenue is payments settled in the period minus refunds recorded in it, per currency.</p>
+  </article>
 </section>
+@if (error()) { <p class="form-error">{{ error() }}</p> }
+@if (loading() && !coach() && !admin()) { <p class="table-message">Loading…</p> }
 @if (coach(); as c) {
   <section class="card workbench">
     <div class="section-heading"><div><p class="eyebrow">Coach dashboard</p><h2>Your clients today</h2></div><a routerLink="/calendar">Open calendar</a></div>
@@ -91,59 +100,6 @@
       @for (d of a.userActivity.slice(-7); track d.date) { <tr><td>{{ d.date | date: 'EEE d MMM' }}</td><td>{{ d.activeUsers }}</td><td>{{ d.changes }}</td></tr> }
     </tbody></table></div>
   </section>
-}
-<section class="card workbench reporting-workbench">
-  <div class="toolbar">
-    <div><p class="eyebrow">Management reporting</p><h2>Selected-period activity</h2></div>
-    <form class="filter-row" (ngSubmit)="load()">
-      <label><span>From</span><input type="date" name="reportFrom" [(ngModel)]="from" required /></label>
-      <label><span>To</span><input type="date" name="reportTo" [(ngModel)]="to" required /></label>
-      <button class="button button-primary" [disabled]="loading">Apply</button>
-    </form>
-  </div>
-  @if (error) { <p class="form-error">{{ error }}</p> }
-  @if (loading && !report) { <p class="table-message">Loading operational report...</p> }
-  @if (report) {
-    <div class="report-metrics">
-      <article><span>Total clients</span><strong>{{ report.clients.total }}</strong><small>{{ report.clients.activeRecords }} enabled records</small></article>
-      <article><span>Clients on active subscription</span><strong>{{ report.clients.clientsWithActiveSubscription }}</strong><small>{{ report.clients.clientsWithOnlyExpiredSubscriptions }} clients expired · {{ report.clients.clientsWithoutSubscriptions }} without</small></article>
-      <article><span>New clients</span><strong>{{ report.clients.newInPeriod }}</strong><small>{{ report.from }} to {{ report.to }}</small></article>
-      <article><span>Assessment submissions</span><strong>{{ report.assessments.initialSubmissions + report.assessments.updateSubmissions }}</strong><small>{{ report.assessments.initialSubmissions }} initial · {{ report.assessments.updateSubmissions }} updates</small></article>
-      <article><span>Plan review queue</span><strong>{{ report.workflow.dietReviewRequired + report.workflow.workoutReviewRequired }}</strong><small>{{ report.workflow.dietReviewRequired }} diet · {{ report.workflow.workoutReviewRequired }} workout</small></article>
-      <article><span>Assigned plans</span><strong>{{ report.plans.assignedDietPlans + report.plans.assignedWorkoutPlans }}</strong><small>{{ report.plans.assignedDietPlans }} diet · {{ report.plans.assignedWorkoutPlans }} workout</small></article>
-    </div>
-    <div class="report-columns">
-      <section>
-        <div class="section-heading"><h3>Expiring within 30 days</h3><span>{{ report.expiringSubscriptions.length }} shown</span></div>
-        <div class="table-scroll"><table><thead><tr><th>Client</th><th>Package</th><th>End date</th><th>Remaining</th></tr></thead><tbody>
-          @for (item of report.expiringSubscriptions; track item.subscriptionId) {
-            <tr><td><button class="link-button" (click)="openClient(item.clientName)">{{ item.clientName }}</button></td><td>{{ item.packageName }}</td><td>{{ item.endDate }}</td><td><strong>{{ item.daysRemaining }} days</strong></td></tr>
-          }
-          @if (!report.expiringSubscriptions.length) { <tr><td colspan="4" class="table-message">No active subscriptions expire in the next 30 days.</td></tr> }
-        </tbody></table></div>
-      </section>
-      <section>
-        <div class="section-heading"><h3>Revenue by currency</h3><span>Settled payments − refunds in the period</span></div>
-        <div class="table-scroll"><table><thead><tr><th>Currency</th><th>Settled</th><th>Refunded</th><th>Net</th></tr></thead><tbody>
-          @for (item of report.byCurrency; track item.key) { <tr><td><strong>{{ item.label }}</strong></td><td>{{ item.settled | number: '1.2-2' }} ({{ item.payments }})</td><td>{{ item.refunded | number: '1.2-2' }} ({{ item.refunds }})</td><td><strong>{{ item.net | number: '1.2-2' }}</strong></td></tr> }
-          @if (!report.byCurrency.length) { <tr><td colspan="4" class="table-message">No revenue in this period.</td></tr> }
-        </tbody></table></div>
-      </section>
-    </div>
-    <div class="report-columns">
-      <section><div class="section-heading"><h3>Revenue by package</h3></div><div class="table-scroll"><table><thead><tr><th>Package</th><th>Payments</th><th>Net</th></tr></thead><tbody>
-        @for (item of report.byPackage; track item.key + item.currencyCode) { <tr><td>{{ item.label }}</td><td>{{ item.payments }}</td><td>{{ item.net | number: '1.2-2' }} {{ item.currencyCode }}</td></tr> }
-        @if (!report.byPackage.length) { <tr><td colspan="3" class="table-message">No revenue.</td></tr> }
-      </tbody></table></div></section>
-      <section><div class="section-heading"><h3>Revenue by payment account</h3></div><div class="table-scroll"><table><thead><tr><th>Account</th><th>Payments</th><th>Net</th></tr></thead><tbody>
-        @for (item of report.byPaymentAccount; track item.key + item.currencyCode) { <tr><td>{{ item.label }}</td><td>{{ item.payments }}</td><td>{{ item.net | number: '1.2-2' }} {{ item.currencyCode }}</td></tr> }
-        @if (!report.byPaymentAccount.length) { <tr><td colspan="3" class="table-message">No revenue.</td></tr> }
-      </tbody></table></div></section>
-    </div>
-  }
-</section>
-@if (advanced) {
-<section class="card workbench"><div class="section-heading"><div><p class="eyebrow">Advanced analytics</p><h2>Adherence, retention and settlement</h2></div><span>Definitions documented in Phase 21</span></div><div class="report-metrics"><article><span>Assessment adherence</span><strong>{{ advanced.assessmentAdherencePercent }}%</strong><small>Active clients with an update in period</small></article><article><span>Renewal retention</span><strong>{{ advanced.renewalRetentionPercent }}%</strong><small>Renewals vs subscriptions ending in period</small></article><article><span>Progress histories</span><strong>{{ advanced.clientsWithProgressHistory }}</strong><small>Clients with at least two assessments</small></article><article><span>Delivered plans</span><strong>{{ advanced.deliveredPlans }}</strong></article><article><span>Notification success</span><strong>{{ advanced.notificationSuccessPercent }}%</strong><small>{{ advanced.notificationsSent }} sent</small></article></div><div class="table-scroll"><table><thead><tr><th>Currency</th><th>Invoiced</th><th>Settled</th><th>Refunded</th><th>Outstanding</th></tr></thead><tbody>@for (item of advanced.settlement; track item.currencyCode) { <tr><td>{{ item.currencyCode }}</td><td>{{ item.invoiced }}</td><td>{{ item.settled }}</td><td>{{ item.refunded }}</td><td>{{ item.outstanding }}</td></tr> } @if (!advanced.settlement.length) { <tr><td colspan="5" class="table-message">No invoices in this period.</td></tr> }</tbody></table></div></section>
 }
 <section><div class="section-heading"><h2>{{ 'dashboard.quickActions' | translate }}</h2></div><div class="quick-actions">
   <a routerLink="/clients" [queryParams]="{ action: 'new' }"><span class="action-icon">+</span><strong>{{ 'dashboard.addClient' | translate }}</strong><span class="arrow">Go</span></a>

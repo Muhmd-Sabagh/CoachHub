@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -9,37 +9,36 @@ import { ReferenceDataService, ReferenceRecord } from '../settings/reference-dat
 import { Client, ClientDetail, ClientsService, Subscription } from './clients.service';
 import { ReportsService, saveFile } from '../reports/reports.service';
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-clients', templateUrl: './clients.component.html', standalone: false })
+  selector: 'app-clients', templateUrl: './clients.component.html', standalone: false })
 export class ClientsComponent implements OnInit {
   readonly subscriptionsWorkspace: boolean;
-  page: PagedResult<Client> = emptyPage();
-  search = '';
-  appliedSearch = '';
-  active = '';
-  subscriptionStatus = '';
+  readonly page = signal<PagedResult<Client>>(emptyPage());
+  readonly search = signal('');
+  readonly appliedSearch = signal('');
+  readonly active = signal('');
+  readonly subscriptionStatus = signal('');
   /** The computed client status (§39); the coach dashboard links here with ?status=. */
-  clientStatus = '';
-  loading = false;
-  saving = false;
-  error = '';
-  editorOpen = false;
-  detailOpen = false;
-  subscriptionOpen = false;
-  renewalOpen = false;
-  renewingSubscription: Subscription | null = null;
-  editingId: string | null = null;
-  detail: ClientDetail | null = null;
-  packages: ReferenceRecord[] = [];
-  currencies: ReferenceRecord[] = [];
-  accounts: ReferenceRecord[] = [];
-  coaches: Coach[] = [];
-  transferCoachId = '';
+  readonly clientStatus = signal('');
+  readonly loading = signal(false);
+  readonly saving = signal(false);
+  readonly error = signal('');
+  readonly editorOpen = signal(false);
+  readonly detailOpen = signal(false);
+  readonly subscriptionOpen = signal(false);
+  readonly renewalOpen = signal(false);
+  readonly renewingSubscription = signal<Subscription | null>(null);
+  readonly editingId = signal<string | null>(null);
+  readonly detail = signal<ClientDetail | null>(null);
+  readonly packages = signal<ReferenceRecord[]>([]);
+  readonly currencies = signal<ReferenceRecord[]>([]);
+  readonly accounts = signal<ReferenceRecord[]>([]);
+  readonly coaches = signal<Coach[]>([]);
+  readonly transferCoachId = signal('');
   readonly isAdmin: boolean;
-  editor = this.emptyClient();
-  subscription = this.emptySubscription();
-  renewal = this.emptyRenewal();
-  editingSubscriptionId: string | null = null;
+  readonly editor = signal(this.emptyClient());
+  readonly subscription = signal(this.emptySubscription());
+  readonly renewal = signal(this.emptyRenewal());
+  readonly editingSubscriptionId = signal<string | null>(null);
   constructor(
     route: ActivatedRoute,
     private readonly data: ClientsService,
@@ -50,9 +49,9 @@ export class ClientsComponent implements OnInit {
   ) {
     this.isAdmin = auth.isAdmin();
     this.subscriptionsWorkspace = route.snapshot.data['workspace'] === 'subscriptions';
-    this.search = route.snapshot.queryParamMap.get('search') ?? '';
-    this.appliedSearch = this.search;
-    this.clientStatus = route.snapshot.queryParamMap.get('status') ?? '';
+    this.search.set(route.snapshot.queryParamMap.get('search') ?? '');
+    this.appliedSearch.set(this.search());
+    this.clientStatus.set(route.snapshot.queryParamMap.get('status') ?? '');
   }
   ngOnInit(): void {
     forkJoin({
@@ -60,127 +59,125 @@ export class ClientsComponent implements OnInit {
       currencies: this.refs.list('currencies', { pageSize: 100, isActive: true }),
       accounts: this.refs.list('payment-accounts', { pageSize: 100, isActive: true }),
     }).subscribe((x) => {
-      this.packages = x.packages.items;
-      this.currencies = x.currencies.items;
-      this.accounts = x.accounts.items;
+      this.packages.set(x.packages.items);
+      this.currencies.set(x.currencies.items);
+      this.accounts.set(x.accounts.items);
     });
-    this.data.durationPresets().subscribe({ next: (x) => (this.durationPresets = x.durationPresets), error: () => undefined });
+    this.data.durationPresets().subscribe({ next: (x) => (this.durationPresets.set(x.durationPresets)), error: () => undefined });
     if (this.isAdmin) {
-      this.coachDirectory.list({ pageSize: 100, isActive: true }).subscribe((p) => (this.coaches = p.items));
+      this.coachDirectory.list({ pageSize: 100, isActive: true }).subscribe((p) => (this.coaches.set(p.items)));
     }
     this.load();
   }
   coachName(id: string | undefined): string {
-    return this.coaches.find((coach) => coach.id === id)?.displayName ?? '—';
+    return this.coaches().find((coach) => coach.id === id)?.displayName ?? '—';
   }
   transfer(): void {
-    if (!this.detail || !this.transferCoachId) return;
-    const id = this.detail.client.id;
-    this.saving = true;
+    const detail = this.detail();
+    if (!detail || !this.transferCoachId()) return;
+    const id = detail.client.id;
+    this.saving.set(true);
     this.data
-      .transfer(id, this.transferCoachId)
-      .pipe(finalize(() => (this.saving = false)))
+      .transfer(id, this.transferCoachId())
+      .pipe(finalize(() => (this.saving.set(false))))
       .subscribe({
         next: () => {
-          this.transferCoachId = '';
-          this.data.get(id).subscribe((d) => (this.detail = d));
+          this.transferCoachId.set('');
+          this.data.get(id).subscribe((d) => (this.detail.set(d)));
           this.load();
         },
-        error: (e) => (this.error = apiErrorMessage(e)),
+        error: (e) => (this.error.set(apiErrorMessage(e))),
       });
   }
   applySearch(): void {
-    this.appliedSearch = this.search.trim();
+    this.appliedSearch.set(this.search().trim());
     this.load(1);
   }
   reset(): void {
-    this.search = '';
-    this.appliedSearch = '';
-    this.active = '';
-    this.subscriptionStatus = '';
-    this.clientStatus = '';
+    this.search.set('');
+    this.appliedSearch.set('');
+    this.active.set('');
+    this.subscriptionStatus.set('');
+    this.clientStatus.set('');
     this.load(1);
   }
-  load(pageNumber = this.page.pageNumber): void {
-    this.loading = true;
+  load(pageNumber = this.page().pageNumber): void {
+    this.loading.set(true);
     this.data
       .list({
         pageNumber,
         pageSize: 10,
-        searchTerm: this.appliedSearch,
-        isActive: this.active,
-        subscriptionStatus: this.subscriptionStatus,
-        status: this.clientStatus,
+        searchTerm: this.appliedSearch(),
+        isActive: this.active(),
+        subscriptionStatus: this.subscriptionStatus(),
+        status: this.clientStatus(),
       })
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({ next: (p) => (this.page = p), error: (e) => (this.error = apiErrorMessage(e)) });
+      .pipe(finalize(() => (this.loading.set(false))))
+      .subscribe({ next: (p) => (this.page.set(p)), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   create(): void {
-    this.editingId = null;
-    this.editor = this.emptyClient();
-    this.editorOpen = true;
+    this.editingId.set(null);
+    this.editor.set(this.emptyClient());
+    this.editorOpen.set(true);
   }
   edit(c: Client): void {
-    this.editingId = c.id;
-    this.editor = {
+    this.editingId.set(c.id);
+    this.editor.set({
       name: c.name,
       phone: c.phone ?? '',
       email: c.email ?? '',
       joinDate: c.joinDate,
-      dietStatus: c.dietStatus,
-      workoutStatus: c.workoutStatus,
       isActive: c.isActive,
       coachId: c.coachId,
       invite: false,
-    };
-    this.editorOpen = true;
+    });
+    this.editorOpen.set(true);
   }
   save(): void {
+    const editingId = this.editingId();
     const create = {
-      name: this.editor.name,
-      phone: this.editor.phone || null,
-      email: this.editor.email || null,
-      joinDate: this.editor.joinDate || null,
-      coachId: this.isAdmin ? this.editor.coachId || null : null,
-      invite: this.editor.invite && !!this.editor.email,
+      name: this.editor().name,
+      phone: this.editor().phone || null,
+      email: this.editor().email || null,
+      joinDate: this.editor().joinDate || null,
+      coachId: this.isAdmin ? this.editor().coachId || null : null,
+      invite: this.editor().invite && !!this.editor().email,
     };
     const update = {
-      name: this.editor.name,
-      phone: this.editor.phone || null,
-      email: this.editor.email || null,
-      dietStatus: this.editor.dietStatus,
-      workoutStatus: this.editor.workoutStatus,
-      isActive: this.editor.isActive,
+      name: this.editor().name,
+      phone: this.editor().phone || null,
+      email: this.editor().email || null,
+      isActive: this.editor().isActive,
     };
-    this.saving = true;
-    const req = this.editingId
-      ? this.data.update(this.editingId, update)
+    this.saving.set(true);
+    const req = editingId
+      ? this.data.update(editingId, update)
       : this.data.create(create);
-    req.pipe(finalize(() => (this.saving = false))).subscribe({
+    req.pipe(finalize(() => (this.saving.set(false)))).subscribe({
       next: () => {
-        this.editorOpen = false;
+        this.editorOpen.set(false);
         this.load();
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   openDetail(c: Client): void {
     this.data.get(c.id).subscribe({
       next: (d) => {
-        this.detail = d;
-        this.detailOpen = true;
+        this.detail.set(d);
+        this.detailOpen.set(true);
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   addSubscription(): void {
-    this.editingSubscriptionId = null;
-    this.subscription = this.emptySubscription();
-    this.subscriptionOpen = true;
+    this.editingSubscriptionId.set(null);
+    this.subscription.set(this.emptySubscription());
+    this.subscriptionOpen.set(true);
   }
   editSubscription(s: Subscription): void {
-    this.editingSubscriptionId = s.id;
-    this.subscription = {
+    this.editingSubscriptionId.set(s.id);
+    this.subscription.set({
       packageId: s.packageId,
       startDate: s.startDate,
       durationMonths: s.durationMonths,
@@ -188,93 +185,101 @@ export class ClientsComponent implements OnInit {
       currencyId: s.currencyId,
       paymentAccountId: s.paymentAccountId ?? '',
       renewalCount: s.renewalCount,
-    };
-    this.subscriptionOpen = true;
+    });
+    this.subscriptionOpen.set(true);
   }
   saveSubscription(): void {
-    if (!this.detail) return;
+    const editingSubscriptionId = this.editingSubscriptionId();
+    const detail = this.detail();
+    if (!detail) return;
     const input = {
-      ...this.subscription,
-      paymentAccountId: this.subscription.paymentAccountId || null,
+      ...this.subscription(),
+      paymentAccountId: this.subscription().paymentAccountId || null,
     };
-    const req = this.editingSubscriptionId
-      ? this.data.updateSubscription(this.detail.client.id, this.editingSubscriptionId, input)
-      : this.data.createSubscription(this.detail.client.id, input);
+    const req = editingSubscriptionId
+      ? this.data.updateSubscription(detail.client.id, editingSubscriptionId, input)
+      : this.data.createSubscription(detail.client.id, input);
     req.subscribe({
       next: () => {
-        this.subscriptionOpen = false;
+        this.subscriptionOpen.set(false);
         this.refreshDetail();
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   openRenewal(s: Subscription): void {
-    this.renewingSubscription = s;
-    this.renewal = {
+    this.renewingSubscription.set(s);
+    this.renewal.set({
       ...this.emptyRenewal(),
       currencyId: s.currencyId,
       paymentAccountId: s.paymentAccountId ?? '',
-    };
-    this.renewalOpen = true;
+    });
+    this.renewalOpen.set(true);
   }
   saveRenewal(): void {
-    if (!this.detail || !this.renewingSubscription) return;
+    const detail = this.detail();
+    const renewing = this.renewingSubscription();
+    if (!detail || !renewing) return;
     const input = {
-      ...this.renewal,
-      paymentAccountId: this.renewal.paymentAccountId || null,
+      ...this.renewal(),
+      paymentAccountId: this.renewal().paymentAccountId || null,
     };
-    this.saving = true;
+    this.saving.set(true);
     this.data
-      .renewSubscription(this.detail.client.id, this.renewingSubscription.id, input)
-      .pipe(finalize(() => (this.saving = false)))
+      .renewSubscription(detail.client.id, renewing.id, input)
+      .pipe(finalize(() => (this.saving.set(false))))
       .subscribe({
         next: () => {
-          this.renewalOpen = false;
-          this.renewingSubscription = null;
+          this.renewalOpen.set(false);
+          this.renewingSubscription.set(null);
           this.refreshDetail();
         },
-        error: (e) => (this.error = apiErrorMessage(e)),
+        error: (e) => (this.error.set(apiErrorMessage(e))),
       });
   }
   suspendSubscription(s: Subscription): void {
-    if (!this.detail) return;
+    const detail = this.detail();
+    if (!detail) return;
     const reason = prompt('Why is the subscription suspended? The client sees the access rules for suspended subscriptions.');
     if (!reason?.trim()) return;
-    this.data.suspendSubscription(this.detail.client.id, s.id, reason.trim())
-      .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error = apiErrorMessage(e)) });
+    this.data.suspendSubscription(detail.client.id, s.id, reason.trim())
+      .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   resumeSubscription(s: Subscription): void {
-    if (!this.detail) return;
-    this.data.resumeSubscription(this.detail.client.id, s.id)
-      .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error = apiErrorMessage(e)) });
+    const detail = this.detail();
+    if (!detail) return;
+    this.data.resumeSubscription(detail.client.id, s.id)
+      .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   readonly paymentLabels: Record<string, string> = {
     NoInvoice: 'No invoice', Unpaid: 'Unpaid', PartiallyPaid: 'Partially paid', Paid: 'Paid', Refunded: 'Refunded',
   };
-  durationPresets: number[] = [1, 3, 6, 12];
+  readonly durationPresets = signal<number[]>([1, 3, 6, 12]);
   /** The client list as CSV (§51); administrators get every coach's clients. */
   exportList(): void {
-    this.reports.clientList().subscribe({ next: (file) => saveFile(file), error: (e) => (this.error = apiErrorMessage(e)) });
+    this.reports.clientList().subscribe({ next: (file) => saveFile(file), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   removeSubscription(s: Subscription): void {
-    if (this.detail && confirm('Delete this subscription?'))
+    const detail = this.detail();
+    if (detail && confirm('Delete this subscription?'))
       this.data
-        .deleteSubscription(this.detail.client.id, s.id)
+        .deleteSubscription(detail.client.id, s.id)
         .subscribe(() => this.refreshDetail());
   }
   remove(c: Client): void {
     if (confirm(`Delete ${c.name}?`))
       this.data
         .delete(c.id)
-        .subscribe({ next: () => this.load(), error: (e) => (this.error = apiErrorMessage(e)) });
+        .subscribe({ next: () => this.load(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   nameOf(items: ReferenceRecord[], id?: string | null): string {
     return items.find((x) => x.id === id)?.nameEn ?? items.find((x) => x.id === id)?.name ?? '—';
   }
   private refreshDetail(): void {
-    if (this.detail)
-      this.data.get(this.detail.client.id).subscribe((d) => {
-        this.detail = d;
+    const detail = this.detail();
+    if (detail)
+      this.data.get(detail.client.id).subscribe((d) => {
+        this.detail.set(d);
         this.load();
       });
   }
@@ -284,8 +289,6 @@ export class ClientsComponent implements OnInit {
       phone: '',
       email: '',
       joinDate: new Date().toISOString().slice(0, 10),
-      dietStatus: 'NotStarted',
-      workoutStatus: 'NotStarted',
       isActive: true,
       coachId: '',
       invite: true,

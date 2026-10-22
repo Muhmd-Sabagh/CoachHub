@@ -38,16 +38,11 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         {
             clients = clients.Where(client =>
                 client.Name.Contains(query.SearchTerm) ||
-                client.ClientCode.Contains(query.SearchTerm) ||
                 (client.Phone != null && client.Phone.Contains(query.SearchTerm)) ||
                 (client.Email != null && client.Email.Contains(query.SearchTerm)));
         }
         if (query.IsActive.HasValue)
             clients = clients.Where(client => client.IsActive == query.IsActive.Value);
-        if (query.DietStatus.HasValue)
-            clients = clients.Where(client => client.DietStatus == query.DietStatus.Value);
-        if (query.WorkoutStatus.HasValue)
-            clients = clients.Where(client => client.WorkoutStatus == query.WorkoutStatus.Value);
         if (query.JoinDateFrom.HasValue)
             clients = clients.Where(client => client.JoinDate >= query.JoinDateFrom.Value);
         if (query.JoinDateTo.HasValue)
@@ -61,9 +56,6 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
             "name" => query.SortDescending
                 ? clients.OrderByDescending(client => client.Name)
                 : clients.OrderBy(client => client.Name),
-            "code" => query.SortDescending
-                ? clients.OrderByDescending(client => client.ClientCode)
-                : clients.OrderBy(client => client.ClientCode),
             _ => query.SortDescending
                 ? clients.OrderBy(client => client.JoinDate)
                 : clients.OrderByDescending(client => client.JoinDate)
@@ -82,9 +74,6 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
             .Include(client => client.Subscriptions)
                 .ThenInclude(subscription => subscription.Renewals)
             .SingleOrDefaultAsync(client => client.Id == id, cancellationToken);
-    // Client codes are unique across all coaches, so this check ignores tenant filters.
-    public Task<bool> ClientCodeExistsAsync(string code, CancellationToken cancellationToken) =>
-        dbContext.Set<Client>().IgnoreQueryFilters().AnyAsync(client => client.ClientCode == code, cancellationToken);
 
     /// <summary>Reached only after the caller found the client through the tenant filter.</summary>
     public Task<decimal?> FindLatestWeightKgAsync(Guid clientId, CancellationToken cancellationToken) =>
@@ -157,15 +146,13 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 : client.IsActive &&
                   (!client.Subscriptions.Any() ||
                    client.Subscriptions.Any(subscription => subscription.EndDate > today)) &&
-                  (client.DietStatus == PlanWorkflowStatus.ReviewRequired || client.WorkoutStatus == PlanWorkflowStatus.ReviewRequired ||
-                   client.CheckInAwaitingReview)),
+                  client.CheckInAwaitingReview),
         ClientStatus.CheckInOverdue => clients.Where(client =>
             (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
                 ? client.StatusOverride == status
                 : client.IsActive &&
                   (!client.Subscriptions.Any() ||
                    client.Subscriptions.Any(subscription => subscription.EndDate > today)) &&
-                  client.DietStatus != PlanWorkflowStatus.ReviewRequired && client.WorkoutStatus != PlanWorkflowStatus.ReviewRequired &&
                   !client.CheckInAwaitingReview && client.CheckInDueOn != null && client.CheckInDueOn < today),
         ClientStatus.OnTrack => clients.Where(client =>
             (client.StatusOverride != null && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))
@@ -173,7 +160,6 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
                 : client.IsActive &&
                   (!client.Subscriptions.Any() ||
                    client.Subscriptions.Any(subscription => subscription.EndDate > today)) &&
-                  client.DietStatus != PlanWorkflowStatus.ReviewRequired && client.WorkoutStatus != PlanWorkflowStatus.ReviewRequired &&
                   !client.CheckInAwaitingReview && (client.CheckInDueOn == null || client.CheckInDueOn >= today)),
         _ => clients.Where(client =>
             client.StatusOverride == status && (client.StatusOverrideUntil == null || client.StatusOverrideUntil >= today))

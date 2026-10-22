@@ -51,7 +51,7 @@ async function seed() {
 
 const staffPages = (clientId) => [
   '/dashboard', '/clients', `/clients/${clientId}`, '/subscriptions', '/assessments', '/fitness-tests', '/calendar', '/messages',
-  '/check-ins', '/nutrition', '/training', '/plans', '/operations', '/audit', '/settings', '/workspace', '/account',
+  '/check-ins', '/nutrition', '/training', '/plans', '/operations', '/audit', '/settings/branding', '/settings/reference-data', '/account',
 ];
 const adminPages = (clientId) => [...staffPages(clientId), '/coaches'];
 const clientPages = ['/app', '/app/nutrition', '/app/training', '/app/progress', '/app/tests', '/app/calendar', '/app/chat', '/app/files',

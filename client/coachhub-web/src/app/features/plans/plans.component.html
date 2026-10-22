@@ -27,8 +27,8 @@
       ><button class="button button-primary" (click)="create('Workout')">New workout plan</button>
     </div>
   </div>
-  @if (error) {
-    <p class="form-error">{{ error }}</p>
+  @if (error()) {
+    <p class="form-error">{{ error() }}</p>
   }
   <div class="table-scroll">
     <table>
@@ -42,7 +42,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (p of page.items; track p.id) {
+        @for (p of page().items; track p.id) {
           <tr>
             <td>
               <strong>{{ p.nameEn }}</strong
@@ -58,7 +58,7 @@
               }
             </td>
             <td>
-              {{ p.clientName || 'Unassigned' }}<small>{{ p.clientCode || '' }}</small>
+              {{ p.clientName || 'Unassigned' }}
             </td>
             <td>
               @if (p.planType === 'Diet') {
@@ -82,7 +82,7 @@
             </td>
           </tr>
         }
-        @if (!loading && !page.items.length) {
+        @if (!loading() && !page().items.length) {
           <tr>
             <td colspan="5" class="table-message">No plans match the applied filters.</td>
           </tr>
@@ -91,53 +91,53 @@
     </table>
   </div>
   <app-pagination
-    [page]="page.pageNumber"
-    [totalPages]="page.totalPages"
-    [totalCount]="page.totalCount"
+    [page]="page().pageNumber"
+    [totalPages]="page().totalPages"
+    [totalCount]="page().totalCount"
     (pageChange)="load($event)"
   />
 </section>
-@if (editorOpen && editor) {
+@if (editorOpen() && editor()) {
   <div class="modal-backdrop">
     <section class="modal-card plan-editor">
       <header>
         <div>
           <p class="eyebrow">
-            {{ editingId ? 'Edit' : 'New' }} {{ editorType }} plan
-            @if (version) {
-              · Version {{ version.versionNumber }} · {{ version.status }}
+            {{ editingId() ? 'Edit' : 'New' }} {{ editorType() }} plan
+            @if (version(); as v) {
+              · Version {{ v.versionNumber }} · {{ v.status }}
             }
           </p>
-          <h2>{{ editor.nameEn || 'Untitled plan' }}</h2>
+          <h2>{{ editor().nameEn || 'Untitled plan' }}</h2>
         </div>
         <div class="actions">
-          @if (editingId) {
+          @if (editingId()) {
             <button class="button button-secondary" type="button" (click)="openHistory()">
               Version history
             </button>
           }
-          <button class="icon-button" (click)="editorOpen = false" aria-label="Close">×</button>
+          <button class="icon-button" (click)="editorOpen.set(false)" aria-label="Close">×</button>
         </div>
       </header>
-      @if (readOnly && version) {
+      @if (readOnly && version(); as v) {
         <p class="version-notice" role="status">
-          Version {{ version.versionNumber }} was archived on
-          {{ version.archivedAt | date: 'medium' }} and is read-only. The current version is V{{
-            currentVersionNumber
+          Version {{ v.versionNumber }} was archived on
+          {{ v.archivedAt | date: 'medium' }} and is read-only. The current version is V{{
+            currentVersionNumber()
           }}.
         </p>
       }
-      @if (error) {
-        <p class="form-error">{{ error }}</p>
+      @if (error()) {
+        <p class="form-error">{{ error() }}</p>
       }
-      @if (historyOpen) {
+      @if (historyOpen()) {
         <section class="nested-card version-history" aria-label="Version history">
           <div class="toolbar">
             <strong>Version history</strong
-            ><button class="link-button" type="button" (click)="historyOpen = false">Close</button>
+            ><button class="link-button" type="button" (click)="historyOpen.set(false)">Close</button>
           </div>
           <ul>
-            @for (v of history; track v.id) {
+            @for (v of history(); track v.id) {
               <li class="nested-row">
                 <span
                   ><strong>V{{ v.versionNumber }}</strong> · {{ v.status }}
@@ -150,7 +150,7 @@
                   ></span
                 ><span class="actions"
                   ><button class="link-button" type="button" (click)="viewVersion(v)">
-                    {{ v.versionNumber === version?.versionNumber ? 'Showing' : 'View' }}</button
+                    {{ v.versionNumber === version()?.versionNumber ? 'Showing' : 'View' }}</button
                   ><button class="link-button" type="button" (click)="previewVersion(v)">
                     PDF
                   </button></span
@@ -165,44 +165,44 @@
           <div class="form-grid">
             <label
               ><span>English name *</span
-              ><input name="planName" [(ngModel)]="editor.nameEn" required /></label
+              ><input name="planName" [(ngModel)]="editor().nameEn" required /></label
             ><label
               ><span>Arabic name</span
-              ><input name="planNameAr" [(ngModel)]="editor.nameAr" dir="rtl" /></label
+              ><input name="planNameAr" [(ngModel)]="editor().nameAr" dir="rtl" /></label
             ><label
               ><span>Assign client</span
-              ><select name="clientId" [(ngModel)]="editor.clientId">
+              ><select name="clientId" [(ngModel)]="editor().clientId">
                 <option [ngValue]="null">Unassigned</option>
-                @for (c of clients; track c.id) {
-                  <option [value]="c.id">{{ c.name }} · {{ c.clientCode }}</option>
+                @for (c of clients(); track c.id) {
+                  <option [value]="c.id">{{ c.name }}{{ c.email ? ' · ' + c.email : '' }}</option>
                 }
               </select></label
             ><label
               ><span>Start date</span
-              ><input type="date" name="startDate" [(ngModel)]="editor.startDate" /></label
+              ><input type="date" name="startDate" [(ngModel)]="editor().startDate" /></label
             ><label
               ><span>End date</span
               ><input
                 type="date"
                 name="endDate"
-                [min]="editor.startDate || ''"
-                [(ngModel)]="editor.endDate" /></label
+                [min]="editor().startDate || ''"
+                [(ngModel)]="editor().endDate" /></label
             ><label
               ><span>Status</span
-              ><select name="status" [(ngModel)]="editor.status">
+              ><select name="status" [(ngModel)]="editor().status">
                 <option value="Active">Active</option>
                 <option value="Draft">Draft</option>
               </select></label
             >
-            @if (editorType === 'Diet' && editor.targets) {
+            @if (editorType() === 'Diet' && editor().targets) {
               <fieldset class="targets span-2" aria-label="Version targets">
                 <legend>
                   Targets for this version
                   <button
                     class="link-button"
                     type="button"
-                    [disabled]="!editor.clientId"
-                    [title]="editor.clientId ? '' : 'Assign a client first'"
+                    [disabled]="!editor().clientId"
+                    [title]="editor().clientId ? '' : 'Assign a client first'"
                     (click)="useClientTargets()"
                   >
                     Use client's targets
@@ -215,7 +215,7 @@
                     min="0"
                     step="any"
                     name="tCalories"
-                    [(ngModel)]="editor.targets.calories" /></label
+                    [(ngModel)]="editor().targets.calories" /></label
                 ><label
                   ><span>Protein g</span
                   ><input
@@ -223,7 +223,7 @@
                     min="0"
                     step="any"
                     name="tProtein"
-                    [(ngModel)]="editor.targets.protein" /></label
+                    [(ngModel)]="editor().targets.protein" /></label
                 ><label
                   ><span>Carbohydrates g</span
                   ><input
@@ -231,7 +231,7 @@
                     min="0"
                     step="any"
                     name="tCarbs"
-                    [(ngModel)]="editor.targets.carbohydrates" /></label
+                    [(ngModel)]="editor().targets.carbohydrates" /></label
                 ><label
                   ><span>Fat g</span
                   ><input
@@ -239,7 +239,7 @@
                     min="0"
                     step="any"
                     name="tFat"
-                    [(ngModel)]="editor.targets.fat" /></label
+                    [(ngModel)]="editor().targets.fat" /></label
                 ><label
                   ><span>Meals</span
                   ><input
@@ -247,7 +247,7 @@
                     min="0"
                     max="15"
                     name="tMeals"
-                    [(ngModel)]="editor.targets.mealCount" /></label
+                    [(ngModel)]="editor().targets.mealCount" /></label
                 ><label
                   ><span>Snacks</span
                   ><input
@@ -255,11 +255,11 @@
                     min="0"
                     max="15"
                     name="tSnacks"
-                    [(ngModel)]="editor.targets.snackCount"
+                    [(ngModel)]="editor().targets.snackCount"
                 /></label>
                 <small class="span-2"
                   >Macros add up to {{ targetMacroCalories() | number: '1.0-0' }} kcal.
-                  {{ targetsMessage }}</small
+                  {{ targetsMessage() }}</small
                 >
               </fieldset>
             }
@@ -268,7 +268,7 @@
               ><button class="link-button" type="button" (click)="addNote()">Add note</button>
             </div>
           </div>
-          @for (n of editor.notes; track n.id; let ni = $index) {
+          @for (n of editor().notes; track n.id; let ni = $index) {
             <div class="nested-row">
               <input [name]="'note' + ni" [(ngModel)]="n.text" placeholder="Plan note" /><label
                 class="checkbox-row"
@@ -280,14 +280,14 @@
               ><button
                 class="link-button danger"
                 type="button"
-                (click)="removeFrom(editor.notes, ni)"
+                (click)="removeFrom(editor().notes, ni)"
               >
                 Remove
               </button>
             </div>
           }
-          @if (editorType === 'Diet') {
-            @for (v of editor.variants; track v.id; let vi = $index) {
+          @if (editorType() === 'Diet') {
+            @for (v of editor().variants; track v.id; let vi = $index) {
               <section class="builder-section">
                 <div class="toolbar">
                   <input [name]="'variant' + vi" [(ngModel)]="v.nameEn" aria-label="Variant name" />
@@ -295,13 +295,13 @@
                     <button
                       class="link-button"
                       type="button"
-                      (click)="move(editor.variants, vi, -1)"
+                      (click)="move(editor().variants, vi, -1)"
                     >
                       ↑</button
                     ><button
                       class="link-button"
                       type="button"
-                      (click)="move(editor.variants, vi, 1)"
+                      (click)="move(editor().variants, vi, 1)"
                     >
                       ↓</button
                     ><button class="button button-secondary" type="button" (click)="addMeal(v)">
@@ -312,7 +312,7 @@
                 @if (variantTotals(v); as vt) {
                   <p class="plan-summary" aria-live="polite">
                     <strong>{{ vt.calories | number: '1.0-0' }} kcal</strong>
-                    @if (difference(vt.calories, editor.targets?.calories); as d) {
+                    @if (difference(vt.calories, editor().targets?.calories); as d) {
                       <small [class.over]="d > 0"
                         >({{ d > 0 ? '+' : '' }}{{ d | number: '1.0-0' }})</small
                       >
@@ -320,11 +320,11 @@
                     · P {{ vt.protein | number: '1.0-1' }} g · C
                     {{ vt.carbohydrates | number: '1.0-1' }} g · F {{ vt.fat | number: '1.0-1' }} g
                     · Fiber {{ vt.fiber | number: '1.0-1' }} g · Meals {{ mealCount(v, false)
-                    }}{{ editor.targets?.mealCount != null ? '/' + editor.targets.mealCount : '' }}
+                    }}{{ editor().targets?.mealCount != null ? '/' + editor().targets.mealCount : '' }}
                     · Snacks
                     {{ mealCount(v, true)
                     }}{{
-                      editor.targets?.snackCount != null ? '/' + editor.targets.snackCount : ''
+                      editor().targets?.snackCount != null ? '/' + editor().targets.snackCount : ''
                     }}
                   </p>
                 }
@@ -405,7 +405,7 @@
                           required
                         >
                           <option value="">Select food</option>
-                          @for (x of foods; track x.id) {
+                          @for (x of foods(); track x.id) {
                             <option [value]="x.id">
                               {{ x.nameEn }}{{ x.isCustom ? ' (custom)' : '' }}
                             </option>
@@ -510,7 +510,7 @@
                           (ngModelChange)="o.replacementMealId = null"
                         >
                           <option [ngValue]="null">Replacement food</option>
-                          @for (x of foods; track x.id) {
+                          @for (x of foods(); track x.id) {
                             <option [value]="x.id">{{ x.nameEn }}</option>
                           }</select
                         ><select
@@ -563,14 +563,14 @@
               Add variant (e.g. rest day)
             </button>
           } @else {
-            @for (d of editor.days; track d.id; let di = $index) {
+            @for (d of editor().days; track d.id; let di = $index) {
               <section class="builder-section">
                 <div class="toolbar">
                   <input [name]="'day' + di" [(ngModel)]="d.nameEn" aria-label="Day name" />
                   <div class="actions">
-                    <button class="link-button" type="button" (click)="move(editor.days, di, -1)">
+                    <button class="link-button" type="button" (click)="move(editor().days, di, -1)">
                       ↑</button
-                    ><button class="link-button" type="button" (click)="move(editor.days, di, 1)">
+                    ><button class="link-button" type="button" (click)="move(editor().days, di, 1)">
                       ↓</button
                     ><button class="link-button" type="button" (click)="addSetGroup(d, 'Superset')">
                       Add superset</button
@@ -617,7 +617,7 @@
                       }
                       <select [name]="'exercise' + di + '-' + ei" [(ngModel)]="e.exerciseId" required>
                         <option value="">Select exercise</option>
-                        @for (x of exercises; track x.id) {
+                        @for (x of exercises(); track x.id) {
                           <option [value]="x.id">{{ x.nameEn }}{{ x.isCustom ? ' (custom)' : '' }}</option>
                         }</select
                       ><select [name]="'block' + di + '-' + ei" [(ngModel)]="e.block" aria-label="Block">
@@ -704,7 +704,7 @@
           }
         </fieldset>
         <footer class="modal-actions">
-          <button class="button button-secondary" type="button" (click)="editorOpen = false">
+          <button class="button button-secondary" type="button" (click)="editorOpen.set(false)">
             Cancel
           </button>
           @if (readOnly) {
@@ -713,28 +713,28 @@
             ><button
               class="button button-primary"
               type="button"
-              [disabled]="saving"
+              [disabled]="saving()"
               (click)="restoreAsNewVersion()"
             >
-              Restore as V{{ (currentVersionNumber ?? 0) + 1 }}
+              Restore as V{{ (currentVersionNumber() ?? 0) + 1 }}
             </button>
-          } @else if (!editingId) {
-            <button class="button button-primary" [disabled]="saving || hasInvalidTempo()">
-              {{ saving ? 'Saving…' : 'Create plan' }}
+          } @else if (!editingId()) {
+            <button class="button button-primary" [disabled]="saving() || hasInvalidTempo()">
+              {{ saving() ? 'Saving…' : 'Create plan' }}
             </button>
           } @else {
             <button
               class="button button-secondary"
               type="button"
-              [disabled]="saving || hasInvalidTempo()"
+              [disabled]="saving() || hasInvalidTempo()"
               [title]="
-                'Keep V' + version?.versionNumber + ' read-only and save this as the next version'
+                'Keep V' + version()?.versionNumber + ' read-only and save this as the next version'
               "
               (click)="save('newVersion')"
             >
               Save as new version</button
-            ><button class="button button-primary" [disabled]="saving || hasInvalidTempo()">
-              {{ saving ? 'Saving…' : 'Save (V' + version?.versionNumber + ')' }}
+            ><button class="button button-primary" [disabled]="saving() || hasInvalidTempo()">
+              {{ saving() ? 'Saving…' : 'Save (V' + version()?.versionNumber + ')' }}
             </button>
           }
         </footer>
@@ -751,29 +751,29 @@
       </header>
       <form class="form-grid" (ngSubmit)="calculate()">
         <label
-          ><span>Age</span><input type="number" name="age" [(ngModel)]="calculator.age" /></label
+          ><span>Age</span><input type="number" name="age" [(ngModel)]="calculator().age" /></label
         ><label
           ><span>Sex</span
-          ><select name="sex" [(ngModel)]="calculator.sex">
+          ><select name="sex" [(ngModel)]="calculator().sex">
             <option>Male</option>
             <option>Female</option>
           </select></label
         ><label
           ><span>Weight kg</span
-          ><input type="number" name="weight" [(ngModel)]="calculator.weightKg" /></label
+          ><input type="number" name="weight" [(ngModel)]="calculator().weightKg" /></label
         ><label
           ><span>Height cm</span
-          ><input type="number" name="height" [(ngModel)]="calculator.heightCm" /></label
+          ><input type="number" name="height" [(ngModel)]="calculator().heightCm" /></label
         ><label
           ><span>Activity level</span
-          ><select name="activity" [(ngModel)]="calculator.activityLevel">
+          ><select name="activity" [(ngModel)]="calculator().activityLevel">
             @for (level of activityLevels; track level.value) {
               <option [value]="level.value">{{ level.label }}</option>
             }
           </select></label
         ><label
           ><span>Goal</span
-          ><select name="goal" [(ngModel)]="calculator.goal">
+          ><select name="goal" [(ngModel)]="calculator().goal">
             <option>LoseWeight</option>
             <option>Maintain</option>
             <option>GainWeight</option>
@@ -803,14 +803,14 @@
     </section>
   </div>
 }
-@if (pdfUrl) {
+@if (pdfUrl()) {
   <div class="modal-backdrop">
     <section class="modal-card pdf-modal">
       <header>
         <h2>PDF preview</h2>
         <button class="icon-button" (click)="closePdf()">×</button>
       </header>
-      <iframe [src]="pdfUrl" title="Plan PDF preview"></iframe>
+      <iframe [src]="pdfUrl()" title="Plan PDF preview"></iframe>
     </section>
   </div>
 }

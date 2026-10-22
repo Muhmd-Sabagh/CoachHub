@@ -68,6 +68,11 @@ try {
 
         Invoke-Native 'Angular tests' { npm test -- --watch=false --isolate=false }
 
+        # Dead code (P18A): unused files, exports and dependencies, and unused or one-language translation keys.
+        # The .NET side runs in the release build (unused-code analyzers, .editorconfig).
+        Invoke-Native 'Angular dead-code check' { npm run knip }
+        Invoke-Native 'Translation key check' { npm run check:translations }
+
         Invoke-Native 'Angular production build' { npm run build }
     }
     finally {

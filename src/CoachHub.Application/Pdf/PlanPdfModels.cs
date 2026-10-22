@@ -6,7 +6,7 @@ namespace CoachHub.Application.Pdf;
 
 [JsonConverter(typeof(JsonStringEnumConverter<PlanPdfLanguage>))]
 public enum PlanPdfLanguage { English, Arabic }
-public sealed record PdfClientInfo(string Name, string ClientCode);
+public sealed record PdfClientInfo(string Name);
 public sealed record GeneratedPlanPdf(byte[] Content, string FileName);
 
 public interface IPlanPdfRenderer

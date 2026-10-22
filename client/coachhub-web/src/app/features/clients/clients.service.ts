@@ -7,14 +7,11 @@ import { queryParams } from '../../shared/services/query-params';
 export interface Client {
   id: string;
   coachId: string;
-  clientCode: string;
   name: string;
   phone?: string | null;
   email?: string | null;
   joinDate: string;
   subscriptionStatus: string;
-  dietStatus: string;
-  workoutStatus: string;
   isActive: boolean;
   subscriptionCount: number;
   /** §39: computed, or the coach's manual override while it lasts. */

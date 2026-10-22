@@ -66,7 +66,7 @@ public sealed class AuditCaptureTests
         db.Add(user);
         db.Add(UserSession.Create(Guid.NewGuid(), "REFRESH-HASH", "Agent", null,
             DateTimeOffset.UtcNow, TimeSpan.FromDays(1), TimeSpan.FromDays(2)));
-        var client = Client.Create(CoachId, "CLIENTCD", "Audited client", null, null, DateOnly.FromDateTime(DateTime.UtcNow));
+        var client = Client.Create(CoachId, "Audited client", null, null, DateOnly.FromDateTime(DateTime.UtcNow));
         db.Add(client);
         db.Add(Notification.Schedule(CoachId, client.Id, NotificationChannel.Email, "a@b.test", "Reset",
             "Reset link: https://example.test/reset?token=ONE-TIME-TOKEN", DateTimeOffset.UtcNow, isAccountMessage: true));

@@ -13,7 +13,6 @@ using CoachHub.Application.WorkoutPlanning;
 using CoachHub.Domain.Common;
 using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.PlanDelivery;
-using CoachHub.Domain.WorkoutPlanning;
 using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
 using CoachHub.IntegrationTests.Persistence;

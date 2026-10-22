@@ -105,7 +105,7 @@ public sealed class ChatWorkflowTests(CoachHubSqlApiFactory factory) : IClassFix
         Assert.DoesNotContain((await other.GetFromJsonAsync<PagedResult<ConversationSummary>>("/api/v1/conversations?pageSize=100"))!.Items,
             x => x.ClientId == s.ClientId);
         var sibling = await ReadAsync<ClientResponse>(await s.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput("Sibling " + s.Tag, null, null, null)));
-        var siblingPortal = factory.CreateClientPortalClient(s.CoachId, sibling.Id);
+        var siblingPortal = factory.CreateClientAreaClient(s.CoachId, sibling.Id);
         Assert.Null((await siblingPortal.GetFromJsonAsync<MyChatResponse>("/api/v1/me/chat"))!.Current.ConversationId);
         Assert.Equal(HttpStatusCode.Forbidden, (await s.Portal.GetAsync("/api/v1/conversations")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await s.Portal.GetAsync(s.ChatPath)).StatusCode);
@@ -118,7 +118,7 @@ public sealed class ChatWorkflowTests(CoachHubSqlApiFactory factory) : IClassFix
         var fresh = (await other.GetFromJsonAsync<ChatThreadResponse>(s.ChatPath))!;
         Assert.Equal((null, 0), (fresh.ConversationId, fresh.Messages.Items.Count));
 
-        var portal = factory.CreateClientPortalClient(s.OtherCoachId, s.ClientId);
+        var portal = factory.CreateClientAreaClient(s.OtherCoachId, s.ClientId);
         var mine = (await portal.GetFromJsonAsync<MyChatResponse>("/api/v1/me/chat"))!;
         var archived = Assert.Single(mine.Archived);
         Assert.Equal(("Coach " + s.Tag, (Guid?)null), (archived.CoachName, mine.Current.ConversationId));
@@ -170,7 +170,7 @@ public sealed class ChatWorkflowTests(CoachHubSqlApiFactory factory) : IClassFix
         Assert.Equal(HttpStatusCode.NotFound, (await other.GetAsync(path)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await other.DeleteAsync($"{path}/{guide.Id}")).StatusCode);
         var sibling = await ReadAsync<ClientResponse>(await s.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput("Sibling " + s.Tag, null, null, null)));
-        var siblingPortal = factory.CreateClientPortalClient(s.CoachId, sibling.Id);
+        var siblingPortal = factory.CreateClientAreaClient(s.CoachId, sibling.Id);
         Assert.Empty((await siblingPortal.GetFromJsonAsync<ClientFileResponse[]>("/api/v1/me/files"))!);
         Assert.Equal(HttpStatusCode.NotFound, (await siblingPortal.GetAsync($"/api/v1/media/{guide.MediaId}")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await s.Portal.GetAsync(path)).StatusCode);

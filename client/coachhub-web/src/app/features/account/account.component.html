@@ -2,25 +2,25 @@
   <section class="dashboard-hero">
     <div>
       <p class="eyebrow">My account</p>
-      <h1>{{ profile?.displayName || 'Your account' }}</h1>
+      <h1>{{ profile()?.displayName || 'Your account' }}</h1>
       <p>Your details, profile picture, password and the devices you are signed in on.</p>
     </div>
     <a class="button button-secondary" [routerLink]="backLink">Back</a>
   </section>
-  @if (error) { <p class="form-error" role="alert">{{ error }}</p> }
-  @if (message) { <p class="success-message" role="status">{{ message }}</p> }
+  @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+  @if (message()) { <p class="success-message" role="status">{{ message() }}</p> }
 
   <section class="card workbench">
     <div class="section-heading"><h2>Profile picture</h2></div>
     <div class="avatar-row">
-      @if (avatarUrl) { <img class="avatar-large" [src]="avatarUrl" alt="Your profile picture" /> }
+      @if (avatarUrl()) { <img class="avatar-large" [src]="avatarUrl()" alt="Your profile picture" /> }
       @else { <span class="avatar-large" aria-hidden="true">{{ initial }}</span> }
       <label class="button button-secondary">
         Upload picture
-        <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="uploadAvatar($event)" [disabled]="saving" />
+        <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="uploadAvatar($event)" [disabled]="saving()" />
       </label>
-      @if (profile?.avatarMediaId) {
-        <button class="link-button danger" type="button" (click)="removeAvatar()" [disabled]="saving">Remove</button>
+      @if (profile()?.avatarMediaId) {
+        <button class="link-button danger" type="button" (click)="removeAvatar()" [disabled]="saving()">Remove</button>
       }
     </div>
     <p class="muted">JPEG, PNG or WebP, up to 5 MB.</p>
@@ -29,40 +29,40 @@
   <section class="card workbench">
     <div class="section-heading"><h2>Personal information</h2></div>
     <form class="form-grid" (ngSubmit)="saveProfile()">
-      <label><span>Display name *</span><input name="displayName" [(ngModel)]="editor.displayName" required maxlength="200" autocomplete="name" /></label>
-      <label><span>Phone</span><input name="phoneNumber" type="tel" [(ngModel)]="editor.phoneNumber" maxlength="30" autocomplete="tel" /></label>
+      <label><span>Display name *</span><input name="displayName" [(ngModel)]="editor().displayName" required maxlength="200" autocomplete="name" /></label>
+      <label><span>Phone</span><input name="phoneNumber" type="tel" [(ngModel)]="editor().phoneNumber" maxlength="30" autocomplete="tel" /></label>
       <label><span>Language</span>
-        <select name="preferredLanguage" [(ngModel)]="editor.preferredLanguage">
+        <select name="preferredLanguage" [(ngModel)]="editor().preferredLanguage">
           <option value="">Same as this browser</option>
           <option value="en">English</option>
           <option value="ar">العربية</option>
         </select>
       </label>
-      <label><span>Sign-in</span><input [value]="profile?.userName || profile?.email || ''" disabled /></label>
-      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving || !profile">Save details</button></div>
+      <label><span>Sign-in</span><input [value]="profile()?.userName || profile()?.email || ''" disabled /></label>
+      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving() || !profile()">Save details</button></div>
     </form>
   </section>
 
   <section class="card workbench">
     <div class="section-heading"><h2>Change password</h2><span>Other devices are signed out</span></div>
     <form class="form-grid" (ngSubmit)="changePassword()">
-      <label><span>Current password *</span><input type="password" name="current" [(ngModel)]="password.current" required autocomplete="current-password" /></label>
-      <label><span>New password *</span><input type="password" name="next" [(ngModel)]="password.next" required minlength="12" autocomplete="new-password" /></label>
-      <label><span>Repeat new password *</span><input type="password" name="confirm" [(ngModel)]="password.confirm" required autocomplete="new-password" /></label>
+      <label><span>Current password *</span><input type="password" name="current" [(ngModel)]="password().current" required autocomplete="current-password" /></label>
+      <label><span>New password *</span><input type="password" name="next" [(ngModel)]="password().next" required minlength="12" autocomplete="new-password" /></label>
+      <label><span>Repeat new password *</span><input type="password" name="confirm" [(ngModel)]="password().confirm" required autocomplete="new-password" /></label>
       <p class="muted">At least 12 characters with upper and lower case letters, a digit and a symbol.</p>
-      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving || !password.current || !password.next">Change password</button></div>
+      <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving() || !password().current || !password().next">Change password</button></div>
     </form>
   </section>
 
   <section class="card workbench">
     <div class="section-heading toolbar">
       <h2>Signed-in devices</h2>
-      @if (sessions.length > 1) {
-        <button class="button button-secondary" type="button" (click)="revokeOthers()" [disabled]="saving">Sign out all other devices</button>
+      @if (sessions().length > 1) {
+        <button class="button button-secondary" type="button" (click)="revokeOthers()" [disabled]="saving()">Sign out all other devices</button>
       }
     </div>
     <ul class="session-list">
-      @for (session of sessions; track session.id) {
+      @for (session of sessions(); track session.id) {
         <li>
           <div>
             <strong>{{ device(session) }} @if (session.isCurrent) { <span class="muted">· This device</span> }</strong>
@@ -70,7 +70,7 @@
             @if (session.ipAddress) { <small class="muted">IP {{ session.ipAddress }}</small> }
           </div>
           @if (!session.isCurrent) {
-            <button class="link-button danger" type="button" (click)="revoke(session)" [disabled]="saving">Sign out</button>
+            <button class="link-button danger" type="button" (click)="revoke(session)" [disabled]="saving()">Sign out</button>
           }
         </li>
       } @empty {

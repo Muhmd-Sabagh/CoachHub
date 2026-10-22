@@ -107,6 +107,8 @@
 - **Secondary-muscle weighting** for analytics is a coach setting since P10 (by default only the primary muscle counts).
 - **No manual browser smoke test yet.** The UI was checked by build and tests only.
 
+**Status after P18A (2026-10-22).** Closed: logging and analytics (P10), browser smoke test (P10A, P18). Open: uploaded exercise videos (P20).
+
 ## Verification
 
 | Check | Result |

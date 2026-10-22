@@ -25,7 +25,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
     public byte[] RenderDiet(DietPlanResponse plan, PdfClientInfo? client, PlanPdfLanguage language) =>
         Document.Create(document => document.Page(page =>
         {
-            ConfigurePage(page, language);
+            ConfigurePage(page);
             page.Header().Element(container => Header(container,
                 PdfLanguageText.Name(plan.NameEn, plan.NameAr, language),
                 Kind(T(language, "Diet plan", "خطة غذائية"), plan.Revision, language), client, language));
@@ -47,7 +47,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
     public byte[] RenderWorkout(WorkoutPlanResponse plan, PdfClientInfo? client, PlanPdfLanguage language) =>
         Document.Create(document => document.Page(page =>
         {
-            ConfigurePage(page, language);
+            ConfigurePage(page);
             page.Header().Element(container => Header(container,
                 PdfLanguageText.Name(plan.NameEn, plan.NameAr, language),
                 Kind(T(language, "Workout plan", "خطة تدريبية"), plan.Revision, language), client, language));
@@ -62,7 +62,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             page.Footer().Element(container => Footer(container, language));
         })).GeneratePdf();
 
-    private static void ConfigurePage(PageDescriptor page, PlanPdfLanguage language)
+    private static void ConfigurePage(PageDescriptor page)
     {
         page.Size(PageSizes.A4); page.Margin(28); page.PageColor(Colors.White);
         page.DefaultTextStyle(style => style.FontFamily(FontFamily).FontSize(9).FontColor(Ink));
@@ -86,7 +86,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
                     right.Item().AlignRight().Text(planName).FontSize(17).Bold().FontColor(Ink)
                         .DirectionAuto(language);
                     if (client is not null)
-                        right.Item().AlignRight().Text($"{client.Name}  •  {client.ClientCode}")
+                        right.Item().AlignRight().Text(client.Name)
                             .FontSize(8).FontColor(Muted).DirectionAuto(language);
                 });
             });

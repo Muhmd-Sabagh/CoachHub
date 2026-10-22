@@ -139,7 +139,7 @@ public sealed class ProgressTrackingTests(CoachHubSqlApiFactory factory) : IClas
         // The image is the client's own media: the client and their coach open it; nobody else does (§26, §62).
         var sibling = await ReadAsync<ClientResponse>(await setup.Coach.PostAsJsonAsync("/api/v1/clients",
             new ClientCreateInput("Sibling " + setup.Tag, null, null, null)));
-        var siblingPortal = factory.CreateClientPortalClient(setup.CoachId, sibling.Id);
+        var siblingPortal = factory.CreateClientAreaClient(setup.CoachId, sibling.Id);
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync($"/api/v1/media/{latest.MediaId}")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await setup.Coach.GetAsync($"/api/v1/media/{latest.MediaId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await siblingPortal.GetAsync($"/api/v1/media/{latest.MediaId}")).StatusCode);

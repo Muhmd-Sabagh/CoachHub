@@ -122,6 +122,8 @@ Every role can manage their own account and stay signed in safely. Sessions are 
 - **Safari in development.** Older Safari versions reject `Secure` cookies on `http://localhost`. Use Chromium or Firefox with `npm start`, or an HTTPS dev server.
 - **Native mobile apps (§54).** These will need a non-cookie transport for the refresh token. `SessionService` is transport-agnostic; only the controller decides on the cookie.
 
+**Status after P18A (2026-10-22).** Closed: forwarded headers (P18), client personal information (P5). Open: preferred language at sign-in (P19), session rotations in the audit trail (backlog), native-app refresh transport (backlog).
+
 ## Verification
 
 | Check | Result |

@@ -134,12 +134,12 @@ public sealed class CoachHubDbContextTests
                            typeof(CoachHub.Domain.Common.IOptionalTenantOwned).IsAssignableFrom(type.ClrType))
             .ToArray();
 
-        // 15 coach-owned business types (P1), MediaAsset (P2), AuditEntry (P3), Brand and
+        // 14 coach-owned business types (P1; P18A removed the form import profile), MediaAsset (P2), AuditEntry (P3), Brand and
         // CoachSettings (P4), FoodItem (P7, a catalog entry), FoodLogEntry and NutritionDay (P8), Exercise
         // (P9, a catalog entry), WorkoutSession and PersonalRecord (P10), and six tracking entries, ProgressPhoto and
         // LifestyleTargets (P11), and CheckInSchedule and CheckIn (P12). MediaAsset, AuditEntry, Brand, FoodItem and
         // Exercise also admit platform rows.
-        Assert.Equal(43, owned.Length);
+        Assert.Equal(42, owned.Length);
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.CheckIns.CheckIn));
         Assert.DoesNotContain(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressEntry));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressPhoto));

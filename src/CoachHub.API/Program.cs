@@ -8,8 +8,6 @@ using CoachHub.Application.Common.Tenancy;
 using CoachHub.Infrastructure;
 using CoachHub.Infrastructure.Auth;
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppConfigService } from '../../core/config/app-config.service';
@@ -14,13 +14,11 @@ interface Resource {
   owner: 'coach' | 'platform';
 }
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
-  selector: 'app-settings',
-  templateUrl: './settings.component.html',
+  selector: 'app-reference-data',
+  templateUrl: './reference-data.component.html',
   standalone: false,
 })
-export class SettingsComponent implements OnInit {
+export class ReferenceDataComponent implements OnInit {
   readonly resources: Resource[] = [
     { key: 'packages', label: 'Packages', kind: 'package', owner: 'coach' },
     { key: 'currencies', label: 'Currencies', kind: 'currency', owner: 'platform' },
@@ -30,17 +28,17 @@ export class SettingsComponent implements OnInit {
     { key: 'equipment', label: 'Equipment', kind: 'bilingual', owner: 'platform' },
     { key: 'muscle-groups', label: 'Muscle groups', kind: 'bilingual', owner: 'platform' },
   ];
-  resource = this.resources[0];
-  page: PagedResult<ReferenceRecord> = emptyPage();
-  search = '';
-  appliedSearch = '';
-  active = '';
-  loading = false;
-  saving = false;
-  error = '';
-  editorOpen = false;
-  editingId: string | null = null;
-  editor = this.emptyEditor();
+  readonly resource = signal(this.resources[0]);
+  readonly page = signal<PagedResult<ReferenceRecord>>(emptyPage());
+  readonly search = signal('');
+  readonly appliedSearch = signal('');
+  readonly active = signal('');
+  readonly loading = signal(false);
+  readonly saving = signal(false);
+  readonly error = signal('');
+  readonly editorOpen = signal(false);
+  readonly editingId = signal<string | null>(null);
+  readonly editor = signal(this.emptyEditor());
   constructor(
     readonly config: AppConfigService,
     private readonly data: ReferenceDataService,
@@ -48,56 +46,56 @@ export class SettingsComponent implements OnInit {
   ) {}
   /** Coaches create their own packages and accounts; administrators create platform data. */
   get canCreate(): boolean {
-    return this.resource.owner === 'platform' ? this.auth.isAdmin() : this.auth.isCoach();
+    return this.resource().owner === 'platform' ? this.auth.isAdmin() : this.auth.isCoach();
   }
   get canModify(): boolean {
-    return this.resource.owner === 'platform' ? this.auth.isAdmin() : this.auth.isCoach() || this.auth.isAdmin();
+    return this.resource().owner === 'platform' ? this.auth.isAdmin() : this.auth.isCoach() || this.auth.isAdmin();
   }
   ngOnInit(): void {
     this.load();
   }
   select(resource: Resource): void {
-    this.resource = resource;
-    this.search = '';
-    this.appliedSearch = '';
-    this.active = '';
+    this.resource.set(resource);
+    this.search.set('');
+    this.appliedSearch.set('');
+    this.active.set('');
     this.closeEditor();
     this.load(1);
   }
   applySearch(): void {
-    this.appliedSearch = this.search.trim();
+    this.appliedSearch.set(this.search().trim());
     this.load(1);
   }
   clear(): void {
-    this.search = '';
-    this.appliedSearch = '';
-    this.active = '';
+    this.search.set('');
+    this.appliedSearch.set('');
+    this.active.set('');
     this.load(1);
   }
-  load(pageNumber = this.page.pageNumber): void {
-    this.loading = true;
-    this.error = '';
+  load(pageNumber = this.page().pageNumber): void {
+    this.loading.set(true);
+    this.error.set('');
     this.data
-      .list(this.resource.key, {
+      .list(this.resource().key, {
         pageNumber,
         pageSize: 10,
-        searchTerm: this.appliedSearch,
-        isActive: this.active,
+        searchTerm: this.appliedSearch(),
+        isActive: this.active(),
       })
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.loading.set(false))))
       .subscribe({
-        next: (page) => (this.page = page),
-        error: (e) => (this.error = apiErrorMessage(e)),
+        next: (page) => (this.page.set(page)),
+        error: (e) => (this.error.set(apiErrorMessage(e))),
       });
   }
   create(): void {
-    this.editingId = null;
-    this.editor = this.emptyEditor();
-    this.editorOpen = true;
+    this.editingId.set(null);
+    this.editor.set(this.emptyEditor());
+    this.editorOpen.set(true);
   }
   edit(item: ReferenceRecord): void {
-    this.editingId = item.id;
-    this.editor = {
+    this.editingId.set(item.id);
+    this.editor.set({
       nameEn: item.nameEn ?? '',
       nameAr: item.nameAr ?? '',
       name: item.name ?? '',
@@ -106,33 +104,34 @@ export class SettingsComponent implements OnInit {
       description: item.description ?? '',
       details: item.details ?? '',
       isActive: item.isActive,
-    };
-    this.editorOpen = true;
+    });
+    this.editorOpen.set(true);
   }
   closeEditor(): void {
-    this.editorOpen = false;
-    this.editingId = null;
+    this.editorOpen.set(false);
+    this.editingId.set(null);
   }
   save(): void {
     const input = this.payload();
-    this.saving = true;
-    this.error = '';
-    const request = this.editingId
-      ? this.data.update(this.resource.key, this.editingId, input)
-      : this.data.create(this.resource.key, input);
-    request.pipe(finalize(() => (this.saving = false))).subscribe({
+    this.saving.set(true);
+    this.error.set('');
+    const editingId = this.editingId();
+    const request = editingId
+      ? this.data.update(this.resource().key, editingId, input)
+      : this.data.create(this.resource().key, input);
+    request.pipe(finalize(() => (this.saving.set(false)))).subscribe({
       next: () => {
         this.closeEditor();
         this.load();
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   remove(item: ReferenceRecord): void {
     if (!confirm(`Delete ${this.displayName(item)}?`)) return;
     this.data
-      .delete(this.resource.key, item.id)
-      .subscribe({ next: () => this.load(), error: (e) => (this.error = apiErrorMessage(e)) });
+      .delete(this.resource().key, item.id)
+      .subscribe({ next: () => this.load(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   displayName(item: ReferenceRecord): string {
     return item.nameEn ?? item.name ?? item.code ?? '';
@@ -150,32 +149,32 @@ export class SettingsComponent implements OnInit {
     };
   }
   private payload(): object {
-    switch (this.resource.kind) {
+    switch (this.resource().kind) {
       case 'currency':
         return {
-          code: this.editor.code,
-          name: this.editor.name,
-          symbol: this.editor.symbol || null,
-          isActive: this.editor.isActive,
+          code: this.editor().code,
+          name: this.editor().name,
+          symbol: this.editor().symbol || null,
+          isActive: this.editor().isActive,
         };
       case 'payment':
         return {
-          name: this.editor.name,
-          details: this.editor.details || null,
-          isActive: this.editor.isActive,
+          name: this.editor().name,
+          details: this.editor().details || null,
+          isActive: this.editor().isActive,
         };
       case 'package':
         return {
-          nameEn: this.editor.nameEn,
-          nameAr: this.editor.nameAr || null,
-          description: this.editor.description || null,
-          isActive: this.editor.isActive,
+          nameEn: this.editor().nameEn,
+          nameAr: this.editor().nameAr || null,
+          description: this.editor().description || null,
+          isActive: this.editor().isActive,
         };
       default:
         return {
-          nameEn: this.editor.nameEn,
-          nameAr: this.editor.nameAr || null,
-          isActive: this.editor.isActive,
+          nameEn: this.editor().nameEn,
+          nameAr: this.editor().nameAr || null,
+          isActive: this.editor().isActive,
         };
     }
   }

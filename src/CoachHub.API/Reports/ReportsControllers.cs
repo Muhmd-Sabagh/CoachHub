@@ -4,7 +4,6 @@ using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Exports;
-using CoachHub.Application.Pdf;
 using CoachHub.Application.Reports;
 using CoachHub.Domain.Settings;
 using Microsoft.AspNetCore.Authorization;

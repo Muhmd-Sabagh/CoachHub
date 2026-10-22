@@ -11,7 +11,7 @@
         ><span>Category</span
         ><select name="category" [(ngModel)]="categoryId">
           <option value="">All</option>
-          @for (c of categories; track c.id) {
+          @for (c of categories(); track c.id) {
             <option [value]="c.id">{{ c.nameEn }}</option>
           }
         </select></label
@@ -36,7 +36,7 @@
           ><span>Muscle</span
           ><select name="muscle" [(ngModel)]="muscleGroupId">
             <option value="">All</option>
-            @for (m of muscles; track m.id) {
+            @for (m of muscles(); track m.id) {
               <option [value]="m.id">{{ m.nameEn }}</option>
             }
           </select></label
@@ -51,8 +51,8 @@
       </button>
     }
   </div>
-  @if (error) {
-    <p class="form-error">{{ error }}</p>
+  @if (error()) {
+    <p class="form-error">{{ error() }}</p>
   }
   <div class="table-scroll">
     <table>
@@ -70,12 +70,12 @@
         </tr>
       </thead>
       <tbody>
-        @if (loading) {
+        @if (loading()) {
           <tr>
             <td colspan="5" class="table-message">Loading…</td>
           </tr>
         }
-        @for (item of page.items; track item.id) {
+        @for (item of page().items; track item.id) {
           <tr>
             <td>
               <strong>{{ item.nameEn }}</strong
@@ -127,7 +127,7 @@
             </td>
           </tr>
         }
-        @if (!loading && !page.items.length) {
+        @if (!loading() && !page().items.length) {
           <tr>
             <td colspan="5" class="table-message">No records match the applied filters.</td>
           </tr>
@@ -136,18 +136,18 @@
     </table>
   </div>
   <app-pagination
-    [page]="page.pageNumber"
-    [totalPages]="page.totalPages"
-    [totalCount]="page.totalCount"
+    [page]="page().pageNumber"
+    [totalPages]="page().totalPages"
+    [totalCount]="page().totalCount"
     (pageChange)="load($event)"
   />
 </section>
-@if (editorOpen) {
+@if (editorOpen()) {
   <div class="modal-backdrop">
     <section class="modal-card wide" role="dialog" aria-modal="true">
       <header>
         <div>
-          <p class="eyebrow">{{ editingId ? 'Edit' : 'New' }}</p>
+          <p class="eyebrow">{{ editingId() ? 'Edit' : 'New' }}</p>
           <h2>{{ title }}</h2>
         </div>
         <button class="icon-button" (click)="close()">×</button>
@@ -155,15 +155,15 @@
       <form class="form-grid" (ngSubmit)="save()">
         <label
           ><span>English name *</span
-          ><input name="nameEn" [(ngModel)]="editor.nameEn" required /></label
+          ><input name="nameEn" [(ngModel)]="editor().nameEn" required /></label
         ><label
           ><span>Arabic name</span
-          ><input name="nameAr" [(ngModel)]="editor.nameAr" dir="rtl" /></label
+          ><input name="nameAr" [(ngModel)]="editor().nameAr" dir="rtl" /></label
         ><label
           ><span>Category *</span
-          ><select name="categoryId" [(ngModel)]="editor.categoryId" required>
+          ><select name="categoryId" [(ngModel)]="editor().categoryId" required>
             <option value="">Select</option>
-            @for (c of categories; track c.id) {
+            @for (c of categories(); track c.id) {
               <option [value]="c.id">{{ c.nameEn }}</option>
             }
           </select></label
@@ -171,34 +171,34 @@
         @if (kind === 'foods') {
           <label
             ><span>Measured per *</span
-            ><select name="baseUnit" [(ngModel)]="editor.baseUnit">
+            ><select name="baseUnit" [(ngModel)]="editor().baseUnit">
               <option value="Gram">Grams (g)</option>
               <option value="Milliliter">Millilitres (ml)</option>
               <option value="Piece">Pieces (slice, egg, scoop…)</option>
             </select></label
           >
-          @if (editor.baseUnit === 'Piece') {
+          @if (editor().baseUnit === 'Piece') {
             <label
               ><span>Piece name *</span
               ><input
                 name="pieceEn"
-                [(ngModel)]="editor.pieceNameEn"
+                [(ngModel)]="editor().pieceNameEn"
                 placeholder="slice"
                 required /></label
             ><label
               ><span>Piece name (Arabic)</span
-              ><input name="pieceAr" [(ngModel)]="editor.pieceNameAr" dir="rtl"
+              ><input name="pieceAr" [(ngModel)]="editor().pieceNameAr" dir="rtl"
             /></label>
           }
           <label
             ><span
               >Serving size ({{
-                editor.baseUnit === 'Piece' ? 'pieces' : editor.baseUnit === 'Gram' ? 'g' : 'ml'
+                editor().baseUnit === 'Piece' ? 'pieces' : editor().baseUnit === 'Gram' ? 'g' : 'ml'
               }})</span
             ><input
               type="number"
               name="serving"
-              [(ngModel)]="editor.servingSize"
+              [(ngModel)]="editor().servingSize"
               min="0.01"
               step="any" /></label
           ><label
@@ -206,7 +206,7 @@
             ><input
               type="number"
               name="calories"
-              [(ngModel)]="editor.calories"
+              [(ngModel)]="editor().calories"
               min="0"
               step="any" /></label
           ><label
@@ -214,7 +214,7 @@
             ><input
               type="number"
               name="protein"
-              [(ngModel)]="editor.protein"
+              [(ngModel)]="editor().protein"
               min="0"
               step="any" /></label
           ><label
@@ -222,18 +222,18 @@
             ><input
               type="number"
               name="carbs"
-              [(ngModel)]="editor.carbs"
+              [(ngModel)]="editor().carbs"
               min="0"
               step="any" /></label
           ><label
             ><span>Fat g / {{ per100() }}</span
-            ><input type="number" name="fat" [(ngModel)]="editor.fat" min="0" step="any" /></label
+            ><input type="number" name="fat" [(ngModel)]="editor().fat" min="0" step="any" /></label
           ><label
             ><span>Fiber g / {{ per100() }}</span
             ><input
               type="number"
               name="fiber"
-              [(ngModel)]="editor.fiber"
+              [(ngModel)]="editor().fiber"
               min="0"
               step="any"
               placeholder="Not recorded" /></label
@@ -242,7 +242,7 @@
             ><input
               type="number"
               name="sugar"
-              [(ngModel)]="editor.sugar"
+              [(ngModel)]="editor().sugar"
               min="0"
               step="any"
               placeholder="Not recorded" /></label
@@ -251,7 +251,7 @@
             ><input
               type="number"
               name="sodium"
-              [(ngModel)]="editor.sodium"
+              [(ngModel)]="editor().sodium"
               min="0"
               step="any"
               placeholder="Not recorded"
@@ -261,7 +261,7 @@
               <strong>Household units</strong
               ><button class="link-button" type="button" (click)="addUnit()">Add unit</button>
             </div>
-            @for (u of editor.units; track $index; let ui = $index) {
+            @for (u of editor().units; track $index; let ui = $index) {
               <div class="nested-row">
                 <input
                   [name]="'unitEn' + ui"
@@ -283,9 +283,9 @@
                   step="any"
                   aria-label="Base units per unit"
                 /><small>{{
-                  editor.baseUnit === 'Piece'
-                    ? editor.pieceNameEn || 'pieces'
-                    : editor.baseUnit === 'Gram'
+                  editor().baseUnit === 'Piece'
+                    ? editor().pieceNameEn || 'pieces'
+                    : editor().baseUnit === 'Gram'
                       ? 'g'
                       : 'ml'
                 }}</small
@@ -298,15 +298,15 @@
         } @else {
           <label
             ><span>Primary muscle</span
-            ><select name="primaryMuscle" [(ngModel)]="editor.primaryMuscleGroupId" required>
+            ><select name="primaryMuscle" [(ngModel)]="editor().primaryMuscleGroupId" required>
               <option value="">Select</option>
-              @for (m of muscles; track m.id) {
+              @for (m of muscles(); track m.id) {
                 <option [value]="m.id">{{ m.nameEn }}</option>
               }
             </select></label
           ><label
             ><span>Difficulty</span
-            ><select name="difficulty" [(ngModel)]="editor.difficulty">
+            ><select name="difficulty" [(ngModel)]="editor().difficulty">
               <option value="">Not set</option>
               @for (d of difficulties; track d) {
                 <option [value]="d">{{ d }}</option>
@@ -316,13 +316,13 @@
           <fieldset class="span-2 plain-fieldset">
             <legend>Secondary muscles</legend>
             <div class="checkbox-grid">
-              @for (m of muscles; track m.id) {
-                @if (m.id !== editor.primaryMuscleGroupId) {
+              @for (m of muscles(); track m.id) {
+                @if (m.id !== editor().primaryMuscleGroupId) {
                   <label class="checkbox-row"
                     ><input
                       type="checkbox"
-                      [checked]="editor.secondaryMuscleGroupIds.has(m.id)"
-                      (change)="toggle(editor.secondaryMuscleGroupIds, m.id)"
+                      [checked]="editor().secondaryMuscleGroupIds.has(m.id)"
+                      (change)="toggle(editor().secondaryMuscleGroupIds, m.id)"
                     />
                     {{ m.nameEn }}</label
                   >
@@ -333,12 +333,12 @@
           <fieldset class="span-2 plain-fieldset">
             <legend>Equipment</legend>
             <div class="checkbox-grid">
-              @for (e of equipment; track e.id) {
+              @for (e of equipment(); track e.id) {
                 <label class="checkbox-row"
                   ><input
                     type="checkbox"
-                    [checked]="editor.equipmentIds.has(e.id)"
-                    (change)="toggle(editor.equipmentIds, e.id)"
+                    [checked]="editor().equipmentIds.has(e.id)"
+                    (change)="toggle(editor().equipmentIds, e.id)"
                   />
                   {{ e.nameEn }}</label
                 >
@@ -349,40 +349,40 @@
           </fieldset>
           <label
             ><span>Instructions</span
-            ><textarea name="instructionsEn" rows="3" maxlength="4000" [(ngModel)]="editor.instructionsEn"></textarea></label
+            ><textarea name="instructionsEn" rows="3" maxlength="4000" [(ngModel)]="editor().instructionsEn"></textarea></label
           ><label
             ><span>Instructions (Arabic)</span
-            ><textarea name="instructionsAr" rows="3" maxlength="4000" dir="rtl" [(ngModel)]="editor.instructionsAr"></textarea></label
+            ><textarea name="instructionsAr" rows="3" maxlength="4000" dir="rtl" [(ngModel)]="editor().instructionsAr"></textarea></label
           ><label
             ><span>Coaching cues</span
-            ><textarea name="cuesEn" rows="2" maxlength="4000" [(ngModel)]="editor.coachingCuesEn"></textarea></label
+            ><textarea name="cuesEn" rows="2" maxlength="4000" [(ngModel)]="editor().coachingCuesEn"></textarea></label
           ><label
             ><span>Coaching cues (Arabic)</span
-            ><textarea name="cuesAr" rows="2" maxlength="4000" dir="rtl" [(ngModel)]="editor.coachingCuesAr"></textarea></label
+            ><textarea name="cuesAr" rows="2" maxlength="4000" dir="rtl" [(ngModel)]="editor().coachingCuesAr"></textarea></label
           ><label
             ><span>Common mistakes</span
-            ><textarea name="mistakesEn" rows="2" maxlength="4000" [(ngModel)]="editor.commonMistakesEn"></textarea></label
+            ><textarea name="mistakesEn" rows="2" maxlength="4000" [(ngModel)]="editor().commonMistakesEn"></textarea></label
           ><label
             ><span>Common mistakes (Arabic)</span
-            ><textarea name="mistakesAr" rows="2" maxlength="4000" dir="rtl" [(ngModel)]="editor.commonMistakesAr"></textarea></label
+            ><textarea name="mistakesAr" rows="2" maxlength="4000" dir="rtl" [(ngModel)]="editor().commonMistakesAr"></textarea></label
           ><label class="span-2"
             ><span>YouTube URL</span
-            ><input name="youtube" [(ngModel)]="editor.youTubeUrl" type="url"
+            ><input name="youtube" [(ngModel)]="editor().youTubeUrl" type="url"
           /></label>
         }
         <label
           ><span>Media ID</span
           ><input
             name="media"
-            [(ngModel)]="editor.mediaId"
+            [(ngModel)]="editor().mediaId"
             placeholder="Optional uploaded media ID" /></label
         ><label class="checkbox-row"
-          ><input type="checkbox" name="isActive" [(ngModel)]="editor.isActive" /> Active</label
+          ><input type="checkbox" name="isActive" [(ngModel)]="editor().isActive" /> Active</label
         >
         <footer class="modal-actions span-2">
           <button class="button button-secondary" type="button" (click)="close()">Cancel</button
-          ><button class="button button-primary" [disabled]="saving">
-            {{ saving ? 'Saving…' : 'Save' }}
+          ><button class="button button-primary" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : 'Save' }}
           </button>
         </footer>
       </form>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -7,12 +7,11 @@ import { BrandingService, brandInitials } from '../../../core/branding/branding.
 import { I18nService } from '../../../core/i18n/i18n.service';
 
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-login', templateUrl: './login.component.html', standalone: false })
+  selector: 'app-login', templateUrl: './login.component.html', standalone: false })
 export class LoginComponent {
   showPassword = false;
-  submitting = false;
-  failed = false;
+  readonly submitting = signal(false);
+  readonly failed = signal(false);
   readonly form;
   constructor(fb: FormBuilder, private readonly auth: AuthService, private readonly route: ActivatedRoute, private readonly router: Router, readonly i18n: I18nService, readonly branding: BrandingService) {
     this.form = fb.nonNullable.group({ login: ['', Validators.required], password: ['', Validators.required] });
@@ -20,11 +19,11 @@ export class LoginComponent {
   }
   readonly initials = brandInitials;
   submit(): void {
-    if (this.form.invalid || this.submitting) { this.form.markAllAsTouched(); return; }
-    this.submitting = true; this.failed = false;
-    this.auth.login(this.form.getRawValue()).pipe(finalize(() => this.submitting = false)).subscribe({
+    if (this.form.invalid || this.submitting()) { this.form.markAllAsTouched(); return; }
+    this.submitting.set(true); this.failed.set(false);
+    this.auth.login(this.form.getRawValue()).pipe(finalize(() => this.submitting.set(false))).subscribe({
       next: result => void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') || this.auth.landingRoute()),
-      error: () => this.failed = true
+      error: () => this.failed.set(true)
     });
   }
 }

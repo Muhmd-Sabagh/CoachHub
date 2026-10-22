@@ -12,7 +12,6 @@ public interface IClientRepository
     Task AddProfileAsync(ClientProfile profile, CancellationToken cancellationToken);
     Task<PagedResult<Client>> ListAsync(ClientQuery query, DateOnly today, CancellationToken cancellationToken);
     Task<Client?> FindAsync(Guid id, CancellationToken cancellationToken);
-    Task<bool> ClientCodeExistsAsync(string code, CancellationToken cancellationToken);
     Task AddAsync(Client client, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken);
 

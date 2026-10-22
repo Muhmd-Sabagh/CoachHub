@@ -120,6 +120,8 @@
 - **Unit display.** Height and weight are entered metric. Imperial display arrives with the measurement screens (P11), using the P4 units setting.
 - **Invitation email delivery** needs SMTP configured; in development the invitation stays in the outbox.
 
+**Status after P18A (2026-10-22).** Closed: CheckInOverdue (P12) and every profile tab (P8–P14). Open: imperial display (P20).
+
 ## Verification
 
 | Check | Result |

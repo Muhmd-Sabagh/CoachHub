@@ -11,7 +11,7 @@ public sealed record AssessmentSubmissionQuery(int PageNumber = 1, int PageSize 
 {
     public AssessmentSubmissionQuery Normalize() => this with { PageNumber = Math.Max(1, PageNumber), PageSize = Math.Clamp(PageSize, 1, 100), SearchTerm = string.IsNullOrWhiteSpace(SearchTerm) ? null : SearchTerm.Trim() };
 }
-public sealed record AssessmentSubmissionSummary(Guid Id, Guid ClientId, string ClientName, string ClientCode, Guid FormDefinitionId, string FormName, AssessmentFormType FormType, SubmissionSource Source, DateTimeOffset SubmittedAt, int AnswerCount);
+public sealed record AssessmentSubmissionSummary(Guid Id, Guid ClientId, string ClientName, Guid FormDefinitionId, string FormName, AssessmentFormType FormType, SubmissionSource Source, DateTimeOffset SubmittedAt, int AnswerCount);
 public sealed record AssessmentAnswerResponse(Guid Id, Guid QuestionStableKey, string QuestionText, QuestionType QuestionType, string ValueJson, Guid? MediaId, string? ExternalMediaUrl);
 public sealed record AssessmentSubmissionDetail(AssessmentSubmissionSummary Submission, IReadOnlyList<AssessmentAnswerResponse> Answers);
 
