@@ -6,8 +6,9 @@ import { I18nService } from '../i18n/i18n.service';
 import { ThemeService } from '../theme/theme.service';
 
 import { Role } from '../auth/auth.models';
+import { TranslationKey } from '../i18n/translations';
 
-interface NavItem { route: string; label: string; icon: string; roles: Role[]; }
+interface NavItem { route: string; label: TranslationKey; icon: string; roles: Role[]; }
 const coachOrAdmin: Role[] = ['Administrator', 'Coach'];
 @Component({
   selector: 'app-shell', templateUrl: './shell.component.html', standalone: false })
