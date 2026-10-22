@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import { PagedResult } from '../../shared/models/paged-result';
 import { PrescribedSet, SetType, WorkoutBlock } from '../plans/workout-math';
 import { OneRepMaxFormula } from '../settings/settings.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 export type WorkoutSessionStatus = 'InProgress' | 'Completed';
 export type LoggedSetStatus = 'Completed' | 'Skipped';
@@ -269,17 +270,34 @@ export class TrainingTrackingService {
 }
 
 /** A logged set in a few words: "8 × 60 kg", "12 reps", "45 s", "Skipped". */
-export function setText(set: Pick<LoggedSet, 'status' | 'reps' | 'weightKg' | 'durationSeconds'>): string {
-  if (set.status === 'Skipped') return 'Skipped';
+export function setText(set: Pick<LoggedSet, 'status' | 'reps' | 'weightKg' | 'durationSeconds'>, i18n?: I18nService): string {
+  if (set.status === 'Skipped') return i18n ? i18n.translate('training.setSkipped') : 'Skipped';
   const parts: string[] = [];
-  if (set.reps !== null && set.weightKg !== null) parts.push(`${set.reps} × ${set.weightKg} kg`);
-  else if (set.reps !== null) parts.push(`${set.reps} reps`);
+  const kg = i18n ? i18n.translate('unit.kg') : 'kg';
+  if (set.reps !== null && set.weightKg !== null) parts.push(`${set.reps} × ${set.weightKg} ${kg}`);
+  else if (set.reps !== null) parts.push(i18n ? i18n.translate('training.repsCount', { value: set.reps }) : `${set.reps} reps`);
   if (set.durationSeconds) parts.push(clock(set.durationSeconds));
   return parts.join(' · ');
 }
 
 /** "New PR: Bench Press — 90 kg × 8" (§21). */
-export function recordText(record: PersonalRecord): string {
+export function recordText(record: PersonalRecord, i18n?: I18nService): string {
+  if (i18n) {
+    const value = (() => {
+      switch (record.type) {
+        case 'Weight': return record.reps
+          ? i18n.translate('training.recordWeightReps', { value: record.value, reps: record.reps })
+          : i18n.translate('training.recordWeight', { value: record.value });
+        case 'Reps': return record.weightKg
+          ? i18n.translate('training.recordRepsAt', { value: record.value, weight: record.weightKg })
+          : i18n.translate('training.recordReps', { value: record.value });
+        case 'Volume': return i18n.translate('training.recordVolume', { value: record.value });
+        case 'EstimatedOneRepMax': return i18n.translate('training.recordE1rm', { value: record.value });
+      }
+    })();
+    const name = i18n.language() === 'ar' && record.exerciseNameAr?.trim() ? record.exerciseNameAr : record.exerciseNameEn;
+    return `${name} — ${value}`;
+  }
   const value = (() => {
     switch (record.type) {
       case 'Weight': return `${record.value} kg${record.reps ? ` × ${record.reps}` : ''}`;

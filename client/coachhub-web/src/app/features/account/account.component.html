@@ -65,7 +65,7 @@
       @for (session of sessions(); track session.id) {
         <li>
           <div>
-            <strong>{{ device(session) }} @if (session.isCurrent) { <span class="muted">{{ 'account.thisDevice' | translate }}</span> }</strong>
+            <strong><span translate="no">{{ device(session) }}</span> @if (session.isCurrent) { <span class="muted">{{ 'account.thisDevice' | translate }}</span> }</strong>
             <small class="muted">{{ 'account.lastActive' | translate: { lastSeen: (session.lastSeenAt | localDate: 'medium'), signedIn: (session.createdAt | localDate: 'mediumDate') } }}</small>
             @if (session.ipAddress) { <small class="muted">{{ 'account.ip' | translate: { address: session.ipAddress } }}</small> }
           </div>

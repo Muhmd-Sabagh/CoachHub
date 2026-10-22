@@ -1,15 +1,17 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { addDays, isoDate } from '../nutrition-tracking/nutrition-tracking.service';
-import { recordText } from '../training-tracking/training-tracking.service';
+import { PersonalRecord, recordText } from '../training-tracking/training-tracking.service';
 import { PhotoCompareComponent } from './photo-compare.component';
 import {
   BodyProgress, Lifestyle, MeasurementSite, PhotoPose, ProgressDashboard, ProgressPhoto, ProgressTrackingService, SeriesSummary,
-  bodyFatNotice, changeText, hoursText, measurementSites, percentText, photoPoses,
+  changeText, hoursText, measurementSites, percentText, photoPoses,
 } from './progress-tracking.service';
 import { TrendChartComponent } from './trend-chart.component';
 import { ClientReportsComponent } from '../reports/client-reports.component';
@@ -24,13 +26,13 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
 @Component({
   selector: 'app-my-progress',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent, ClientReportsComponent],
+  imports: [FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent, ClientReportsComponent, ...I18N_PIPES],
   template: `
-    <section class="dashboard-hero"><div><p class="eyebrow">Progress</p><h1>My progress</h1></div>
-      <a class="button button-secondary" routerLink="/app/tests">My tests</a></section>
-    <nav class="segmented sections" role="tablist" aria-label="Progress sections">
+    <section class="dashboard-hero"><div><p class="eyebrow">{{ 'progress.eyebrow' | translate }}</p><h1>{{ 'progress.title' | translate }}</h1></div>
+      <a class="button button-secondary" routerLink="/app/tests">{{ 'progress.myTests' | translate }}</a></section>
+    <nav class="segmented sections" role="tablist" [attr.aria-label]="'progress.sections' | translate">
       @for (s of sections; track s.id) {
-        <button type="button" role="tab" [class.active]="section() === s.id" [attr.aria-selected]="section() === s.id" (click)="open(s.id)">{{ s.label }}</button>
+        <button type="button" role="tab" [class.active]="section() === s.id" [attr.aria-selected]="section() === s.id" (click)="open(s.id)">{{ s.label | translate }}</button>
       }
     </nav>
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
@@ -39,178 +41,179 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
     @switch (section()) {
       @case ('overview') {
         @if (dashboard(); as d) {
-          <p class="muted">Last 4 weeks</p>
+          <p class="muted">{{ 'progress.last4Weeks' | translate }}</p>
           <div class="tiles">
-            <article class="card workbench tile"><small>Weight</small><strong>{{ d.body.weight.current ? d.body.weight.current.value + ' kg' : '–' }}</strong>
-              <span class="muted">{{ change(d.body.weight, 'kg') }} since start</span></article>
-            <article class="card workbench tile"><small>Body fat</small><strong>{{ d.body.bodyFat.current ? d.body.bodyFat.current.value + '%' : '–' }}</strong>
-              <span class="muted">{{ change(d.body.bodyFat, '%') }}</span></article>
-            <article class="card workbench tile"><small>Nutrition adherence</small><strong>{{ percent(d.nutrition.adherencePercent) }}</strong>
-              <span class="muted">{{ d.nutrition.loggedDays }} of {{ d.nutrition.days }} days logged</span></article>
-            <article class="card workbench tile"><small>Workouts</small><strong>{{ d.training.summary.completedSessions }} / {{ d.training.summary.scheduledSessions }}</strong>
-              <span class="muted">{{ d.training.summary.volumeKg | number: '1.0-0' }} kg volume</span></article>
-            <article class="card workbench tile"><small>Sleep</small><strong>{{ hours(d.lifestyle.averageSleepHours) }}</strong>
-              <span class="muted">goal {{ percent(d.lifestyle.sleepGoalPercent) }}</span></article>
-            <article class="card workbench tile"><small>Steps</small><strong>{{ d.lifestyle.averageSteps !== null ? (d.lifestyle.averageSteps | number) : '–' }}</strong>
-              <span class="muted">goal {{ percent(d.lifestyle.stepsGoalPercent) }}</span></article>
-            <article class="card workbench tile"><small>Water</small><strong>{{ d.lifestyle.averageWaterMl !== null ? (d.lifestyle.averageWaterMl | number) + ' ml' : '–' }}</strong>
-              <span class="muted">goal {{ percent(d.lifestyle.waterGoalPercent) }}</span></article>
-            <article class="card workbench tile"><small>Overall adherence</small><strong>{{ percent(d.adherence.overallPercent) }}</strong>
-              <span class="muted">weighted by your coach</span></article>
-            <article class="card workbench tile"><small>Check-ins</small><strong>{{ d.checkIn.adherence.completed }} / {{ d.checkIn.adherence.due }}</strong>
-              <span class="muted">{{ d.checkIn.schedule?.nextDueOn ? 'next ' + (d.checkIn.schedule!.nextDueOn | date: 'd MMM') : 'none scheduled' }}</span></article>
-            <article class="card workbench tile"><small>Photos</small><strong>{{ d.body.photoCount }}</strong>
-              <span class="muted">{{ d.body.latestPhoto ? 'latest ' + (d.body.latestPhoto.date | date: 'd MMM') : 'none yet' }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.weight' | translate }}</small><strong>{{ d.body.weight.current ? (d.body.weight.current.value | localNumber: '1.0-1') + ' ' + ('unit.kg' | translate) : '–' }}</strong>
+              <span class="muted">{{ 'progress.sinceStart' | translate: { change: change(d.body.weight, 'unit.kg') } }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.bodyFat' | translate }}</small><strong>{{ d.body.bodyFat.current ? (d.body.bodyFat.current.value | localNumber: '1.0-1') + '%' : '–' }}</strong>
+              <span class="muted">{{ change(d.body.bodyFat, 'unit.percent') }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.nutritionAdherence' | translate }}</small><strong>{{ percent(d.nutrition.adherencePercent) }}</strong>
+              <span class="muted">{{ 'progress.daysLogged' | translate: { logged: d.nutrition.loggedDays, days: d.nutrition.days } }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.workouts' | translate }}</small><strong>{{ d.training.summary.completedSessions }} / {{ d.training.summary.scheduledSessions }}</strong>
+              <span class="muted">{{ 'progress.volume' | translate: { value: (d.training.summary.volumeKg | localNumber: '1.0-0') } }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.sleep' | translate }}</small><strong>{{ hours(d.lifestyle.averageSleepHours) }}</strong>
+              <span class="muted">{{ 'progress.goal' | translate: { value: percent(d.lifestyle.sleepGoalPercent) } }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.steps' | translate }}</small><strong>{{ d.lifestyle.averageSteps !== null ? (d.lifestyle.averageSteps | localNumber) : '–' }}</strong>
+              <span class="muted">{{ 'progress.goal' | translate: { value: percent(d.lifestyle.stepsGoalPercent) } }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.water' | translate }}</small><strong>{{ d.lifestyle.averageWaterMl !== null ? (d.lifestyle.averageWaterMl | localNumber) + ' ' + ('unit.ml' | translate) : '–' }}</strong>
+              <span class="muted">{{ 'progress.goal' | translate: { value: percent(d.lifestyle.waterGoalPercent) } }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.overallAdherence' | translate }}</small><strong>{{ percent(d.adherence.overallPercent) }}</strong>
+              <span class="muted">{{ 'progress.weightedByCoach' | translate }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.checkIns' | translate }}</small><strong>{{ d.checkIn.adherence.completed }} / {{ d.checkIn.adherence.due }}</strong>
+              <span class="muted">{{ d.checkIn.schedule?.nextDueOn ? ('progress.nextDue' | translate: { date: (d.checkIn.schedule!.nextDueOn | localDate: 'd MMM') }) : ('progress.noneScheduled' | translate) }}</span></article>
+            <article class="card workbench tile"><small>{{ 'progress.photos' | translate }}</small><strong>{{ d.body.photoCount }}</strong>
+              <span class="muted">{{ d.body.latestPhoto ? ('progress.latest' | translate: { date: (d.body.latestPhoto.date | localDate: 'd MMM') }) : ('progress.noneYet' | translate) }}</span></article>
           </div>
           @if (d.checkIn.latestFeedback; as f) {
-            <section class="card workbench"><h2>Latest from your coach</h2><p>{{ f.text }}</p>
-              <small class="muted">{{ f.createdAt | date: 'd MMM, HH:mm' }}</small></section>
+            <section class="card workbench"><h2>{{ 'progress.latestFromCoach' | translate }}</h2><p translate="no">{{ f.text }}</p>
+              <small class="muted">{{ f.createdAt | localDate: 'd MMM, HH:mm' }}</small></section>
           }
           @if (d.training.recentRecords.length) {
-            <section class="card workbench"><h2>Recent PRs</h2>
+            <section class="card workbench"><h2>{{ 'progress.recentPrs' | translate }}</h2>
               <ul class="plain-list">@for (r of d.training.recentRecords; track r.id) { <li>{{ recordText(r) }}</li> }</ul></section>
           }
-        } @else if (loading()) { <p class="table-message">Loading…</p> }
+        } @else if (loading()) { <p class="table-message">{{ 'common.loading' | translate }}</p> }
       }
 
       @case ('body') {
         <section class="card workbench entry">
-          <h2>Record</h2>
-          <label><span>Day</span><input type="date" [(ngModel)]="date" name="bodyDate" [max]="tomorrow" /></label>
+          <h2>{{ 'progress.record' | translate }}</h2>
+          <label><span>{{ 'progress.day' | translate }}</span><input type="date" [(ngModel)]="date" name="bodyDate" [max]="tomorrow" /></label>
           <div class="entry-row">
-            <label><span>Weight (kg)</span><input type="number" inputmode="decimal" min="20" max="400" step="0.1" [(ngModel)]="weightKg" name="weightKg" /></label>
-            <button class="button button-primary" type="button" [disabled]="busy() || !weightKg()" (click)="saveWeight()">Save weight</button>
+            <label><span>{{ 'progress.weightKg' | translate }}</span><input type="number" inputmode="decimal" min="20" max="400" step="0.1" [(ngModel)]="weightKg" name="weightKg" /></label>
+            <button class="button button-primary" type="button" [disabled]="busy() || !weightKg()" (click)="saveWeight()">{{ 'progress.saveWeight' | translate }}</button>
           </div>
           <div class="entry-row">
-            <label><span>Body fat (%)</span><input type="number" inputmode="decimal" min="2" max="75" step="0.1" [(ngModel)]="bodyFat" name="bodyFat" /></label>
-            <button class="button button-secondary" type="button" [disabled]="busy() || !bodyFat()" (click)="saveBodyFat()">Save body fat</button>
+            <label><span>{{ 'progress.bodyFatPercent' | translate }}</span><input type="number" inputmode="decimal" min="2" max="75" step="0.1" [(ngModel)]="bodyFat" name="bodyFat" /></label>
+            <button class="button button-secondary" type="button" [disabled]="busy() || !bodyFat()" (click)="saveBodyFat()">{{ 'progress.saveBodyFat' | translate }}</button>
           </div>
-          <small class="muted">{{ notice }}</small>
-          <fieldset class="sites"><legend>Measurements (cm)</legend>
+          <small class="muted">{{ 'progress.bodyFatNotice' | translate }}</small>
+          <fieldset class="sites"><legend>{{ 'progress.measurementsCm' | translate }}</legend>
             @for (site of sites; track site) {
-              <label><span>{{ site }}</span><input type="number" inputmode="decimal" min="5" max="300" step="0.1" [(ngModel)]="measurements()[site]" [name]="'m' + site" /></label>
+              <label><span>{{ site | enumLabel: 'measurementSite' }}</span><input type="number" inputmode="decimal" min="5" max="300" step="0.1" [(ngModel)]="measurements()[site]" [name]="'m' + site" /></label>
             }
           </fieldset>
-          <button class="button button-secondary" type="button" [disabled]="busy() || !hasMeasurements()" (click)="saveMeasurements()">Save measurements</button>
+          <button class="button button-secondary" type="button" [disabled]="busy() || !hasMeasurements()" (click)="saveMeasurements()">{{ 'progress.saveMeasurements' | translate }}</button>
         </section>
 
         @if (body(); as b) {
           <section class="card workbench">
-            <h2>Weight</h2>
+            <h2>{{ 'progress.weight' | translate }}</h2>
             <div class="stats">
-              <div><small>Starting</small><strong>{{ b.weight.summary.start?.value ?? b.profileStartingWeightKg ?? '–' }}</strong></div>
-              <div><small>Current</small><strong>{{ b.weight.summary.current?.value ?? '–' }}</strong></div>
-              <div><small>Lowest</small><strong>{{ b.weight.summary.lowest?.value ?? '–' }}</strong></div>
-              <div><small>Highest</small><strong>{{ b.weight.summary.highest?.value ?? '–' }}</strong></div>
-              <div><small>Change</small><strong>{{ change(b.weight.summary, 'kg') }}</strong></div>
-              <div><small>This week's average</small><strong>{{ b.weight.summary.weeks.at(-1)?.average ?? '–' }}</strong></div>
+              <div><small>{{ 'progress.starting' | translate }}</small><strong>{{ b.weight.summary.start?.value ?? b.profileStartingWeightKg ?? '–' }}</strong></div>
+              <div><small>{{ 'progress.current' | translate }}</small><strong>{{ b.weight.summary.current?.value ?? '–' }}</strong></div>
+              <div><small>{{ 'progress.lowest' | translate }}</small><strong>{{ b.weight.summary.lowest?.value ?? '–' }}</strong></div>
+              <div><small>{{ 'progress.highest' | translate }}</small><strong>{{ b.weight.summary.highest?.value ?? '–' }}</strong></div>
+              <div><small>{{ 'progress.change' | translate }}</small><strong>{{ change(b.weight.summary, 'unit.kg') }}</strong></div>
+              <div><small>{{ 'progress.weekAverage' | translate }}</small><strong>{{ b.weight.summary.weeks.at(-1)?.average ?? '–' }}</strong></div>
             </div>
-            <app-trend-chart [points]="b.weight.entries" series="Weight" unit="kg" label="Weight trend" />
+            <app-trend-chart [points]="b.weight.entries" [series]="'progress.weight' | translate" [unit]="'unit.kg' | translate" [label]="'progress.weightTrend' | translate" />
             <ul class="plain-list">
               @for (e of b.weight.entries.slice().reverse(); track e.id) {
-                <li class="line"><span>{{ e.date | date: 'EEE d MMM' }} · {{ e.value }} kg</span>
-                  <button class="link-button danger" type="button" [disabled]="busy()" (click)="deleteWeight(e.date)">Delete</button></li>
+                <li class="line"><span>{{ e.date | localDate: 'EEE d MMM' }} · {{ e.value | localNumber: '1.0-2' }} {{ 'unit.kg' | translate }}</span>
+                  <button class="link-button danger" type="button" [disabled]="busy()" (click)="deleteWeight(e.date)">{{ 'progress.delete' | translate }}</button></li>
               }
             </ul>
           </section>
           <section class="card workbench">
-            <h2>Body fat</h2>
-            <p class="muted">{{ notice }}</p>
+            <h2>{{ 'progress.bodyFat' | translate }}</h2>
+            <p class="muted">{{ 'progress.bodyFatNotice' | translate }}</p>
             <div class="stats">
-              <div><small>Starting</small><strong>{{ b.bodyFat.summary.start?.value ?? b.profileStartingBodyFatPercent ?? '–' }}</strong></div>
-              <div><small>Current</small><strong>{{ b.bodyFat.summary.current?.value ?? '–' }}</strong></div>
-              <div><small>Change</small><strong>{{ change(b.bodyFat.summary, '%') }}</strong></div>
+              <div><small>{{ 'progress.starting' | translate }}</small><strong>{{ b.bodyFat.summary.start?.value ?? b.profileStartingBodyFatPercent ?? '–' }}</strong></div>
+              <div><small>{{ 'progress.current' | translate }}</small><strong>{{ b.bodyFat.summary.current?.value ?? '–' }}</strong></div>
+              <div><small>{{ 'progress.change' | translate }}</small><strong>{{ change(b.bodyFat.summary, 'unit.percent') }}</strong></div>
             </div>
-            @if (b.bodyFat.entries.length) { <app-trend-chart [points]="b.bodyFat.entries" series="Body fat" unit="%" label="Body fat trend" /> }
+            @if (b.bodyFat.entries.length) { <app-trend-chart [points]="b.bodyFat.entries" [series]="'progress.bodyFat' | translate" unit="%" [label]="'progress.bodyFatTrend' | translate" /> }
           </section>
           <section class="card workbench">
-            <h2>Measurements</h2>
+            <h2>{{ 'progress.measurements' | translate }}</h2>
             <div class="table-scroll"><table class="compact-table">
-              <thead><tr><th>Site</th><th>Starting</th><th>Current</th><th>Difference</th></tr></thead>
+              <thead><tr><th>{{ 'progress.site' | translate }}</th><th>{{ 'progress.starting' | translate }}</th><th>{{ 'progress.current' | translate }}</th><th>{{ 'progress.difference' | translate }}</th></tr></thead>
               <tbody>
                 @for (m of b.measurements; track m.site) {
-                  <tr [class.chosen]="m.site === chartSite()" (click)="chartSite.set(m.site)"><td>{{ m.site }}</td>
-                    <td>{{ m.summary.start?.value ?? '–' }}</td><td>{{ m.summary.current?.value ?? '–' }}</td><td>{{ change(m.summary, 'cm') }}</td></tr>
+                  <tr [class.chosen]="m.site === chartSite()" (click)="chartSite.set(m.site)"><td>{{ m.site | enumLabel: 'measurementSite' }}</td>
+                    <td>{{ m.summary.start?.value ?? '–' }}</td><td>{{ m.summary.current?.value ?? '–' }}</td><td>{{ change(m.summary, 'unit.cm') }}</td></tr>
                 }
               </tbody>
             </table></div>
             @if (siteSeries(b); as s) {
-              @if (s.entries.length) { <app-trend-chart [points]="s.entries" [series]="chartSite()" unit="cm" [label]="chartSite() + ' measurement trend'" /> }
+              @if (s.entries.length) { <app-trend-chart [points]="s.entries" [series]="chartSite() | enumLabel: 'measurementSite'" [unit]="'unit.cm' | translate" [label]="'progress.siteTrend' | translate: { site: (chartSite() | enumLabel: 'measurementSite') }" /> }
             }
           </section>
-        } @else if (loading()) { <p class="table-message">Loading…</p> }
+        } @else if (loading()) { <p class="table-message">{{ 'common.loading' | translate }}</p> }
       }
 
       @case ('photos') {
         <section class="card workbench entry">
-          <h2>Add a photo</h2>
+          <h2>{{ 'progress.addPhoto' | translate }}</h2>
           <div class="entry-row">
-            <label><span>Day</span><input type="date" [(ngModel)]="photoDate" name="photoDate" [max]="tomorrow" /></label>
-            <label><span>Pose</span><select [(ngModel)]="pose" name="pose">@for (p of poses; track p) { <option [ngValue]="p">{{ p }}</option> }</select></label>
-            @if (pose() === 'Custom') { <label><span>Label</span><input [(ngModel)]="poseLabel" name="poseLabel" maxlength="50" /></label> }
+            <label><span>{{ 'progress.day' | translate }}</span><input type="date" [(ngModel)]="photoDate" name="photoDate" [max]="tomorrow" /></label>
+            <label><span>{{ 'progress.pose' | translate }}</span><select [(ngModel)]="pose" name="pose">@for (p of poses; track p) { <option [ngValue]="p">{{ p | enumLabel: 'photoPose' }}</option> }</select></label>
+            @if (pose() === 'Custom') { <label><span>{{ 'progress.label' | translate }}</span><input [(ngModel)]="poseLabel" name="poseLabel" maxlength="50" /></label> }
           </div>
-          <label class="file"><span>Photo</span><input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" (change)="pick($event)" /></label>
-          <button class="button button-primary" type="button" [disabled]="busy() || !file()" (click)="upload()">Upload</button>
-          <small class="muted">Only you and your coach can see your photos.</small>
+          <label class="file"><span>{{ 'progress.photo' | translate }}</span><input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" (change)="pick($event)" /></label>
+          <button class="button button-primary" type="button" [disabled]="busy() || !file()" (click)="upload()">{{ 'progress.upload' | translate }}</button>
+          <small class="muted">{{ 'progress.photosPrivate' | translate }}</small>
         </section>
         <section class="card workbench"><app-photo-compare [photos]="photos()" [deletable]="true" (deleted)="deletePhoto($event)" /></section>
       }
 
       @case ('lifestyle') {
         <section class="card workbench entry">
-          <h2>Today</h2>
-          <label><span>Day</span><input type="date" [(ngModel)]="date" name="lifestyleDate" [max]="tomorrow" (ngModelChange)="loadLifestyle()" /></label>
+          <h2>{{ 'progress.today' | translate }}</h2>
+          <label><span>{{ 'progress.day' | translate }}</span><input type="date" [(ngModel)]="date" name="lifestyleDate" [max]="tomorrow" (ngModelChange)="loadLifestyle()" /></label>
           @if (lifestyle(); as l) {
-            <p class="muted">Targets: {{ l.targets.steps ? (l.targets.steps | number) + ' steps' : 'no steps target' }} ·
-              {{ l.targets.waterMl ? (l.targets.waterMl | number) + ' ml water' : 'no water target' }} ·
-              {{ l.targets.sleepHours ? hours(l.targets.sleepHours) + ' sleep' : 'no sleep target' }}</p>
+            <p class="muted">{{ 'progress.targets' | translate: {
+              steps: l.targets.steps ? ('progress.stepsTarget' | translate: { value: l.targets.steps }) : ('progress.noStepsTarget' | translate),
+              water: l.targets.waterMl ? ('progress.waterTarget' | translate: { value: l.targets.waterMl }) : ('progress.noWaterTarget' | translate),
+              sleep: l.targets.sleepHours ? ('progress.sleepTarget' | translate: { value: hours(l.targets.sleepHours) }) : ('progress.noSleepTarget' | translate) } }}</p>
             @if (dayOf(l); as day) {
               <div class="water">
-                <strong>Water {{ day.waterMl | number }} ml</strong>
-                @if (l.targets.waterMl) { <span class="muted">· {{ remaining(l.targets.waterMl, day.waterMl) }} ml to go</span> }
-                <div class="bar" role="progressbar" [attr.aria-valuenow]="day.waterCompletionPercent ?? 0" aria-valuemin="0" aria-valuemax="100" aria-label="Water">
+                <strong>{{ 'progress.waterToday' | translate: { value: day.waterMl } }}</strong>
+                @if (l.targets.waterMl) { <span class="muted">{{ 'progress.toGo' | translate: { value: remaining(l.targets.waterMl, day.waterMl) } }}</span> }
+                <div class="bar" role="progressbar" [attr.aria-valuenow]="day.waterCompletionPercent ?? 0" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'progress.water' | translate">
                   <span [style.width.%]="day.waterCompletionPercent ?? 0"></span></div>
                 <div class="entry-row">
-                  <button class="button button-secondary" type="button" [disabled]="busy()" (click)="addWater(250)">+250 ml</button>
-                  <button class="button button-secondary" type="button" [disabled]="busy()" (click)="addWater(500)">+500 ml</button>
-                  <input type="number" min="1" max="10000" [(ngModel)]="waterMl" name="waterMl" aria-label="Water in ml" />
-                  <button class="button button-secondary" type="button" [disabled]="busy() || !waterMl()" (click)="addWater(waterMl()!)">Add</button>
+                  <button class="button button-secondary" type="button" [disabled]="busy()" (click)="addWater(250)">{{ 'progress.add250' | translate }}</button>
+                  <button class="button button-secondary" type="button" [disabled]="busy()" (click)="addWater(500)">{{ 'progress.add500' | translate }}</button>
+                  <input type="number" min="1" max="10000" [(ngModel)]="waterMl" name="waterMl" [attr.aria-label]="'progress.waterMl' | translate" />
+                  <button class="button button-secondary" type="button" [disabled]="busy() || !waterMl()" (click)="addWater(waterMl()!)">{{ 'progress.add' | translate }}</button>
                 </div>
                 <ul class="plain-list">
                   @for (w of day.water; track w.id) {
-                    <li class="line"><span>{{ w.amountMl }} ml · {{ w.createdAt | date: 'shortTime' }}</span>
-                      <button class="link-button danger" type="button" [disabled]="busy()" (click)="deleteWater(w.id)">Delete</button></li>
+                    <li class="line"><span>{{ w.amountMl | localNumber }} {{ 'unit.ml' | translate }} · {{ w.createdAt | localDate: 'shortTime' }}</span>
+                      <button class="link-button danger" type="button" [disabled]="busy()" (click)="deleteWater(w.id)">{{ 'progress.delete' | translate }}</button></li>
                   }
                 </ul>
               </div>
             }
           }
           <div class="entry-row">
-            <label><span>Steps</span><input type="number" inputmode="numeric" min="0" max="200000" [(ngModel)]="steps" name="steps" /></label>
-            <button class="button button-primary" type="button" [disabled]="busy() || steps() === null" (click)="saveSteps()">Save steps</button>
+            <label><span>{{ 'progress.steps' | translate }}</span><input type="number" inputmode="numeric" min="0" max="200000" [(ngModel)]="steps" name="steps" /></label>
+            <button class="button button-primary" type="button" [disabled]="busy() || steps() === null" (click)="saveSteps()">{{ 'progress.saveSteps' | translate }}</button>
           </div>
           <div class="entry-row">
-            <label><span>Bedtime</span><input type="time" [(ngModel)]="bedtime" name="bedtime" /></label>
-            <label><span>Wake time</span><input type="time" [(ngModel)]="wakeTime" name="wakeTime" /></label>
-            <label><span>Or hours</span><input type="number" min="0" max="24" step="0.25" [(ngModel)]="sleepHours" name="sleepHours" /></label>
-            <label><span>Quality (1–5)</span><input type="number" min="1" max="5" [(ngModel)]="sleepQuality" name="sleepQuality" /></label>
-            <button class="button button-primary" type="button" [disabled]="busy() || !(sleepHours() || (bedtime() && wakeTime()))" (click)="saveSleep()">Save sleep</button>
+            <label><span>{{ 'progress.bedtime' | translate }}</span><input type="time" [(ngModel)]="bedtime" name="bedtime" /></label>
+            <label><span>{{ 'progress.wakeTime' | translate }}</span><input type="time" [(ngModel)]="wakeTime" name="wakeTime" /></label>
+            <label><span>{{ 'progress.orHours' | translate }}</span><input type="number" min="0" max="24" step="0.25" [(ngModel)]="sleepHours" name="sleepHours" /></label>
+            <label><span>{{ 'progress.quality' | translate }}</span><input type="number" min="1" max="5" [(ngModel)]="sleepQuality" name="sleepQuality" /></label>
+            <button class="button button-primary" type="button" [disabled]="busy() || !(sleepHours() || (bedtime() && wakeTime()))" (click)="saveSleep()">{{ 'progress.saveSleep' | translate }}</button>
           </div>
         </section>
         @if (lifestyle(); as l) {
           <section class="card workbench">
-            <h2>Last 14 days</h2>
+            <h2>{{ 'progress.last14' | translate }}</h2>
             <div class="stats">
-              <div><small>Average sleep</small><strong>{{ hours(l.summary.averageSleepHours) }}</strong><span class="muted">goal {{ percent(l.summary.sleepGoalPercent) }}</span></div>
-              <div><small>Average steps</small><strong>{{ l.summary.averageSteps !== null ? (l.summary.averageSteps | number) : '–' }}</strong><span class="muted">goal {{ percent(l.summary.stepsGoalPercent) }}</span></div>
-              <div><small>Average water</small><strong>{{ l.summary.averageWaterMl !== null ? (l.summary.averageWaterMl | number) + ' ml' : '–' }}</strong><span class="muted">goal {{ percent(l.summary.waterGoalPercent) }}</span></div>
+              <div><small>{{ 'progress.averageSleep' | translate }}</small><strong>{{ hours(l.summary.averageSleepHours) }}</strong><span class="muted">{{ 'progress.goal' | translate: { value: percent(l.summary.sleepGoalPercent) } }}</span></div>
+              <div><small>{{ 'progress.averageSteps' | translate }}</small><strong>{{ l.summary.averageSteps !== null ? (l.summary.averageSteps | localNumber) : '–' }}</strong><span class="muted">{{ 'progress.goal' | translate: { value: percent(l.summary.stepsGoalPercent) } }}</span></div>
+              <div><small>{{ 'progress.averageWater' | translate }}</small><strong>{{ l.summary.averageWaterMl !== null ? (l.summary.averageWaterMl | localNumber) + ' ' + ('unit.ml' | translate) : '–' }}</strong><span class="muted">{{ 'progress.goal' | translate: { value: percent(l.summary.waterGoalPercent) } }}</span></div>
             </div>
-            <h3>Steps</h3>
-            <app-trend-chart [points]="stepsPoints(l)" series="Steps" unit="steps" [target]="l.targets.steps" [bars]="true" label="Daily steps" />
-            <h3>Sleep</h3>
-            <app-trend-chart [points]="sleepPoints(l)" series="Sleep" unit="hours" [target]="l.targets.sleepHours" label="Hours slept" />
-            <h3>Water</h3>
-            <app-trend-chart [points]="waterPoints(l)" series="Water" unit="ml" [target]="l.targets.waterMl" [bars]="true" label="Daily water" />
+            <h3>{{ 'progress.steps' | translate }}</h3>
+            <app-trend-chart [points]="stepsPoints(l)" [series]="'progress.steps' | translate" [unit]="'unit.steps' | translate" [target]="l.targets.steps" [bars]="true" [label]="'progress.dailySteps' | translate" />
+            <h3>{{ 'progress.sleep' | translate }}</h3>
+            <app-trend-chart [points]="sleepPoints(l)" [series]="'progress.sleep' | translate" [unit]="'progress.hoursUnit' | translate" [target]="l.targets.sleepHours" [label]="'progress.hoursSlept' | translate" />
+            <h3>{{ 'progress.water' | translate }}</h3>
+            <app-trend-chart [points]="waterPoints(l)" [series]="'progress.water' | translate" [unit]="'unit.ml' | translate" [target]="l.targets.waterMl" [bars]="true" [label]="'progress.dailyWater' | translate" />
           </section>
         }
       }
@@ -246,18 +249,15 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
   `],
 })
 export class MyProgressComponent implements OnInit {
-  readonly sections: { id: Section; label: string }[] = [
-    { id: 'overview', label: 'Overview' }, { id: 'body', label: 'Body' }, { id: 'photos', label: 'Photos' }, { id: 'lifestyle', label: 'Lifestyle' },
+  readonly sections: { id: Section; label: TranslationKey }[] = [
+    { id: 'overview', label: 'progress.section.overview' }, { id: 'body', label: 'progress.section.body' },
+    { id: 'photos', label: 'progress.section.photos' }, { id: 'lifestyle', label: 'progress.section.lifestyle' },
   ];
   readonly sites = measurementSites;
   readonly poses = photoPoses;
-  readonly notice = bodyFatNotice;
   readonly today = isoDate(new Date());
   readonly tomorrow = addDays(this.today, 1);
-  readonly change = changeText;
   readonly percent = percentText;
-  readonly hours = hoursText;
-  readonly recordText = recordText;
   readonly section = signal<Section>('overview');
   readonly dashboard = signal<ProgressDashboard | null>(null);
   readonly body = signal<BodyProgress | null>(null);
@@ -284,7 +284,11 @@ export class MyProgressComponent implements OnInit {
   readonly sleepQuality = signal<number | null>(null);
   readonly waterMl = signal<number | null>(null);
 
-  constructor(private readonly api: ProgressTrackingService) {}
+  constructor(private readonly api: ProgressTrackingService, private readonly i18n: I18nService) {}
+
+  change(summary: SeriesSummary, unit: TranslationKey): string { return changeText(summary, this.i18n.translate(unit)); }
+  hours(value: number | null | undefined): string { return hoursText(value, this.i18n); }
+  recordText(record: PersonalRecord): string { return recordText(record, this.i18n); }
 
   ngOnInit(): void {
     this.open('overview');
@@ -308,21 +312,21 @@ export class MyProgressComponent implements OnInit {
   }
 
   saveWeight(): void {
-    this.save(this.api.setWeight(this.date(), this.weightKg()!), 'Weight saved.', () => this.loadBody());
+    this.save(this.api.setWeight(this.date(), this.weightKg()!), this.i18n.translate('progress.saved.weight'), () => this.loadBody());
   }
 
   deleteWeight(date: string): void {
-    this.save(this.api.deleteWeight(date), 'Weigh-in deleted.', () => this.loadBody());
+    this.save(this.api.deleteWeight(date), this.i18n.translate('progress.saved.weightDeleted'), () => this.loadBody());
   }
 
   saveBodyFat(): void {
-    this.save(this.api.setBodyFat(this.date(), this.bodyFat()!), 'Body fat saved.', () => this.loadBody());
+    this.save(this.api.setBodyFat(this.date(), this.bodyFat()!), this.i18n.translate('progress.saved.bodyFat'), () => this.loadBody());
   }
 
   saveMeasurements(): void {
     const values = this.sites.filter(site => this.measurements()[site] !== null && this.measurements()[site] !== undefined)
       .map(site => ({ site, valueCm: this.measurements()[site]! }));
-    this.save(this.api.setMeasurements(this.date(), values), 'Measurements saved.', () => { this.measurements.set({}); this.loadBody(); });
+    this.save(this.api.setMeasurements(this.date(), values), this.i18n.translate('progress.saved.measurements'), () => { this.measurements.set({}); this.loadBody(); });
   }
 
   pick(event: Event): void {
@@ -332,14 +336,14 @@ export class MyProgressComponent implements OnInit {
   upload(): void {
     const file = this.file();
     if (!file) return;
-    this.save(this.api.uploadPhoto(file, this.photoDate(), this.pose(), this.pose() === 'Custom' ? this.poseLabel() : null), 'Photo added.', () => {
+    this.save(this.api.uploadPhoto(file, this.photoDate(), this.pose(), this.pose() === 'Custom' ? this.poseLabel() : null), this.i18n.translate('progress.saved.photo'), () => {
       this.file.set(null);
       this.open('photos');
     });
   }
 
   deletePhoto(photo: ProgressPhoto): void {
-    this.save(this.api.deletePhoto(photo.id), 'Photo deleted.', () => this.open('photos'));
+    this.save(this.api.deletePhoto(photo.id), this.i18n.translate('progress.saved.photoDeleted'), () => this.open('photos'));
   }
 
   dayOf(lifestyle: Lifestyle) {
@@ -359,7 +363,7 @@ export class MyProgressComponent implements OnInit {
   }
 
   saveSteps(): void {
-    this.save(this.api.setSteps(this.date(), this.steps()!), 'Steps saved.', () => this.loadLifestyle());
+    this.save(this.api.setSteps(this.date(), this.steps()!), this.i18n.translate('progress.saved.steps'), () => this.loadLifestyle());
   }
 
   saveSleep(): void {
@@ -367,7 +371,7 @@ export class MyProgressComponent implements OnInit {
     this.save(this.api.setSleep(this.date(), {
       hours: this.sleepHours() || null, quality: this.sleepQuality() || null,
       bedtime: times ? this.bedtime() : null, wakeTime: times ? this.wakeTime() : null,
-    }), 'Sleep saved.', () => this.loadLifestyle());
+    }), this.i18n.translate('progress.saved.sleep'), () => this.loadLifestyle());
   }
 
   stepsPoints(l: Lifestyle) { return l.days.map(x => ({ date: x.date, value: x.steps?.steps ?? null })); }

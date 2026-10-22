@@ -15,7 +15,7 @@ import { MyHome, MyHomeService } from './my-home.service';
     <section class="dashboard-hero">
       <div>
         <p class="eyebrow" translate="no">{{ branding.brand().brandName }}</p>
-        <h1>{{ 'client.home.welcome' | translate: { name: home()?.client?.client?.name || auth.currentUser()?.displayName } }}</h1>
+        <h1>{{ 'client.home.welcome' | translate }} <span translate="no">{{ home()?.client?.client?.name || auth.currentUser()?.displayName }}</span></h1>
         @if (branding.brand().dashboardWelcome; as welcome) { <p translate="no">{{ welcome }}</p> } @else { <p>{{ 'client.home.intro' | translate }}</p> }
       </div>
       <div class="hero-actions"><a class="button button-primary" routerLink="/app/forms">{{ 'client.home.myForms' | translate }}</a> <a class="button button-secondary" routerLink="/app/calendar">{{ 'client.home.myCalendar' | translate }}</a></div>

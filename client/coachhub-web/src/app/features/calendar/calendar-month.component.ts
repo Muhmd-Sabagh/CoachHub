@@ -17,9 +17,9 @@ interface Cell { date: string; inMonth: boolean; today: boolean; entries: Calend
   imports: [NgClass, ...I18N_PIPES],
   template: `
     <div class="head">
-      <button type="button" class="button button-secondary" (click)="move(-1)" [attr.aria-label]="'calendar.previousMonth' | translate">‹</button>
+      <button type="button" class="button button-secondary" (click)="move(-1)" [attr.aria-label]="'calendar.previousMonth' | translate"><span class="flip-rtl">‹</span></button>
       <h2>{{ month | localDate: 'MMMM y' }}</h2>
-      <button type="button" class="button button-secondary" (click)="move(1)" [attr.aria-label]="'calendar.nextMonth' | translate">›</button>
+      <button type="button" class="button button-secondary" (click)="move(1)" [attr.aria-label]="'calendar.nextMonth' | translate"><span class="flip-rtl">›</span></button>
       <button type="button" class="link-button" (click)="today()">{{ 'calendar.today' | translate }}</button>
     </div>
     <div class="grid" role="grid" [attr.aria-label]="'calendar.month' | translate">

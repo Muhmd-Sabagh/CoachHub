@@ -33,6 +33,16 @@ export class LocalNamePipe implements PipeTransform {
   transform(item: Named | null | undefined): string { return this.i18n.name(item); }
 }
 
+/** A unit label with an Arabic variant (food units), in the current language: `{{ food | localUnitLabel }}`. */
+@Pipe({ name: 'localUnitLabel', pure: false, standalone: true })
+export class LocalUnitLabelPipe implements PipeTransform {
+  constructor(private readonly i18n: I18nService) {}
+  transform(item: { unitLabel?: string | null; unitLabelAr?: string | null } | null | undefined): string {
+    if (!item) return '';
+    return this.i18n.language() === 'ar' && item.unitLabelAr?.trim() ? item.unitLabelAr : item.unitLabel ?? '';
+  }
+}
+
 /** An enum value's label: `{{ entry.slot | enumLabel: 'mealType' }}`. */
 @Pipe({ name: 'enumLabel', pure: false, standalone: true })
 export class EnumLabelPipe implements PipeTransform {
@@ -45,4 +55,4 @@ export class EnumLabelPipe implements PipeTransform {
 }
 
 /** Every localisation pipe, for a standalone component's `imports`. */
-export const I18N_PIPES = [TranslatePipe, LocalDatePipe, LocalNumberPipe, LocalNamePipe, EnumLabelPipe] as const;
+export const I18N_PIPES = [TranslatePipe, LocalDatePipe, LocalNumberPipe, LocalNamePipe, LocalUnitLabelPipe, EnumLabelPipe] as const;

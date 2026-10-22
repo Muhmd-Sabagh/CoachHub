@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
 import type ApexCharts from 'apexcharts';
 import type { ApexAxisChartSeries, ApexOptions } from 'apexcharts';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 /**
  * A measure over time (§24 weight trend graph, §25, §27, §31–§33) as a line, with the target as a dashed line on the
@@ -22,6 +23,8 @@ export class TrendChartComponent implements AfterViewInit, OnChanges, OnDestroy 
   @Input() label = '';
   @ViewChild('host', { static: true }) host!: ElementRef<HTMLElement>;
   private chart: ApexCharts | null = null;
+
+  constructor(private readonly i18n: I18nService) {}
   private ready = false;
 
   ngAfterViewInit(): void {
@@ -46,7 +49,7 @@ export class TrendChartComponent implements AfterViewInit, OnChanges, OnDestroy 
     const unit = this.unit;
     const format = (value: number | null) => (value === null || value === undefined ? '–' : `${Math.round(value * 100) / 100} ${unit}`);
     const series: ApexAxisChartSeries = [{ name: this.series, type: this.bars ? 'column' : 'line', data: this.points.map(x => x.value) }];
-    if (this.target !== null) series.push({ name: 'Target', type: 'line', data: this.points.map(() => this.target) });
+    if (this.target !== null) series.push({ name: this.i18n.translate('chart.target'), type: 'line', data: this.points.map(() => this.target) });
     const options: ApexOptions = {
       chart: { type: 'line', height: 240, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', foreColor: ink,
         background: 'transparent', animations: { enabled: false } },
@@ -62,7 +65,7 @@ export class TrendChartComponent implements AfterViewInit, OnChanges, OnDestroy 
       grid: { borderColor: token(dark ? '--gray-700' : '--gray-200', '#e4e7ec'), strokeDashArray: 3 },
       legend: { show: this.target !== null, position: 'top', horizontalAlign: 'left' },
       tooltip: { shared: true, intersect: false, y: { formatter: format } },
-      noData: { text: 'Nothing recorded in this range' },
+      noData: { text: this.i18n.translate('chart.nothingRecorded') },
     };
     if (this.chart) {
       await this.chart.updateOptions(options, true, false);

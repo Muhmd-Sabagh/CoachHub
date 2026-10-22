@@ -1,3 +1,5 @@
+import { I18nService } from '../../core/i18n/i18n.service';
+
 /**
  * Workout builder helpers (§16): typed sets (D3), tempo text, set-group labels and a short summary. The
  * server validates and stores the structure; these only shape the editor.
@@ -98,17 +100,18 @@ export function groupLabels(exercises: GroupedExercise[]): Map<string, string> {
 }
 
 /** A one-line summary: "1 warm-up + 3 × 8–12 @ 60 kg". */
-export function summarizeSets(sets: PrescribedSet[]): string {
+export function summarizeSets(sets: PrescribedSet[], i18n?: I18nService): string {
   const warmUps = sets.filter((x) => x.type === 'WarmUp').length;
   const working = sets.filter((x) => x.type !== 'WarmUp');
   const drops = working.filter((x) => x.type === 'Drop').length;
   const reps = unique(working.map(repsText));
   const loads = unique(working.map((x) => (x.loadKg === null || x.loadKg === undefined ? null : `${x.loadKg}`)));
   const parts: string[] = [];
-  if (warmUps) parts.push(`${warmUps} warm-up`);
+  const kg = i18n ? i18n.translate('unit.kg') : 'kg';
+  if (warmUps) parts.push(i18n ? i18n.translate('training.warmUpCount', { count: warmUps }) : `${warmUps} warm-up`);
   const main = working.length - drops;
-  if (main) parts.push(`${main}${reps.length === 1 && reps[0] ? ` × ${reps[0]}` : ''}${loads.length === 1 && loads[0] ? ` @ ${loads[0]} kg` : ''}`);
-  if (drops) parts.push(`${drops} drop`);
+  if (main) parts.push(`${main}${reps.length === 1 && reps[0] ? ` × ${reps[0]}` : ''}${loads.length === 1 && loads[0] ? ` @ ${loads[0]} ${kg}` : ''}`);
+  if (drops) parts.push(i18n ? i18n.translate('training.dropCount', { count: drops }) : `${drops} drop`);
   return parts.join(' + ');
 }
 

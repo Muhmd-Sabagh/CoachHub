@@ -521,6 +521,11 @@ input[type='radio'] {
   flex: 1;
   margin: 0;
 }
+/* Direction arrows (‹ ›) point the reading way in right-to-left (P19). */
+[dir='rtl'] .flip-rtl {
+  display: inline-block;
+  transform: scaleX(-1);
+}
 .period-card {
   display: grid;
   gap: 10px;
