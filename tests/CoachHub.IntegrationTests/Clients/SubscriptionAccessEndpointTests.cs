@@ -106,7 +106,14 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
         var refused = await portal.PutAsJsonAsync(weight, new WeightInput(81m, null));
         Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
         var problem = (await refused.Content.ReadFromJsonAsync<ProblemDetails>())!;
-        Assert.Contains("read-only", problem.Detail);
+        Assert.Equal("Your subscription has ended, so progress is read-only: your history stays visible, but nothing new can be added.", problem.Detail);
+        Assert.Equal("access.readOnly", problem.Extensions["code"]!.ToString());
+        // P19: in Arabic when the client asks for it.
+        using var arabic = new HttpRequestMessage(HttpMethod.Put, weight) { Content = JsonContent.Create(new WeightInput(81m, null)) };
+        arabic.Headers.AcceptLanguage.ParseAdd("ar");
+        var arabicProblem = (await (await portal.SendAsync(arabic)).Content.ReadFromJsonAsync<ProblemDetails>())!;
+        Assert.Equal(("غير متاح مع اشتراكك الحالي", "انتهى اشتراكك، لذلك أصبح قسم التقدم للقراءة فقط: يبقى سجلك ظاهرًا، لكن لا يمكن إضافة جديد."),
+            (arabicProblem.Title, arabicProblem.Detail));
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync("/api/v1/me/chat")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await portal.PostAsJsonAsync("/api/v1/me/chat/messages", new ChatSendInput("Hello?"))).StatusCode);
         // The account and notifications are never restricted.

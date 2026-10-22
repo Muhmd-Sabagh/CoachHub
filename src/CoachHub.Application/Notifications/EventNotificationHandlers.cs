@@ -25,8 +25,8 @@ public sealed class PlanNotificationHandler(IPlanLookup plans, NotificationCente
             return;
         }
         await center.NotifyClientAsync(new EventNotice(NotificationEvent.NewProgram, plan.CoachId, clientId,
-            $"New version of {plan.Name}",
-            $"Version {domainEvent.VersionNumber} of your {Noun(domainEvent.Kind)} plan is now active.",
+            NoticeText.Of("notice.newVersion.title", plan.Name),
+            NoticeText.Of($"notice.newVersion.{Noun(domainEvent.Kind)}", domainEvent.VersionNumber),
             Link(domainEvent.Kind), $"plan:{domainEvent.PlanId}:v{domainEvent.VersionNumber}"), cancellationToken);
     }
 
@@ -35,7 +35,7 @@ public sealed class PlanNotificationHandler(IPlanLookup plans, NotificationCente
         if (await plans.FindAsync(domainEvent.Kind, domainEvent.PlanId, cancellationToken) is not { ClientId: { } clientId } plan) return;
         var hour = timeProvider.GetUtcNow().ToString("yyyyMMddHH");
         await center.NotifyClientAsync(new EventNotice(NotificationEvent.ProgramUpdated, plan.CoachId, clientId,
-            $"{plan.Name} was updated", $"Your coach updated your {Noun(domainEvent.Kind)} plan.",
+            NoticeText.Of("notice.updated.title", plan.Name), NoticeText.Of($"notice.updated.{Noun(domainEvent.Kind)}"),
             Link(domainEvent.Kind), $"plan:{domainEvent.PlanId}:updated:{hour}"), cancellationToken);
     }
 
@@ -49,8 +49,8 @@ public sealed class PlanNotificationHandler(IPlanLookup plans, NotificationCente
     // Activation and assignment share the key, so a plan created Active for a client notifies once.
     private Task NotifyNewAsync(PlanKind kind, Guid planId, Guid clientId, PlanSummary plan, CancellationToken cancellationToken) =>
         center.NotifyClientAsync(new EventNotice(kind == PlanKind.Diet ? NotificationEvent.NewDiet : NotificationEvent.NewWorkout,
-            plan.CoachId, clientId, kind == PlanKind.Diet ? "New diet plan" : "New workout plan",
-            $"Your coach shared a new {Noun(kind)} plan: {plan.Name}.", Link(kind), $"plan:{planId}:client:{clientId}:new"), cancellationToken);
+            plan.CoachId, clientId, NoticeText.Of(kind == PlanKind.Diet ? "notice.newDiet.title" : "notice.newWorkout.title"),
+            NoticeText.Of(kind == PlanKind.Diet ? "notice.newDiet.body" : "notice.newWorkout.body", plan.Name), Link(kind), $"plan:{planId}:client:{clientId}:new"), cancellationToken);
 
     private static string Noun(PlanKind kind) => kind == PlanKind.Diet ? "diet" : "workout";
     private static string Link(PlanKind kind) => kind == PlanKind.Diet ? "/app/nutrition" : "/app/training";
@@ -61,14 +61,14 @@ public sealed class CheckInNotificationHandler(NotificationCenter center) : IDom
 {
     public Task HandleAsync(CheckInReviewed domainEvent, CancellationToken cancellationToken)
     {
-        var (title, body) = domainEvent.Outcome switch
+        var code = domainEvent.Outcome switch
         {
-            CheckInStatus.Approved => ("Check-in approved", "Your coach reviewed and approved your check-in."),
-            CheckInStatus.ChangesRequested => ("Your coach asked for changes", "Update your check-in and send it again."),
-            _ => ("New reply on your check-in", "Your coach replied to your check-in.")
+            CheckInStatus.Approved => "notice.checkInApproved",
+            CheckInStatus.ChangesRequested => "notice.checkInChanges",
+            _ => "notice.checkInReply"
         };
         return center.NotifyClientAsync(new EventNotice(NotificationEvent.CheckInReviewed, domainEvent.CoachId, domainEvent.ClientId,
-            title, body, "/app/forms", null), cancellationToken);
+            NoticeText.Of(code + ".title"), NoticeText.Of(code + ".body"), "/app/forms", null), cancellationToken);
     }
 }
 
@@ -88,17 +88,18 @@ public sealed class EventNotificationScanner(INotificationEventSource source, No
         foreach (var due in await source.DueCheckInsAsync(today.AddDays(CheckInService.OpensDaysBefore), cancellationToken))
         {
             await center.NotifyClientAsync(new EventNotice(NotificationEvent.CheckInRequired, due.CoachId, due.ClientId,
-                due.DueOn < today ? "Your check-in is overdue" : "Time for your check-in",
-                $"Your check-in is due on {due.DueOn:ddd d MMM}.", "/app/forms", $"checkin:{due.DueOn:yyyy-MM-dd}"), cancellationToken);
+                NoticeText.Of(due.DueOn < today ? "notice.checkInOverdue.title" : "notice.checkInDue.title"),
+                NoticeText.Of("notice.checkInDue.body", due.DueOn), "/app/forms", $"checkin:{due.DueOn:yyyy-MM-dd}"), cancellationToken);
         }
         foreach (var expired in await source.ExpiredSubscriptionsAsync(today, today.AddDays(-ExpiryNoticeDays), cancellationToken))
         {
             var key = $"subscription:{expired.ClientId}:{expired.EndedOn:yyyy-MM-dd}";
             await center.NotifyClientAsync(new EventNotice(NotificationEvent.SubscriptionExpired, expired.CoachId, expired.ClientId,
-                "Your subscription has ended", $"Your subscription ended on {expired.EndedOn:d MMM yyyy}. Contact your coach to renew.",
+                NoticeText.Of("notice.subscriptionEnded.title"), NoticeText.Of("notice.subscriptionEnded.body", expired.EndedOn),
                 "/app", key), cancellationToken);
             await center.NotifyCoachAsync(new EventNotice(NotificationEvent.SubscriptionExpired, expired.CoachId, expired.ClientId,
-                $"{expired.ClientName}'s subscription has ended", $"The subscription ended on {expired.EndedOn:d MMM yyyy}.",
+                NoticeText.Of("notice.clientSubscriptionEnded.title", expired.ClientName),
+                NoticeText.Of("notice.clientSubscriptionEnded.body", expired.EndedOn),
                 $"/clients/{expired.ClientId}", key), cancellationToken);
         }
     }

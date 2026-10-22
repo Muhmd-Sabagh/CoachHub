@@ -70,7 +70,8 @@ public sealed class IdentityGateway(UserManager<User> userManager, CoachHubDbCon
             user.DisplayName,
             roles.ToArray(),
             coachId,
-            user.ClientId);
+            user.ClientId,
+            user.PreferredLanguage);
     }
 
     /// <summary>

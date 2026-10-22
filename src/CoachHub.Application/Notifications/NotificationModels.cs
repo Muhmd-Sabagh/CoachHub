@@ -1,3 +1,4 @@
+using CoachHub.Application.Common.Localization;
 using CoachHub.Application.Common.Models;
 using CoachHub.Domain.Common;
 using CoachHub.Domain.Communications;
@@ -5,7 +6,8 @@ using CoachHub.Domain.Communications;
 namespace CoachHub.Application.Notifications;
 
 /// <summary>An account to notify, with its email address for the email copy.</summary>
-public sealed record NotificationRecipient(Guid UserId, string? Email);
+/// <param name="Language">The account's saved interface language; null uses the platform default (P19).</param>
+public sealed record NotificationRecipient(Guid UserId, string? Email, string? Language = null);
 
 /// <summary>The active accounts behind a client or a coach. Accounts are not tenant data, so this is a port.</summary>
 public interface IRecipientDirectory
@@ -81,8 +83,8 @@ public sealed record EventNotice(
     NotificationEvent Event,
     Guid CoachId,
     Guid? ClientId,
-    string Title,
-    string Body,
+    NoticeText Title,
+    NoticeText Body,
     string Link,
     string? EventKey,
     bool OnlyWhileUnread = false);
@@ -112,3 +114,29 @@ public sealed record UnreadCountResponse(int Count);
 public sealed record NotificationPreferencesResponse(IReadOnlyList<NotificationEvent> EmailEvents, bool EmailEnabledOnPlatform);
 
 public sealed record NotificationPreferencesInput(IReadOnlyList<NotificationEvent> EmailEvents);
+
+/// <summary>
+/// A notification's title or body (P19): a message-catalog entry and its values, written in each recipient's own
+/// language when the notification is created. A value may itself be a <see cref="NoticeText"/>. Verbatim text (a chat
+/// message preview) is shown as written.
+/// </summary>
+public sealed class NoticeText
+{
+    private readonly string? code;
+    private readonly object?[] values;
+    private readonly string? verbatim;
+
+    private NoticeText(string? code, object?[] values, string? verbatim)
+    {
+        this.code = code;
+        this.values = values;
+        this.verbatim = verbatim;
+    }
+
+    public static NoticeText Of(string code, params object?[] values) => new(code, values, null);
+
+    public static NoticeText Verbatim(string text) => new(null, [], text);
+
+    public string Render(string language) =>
+        verbatim ?? Messages.Text(code!, language, values.Select(value => value is NoticeText text ? text.Render(language) : value).ToArray());
+}

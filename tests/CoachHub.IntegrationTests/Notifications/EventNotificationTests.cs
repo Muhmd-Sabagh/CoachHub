@@ -79,6 +79,23 @@ public sealed class EventNotificationTests(CoachHubSqlApiFactory factory) : ICla
     }
 
     [Fact]
+    public async Task Notifications_are_written_in_each_recipient_s_language()
+    {
+        // P19: the client chose Arabic, so their copy is Arabic; the coach saved nothing, so theirs uses the platform default.
+        var s = await SetUpAsync();
+        (await s.Portal.PutAsJsonAsync("/api/v1/me/profile", new UpdateMyProfileInput("Client", null, "ar"))).EnsureSuccessStatusCode();
+
+        await ReadAsync<DietPlanResponse>(await s.Coach.PostAsJsonAsync("/api/v1/diet-plans", Plan("Cut " + s.Tag, s.ClientId)));
+        var created = Assert.Single(await InboxAsync(s.Portal));
+        Assert.Equal("نظام غذائي جديد", created.Title);
+        Assert.Equal($"شارك مدربك معك نظامًا غذائيًا جديدًا: Cut {s.Tag}.", created.Body);
+
+        (await s.Portal.PostAsJsonAsync("/api/v1/me/chat/messages", new { text = "Hello", mediaIds = Array.Empty<Guid>() })).EnsureSuccessStatusCode();
+        var message = Assert.Single(await InboxAsync(s.Coach), x => x.Event == NotificationEvent.NewMessage);
+        Assert.Equal(($"New message from Notified {s.Tag}", "Hello"), (message.Title, message.Body));
+    }
+
+    [Fact]
     public async Task Check_in_and_subscription_events_notify_on_schedule_and_review()
     {
         var s = await SetUpAsync();
