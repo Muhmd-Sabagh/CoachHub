@@ -58,7 +58,7 @@
               }
             </td>
             <td>
-              {{ p.clientName || 'Unassigned' }}<small>{{ p.clientCode || '' }}</small>
+              {{ p.clientName || 'Unassigned' }}
             </td>
             <td>
               @if (p.planType === 'Diet') {
@@ -174,7 +174,7 @@
               ><select name="clientId" [(ngModel)]="editor.clientId">
                 <option [ngValue]="null">Unassigned</option>
                 @for (c of clients; track c.id) {
-                  <option [value]="c.id">{{ c.name }} · {{ c.clientCode }}</option>
+                  <option [value]="c.id">{{ c.name }}{{ c.email ? ' · ' + c.email : '' }}</option>
                 }
               </select></label
             ><label

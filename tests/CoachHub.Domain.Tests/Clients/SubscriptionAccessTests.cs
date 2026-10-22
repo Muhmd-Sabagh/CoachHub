@@ -48,7 +48,7 @@ public sealed class SubscriptionAccessTests
     [Fact]
     public void A_client_takes_the_best_status_of_their_subscriptions()
     {
-        var client = Client.Create(Coach, "S1B2C3D4", "Client", null, null, Today);
+        var client = Client.Create(Coach, "Client", null, null, Today);
         Assert.Equal(SubscriptionStatus.Inactive, client.GetSubscriptionStatus(Today));
         client.AddSubscription(Sub(client.Id, Today.AddMonths(-3)));
         Assert.Equal(SubscriptionStatus.Expired, client.GetSubscriptionStatus(Today));

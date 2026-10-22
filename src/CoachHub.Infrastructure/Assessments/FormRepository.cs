@@ -35,24 +35,24 @@ public sealed class FormRepository(CoachHubDbContext dbContext) : IFormRepositor
             var referenced = await source.Select(x => x.submission.FormDefinitionId).Distinct().ToArrayAsync(token);
             var matchingForms = await dbContext.Set<FormDefinition>().IgnoreQueryFilters().AsNoTracking()
                 .Where(x => referenced.Contains(x.Id) && x.Name.Contains(query.SearchTerm)).Select(x => x.Id).ToArrayAsync(token);
-            source = source.Where(x => x.client.Name.Contains(query.SearchTerm) || x.client.ClientCode.Contains(query.SearchTerm) || matchingForms.Contains(x.submission.FormDefinitionId));
+            source = source.Where(x => x.client.Name.Contains(query.SearchTerm) || matchingForms.Contains(x.submission.FormDefinitionId));
         }
         var total = await source.LongCountAsync(token);
         var rows = await source.OrderByDescending(x => x.submission.SubmittedAt).Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize)
-            .Select(x => new { x.submission.Id, ClientId = x.client.Id, x.client.Name, x.client.ClientCode, x.submission.FormDefinitionId, x.submission.FormType, x.submission.Source, x.submission.SubmittedAt, Answers = dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == x.submission.Id) })
+            .Select(x => new { x.submission.Id, ClientId = x.client.Id, x.client.Name, x.submission.FormDefinitionId, x.submission.FormType, x.submission.Source, x.submission.SubmittedAt, Answers = dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == x.submission.Id) })
             .ToArrayAsync(token);
         var names = await DefinitionNamesAsync(rows.Select(x => x.FormDefinitionId), token);
-        var items = rows.Select(x => new AssessmentSubmissionSummary(x.Id, x.ClientId, x.Name, x.ClientCode, x.FormDefinitionId, names.GetValueOrDefault(x.FormDefinitionId, string.Empty), x.FormType, x.Source, x.SubmittedAt, x.Answers)).ToArray();
+        var items = rows.Select(x => new AssessmentSubmissionSummary(x.Id, x.ClientId, x.Name, x.FormDefinitionId, names.GetValueOrDefault(x.FormDefinitionId, string.Empty), x.FormType, x.Source, x.SubmittedAt, x.Answers)).ToArray();
         return new(items, query.PageNumber, query.PageSize, total);
     }
 
     public async Task<AssessmentSubmissionDetail?> GetSubmissionAsync(Guid id, CancellationToken token)
     {
         var row = await (from submission in dbContext.Set<FormSubmission>().AsNoTracking() join client in dbContext.Set<Client>().AsNoTracking() on submission.ClientId equals client.Id where submission.Id == id
-            select new { submission.Id, ClientId = client.Id, client.Name, client.ClientCode, submission.FormDefinitionId, submission.FormType, submission.Source, submission.SubmittedAt, Answers = dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == submission.Id) }).SingleOrDefaultAsync(token);
+            select new { submission.Id, ClientId = client.Id, client.Name, submission.FormDefinitionId, submission.FormType, submission.Source, submission.SubmittedAt, Answers = dbContext.Set<FormAnswer>().Count(a => a.FormSubmissionId == submission.Id) }).SingleOrDefaultAsync(token);
         if (row is null) return null;
         var names = await DefinitionNamesAsync([row.FormDefinitionId], token);
-        var summary = new AssessmentSubmissionSummary(row.Id, row.ClientId, row.Name, row.ClientCode, row.FormDefinitionId, names.GetValueOrDefault(row.FormDefinitionId, string.Empty), row.FormType, row.Source, row.SubmittedAt, row.Answers);
+        var summary = new AssessmentSubmissionSummary(row.Id, row.ClientId, row.Name, row.FormDefinitionId, names.GetValueOrDefault(row.FormDefinitionId, string.Empty), row.FormType, row.Source, row.SubmittedAt, row.Answers);
         var answers = await dbContext.Set<FormAnswer>().AsNoTracking().Where(x => x.FormSubmissionId == id).OrderBy(x => x.QuestionTextSnapshot).Select(x => new AssessmentAnswerResponse(x.Id, x.QuestionStableKey, x.QuestionTextSnapshot, x.QuestionTypeSnapshot, x.ValueJson, x.MediaId, x.ExternalMediaUrl)).ToArrayAsync(token);
         return new(summary, answers);
     }

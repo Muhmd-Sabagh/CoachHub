@@ -47,7 +47,7 @@ public sealed class SavedPlanSqlQueryTests(CoachHubSqlApiFactory factory) : ICla
         }
 
         var dietRow = Assert.Single((await ListAsync(coach,
-            "planName=حمية&clientName=Listed&clientCode=" + client.ClientCode + "&planType=Diet&isAssigned=true" +
+            "planName=حمية&clientName=Listed&clientId=" + client.Id + "&planType=Diet&isAssigned=true" +
             "&minCalories=149&maxCalories=151&minProtein=14&maxProtein=16&minCarbohydrates=29&maxCarbohydrates=31&minFat=7&maxFat=8")).Items);
         Assert.Equal((diet.Id, 150m, "Listed client", 1), (dietRow.Id, dietRow.TotalWeight!.Value, dietRow.ClientName, dietRow.VersionNumber!.Value));
 

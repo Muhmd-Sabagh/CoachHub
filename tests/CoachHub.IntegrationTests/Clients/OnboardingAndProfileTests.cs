@@ -77,7 +77,7 @@ public sealed partial class OnboardingAndProfileTests(CoachHubSqlApiFactory fact
         var account = await factory.CreateSignedInAccountAsync(AuthRoles.Client, client.CoachId, client.Id);
 
         var deactivated = await coach.PutAsJsonAsync($"/api/v1/clients/{client.Id}", new ClientUpdateInput(
-            client.Name, null, null, PlanWorkflowStatus.NotStarted, PlanWorkflowStatus.NotStarted, false));
+            client.Name, null, null, false));
         Assert.Equal(HttpStatusCode.OK, deactivated.StatusCode);
 
         using var scope = factory.Services.CreateScope();

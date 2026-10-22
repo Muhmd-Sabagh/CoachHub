@@ -69,10 +69,10 @@ public sealed class ReportsExportTests(CoachHubSqlApiFactory factory) : IClassFi
 
         // The client list: the coach's own clients, with a dangerous name neutralised.
         var list = await CsvAsync(s.Coach, "/api/v1/exports/clients");
-        Assert.StartsWith("Client code,Name,Phone,Email,Join date,Active,Status,Subscription,Coach\r\n", list);
+        Assert.StartsWith("Client ID,Name,Phone,Email,Join date,Active,Status,Subscription,Coach\r\n", list);
         Assert.Contains($"\"'=HYPERLINK(\"\"evil\"\") {s.Tag}\"", list);
         Assert.DoesNotContain(",=HYPERLINK", list);
-        Assert.DoesNotContain(s.OtherClientCode, list);
+        Assert.DoesNotContain(s.OtherClientName, list);
 
         // One client's data, one dataset or everything in a ZIP.
         var progress = await CsvAsync(s.Coach, $"/api/v1/exports/clients/{s.ClientId}/Progress");
@@ -90,7 +90,7 @@ public sealed class ReportsExportTests(CoachHubSqlApiFactory factory) : IClassFi
         // Platform exports are the Administrator's; the revenue ledger nets to revenue (D6).
         Assert.Equal(HttpStatusCode.Forbidden, (await s.Coach.GetAsync("/api/v1/exports/platform/Coaches")).StatusCode);
         Assert.Contains(s.CoachName, await CsvAsync(admin, "/api/v1/exports/platform/Coaches"));
-        Assert.Contains(s.OtherClientCode, await CsvAsync(admin, "/api/v1/exports/platform/Clients"));
+        Assert.Contains(s.OtherClientName, await CsvAsync(admin, "/api/v1/exports/platform/Clients"));
         var currency = await ReadAsync<CurrencyResponse>(await admin.PostAsJsonAsync("/api/v1/reference-data/currencies",
             new CurrencyInput("X" + s.Tag[..4].ToUpperInvariant(), "Export currency", "$", true)));
         var package = await ReadAsync<PackageResponse>(await s.Coach.PostAsJsonAsync("/api/v1/reference-data/packages", new PackageInput("Pack " + s.Tag, null, null, true)));
@@ -130,7 +130,7 @@ public sealed class ReportsExportTests(CoachHubSqlApiFactory factory) : IClassFi
     }
 
     private sealed record Setup(Guid CoachId, string CoachName, HttpClient Coach, HttpClient OtherCoach, Guid ClientId, string ClientName,
-        HttpClient Portal, string OtherClientCode, string Tag)
+        HttpClient Portal, string OtherClientName, string Tag)
     {
         public string ReportPath => $"/api/v1/clients/{ClientId}/reports";
     }
@@ -146,8 +146,8 @@ public sealed class ReportsExportTests(CoachHubSqlApiFactory factory) : IClassFi
         var clientName = (name ?? "Reporter") + " " + tag;
         var client = await ReadAsync<ClientResponse>(await coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput(clientName, null, null, null)));
         var other = await ReadAsync<ClientResponse>(await otherCoach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput("Other " + tag, null, null, null)));
-        return new Setup(coachId, coachName, coach, otherCoach, client.Id, clientName, factory.CreateClientPortalClient(coachId, client.Id),
-            other.ClientCode, tag);
+        return new Setup(coachId, coachName, coach, otherCoach, client.Id, clientName, factory.CreateClientAreaClient(coachId, client.Id),
+            other.Name, tag);
     }
 
     private static async Task<T> ReadAsync<T>(HttpResponseMessage response)

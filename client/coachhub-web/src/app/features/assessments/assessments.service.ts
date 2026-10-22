@@ -69,7 +69,6 @@ export interface SubmissionSummary {
   id: string;
   clientId: string;
   clientName: string;
-  clientCode: string;
   formDefinitionId: string;
   formName: string;
   formType: string;

@@ -35,8 +35,8 @@ public sealed class BrandingAndSettingsTests(CoachHubSqlApiFactory factory) : IC
         var coachB = await factory.CreateCoachClientAsync();
         var clientOfB = await CreateClientAsync(coachB);
 
-        var seenByA = await factory.CreateClientPortalClient(coachIdA, clientOfA.Id).GetFromJsonAsync<BrandView>("/api/v1/branding");
-        var seenByB = await factory.CreateClientPortalClient(clientOfB.CoachId, clientOfB.Id).GetFromJsonAsync<BrandView>("/api/v1/branding");
+        var seenByA = await factory.CreateClientAreaClient(coachIdA, clientOfA.Id).GetFromJsonAsync<BrandView>("/api/v1/branding");
+        var seenByB = await factory.CreateClientAreaClient(clientOfB.CoachId, clientOfB.Id).GetFromJsonAsync<BrandView>("/api/v1/branding");
 
         Assert.Equal("Coach A Fitness", seenByA!.BrandName);
         Assert.Equal("#aa0000", seenByA.PrimaryColor);
@@ -115,7 +115,7 @@ public sealed class BrandingAndSettingsTests(CoachHubSqlApiFactory factory) : IC
         Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"/api/v1/branding/assets/{first.LogoMediaId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"/api/v1/branding/assets/{clientPhoto!.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.OK,
-            (await factory.CreateClientPortalClient(client.CoachId, client.Id).GetAsync($"/api/v1/media/{second.LogoMediaId}")).StatusCode);
+            (await factory.CreateClientAreaClient(client.CoachId, client.Id).GetAsync($"/api/v1/media/{second.LogoMediaId}")).StatusCode);
 
         var removed = await coachA.DeleteAsync("/api/v1/branding/coach/images/Logo");
         Assert.Equal(HttpStatusCode.OK, removed.StatusCode);

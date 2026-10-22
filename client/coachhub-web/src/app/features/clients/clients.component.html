@@ -54,14 +54,13 @@
           <th>Client</th>
           <th>Status</th>
           <th>Subscription</th>
-          <th>Plan workflow</th>
           <th class="actions">Actions</th>
         </tr>
       </thead>
       <tbody>
         @if (loading) {
           <tr>
-            <td colspan="5" class="table-message">Loading…</td>
+            <td colspan="4" class="table-message">Loading…</td>
           </tr>
         }
         @for (c of page.items; track c.id) {
@@ -71,16 +70,12 @@
               ><small>{{ c.phone || c.email || 'No contact details' }}</small>
             </td>
             <td>
-              <app-status-badge [value]="c.status" /><small><code>{{ c.clientCode }}</code></small>
+              <app-status-badge [value]="c.status" />
             </td>
             <td>
               <app-status-badge [value]="c.subscriptionStatus" /><small
                 >{{ c.subscriptionCount }} record(s)</small
               >
-            </td>
-            <td>
-              <small>Diet: {{ c.dietStatus }}</small
-              ><small>Workout: {{ c.workoutStatus }}</small>
             </td>
             <td class="actions">
               <button class="link-button" (click)="openDetail(c)">Open</button
@@ -91,7 +86,7 @@
         }
         @if (!loading && !page.items.length) {
           <tr>
-            <td colspan="5" class="table-message">No clients match the applied filters.</td>
+            <td colspan="4" class="table-message">No clients match the applied filters.</td>
           </tr>
         }
       </tbody>
@@ -132,21 +127,7 @@
             <span>Invite the client to sign in (emails a link to choose a password)</span></label>
         }
         @if (editingId) {
-          <label
-            ><span>Diet status</span
-            ><select name="diet" [(ngModel)]="editor.dietStatus">
-              @for (s of ['NotStarted', 'WaitingForPlan', 'OnPlan', 'ReviewRequired']; track s) {
-                <option>{{ s }}</option>
-              }
-            </select></label
-          ><label
-            ><span>Workout status</span
-            ><select name="workout" [(ngModel)]="editor.workoutStatus">
-              @for (s of ['NotStarted', 'WaitingForPlan', 'OnPlan', 'ReviewRequired']; track s) {
-                <option>{{ s }}</option>
-              }
-            </select></label
-          ><label class="checkbox-row span-2"
+          <label class="checkbox-row span-2"
             ><input type="checkbox" name="active" [(ngModel)]="editor.isActive" /> Active</label
           >
         }
@@ -170,9 +151,6 @@
         <button class="icon-button" (click)="detailOpen = false">×</button>
       </header>
       <div class="detail-grid">
-        <div>
-          <span>Client code</span><strong>{{ detail.client.clientCode }}</strong>
-        </div>
         <div>
           <span>Status</span><app-status-badge [value]="detail.client.status" />
           <a class="link-button" [routerLink]="['/clients', detail.client.id]">Open client profile</a>

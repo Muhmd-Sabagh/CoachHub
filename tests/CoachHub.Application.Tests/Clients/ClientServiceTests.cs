@@ -13,18 +13,17 @@ public sealed class ClientServiceTests
     private readonly FakeAccounts _accounts = new();
 
     private ClientService Service() => new(
-        _repository, new FakeGenerator(), TestTenancy.CoachOwnership(), new FakeCoachRepository(),
+        _repository, TestTenancy.CoachOwnership(), new FakeCoachRepository(),
         new MediaService(new NoMediaStorage(), new NoMediaRepository()), _accounts, TimeProvider.System);
 
     [Fact]
-    public async Task Client_code_generation_retries_collisions()
+    public async Task Creating_a_client_assigns_the_coach_and_starts_on_track()
     {
         var result = await Service().CreateAsync(
             new ClientCreateInput("Client", null, null, new DateOnly(2026, 1, 1)),
             CancellationToken.None);
 
-        Assert.Equal("BBBBBBBB", result.ClientCode);
-        Assert.Equal(2, _repository.ClientCodeChecks);
+        Assert.Equal(new DateOnly(2026, 1, 1), result.JoinDate);
         Assert.Equal(TestTenancy.CoachId, result.CoachId);
         Assert.Equal(ClientStatus.OnTrack, result.Status);
         Assert.Empty(_accounts.Invited);
@@ -48,7 +47,7 @@ public sealed class ClientServiceTests
         var created = await Service().CreateAsync(new ClientCreateInput("Client", null, null, null), CancellationToken.None);
 
         await Service().UpdateAsync(created.Id, new ClientUpdateInput(
-            "Client", null, null, PlanWorkflowStatus.NotStarted, PlanWorkflowStatus.NotStarted, false), CancellationToken.None);
+            "Client", null, null, false), CancellationToken.None);
 
         Assert.False(Assert.Single(_accounts.Synced).IsActive);
     }
@@ -101,18 +100,10 @@ public sealed class ClientServiceTests
         public Task DeleteAsync(MediaAsset media, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
-    private sealed class FakeGenerator : IClientCodeGenerator
-    {
-        private int _clientCalls;
-        public string GenerateClientCode() => ++_clientCalls == 1 ? "AAAAAAAA" : "BBBBBBBB";
-    }
-
     private sealed class FakeRepository : IClientRepository
     {
-        public int ClientCodeChecks { get; private set; }
         public Task<PagedResult<Client>> ListAsync(ClientQuery query, DateOnly today, CancellationToken cancellationToken) => Task.FromResult(new PagedResult<Client>([], 1, 20, 0));
         public Task<Client?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(Clients.SingleOrDefault(client => client.Id == id));
-        public Task<bool> ClientCodeExistsAsync(string code, CancellationToken cancellationToken) => Task.FromResult(ClientCodeChecks++ == 0);
         public List<Client> Clients { get; } = [];
         public Task<ClientProfile?> FindProfileAsync(Guid clientId, CancellationToken cancellationToken) => Task.FromResult<ClientProfile?>(null);
         public Task<decimal?> FindLatestWeightKgAsync(Guid clientId, CancellationToken cancellationToken) => Task.FromResult<decimal?>(null);

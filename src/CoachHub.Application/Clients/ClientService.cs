@@ -9,7 +9,6 @@ namespace CoachHub.Application.Clients;
 
 public sealed class ClientService(
     IClientRepository repository,
-    IClientCodeGenerator codeGenerator,
     CoachOwnership ownership,
     ICoachRepository coaches,
     MediaService media,
@@ -53,10 +52,8 @@ public sealed class ClientService(
         if (input.Invite && string.IsNullOrWhiteSpace(input.Email))
             throw Validation("email", "An email address is needed to invite the client.");
         var coachId = await ownership.ForNewRecordAsync(input.CoachId, cancellationToken);
-        var clientCode = await UniqueClientCodeAsync(cancellationToken);
         var client = Client.Create(
             coachId,
-            clientCode,
             input.Name,
             input.Phone,
             input.Email,
@@ -77,8 +74,6 @@ public sealed class ClientService(
             input.Name,
             input.Phone,
             input.Email,
-            input.DietStatus,
-            input.WorkoutStatus,
             input.IsActive);
         await repository.SaveChangesAsync(cancellationToken);
         // Deactivating a client also disables their login and signs them out everywhere (§2).
@@ -136,29 +131,16 @@ public sealed class ClientService(
     internal static ClientResponse Map(Client client, DateOnly today) => new(
         client.Id,
         client.CoachId,
-        client.ClientCode,
         client.Name,
         client.Phone,
         client.Email,
         client.JoinDate,
         client.GetSubscriptionStatus(today),
-        client.DietStatus,
-        client.WorkoutStatus,
         client.IsActive,
         client.Subscriptions.Count,
         client.GetStatus(today),
         client.StatusOverride,
         client.StatusOverrideUntil);
-
-    private async Task<string> UniqueClientCodeAsync(CancellationToken cancellationToken)
-    {
-        for (var attempt = 0; attempt < 20; attempt++)
-        {
-            var code = codeGenerator.GenerateClientCode();
-            if (!await repository.ClientCodeExistsAsync(code, cancellationToken)) return code;
-        }
-        throw new ConflictException("Unable to allocate a unique client code.");
-    }
 
     private async Task<Client> FindRequiredAsync(Guid id, CancellationToken cancellationToken) =>
         await repository.FindAsync(id, cancellationToken)

@@ -391,8 +391,8 @@ Removes what the legacy migration (phases 0–21) and the product phases left be
 
 - **Legacy plan workflow status.** `Client.DietStatus` / `WorkoutStatus` (`PlanWorkflowStatus`) are still edited and filtered on, although P5's computed `ClientStatus` and P6's plan versions replaced them. Remove them from the domain, the API, the client list filters and the UI, with a migration (owner decision, 2026-10-22).
 - **Two reporting stacks.**
-  - The legacy `Reporting` area (`ReportingService`, `AdvancedReportingService`, `ReportingController`, the `/operations` screen) runs beside P15's `Dashboards` and P17's `Reports`.
-  - Remove the legacy stack entirely: its services, repositories, controller, the `/operations` screen and nav entry, the dashboard calls to it, its tests and its translation keys (owner decision, 2026-10-22). No figure moves across; P15's dashboards and P17's reports remain, with D6 revenue (`RevenueCalculator`) as the only money figure.
+  - The legacy `Reporting` area (`ReportingService`, `AdvancedReportingService`, `ReportingController`, and the dashboard's "Management reporting" and "Advanced analytics" sections) runs beside P15's `Dashboards` and P17's `Reports`.
+  - Remove the legacy stack entirely: its services, repositories, controller, the dashboard sections and calls, and its tests (owner decision, 2026-10-22). The `/operations` screen is **not** part of it: it issues invoices, records payments, schedules reminders and records deliveries, and stays (corrected when P18A started). No figure moves across; P15's dashboards and P17's reports remain, with D6 revenue (`RevenueCalculator`) as the only money figure.
 - **Settings screens.** Branding and coach defaults live in `/workspace` ("Branding & defaults"), other settings in `/settings`. Merge them into one settings area, with sections per role.
 - **Naming.**
   - The client home is still called `client-portal`: the Angular feature and `ClientPortalController` at `/client-portal/overview`. Rename both to the client area (`client-area`, `/me/home`), and remove the `/portal` redirects.

@@ -99,85 +99,6 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.ToTable("FormDefinitions", (string)null);
                 });
 
-            modelBuilder.Entity("CoachHub.Domain.Assessments.FormImportColumnMapping", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ExternalColumnKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("FormImportProfileId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Header")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid>("QuestionStableKey")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FormImportProfileId", "ExternalColumnKey")
-                        .IsUnique();
-
-                    b.HasIndex("FormImportProfileId", "QuestionStableKey")
-                        .IsUnique();
-
-                    b.ToTable("FormImportColumnMappings", (string)null);
-                });
-
-            modelBuilder.Entity("CoachHub.Domain.Assessments.FormImportProfile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ClientCodeHeader")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid>("CoachId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ExternalIdHeader")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid>("FormDefinitionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("SheetName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("TimestampHeader")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CoachId");
-
-                    b.HasIndex("FormDefinitionId", "Name")
-                        .IsUnique();
-
-                    b.ToTable("FormImportProfiles", (string)null);
-                });
-
             modelBuilder.Entity("CoachHub.Domain.Assessments.FormQuestion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -261,10 +182,6 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CoachId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ExternalSubmissionId")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<Guid>("FormDefinitionId")
                         .HasColumnType("uniqueidentifier");
 
@@ -275,10 +192,6 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("FormVersionId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ImportFingerprint")
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
 
                     b.Property<Guid?>("InitialClientId")
                         .HasColumnType("uniqueidentifier");
@@ -298,10 +211,6 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasIndex("FormDefinitionId");
 
                     b.HasIndex("FormVersionId");
-
-                    b.HasIndex("ImportFingerprint")
-                        .IsUnique()
-                        .HasFilter("[ImportFingerprint] IS NOT NULL");
 
                     b.HasIndex("InitialClientId")
                         .IsUnique()
@@ -1040,18 +949,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly?>("CheckInDueOn")
                         .HasColumnType("date");
 
-                    b.Property<string>("ClientCode")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<Guid>("CoachId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("DietStatus")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(255)
@@ -1079,15 +978,7 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly?>("StatusOverrideUntil")
                         .HasColumnType("date");
 
-                    b.Property<string>("WorkoutStatus")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("ClientCode")
-                        .IsUnique();
 
                     b.HasIndex("CoachId");
 
@@ -4596,30 +4487,6 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CoachHub.Domain.Assessments.FormImportColumnMapping", b =>
-                {
-                    b.HasOne("CoachHub.Domain.Assessments.FormImportProfile", null)
-                        .WithMany()
-                        .HasForeignKey("FormImportProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CoachHub.Domain.Assessments.FormImportProfile", b =>
-                {
-                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
-                        .WithMany()
-                        .HasForeignKey("CoachId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("CoachHub.Domain.Assessments.FormDefinition", null)
-                        .WithMany()
-                        .HasForeignKey("FormDefinitionId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

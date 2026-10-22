@@ -52,7 +52,7 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
         Assert.Equal(FormVersionStatus.Published, published.Status);
 
         // D5: the client fills the form signed in; no codes.
-        var portal = _factory.CreateClientPortalClient(client.CoachId, client.Id);
+        var portal = _factory.CreateClientAreaClient(client.CoachId, client.Id);
         var access = await portal.GetFromJsonAsync<MyFormsResponse>("/api/v1/me/forms");
         Assert.Contains(access!.EligibleForms, form => form.Id == initial.DefinitionId);
         var clientForm = await portal.GetFromJsonAsync<FormVersionResponse>($"/api/v1/me/forms/{initial.DefinitionId}");
@@ -113,8 +113,8 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
 
         await AuthenticateAsync();
         var detail = await _client.GetFromJsonAsync<ClientDetailResponse>($"/api/v1/clients/{client.Id}");
-        Assert.Equal(PlanWorkflowStatus.ReviewRequired, detail!.Client.DietStatus);
-        Assert.Equal(PlanWorkflowStatus.ReviewRequired, detail.Client.WorkoutStatus);
+        // Only a check-in waiting for review makes a client "needs review" (P18A removed the plan workflow status).
+        Assert.Equal(ClientStatus.OnTrack, detail!.Client.Status);
 
         var forms = await _client.GetFromJsonAsync<CoachHub.Application.Common.Models.PagedResult<FormSummary>>(
             $"/api/v1/assessment-forms?searchTerm={Uri.EscapeDataString(initial.Name)}");
@@ -152,7 +152,7 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
         var otherCoach = await _factory.CreateCoachClientAsync();
         var otherClient = await (await otherCoach.PostAsJsonAsync("/api/v1/clients",
             new ClientCreateInput("Other coach client", null, null, null))).Content.ReadFromJsonAsync<ClientResponse>();
-        var portal = _factory.CreateClientPortalClient(otherClient!.CoachId, otherClient.Id);
+        var portal = _factory.CreateClientAreaClient(otherClient!.CoachId, otherClient.Id);
 
         Assert.Equal(HttpStatusCode.NotFound, (await portal.GetAsync($"/api/v1/me/forms/{form.DefinitionId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await portal.PostAsJsonAsync($"/api/v1/me/forms/{form.DefinitionId}/submissions",

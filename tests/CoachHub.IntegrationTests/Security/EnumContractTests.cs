@@ -36,13 +36,7 @@ public sealed class EnumContractTests(CoachHubApiFactory factory) : IClassFixtur
         Assert.Contains("\"subscriptionStatus\":\"Inactive\"", json);
 
         var id = (await created.Content.ReadFromJsonAsync<ClientResponse>())!.Id;
-        var update = await coach.PutAsync($"/api/v1/clients/{id}", JsonContent.Create(new
-        {
-            name = "Enum client",
-            dietStatus = "ReviewRequired",
-            workoutStatus = "OnPlan",
-            isActive = true
-        }));
+        var update = await coach.PutAsync($"/api/v1/clients/{id}/status", JsonContent.Create(new { status = "NeedsReview" }));
         Assert.Contains("\"status\":\"NeedsReview\"", await update.Content.ReadAsStringAsync());
     }
 }

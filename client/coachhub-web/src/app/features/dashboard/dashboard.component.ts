@@ -1,27 +1,23 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
-import { AdminDashboard, AdvancedReport, CoachDashboard, DashboardService, OperationalReport } from './dashboard.service';
+import { AdminDashboard, CoachDashboard, DashboardService } from './dashboard.service';
 import { PlatformExport, ReportsService, platformExports, saveFile } from '../reports/reports.service';
 
-@Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-dashboard', templateUrl: './dashboard.component.html', standalone: false })
+@Component({ selector: 'app-dashboard', templateUrl: './dashboard.component.html', standalone: false })
 export class DashboardComponent implements OnInit {
   from = this.isoDate(-29);
   to = this.isoDate(0);
-  report: OperationalReport | null = null;
-  advanced: AdvancedReport | null = null;
-  /** §38 for coaches, §48 for administrators; signals so the zoneless page updates when they arrive. */
+  /** §38 for coaches, §48 for administrators. */
   readonly coach = signal<CoachDashboard | null>(null);
   readonly admin = signal<AdminDashboard | null>(null);
+  readonly loading = signal(false);
+  readonly error = signal('');
   readonly statusLabels: Record<string, string> = {
     OnTrack: 'On track', NeedsReview: 'Needs review', CheckInOverdue: 'Check-in overdue', SubscriptionExpired: 'Subscription expired', Inactive: 'Inactive',
   };
-  loading = false;
-  error = '';
+  readonly platformExports = platformExports;
 
   constructor(
     readonly auth: AuthService,
@@ -35,18 +31,14 @@ export class DashboardComponent implements OnInit {
   }
 
   load(): void {
-    this.loading = true;
-    this.error = '';
-    forkJoin([this.data.overview(this.from, this.to), this.data.advanced(this.from, this.to)])
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({
-        next: ([report, advanced]) => { this.report = report; this.advanced = advanced; },
-        error: (error) => (this.error = apiErrorMessage(error)),
-      });
+    this.loading.set(true);
+    this.error.set('');
+    const done = () => this.loading.set(false);
+    const failed = (e: unknown) => { this.error.set(apiErrorMessage(e)); done(); };
     if (this.auth.isAdmin()) {
-      this.data.admin(this.from, this.to).subscribe({ next: x => this.admin.set(x), error: e => (this.error = apiErrorMessage(e)) });
+      this.data.admin(this.from, this.to).subscribe({ next: x => { this.admin.set(x); done(); }, error: failed });
     } else {
-      this.data.coach(this.from, this.to).subscribe({ next: x => this.coach.set(x), error: e => (this.error = apiErrorMessage(e)) });
+      this.data.coach(this.from, this.to).subscribe({ next: x => { this.coach.set(x); done(); }, error: failed });
     }
   }
 
@@ -59,18 +51,12 @@ export class DashboardComponent implements OnInit {
     return `${item.actor} ${verb} ${item.entityType.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()}`;
   }
 
-  readonly platformExports = platformExports;
-
   /** Platform CSV exports (§51); revenue follows the selected period. */
   exportPlatform(dataset: PlatformExport): void {
-    this.reports.platformExport(dataset, this.from, this.to).subscribe({ next: file => saveFile(file), error: e => (this.error = apiErrorMessage(e)) });
+    this.reports.platformExport(dataset, this.from, this.to).subscribe({ next: file => saveFile(file), error: e => this.error.set(apiErrorMessage(e)) });
   }
 
   maxActive(): number { return Math.max(1, ...(this.admin()?.userActivity.map(x => x.activeUsers) ?? [1])); }
-
-  openClient(clientName: string): void {
-    void this.router.navigate(['/clients'], { queryParams: { search: clientName } });
-  }
 
   private isoDate(offset: number): string {
     const date = new Date();

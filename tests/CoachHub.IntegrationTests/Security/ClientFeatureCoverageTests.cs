@@ -17,7 +17,7 @@ public sealed class ClientFeatureCoverageTests
         // What the client may do now; the app needs it to explain restrictions.
         "MyAccessController",
         // The subscription and invoices themselves, which the client must see to renew.
-        "ClientPortalController",
+        "MyHomeController",
     ];
 
     [Fact]

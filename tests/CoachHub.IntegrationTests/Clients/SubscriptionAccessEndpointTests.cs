@@ -87,7 +87,7 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
         var s = await SetUpAsync();
         using var admin = factory.CreateAdminClient();
         var client = await ReadAsync<ClientResponse>(await s.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput($"Member {s.Tag}", null, null, null)));
-        var portal = factory.CreateClientPortalClient(s.CoachId, client.Id);
+        var portal = factory.CreateClientAreaClient(s.CoachId, client.Id);
         var weight = $"/api/v1/me/progress/weight/{Today.AddDays(-1):yyyy-MM-dd}";
         var body = $"/api/v1/me/progress/body?from={Today.AddDays(-7):yyyy-MM-dd}&to={Today:yyyy-MM-dd}";
 

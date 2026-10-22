@@ -40,7 +40,7 @@ public sealed record ExportClient(Client Client, string CoachName);
 
 public sealed record ExportCoach(Guid Id, string Name, bool IsActive, DateTimeOffset CreatedAt, int Clients);
 
-public sealed record ExportSubscription(Subscription Subscription, string ClientName, string ClientCode, string CoachName, string PackageName, string CurrencyCode);
+public sealed record ExportSubscription(Subscription Subscription, string ClientName, string CoachName, string PackageName, string CurrencyCode);
 
 /// <summary>A settled payment or a refund (D6), dated when it was recorded.</summary>
 public sealed record LedgerEntry(DateTimeOffset RecordedAt, bool IsRefund, string CoachName, string ClientName, string InvoiceNumber,
@@ -86,9 +86,9 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
         var today = Today();
         var clients = await repository.ClientsAsync(cancellationToken);
         var file = new ExportFile(Csv.Write(
-            ["Client code", "Name", "Phone", "Email", "Join date", "Active", "Status", "Subscription", "Coach"],
+            ["Client ID", "Name", "Phone", "Email", "Join date", "Active", "Status", "Subscription", "Coach"],
             clients.OrderBy(x => x.Client.Name).Select(x => (IReadOnlyList<object?>)[
-                x.Client.ClientCode, x.Client.Name, x.Client.Phone, x.Client.Email, x.Client.JoinDate, x.Client.IsActive,
+                x.Client.Id, x.Client.Name, x.Client.Phone, x.Client.Email, x.Client.JoinDate, x.Client.IsActive,
                 x.Client.GetStatus(today), x.Client.GetSubscriptionStatus(today), x.CoachName])),
             $"clients-{today:yyyy-MM-dd}.csv", "text/csv");
         await repository.RecordAsync("ClientList", null, null, clients.Count, cancellationToken);
@@ -99,7 +99,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
     {
         if (!Enum.IsDefined(dataset)) throw new ValidationException(new Dictionary<string, string[]> { ["dataset"] = ["Unknown export."] });
         var found = await repository.ClientAsync(clientId, cancellationToken) ?? throw new NotFoundException("Client", clientId);
-        var prefix = $"{found.Client.ClientCode.ToLowerInvariant()}";
+        var prefix = $"client-{found.Client.Id.ToString("N")[..8]}";
         var parts = dataset == ClientExport.All
             ? Enum.GetValues<ClientExport>().Where(x => x != ClientExport.All).ToArray()
             : [dataset];
@@ -147,18 +147,18 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
                 break;
             case PlatformExport.Clients:
                 var clients = await repository.ClientsAsync(cancellationToken);
-                csv = (Csv.Write(["Coach", "Client code", "Name", "Email", "Join date", "Active", "Status", "Subscription"],
+                csv = (Csv.Write(["Coach", "Client ID", "Name", "Email", "Join date", "Active", "Status", "Subscription"],
                     clients.OrderBy(x => x.CoachName).ThenBy(x => x.Client.Name).Select(x => (IReadOnlyList<object?>)[
-                        x.CoachName, x.Client.ClientCode, x.Client.Name, x.Client.Email, x.Client.JoinDate, x.Client.IsActive,
+                        x.CoachName, x.Client.Id, x.Client.Name, x.Client.Email, x.Client.JoinDate, x.Client.IsActive,
                         x.Client.GetStatus(today), x.Client.GetSubscriptionStatus(today)])), clients.Count);
                 name = "clients";
                 break;
             case PlatformExport.Subscriptions:
                 var subscriptions = await repository.SubscriptionsAsync(cancellationToken);
                 var payments = await repository.SubscriptionPaymentsAsync(subscriptions.Select(x => x.Subscription.Id).ToArray(), cancellationToken);
-                csv = (Csv.Write(["Coach", "Client code", "Client", "Package", "Start", "End", "Months", "Status", "Payment", "Price", "Currency", "Renewals", "Suspension reason"],
+                csv = (Csv.Write(["Coach", "Client ID", "Client", "Package", "Start", "End", "Months", "Status", "Payment", "Price", "Currency", "Renewals", "Suspension reason"],
                     subscriptions.OrderBy(x => x.CoachName).ThenBy(x => x.ClientName).ThenBy(x => x.Subscription.StartDate).Select(x => (IReadOnlyList<object?>)[
-                        x.CoachName, x.ClientCode, x.ClientName, x.PackageName, x.Subscription.StartDate, x.Subscription.EndDate,
+                        x.CoachName, x.Subscription.ClientId, x.ClientName, x.PackageName, x.Subscription.StartDate, x.Subscription.EndDate,
                         x.Subscription.DurationMonths, x.Subscription.StatusOn(today),
                         payments.GetValueOrDefault(x.Subscription.Id, SubscriptionPaymentStatus.NoInvoice), x.Subscription.Price, x.CurrencyCode,
                         x.Subscription.RenewalCount, x.Subscription.SuspensionReason])), subscriptions.Count);
@@ -188,7 +188,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
     {
         (string Field, object? Value)[] rows =
         [
-            ("Client code", client.ClientCode), ("Name", client.Name), ("Phone", client.Phone), ("Email", client.Email),
+            ("Client ID", client.Id), ("Name", client.Name), ("Phone", client.Phone), ("Email", client.Email),
             ("Join date", client.JoinDate), ("Active", client.IsActive), ("Coach", coachName),
             ("Date of birth", profile?.DateOfBirth), ("Sex", profile?.Sex), ("Height (cm)", profile?.HeightCm),
             ("Starting weight (kg)", profile?.StartingWeightKg), ("Starting body fat (%)", profile?.StartingBodyFatPercent),

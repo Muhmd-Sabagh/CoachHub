@@ -163,7 +163,7 @@ public sealed class FoodTrackingTests(CoachHubSqlApiFactory factory) : IClassFix
         // Another client of the same coach sees only their own (empty) day and cannot touch the entry.
         var sibling = await ReadAsync<ClientResponse>(await setup.Coach.PostAsJsonAsync("/api/v1/clients",
             new ClientCreateInput("Sibling " + setup.Tag, null, null, null)));
-        var siblingPortal = factory.CreateClientPortalClient(setup.CoachId, sibling.Id);
+        var siblingPortal = factory.CreateClientAreaClient(setup.CoachId, sibling.Id);
         var siblingDay = (await siblingPortal.GetFromJsonAsync<NutritionDayResponse>("/api/v1/me" + dayPath))!;
         Assert.Equal(((PlannedDayResponse?)null, 0), (siblingDay.Plan, siblingDay.Entries.Count));
         Assert.Equal(HttpStatusCode.NotFound, (await siblingPortal.PutAsJsonAsync($"/api/v1/me/nutrition/entries/{entry.Id}",
@@ -255,7 +255,7 @@ public sealed class FoodTrackingTests(CoachHubSqlApiFactory factory) : IClassFix
             ]),
         ], Targets: new DietTargets(Calories: 500));
         var plan = await ReadAsync<DietPlanResponse>(await coach.PostAsJsonAsync("/api/v1/diet-plans", input));
-        return new Setup(coachId, coach, otherCoachId, otherCoach, client.Id, factory.CreateClientPortalClient(coachId, client.Id),
+        return new Setup(coachId, coach, otherCoachId, otherCoach, client.Id, factory.CreateClientAreaClient(coachId, client.Id),
             input, plan, bread, custom, otherFood, tag);
     }
 

@@ -24,7 +24,7 @@ public sealed class AuditTenancyTests(CoachHubSqlApiFactory factory) : IClassFix
         var client = await CreateClientAsync(coach, "Before edit");
 
         var updated = await coach.PutAsJsonAsync($"/api/v1/clients/{client.Id}", new ClientUpdateInput(
-            "After edit", null, null, PlanWorkflowStatus.NotStarted, PlanWorkflowStatus.NotStarted, true));
+            "After edit", null, null, true));
         Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
 
         var entry = Assert.Single((await AuditAsync(coach, $"entityType=Client&entityId={client.Id}&operation=Update")).Items);
@@ -47,7 +47,7 @@ public sealed class AuditTenancyTests(CoachHubSqlApiFactory factory) : IClassFix
         Assert.NotEmpty((await AuditAsync(coachA, $"clientId={clientOfA.Id}")).Items);
         Assert.NotEmpty((await AuditAsync(factory.CreateAdminClient(), $"clientId={clientOfA.Id}")).Items);
         Assert.Equal(HttpStatusCode.Forbidden,
-            (await factory.CreateClientPortalClient(clientOfA.CoachId, clientOfA.Id).GetAsync("/api/v1/audit-entries")).StatusCode);
+            (await factory.CreateClientAreaClient(clientOfA.CoachId, clientOfA.Id).GetAsync("/api/v1/audit-entries")).StatusCode);
     }
 
     [Fact]

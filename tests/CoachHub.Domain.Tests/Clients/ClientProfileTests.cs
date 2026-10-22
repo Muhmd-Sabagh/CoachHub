@@ -96,7 +96,7 @@ public sealed class ClientStatusTests
 {
     private static readonly DateOnly Today = new(2026, 10, 12);
 
-    private static Client NewClient() => Client.Create(Guid.NewGuid(), "A1B2C3D4", "Client", null, null, Today);
+    private static Client NewClient() => Client.Create(Guid.NewGuid(), "Client", null, null, Today);
 
     [Fact]
     public void A_new_active_client_is_on_track()
@@ -105,14 +105,13 @@ public sealed class ClientStatusTests
     }
 
     [Fact]
-    public void Inactive_wins_over_review_and_review_follows_plan_workflow()
+    public void Inactive_wins_over_review_and_review_follows_the_check_in()
     {
         var client = NewClient();
-        client.RecordAssessmentSubmission(Domain.Assessments.AssessmentFormType.InitialAssessment);
-        client.Update("Client", null, null, PlanWorkflowStatus.ReviewRequired, PlanWorkflowStatus.OnPlan, true);
+        client.SetCheckInState(null, true);
         Assert.Equal(ClientStatus.NeedsReview, client.GetStatus(Today));
 
-        client.Update("Client", null, null, PlanWorkflowStatus.ReviewRequired, PlanWorkflowStatus.OnPlan, false);
+        client.Update("Client", null, null, false);
         Assert.Equal(ClientStatus.Inactive, client.GetStatus(Today));
     }
 

@@ -127,8 +127,6 @@ export class ClientsComponent implements OnInit {
       phone: c.phone ?? '',
       email: c.email ?? '',
       joinDate: c.joinDate,
-      dietStatus: c.dietStatus,
-      workoutStatus: c.workoutStatus,
       isActive: c.isActive,
       coachId: c.coachId,
       invite: false,
@@ -148,8 +146,6 @@ export class ClientsComponent implements OnInit {
       name: this.editor.name,
       phone: this.editor.phone || null,
       email: this.editor.email || null,
-      dietStatus: this.editor.dietStatus,
-      workoutStatus: this.editor.workoutStatus,
       isActive: this.editor.isActive,
     };
     this.saving = true;
@@ -284,8 +280,6 @@ export class ClientsComponent implements OnInit {
       phone: '',
       email: '',
       joinDate: new Date().toISOString().slice(0, 10),
-      dietStatus: 'NotStarted',
-      workoutStatus: 'NotStarted',
       isActive: true,
       coachId: '',
       invite: true,

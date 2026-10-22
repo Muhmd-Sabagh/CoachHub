@@ -47,7 +47,7 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
                     row.RelativeItem(2).AlignRight().Column(right =>
                     {
                         right.Item().AlignRight().Text(report.ClientName).FontSize(16).Bold().Dir(language);
-                        right.Item().AlignRight().Text($"{report.ClientCode}  •  {D(report.From)} – {D(report.To)}").FontSize(8).FontColor(Muted);
+                        right.Item().AlignRight().Text($"{D(report.From)} – {D(report.To)}").FontSize(8).FontColor(Muted);
                     });
                 });
                 column.Item().PaddingTop(8).LineHorizontal(1).LineColor(Border);

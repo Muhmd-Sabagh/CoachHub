@@ -33,7 +33,7 @@ public sealed class TenantIsolationTests(CoachHubSqlApiFactory factory) : IClass
 
         Assert.Equal(HttpStatusCode.NotFound, (await coachB.GetAsync($"/api/v1/clients/{clientOfA.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await coachB.PutAsJsonAsync($"/api/v1/clients/{clientOfA.Id}",
-            new ClientUpdateInput("Taken over", null, null, PlanWorkflowStatus.NotStarted, PlanWorkflowStatus.NotStarted, true))).StatusCode);
+            new ClientUpdateInput("Taken over", null, null, true))).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await coachB.DeleteAsync($"/api/v1/clients/{clientOfA.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await coachB.GetAsync($"/api/v1/workout-plans/{planOfA.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await coachB.DeleteAsync($"/api/v1/workout-plans/{planOfA.Id}")).StatusCode);
@@ -71,9 +71,9 @@ public sealed class TenantIsolationTests(CoachHubSqlApiFactory factory) : IClass
         var coach = await factory.CreateCoachClientAsync();
         var mine = await CreateClientAsync(coach, "Portal owner");
         var other = await CreateClientAsync(coach, "Portal neighbour");
-        var portal = factory.CreateClientPortalClient(mine.CoachId, mine.Id);
+        var portal = factory.CreateClientAreaClient(mine.CoachId, mine.Id);
 
-        var overview = await portal.GetFromJsonAsync<API.ClientPortal.ClientPortalResponse>("/api/v1/client-portal/overview");
+        var overview = await portal.GetFromJsonAsync<API.Me.MyHomeResponse>("/api/v1/me/home");
         Assert.Equal(mine.Id, overview!.Client.Client.Id);
 
         Assert.Equal(HttpStatusCode.Forbidden, (await portal.GetAsync($"/api/v1/clients/{other.Id}")).StatusCode);

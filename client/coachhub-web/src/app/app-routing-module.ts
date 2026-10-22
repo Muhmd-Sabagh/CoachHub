@@ -20,7 +20,7 @@ const routes: Routes = [
     canActivate: [roleGuard('Client')],
     loadComponent: () => import('./features/client-area/client-shell.component').then(m => m.ClientShellComponent),
     children: [
-      { path: '', pathMatch: 'full', loadComponent: () => import('./features/client-portal/client-portal.component').then(m => m.ClientPortalComponent) },
+      { path: '', pathMatch: 'full', loadComponent: () => import('./features/client-area/my-home.component').then(m => m.MyHomeComponent) },
       { path: 'nutrition', loadComponent: () => import('./features/nutrition-tracking/my-nutrition.component').then(m => m.MyNutritionComponent) },
       { path: 'training', loadComponent: () => import('./features/training-tracking/my-training.component').then(m => m.MyTrainingComponent) },
       { path: 'progress', loadComponent: () => import('./features/progress-tracking/my-progress.component').then(m => m.MyProgressComponent) },
@@ -33,8 +33,6 @@ const routes: Routes = [
       { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent) },
     ],
   },
-  { path: 'portal', redirectTo: 'app' },
-  { path: 'portal/account', redirectTo: 'app/account' },
   {
     path: '',
     component: ShellComponent,

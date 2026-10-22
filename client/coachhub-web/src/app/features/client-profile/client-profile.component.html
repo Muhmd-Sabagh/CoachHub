@@ -6,7 +6,7 @@
     @if (detail; as d) {
       <p><span class="status-badge" [class.success]="d.client.status === 'OnTrack'">{{ d.client.status }}</span>
         @if (d.client.statusOverride) { <small class="muted"> set by hand{{ d.client.statusOverrideUntil ? ' until ' + d.client.statusOverrideUntil : '' }}</small> }
-        @if (profile?.age) { · {{ profile?.age }} years } · Code <code>{{ d.client.clientCode }}</code></p>
+        @if (profile?.age) { · {{ profile?.age }} years }</p>
     }
   </div>
 </section>

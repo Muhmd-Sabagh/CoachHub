@@ -43,7 +43,6 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var client = await create.Content.ReadFromJsonAsync<ClientResponse>();
         Assert.NotNull(client);
-        Assert.Equal(8, client.ClientCode.Length);
         Assert.Equal(SubscriptionStatus.Inactive, client.SubscriptionStatus);
         Assert.Equal(client.Email, client.Email!.ToLowerInvariant());
 
@@ -73,7 +72,7 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
         Assert.Single(detail.Subscriptions);
 
         var activePage = await _client.GetFromJsonAsync<PagedResult<ClientResponse>>(
-            $"/api/v1/clients?searchTerm={client.ClientCode}&subscriptionStatus=Active&pageSize=10");
+            $"/api/v1/clients?searchTerm={Uri.EscapeDataString(client.Name)}&subscriptionStatus=Active&pageSize=10");
         Assert.NotNull(activePage);
         Assert.Single(activePage.Items);
 
@@ -81,15 +80,13 @@ public sealed class ClientEndpointTests : IClassFixture<CoachHubApiFactory>
             $"/api/v1/clients/{client.Id}",
             new ClientUpdateInput(
                 client.Name,
-                client.Phone,
+                "+201000000001",
                 client.Email,
-                PlanWorkflowStatus.WaitingForPlan,
-                PlanWorkflowStatus.ReviewRequired,
                 true));
         update.EnsureSuccessStatusCode();
         var updated = await update.Content.ReadFromJsonAsync<ClientResponse>();
-        Assert.Equal(PlanWorkflowStatus.ReviewRequired, updated!.WorkoutStatus);
-        Assert.Equal(client.ClientCode, updated.ClientCode);
+        Assert.Equal("+201000000001", updated!.Phone);
+        Assert.Equal(client.Id, updated.Id);
 
         Assert.Equal(
             HttpStatusCode.Conflict,

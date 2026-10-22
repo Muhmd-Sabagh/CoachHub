@@ -34,7 +34,7 @@ public static class TestIdentities
             Guid.NewGuid(), $"coach.{coachId:N}@coachhub.test", "Test Coach",
             [AuthRoles.Coach], coachId, ClientId: null));
 
-    public static HttpClient CreateClientPortalClient(
+    public static HttpClient CreateClientAreaClient(
         this WebApplicationFactory<Program> factory, Guid coachId, Guid clientId) =>
         factory.CreateClientFor(new AuthenticatedUser(
             Guid.NewGuid(), $"client.{clientId:N}@coachhub.test", "Test Client",

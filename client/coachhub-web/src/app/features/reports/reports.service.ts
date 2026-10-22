@@ -22,7 +22,6 @@ export interface ReportCheckIn { dueOn: string; status: string; isLate: boolean;
 export interface ClientReport {
   clientId: string;
   clientName: string;
-  clientCode: string;
   period: ReportPeriod;
   from: string;
   to: string;

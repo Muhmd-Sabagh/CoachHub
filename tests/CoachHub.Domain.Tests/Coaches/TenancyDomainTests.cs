@@ -24,7 +24,7 @@ public sealed class TenancyDomainTests
     public void Coach_owned_records_cannot_be_created_without_a_coach()
     {
         Assert.Throws<ArgumentException>(() =>
-            Client.Create(Guid.Empty, "A1B2C3D4", "Client", null, null, Today));
+            Client.Create(Guid.Empty, "Client", null, null, Today));
         Assert.Throws<ArgumentException>(() =>
             Invoice.Create(Guid.Empty, Guid.NewGuid(), null, "INV-1", Guid.NewGuid(), 10m, DateTimeOffset.UtcNow, null));
     }
@@ -34,7 +34,7 @@ public sealed class TenancyDomainTests
     {
         var original = Guid.NewGuid();
         var target = Guid.NewGuid();
-        var client = Client.Create(original, "A1B2C3D4", "Client", null, null, Today);
+        var client = Client.Create(original, "Client", null, null, Today);
 
         client.TransferTo(target);
 
@@ -47,7 +47,7 @@ public sealed class TenancyDomainTests
     public void A_client_only_accepts_subscriptions_sold_by_its_current_coach()
     {
         var coachId = Guid.NewGuid();
-        var client = Client.Create(coachId, "A1B2C3D4", "Client", null, null, Today);
+        var client = Client.Create(coachId, "Client", null, null, Today);
         var otherCoachSubscription = Subscription.Create(
             Guid.NewGuid(), client.Id, Guid.NewGuid(), Today, 1, 100m, Guid.NewGuid(), null, 0);
 

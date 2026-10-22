@@ -28,15 +28,6 @@ public enum SubscriptionPaymentStatus
     Refunded
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter<PlanWorkflowStatus>))]
-public enum PlanWorkflowStatus
-{
-    NotStarted,
-    WaitingForPlan,
-    OnPlan,
-    ReviewRequired
-}
-
 /// <summary>The client's status shown to the coach (§39).</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ClientStatus>))]
 public enum ClientStatus

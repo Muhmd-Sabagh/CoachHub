@@ -56,5 +56,9 @@ public static class QuestionMetrics
     public static QuestionType AnswerType(QuestionMetric metric) => IsPhoto(metric) ? QuestionType.MediaUpload : QuestionType.Number;
 }
 
+/// <summary>
+/// Where a submission came from. <see cref="GoogleFormsExcelImport"/> marks submissions imported before the
+/// importer was removed (P18A); they stay readable, and nothing creates new ones.
+/// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter<SubmissionSource>))]
-public enum SubmissionSource { CoachHubSystem, GoogleFormsExcelImport, ManualAdminEntry }
+public enum SubmissionSource { CoachHubSystem, GoogleFormsExcelImport }

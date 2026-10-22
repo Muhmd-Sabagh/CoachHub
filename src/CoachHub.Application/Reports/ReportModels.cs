@@ -32,7 +32,6 @@ public sealed record ReportCheckIn(DateOnly DueOn, CheckInStatus Status, bool Is
 public sealed record ClientReport(
     Guid ClientId,
     string ClientName,
-    string ClientCode,
     ReportPeriod Period,
     DateOnly From,
     DateOnly To,

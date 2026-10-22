@@ -119,7 +119,6 @@ public sealed class FormSubmissionService(
             answer.Question,
             answer.ValueJson,
             answer.MediaId)).ToArray();
-        client.RecordAssessmentSubmission(graph.Definition.FormType);
         await repository.SubmitAsync(submission, answers, cancellationToken);
         if (target is not null)
             await checkIns.RecordAsync(client, target, graph.Definition.Id, submission.Id, submittedOn, cancellationToken);

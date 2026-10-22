@@ -34,7 +34,7 @@ public sealed class ReportService(
             .Select(x => new ReportCheckIn(x.DueOn, x.Status, x.IsLate, x.SubmittedAt, x.Replies.Count))
             .ToArray();
         var brand = await branding.EffectiveAsync(await CoachOfAsync(clientId, cancellationToken), cancellationToken);
-        return new ClientReport(clientId, client.Name, client.ClientCode, query.Period, from, to, timeProvider.GetUtcNow(),
+        return new ClientReport(clientId, client.Name, query.Period, from, to, timeProvider.GetUtcNow(),
             brand.BrandName, brand.PrimaryColor, progress, periodCheckIns);
     }
 

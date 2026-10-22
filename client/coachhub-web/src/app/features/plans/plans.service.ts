@@ -12,7 +12,6 @@ export interface SavedPlan {
   nameAr?: string | null;
   clientId?: string | null;
   clientName?: string | null;
-  clientCode?: string | null;
   createdAt: string;
   totalWeight?: number | null;
   totalCalories?: number | null;

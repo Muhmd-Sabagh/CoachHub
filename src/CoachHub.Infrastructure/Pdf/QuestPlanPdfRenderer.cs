@@ -86,7 +86,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
                     right.Item().AlignRight().Text(planName).FontSize(17).Bold().FontColor(Ink)
                         .DirectionAuto(language);
                     if (client is not null)
-                        right.Item().AlignRight().Text($"{client.Name}  •  {client.ClientCode}")
+                        right.Item().AlignRight().Text(client.Name)
                             .FontSize(8).FontColor(Muted).DirectionAuto(language);
                 });
             });

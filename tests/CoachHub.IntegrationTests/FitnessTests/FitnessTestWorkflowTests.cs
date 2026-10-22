@@ -167,7 +167,7 @@ public sealed class FitnessTestWorkflowTests(CoachHubSqlApiFactory factory) : IC
         Assert.Equal(HttpStatusCode.NotFound, (await setup.OtherCoach.PutAsJsonAsync($"{path}/results/{result.Id}", new TestResultChangeInput(Today, 1))).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await setup.OtherCoach.PutAsync($"{path}/assignments/{PlankId}", null)).StatusCode);
         var sibling = await ReadAsync<ClientResponse>(await setup.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput("Sibling " + setup.Tag, null, null, null)));
-        var siblingPortal = factory.CreateClientPortalClient(setup.CoachId, sibling.Id);
+        var siblingPortal = factory.CreateClientAreaClient(setup.CoachId, sibling.Id);
         Assert.Empty((await siblingPortal.GetFromJsonAsync<ClientTestsResponse>("/api/v1/me/fitness-tests"))!.Tests);
         Assert.Equal(HttpStatusCode.NotFound, (await siblingPortal.DeleteAsync($"/api/v1/me/fitness-tests/results/{result.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await setup.Portal.GetAsync(path)).StatusCode);
