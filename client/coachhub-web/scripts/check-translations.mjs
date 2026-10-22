@@ -18,7 +18,10 @@ const files = (dir) => readdirSync(dir).flatMap((name) => {
 });
 const code = files('src/app').map((path) => readFileSync(path, 'utf8')).join('\n');
 
-const unused = keys.filter((key) => !key.startsWith('enum.') && !code.includes(`'${key}'`));
+// A key looked up by a computed name (`files.kind.${kind}`) counts as used through its prefix.
+const computedPrefixes = [...code.matchAll(/`([\w.-]+\.)\$\{/g)].map((match) => match[1]);
+const unused = keys.filter((key) => !key.startsWith('enum.') && !code.includes(`'${key}'`) &&
+  !computedPrefixes.some((prefix) => key.startsWith(prefix)));
 if (unused.length) {
   console.error(unused.map((key) => `unused: ${key}`).join('\n'));
   process.exit(1);

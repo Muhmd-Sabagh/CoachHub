@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { AfterViewChecked, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription, concatMap, from, map, toArray } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { RealtimeService } from '../../core/realtime/realtime.service';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { ClientFilesService } from '../client-files/client-files.service';
 import {
@@ -17,31 +18,31 @@ import {
 @Component({
   selector: 'app-chat-thread',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, ...I18N_PIPES],
   template: `
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     <section class="card workbench thread">
-      @if (hasMore()) { <button type="button" class="link-button older" (click)="loadOlder()">Show earlier messages</button> }
-      <div #scroller class="messages" role="log" aria-live="polite" [attr.aria-label]="'Conversation with ' + otherName()">
+      @if (hasMore()) { <button type="button" class="link-button older" (click)="loadOlder()">{{ 'chat.showEarlier' | translate }}</button> }
+      <div #scroller class="messages" role="log" aria-live="polite" [attr.aria-label]="'chat.conversationWith' | translate: { name: otherName() }">
         @for (m of messages(); track m.id) {
           <div class="bubble" [class.mine]="m.sender === me()">
-            @if (m.text) { <p>{{ m.text }}</p> }
+            @if (m.text) { <p translate="no">{{ m.text }}</p> }
             @for (a of m.attachments; track a.mediaId) {
-              <button type="button" class="attachment" (click)="openFile(a)">📎 {{ a.fileName }} <small>{{ size(a.sizeBytes) }}</small></button>
+              <button type="button" class="attachment" (click)="openFile(a)">📎 <span translate="no">{{ a.fileName }}</span> <small>{{ size(a.sizeBytes) }}</small></button>
             }
-            <small class="meta">{{ m.sentAt | date: 'd MMM, HH:mm' }}@if (m.sender === me()) { · {{ m.readAt ? 'Read' : 'Sent' }} }</small>
+            <small class="meta">{{ m.sentAt | localDate: 'd MMM, HH:mm' }}@if (m.sender === me()) { · {{ (m.readAt ? 'chat.read' : 'chat.sent') | translate }} }</small>
           </div>
-        } @empty { <p class="muted empty">{{ archivedId ? 'No messages.' : 'No messages yet. Say hello!' }}</p> }
+        } @empty { <p class="muted empty">{{ (archivedId ? 'chat.noMessages' : 'chat.sayHello') | translate }}</p> }
       </div>
       @if (!archivedId) {
         <form class="composer" (ngSubmit)="send()">
           @if (pending().length) {
-            <div class="pending">@for (f of pending(); track f.name) { <span class="chip">{{ f.name }} <button type="button" class="link-button" (click)="removeFile(f)" [attr.aria-label]="'Remove ' + f.name">×</button></span> }</div>
+            <div class="pending">@for (f of pending(); track f.name) { <span class="chip"><span translate="no">{{ f.name }}</span> <button type="button" class="link-button" (click)="removeFile(f)" [attr.aria-label]="'chat.remove' | translate: { name: f.name }">×</button></span> }</div>
           }
-          <label class="file-button" [attr.aria-label]="'Attach files'">📎<input type="file" multiple [accept]="accept" (change)="pick($event)" /></label>
-          <textarea [(ngModel)]="text" name="text" rows="2" maxlength="4000" placeholder="Write a message…" aria-label="Message"
+          <label class="file-button" [attr.aria-label]="'chat.attach' | translate">📎<input type="file" multiple [accept]="accept" (change)="pick($event)" /></label>
+          <textarea [(ngModel)]="text" name="text" rows="2" maxlength="4000" [placeholder]="'chat.placeholder' | translate" [attr.aria-label]="'chat.message' | translate"
             (keydown.enter)="enter($any($event))"></textarea>
-          <button type="submit" class="button button-primary" [disabled]="busy() || (!text.trim() && !pending().length)">Send</button>
+          <button type="submit" class="button button-primary" [disabled]="busy() || (!text.trim() && !pending().length)">{{ 'chat.send' | translate }}</button>
         </form>
       }
     </section>
@@ -84,10 +85,15 @@ export class ChatThreadComponent implements OnInit, OnChanges, OnDestroy, AfterV
   private stickToBottom = true;
   private live: Subscription[] = [];
 
-  constructor(private readonly chat: ChatService, private readonly realtime: RealtimeService, private readonly files: ClientFilesService) {}
+  constructor(
+    private readonly chat: ChatService,
+    private readonly realtime: RealtimeService,
+    private readonly files: ClientFilesService,
+    private readonly i18n: I18nService,
+  ) {}
 
   me(): ChatParticipant { return this.clientId ? 'Coach' : 'Client'; }
-  otherName(): string { return this.clientId ? this.thread()?.clientName ?? 'client' : 'your coach'; }
+  otherName(): string { return this.clientId ? this.thread()?.clientName ?? this.i18n.translate('chat.theClient') : this.i18n.translate('chat.yourCoach'); }
 
   private loaded = false;
 

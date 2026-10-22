@@ -1,7 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { fileSize, maximumSharedFileBytes, sharedFileAccept } from '../chat/chat.service';
 import { ClientFile, ClientFilesService, fileKind } from './client-files.service';
@@ -13,21 +15,21 @@ import { ClientFile, ClientFilesService, fileKind } from './client-files.service
 @Component({
   selector: 'app-client-files',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, ...I18N_PIPES],
   template: `
     @if (!clientId) {
-      <section class="dashboard-hero"><div><p class="eyebrow">Files</p><h1>From your coach</h1>
-        <p>Guides, videos and documents your coach shared with you.</p></div></section>
+      <section class="dashboard-hero"><div><p class="eyebrow">{{ 'files.eyebrow' | translate }}</p><h1>{{ 'files.title' | translate }}</h1>
+        <p>{{ 'files.intro' | translate }}</p></div></section>
     }
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     @if (clientId) {
       <form class="card workbench share" (ngSubmit)="share()">
-        <h2>Share a file</h2>
-        <label><span>File (PDF, image, video, Word, Excel, PowerPoint or text; up to 50 MB)</span>
+        <h2>{{ 'files.share' | translate }}</h2>
+        <label><span>{{ 'files.fileHint' | translate }}</span>
           <input type="file" [accept]="accept" (change)="pick($event)" required /></label>
-        <label><span>Title</span><input [(ngModel)]="title" name="title" maxlength="200" placeholder="Defaults to the file name" /></label>
-        <label><span>Description</span><input [(ngModel)]="description" name="description" maxlength="1000" /></label>
-        <button type="submit" class="button button-primary" [disabled]="!file || busy()">{{ busy() ? 'Uploading…' : 'Share with client' }}</button>
+        <label><span>{{ 'files.fileTitle' | translate }}</span><input [(ngModel)]="title" name="title" maxlength="200" [placeholder]="'files.titlePlaceholder' | translate" /></label>
+        <label><span>{{ 'files.description' | translate }}</span><input [(ngModel)]="description" name="description" maxlength="1000" /></label>
+        <button type="submit" class="button button-primary" [disabled]="!file || busy()">{{ (busy() ? 'files.uploading' : 'files.shareWithClient') | translate }}</button>
       </form>
     }
     <section class="card workbench">
@@ -36,28 +38,28 @@ import { ClientFile, ClientFilesService, fileKind } from './client-files.service
           <li>
             @if (editing() === f.id) {
               <form class="rename" (ngSubmit)="rename(f)">
-                <input [(ngModel)]="editTitle" name="editTitle" maxlength="200" required aria-label="Title" />
-                <input [(ngModel)]="editDescription" name="editDescription" maxlength="1000" aria-label="Description" />
-                <button type="submit" class="button button-primary">Save</button>
-                <button type="button" class="button button-secondary" (click)="editing.set(null)">Cancel</button>
+                <input [(ngModel)]="editTitle" name="editTitle" maxlength="200" required [attr.aria-label]="'files.fileTitle' | translate" />
+                <input [(ngModel)]="editDescription" name="editDescription" maxlength="1000" [attr.aria-label]="'files.description' | translate" />
+                <button type="submit" class="button button-primary">{{ 'files.save' | translate }}</button>
+                <button type="button" class="button button-secondary" (click)="editing.set(null)">{{ 'files.cancel' | translate }}</button>
               </form>
             } @else {
               <div class="file">
-                <span class="kind">{{ kind(f.contentType) }}</span>
-                <div class="info"><strong>{{ f.title }}</strong>
-                  @if (f.description) { <span>{{ f.description }}</span> }
-                  <small class="muted">{{ f.fileName }} · {{ size(f.sizeBytes) }} · {{ f.sharedAt | date: 'd MMM y' }}</small></div>
+                <span class="kind">{{ kindLabel(f.contentType) | translate }}</span>
+                <div class="info"><strong translate="no">{{ f.title }}</strong>
+                  @if (f.description) { <span translate="no">{{ f.description }}</span> }
+                  <small class="muted"><span translate="no">{{ f.fileName }}</span> · {{ size(f.sizeBytes) }} · {{ f.sharedAt | localDate: 'd MMM y' }}</small></div>
                 <div class="actions">
-                  <button type="button" class="button button-secondary" (click)="open(f)">Open</button>
+                  <button type="button" class="button button-secondary" (click)="open(f)">{{ 'files.open' | translate }}</button>
                   @if (clientId) {
-                    <button type="button" class="link-button" (click)="startEdit(f)">Rename</button>
-                    <button type="button" class="link-button danger" (click)="remove(f)">Remove</button>
+                    <button type="button" class="link-button" (click)="startEdit(f)">{{ 'files.rename' | translate }}</button>
+                    <button type="button" class="link-button danger" (click)="remove(f)">{{ 'files.remove' | translate }}</button>
                   }
                 </div>
               </div>
             }
           </li>
-        } @empty { <li class="muted">{{ clientId ? 'Nothing shared yet.' : 'Your coach has not shared any files yet.' }}</li> }
+        } @empty { <li class="muted">{{ (clientId ? 'files.noneShared' : 'files.noneFromCoach') | translate }}</li> }
       </ul>
     </section>
   `,
@@ -77,7 +79,6 @@ export class ClientFilesComponent implements OnInit, OnChanges {
   @Input() clientId?: string;
   readonly accept = sharedFileAccept;
   readonly size = fileSize;
-  readonly kind = fileKind;
   readonly files = signal<ClientFile[]>([]);
   readonly editing = signal<string | null>(null);
   readonly busy = signal(false);
@@ -88,7 +89,10 @@ export class ClientFilesComponent implements OnInit, OnChanges {
   editTitle = '';
   editDescription = '';
 
-  constructor(private readonly api: ClientFilesService) {}
+  constructor(private readonly api: ClientFilesService, private readonly i18n: I18nService) {}
+
+  /** The file's kind (Image, Video, PDF …) as a label key. */
+  kindLabel(contentType: string): TranslationKey { return `files.kind.${fileKind(contentType)}`; }
 
   ngOnInit(): void { if (!this.clientId) this.load(); }
   ngOnChanges(): void { this.load(); }
@@ -129,7 +133,7 @@ export class ClientFilesComponent implements OnInit, OnChanges {
   }
 
   remove(file: ClientFile): void {
-    if (!this.clientId || !confirm(`Remove "${file.title}"? The client will no longer see it.`)) return;
+    if (!this.clientId || !confirm(this.i18n.translate('files.confirmRemove', { title: file.title }))) return;
     this.run(this.api.delete(this.clientId, file.id));
   }
 
