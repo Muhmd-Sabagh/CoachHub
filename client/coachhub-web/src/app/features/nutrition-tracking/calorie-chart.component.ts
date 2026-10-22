@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
 import type ApexCharts from 'apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import { NutritionDayRow } from './nutrition-tracking.service';
@@ -9,8 +9,6 @@ import { NutritionDayRow } from './nutrition-tracking.service';
  * shown. The analytics table next to it carries the same numbers for screen readers.
  */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-calorie-chart',
   standalone: true,
   template: `<div #host class="calorie-chart" role="img" [attr.aria-label]="label"></div>`,

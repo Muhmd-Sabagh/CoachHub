@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionAccessComponent } from './subscription-access.component';
 import { Observable, finalize } from 'rxjs';
@@ -17,8 +17,7 @@ import {
  * Administrator edits the platform brand and settings, or any coach's brand, hosts and defaults.
  */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-branding-defaults', standalone: true, imports: [CommonModule, FormsModule, SubscriptionAccessComponent], templateUrl: './branding-defaults.component.html' })
+  selector: 'app-branding-defaults', standalone: true, imports: [CommonModule, FormsModule, SubscriptionAccessComponent], templateUrl: './branding-defaults.component.html' })
 export class BrandingDefaultsComponent implements OnInit {
   readonly isAdmin: boolean;
   readonly images: { kind: BrandImage; label: string }[] = [
@@ -37,17 +36,17 @@ export class BrandingDefaultsComponent implements OnInit {
     { value: 'Epley', label: 'Epley: weight × (1 + reps / 30)' },
     { value: 'Brzycki', label: 'Brzycki: weight × 36 / (37 − reps)' },
   ];
-  coaches: Coach[] = [];
+  readonly coaches = signal<Coach[]>([]);
   /** '' is the platform for administrators; otherwise a coach ID. Coaches always edit their own. */
-  target = '';
-  brand: BrandRecord | null = null;
-  brandForm: BrandInput = emptyBrand();
-  hosts = { subdomain: '', customDomain: '' };
-  defaults: CoachDefaults | null = null;
-  platform: PlatformSettings | null = null;
-  saving = false;
-  error = '';
-  message = '';
+  readonly target = signal('');
+  readonly brand = signal<BrandRecord | null>(null);
+  readonly brandForm = signal<BrandInput>(emptyBrand());
+  readonly hosts = signal({ subdomain: '', customDomain: '' });
+  readonly defaults = signal<CoachDefaults | null>(null);
+  readonly platform = signal<PlatformSettings | null>(null);
+  readonly saving = signal(false);
+  readonly error = signal('');
+  readonly message = signal('');
 
   constructor(
     private readonly data: SettingsService,
@@ -59,33 +58,33 @@ export class BrandingDefaultsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.isAdmin) this.coachDirectory.list({ pageSize: 100, isActive: true }).subscribe(page => (this.coaches = page.items));
+    if (this.isAdmin) this.coachDirectory.list({ pageSize: 100, isActive: true }).subscribe(page => (this.coaches.set(page.items)));
     this.load();
   }
 
   get scope(): Scope {
     if (!this.isAdmin) return { kind: 'coach', coachId: null };
-    return this.target ? { kind: 'coach', coachId: this.target } : { kind: 'platform' };
+    return this.target() ? { kind: 'coach', coachId: this.target() } : { kind: 'platform' };
   }
   get isCoachScope(): boolean { return this.scope.kind === 'coach'; }
-  get weightsTotal(): number { return this.defaults ? weightTotal(this.defaults.adherenceWeights) : 0; }
+  get weightsTotal(): number { const defaults = this.defaults(); return defaults ? weightTotal(defaults.adherenceWeights) : 0; }
 
   load(): void {
-    this.error = ''; this.message = '';
-    this.data.brand(this.scope).subscribe({ next: brand => this.showBrand(brand), error: e => (this.error = apiErrorMessage(e)) });
+    this.error.set(''); this.message.set('');
+    this.data.brand(this.scope).subscribe({ next: brand => this.showBrand(brand), error: e => (this.error.set(apiErrorMessage(e))) });
     const coachId = this.scope.kind === 'coach' ? this.scope.coachId : null;
-    this.defaults = null; this.platform = null;
-    if (this.isCoachScope) this.data.coachDefaults(coachId).subscribe({ next: d => (this.defaults = d), error: e => (this.error = apiErrorMessage(e)) });
-    else this.data.platformSettings().subscribe({ next: p => (this.platform = p), error: e => (this.error = apiErrorMessage(e)) });
+    this.defaults.set(null); this.platform.set(null);
+    if (this.isCoachScope) this.data.coachDefaults(coachId).subscribe({ next: d => (this.defaults.set(d)), error: e => (this.error.set(apiErrorMessage(e))) });
+    else this.data.platformSettings().subscribe({ next: p => (this.platform.set(p)), error: e => (this.error.set(apiErrorMessage(e))) });
   }
 
   saveBrand(): void {
-    this.run(this.data.saveBrand(this.scope, clean(this.brandForm)), brand => { this.showBrand(brand); this.refreshOwnBrand(); return 'Brand saved.'; });
+    this.run(this.data.saveBrand(this.scope, clean(this.brandForm())), brand => { this.showBrand(brand); this.refreshOwnBrand(); return 'Brand saved.'; });
   }
 
   saveHosts(): void {
     if (this.scope.kind !== 'coach' || !this.scope.coachId) return;
-    this.run(this.data.setHosts(this.scope.coachId, this.hosts.subdomain.trim() || null, this.hosts.customDomain.trim() || null),
+    this.run(this.data.setHosts(this.scope.coachId, this.hosts().subdomain.trim() || null, this.hosts().customDomain.trim() || null),
       brand => { this.showBrand(brand); return 'Hosts saved.'; });
   }
 
@@ -102,44 +101,47 @@ export class BrandingDefaultsComponent implements OnInit {
   }
 
   imageUrl(image: BrandImage): string | null {
-    if (!this.brand) return null;
-    const id = image === 'Logo' ? this.brand.logoMediaId : image === 'Favicon' ? this.brand.faviconMediaId : this.brand.defaultAvatarMediaId;
+    const brand = this.brand();
+    if (!brand) return null;
+    const id = image === 'Logo' ? brand.logoMediaId : image === 'Favicon' ? brand.faviconMediaId : brand.defaultAvatarMediaId;
     return this.data.assetUrl(id);
   }
 
   saveDefaults(): void {
-    if (!this.defaults) return;
-    if (this.weightsTotal !== 100) { this.error = 'Adherence weights must add up to 100.'; return; }
+    const defaults = this.defaults();
+    if (!defaults) return;
+    if (this.weightsTotal !== 100) { this.error.set('Adherence weights must add up to 100.'); return; }
     const coachId = this.scope.kind === 'coach' ? this.scope.coachId : null;
-    this.run(this.data.saveCoachDefaults(coachId, this.defaults), saved => { this.defaults = saved; return 'Coaching defaults saved.'; });
+    this.run(this.data.saveCoachDefaults(coachId, defaults), saved => { this.defaults.set(saved); return 'Coaching defaults saved.'; });
   }
 
   savePlatform(): void {
-    if (!this.platform) return;
-    this.run(this.data.savePlatformSettings({ ...this.platform, emailSenderName: this.platform.emailSenderName?.trim() || null }),
-      saved => { this.platform = saved; return 'Platform settings saved.'; });
+    const platform = this.platform();
+    if (!platform) return;
+    this.run(this.data.savePlatformSettings({ ...platform, emailSenderName: platform.emailSenderName?.trim() || null }),
+      saved => { this.platform.set(saved); return 'Platform settings saved.'; });
   }
 
   colorValue(value: string | null, fallback: string): string { return isHexColor(value) ? value : fallback; }
 
   private showBrand(brand: BrandRecord): void {
-    this.brand = brand;
-    this.brandForm = {
+    this.brand.set(brand);
+    this.brandForm.set({
       brandName: brand.brandName, primaryColor: brand.primaryColor, secondaryColor: brand.secondaryColor,
       loginHeadline: brand.loginHeadline, loginMessage: brand.loginMessage, dashboardWelcome: brand.dashboardWelcome,
       emailHeader: brand.emailHeader, emailFooter: brand.emailFooter,
-    };
-    this.hosts = { subdomain: brand.subdomain ?? '', customDomain: brand.customDomain ?? '' };
+    });
+    this.hosts.set({ subdomain: brand.subdomain ?? '', customDomain: brand.customDomain ?? '' });
   }
 
   /** The page itself shows the editor's own brand: refresh it after editing your own or the platform's. */
   private refreshOwnBrand(): void { this.branding.load().subscribe(); }
 
   private run<T>(request: Observable<T>, done: (value: T) => string): void {
-    this.saving = true; this.error = ''; this.message = '';
-    request.pipe(finalize(() => (this.saving = false))).subscribe({
-      next: value => (this.message = done(value)),
-      error: e => (this.error = apiErrorMessage(e)),
+    this.saving.set(true); this.error.set(''); this.message.set('');
+    request.pipe(finalize(() => (this.saving.set(false)))).subscribe({
+      next: value => (this.message.set(done(value))),
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 }

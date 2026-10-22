@@ -21,7 +21,6 @@ import { SearchFilterComponent } from './shared/components/search-filter/search-
 import { StatusBadgeComponent } from './shared/components/status-badge/status-badge.component';
 import { TranslatePipe } from './shared/pipes/translate.pipe';
 import { NotificationBellComponent } from './features/notifications/notification-bell.component';
-import { viewRefreshInterceptor } from './core/http/view-refresh.interceptor';
 @NgModule({
   declarations: [
     App,
@@ -42,7 +41,7 @@ import { viewRefreshInterceptor } from './core/http/view-refresh.interceptor';
   providers: [
     provideBrowserGlobalErrorListeners(),
     // The view refresh runs outermost, after each response's own handlers (P10A: zoneless screens).
-    provideHttpClient(withInterceptors([viewRefreshInterceptor, authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor])),
     // A new tab, or a reload after the access token expired, signs in again from the refresh cookie.
     // Then the brand: the user's coach once signed in, otherwise the host's (D1, §63).
     provideAppInitializer(() => {

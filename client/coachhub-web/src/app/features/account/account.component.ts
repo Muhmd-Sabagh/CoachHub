@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -11,8 +11,6 @@ import { AccountService, MyProfile, PreferredLanguage, UserSession } from './acc
 
 /** My account (§2): personal information, profile picture, password and signed-in devices. Every role. */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-account',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, NotificationPreferencesComponent],
@@ -30,14 +28,14 @@ import { AccountService, MyProfile, PreferredLanguage, UserSession } from './acc
   `],
 })
 export class AccountComponent implements OnInit, OnDestroy {
-  profile: MyProfile | null = null;
-  editor = { displayName: '', phoneNumber: '', preferredLanguage: '' as PreferredLanguage | '' };
-  password = { current: '', next: '', confirm: '' };
-  sessions: UserSession[] = [];
-  avatarUrl: string | null = null;
-  saving = false;
-  error = '';
-  message = '';
+  readonly profile = signal<MyProfile | null>(null);
+  readonly editor = signal({ displayName: '', phoneNumber: '', preferredLanguage: '' as PreferredLanguage | '' });
+  readonly password = signal({ current: '', next: '', confirm: '' });
+  readonly sessions = signal<UserSession[]>([]);
+  readonly avatarUrl = signal<string | null>(null);
+  readonly saving = signal(false);
+  readonly error = signal('');
+  readonly message = signal('');
   readonly backLink: string;
 
   constructor(
@@ -49,7 +47,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.account.profile().subscribe({ next: profile => this.show(profile), error: e => (this.error = apiErrorMessage(e)) });
+    this.account.profile().subscribe({ next: profile => this.show(profile), error: e => (this.error.set(apiErrorMessage(e))) });
     this.loadSessions();
   }
 
@@ -58,30 +56,30 @@ export class AccountComponent implements OnInit, OnDestroy {
   saveProfile(): void {
     this.begin();
     this.account.updateProfile({
-      displayName: this.editor.displayName,
-      phoneNumber: this.editor.phoneNumber.trim() || null,
-      preferredLanguage: this.editor.preferredLanguage || null,
-    }).pipe(finalize(() => (this.saving = false))).subscribe({
+      displayName: this.editor().displayName,
+      phoneNumber: this.editor().phoneNumber.trim() || null,
+      preferredLanguage: this.editor().preferredLanguage || null,
+    }).pipe(finalize(() => (this.saving.set(false)))).subscribe({
       next: profile => {
         this.show(profile);
         this.auth.updateDisplayName(profile.displayName);
         if (profile.preferredLanguage) this.i18n.setLanguage(profile.preferredLanguage);
-        this.message = 'Your details were saved.';
+        this.message.set('Your details were saved.');
       },
-      error: e => (this.error = apiErrorMessage(e)),
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   changePassword(): void {
-    if (this.password.next !== this.password.confirm) { this.error = 'The new passwords do not match.'; return; }
+    if (this.password().next !== this.password().confirm) { this.error.set('The new passwords do not match.'); return; }
     this.begin();
-    this.account.changePassword(this.password.current, this.password.next).pipe(finalize(() => (this.saving = false))).subscribe({
+    this.account.changePassword(this.password().current, this.password().next).pipe(finalize(() => (this.saving.set(false)))).subscribe({
       next: () => {
-        this.password = { current: '', next: '', confirm: '' };
-        this.message = 'Password changed. Your other devices were signed out.';
+        this.password.set({ current: '', next: '', confirm: '' });
+        this.message.set('Password changed. Your other devices were signed out.');
         this.loadSessions();
       },
-      error: e => (this.error = apiErrorMessage(e)),
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
@@ -91,64 +89,65 @@ export class AccountComponent implements OnInit, OnDestroy {
     input.value = '';
     if (!file) return;
     this.begin();
-    this.account.setAvatar(file).pipe(finalize(() => (this.saving = false))).subscribe({
-      next: media => { if (this.profile) this.show({ ...this.profile, avatarMediaId: media.id }); this.message = 'Profile picture updated.'; },
-      error: e => (this.error = apiErrorMessage(e)),
+    this.account.setAvatar(file).pipe(finalize(() => (this.saving.set(false)))).subscribe({
+      next: media => { const profile = this.profile(); if (profile) this.show({ ...profile, avatarMediaId: media.id }); this.message.set('Profile picture updated.'); },
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   removeAvatar(): void {
     this.begin();
-    this.account.removeAvatar().pipe(finalize(() => (this.saving = false))).subscribe({
-      next: () => { if (this.profile) this.show({ ...this.profile, avatarMediaId: null }); this.message = 'Profile picture removed.'; },
-      error: e => (this.error = apiErrorMessage(e)),
+    this.account.removeAvatar().pipe(finalize(() => (this.saving.set(false)))).subscribe({
+      next: () => { const profile = this.profile(); if (profile) this.show({ ...profile, avatarMediaId: null }); this.message.set('Profile picture removed.'); },
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   revoke(session: UserSession): void {
     this.begin();
-    this.account.revokeSession(session.id).pipe(finalize(() => (this.saving = false))).subscribe({
-      next: () => { this.message = 'The device was signed out.'; this.loadSessions(); },
-      error: e => (this.error = apiErrorMessage(e)),
+    this.account.revokeSession(session.id).pipe(finalize(() => (this.saving.set(false)))).subscribe({
+      next: () => { this.message.set('The device was signed out.'); this.loadSessions(); },
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   revokeOthers(): void {
     this.begin();
-    this.account.revokeOtherSessions().pipe(finalize(() => (this.saving = false))).subscribe({
-      next: () => { this.message = 'All other devices were signed out.'; this.loadSessions(); },
-      error: e => (this.error = apiErrorMessage(e)),
+    this.account.revokeOtherSessions().pipe(finalize(() => (this.saving.set(false)))).subscribe({
+      next: () => { this.message.set('All other devices were signed out.'); this.loadSessions(); },
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 
   device(session: UserSession): string { return describeDevice(session.userAgent); }
 
-  get initial(): string { return (this.profile?.displayName || this.profile?.email || '?').charAt(0).toUpperCase(); }
+  get initial(): string { return (this.profile()?.displayName || this.profile()?.email || '?').charAt(0).toUpperCase(); }
 
   private show(profile: MyProfile): void {
-    const avatarChanged = profile.avatarMediaId !== this.profile?.avatarMediaId;
-    this.profile = profile;
-    this.editor = {
+    const avatarChanged = profile.avatarMediaId !== this.profile()?.avatarMediaId;
+    this.profile.set(profile);
+    this.editor.set({
       displayName: profile.displayName,
       phoneNumber: profile.phoneNumber ?? '',
       preferredLanguage: profile.preferredLanguage ?? '',
-    };
-    if (!avatarChanged && this.avatarUrl) return;
+    });
+    if (!avatarChanged && this.avatarUrl()) return;
     this.releaseAvatar();
     if (profile.avatarMediaId) {
-      this.account.mediaObjectUrl(profile.avatarMediaId).subscribe({ next: url => (this.avatarUrl = url), error: () => (this.avatarUrl = null) });
+      this.account.mediaObjectUrl(profile.avatarMediaId).subscribe({ next: url => (this.avatarUrl.set(url)), error: () => (this.avatarUrl.set(null)) });
     }
   }
 
   private loadSessions(): void {
-    this.account.sessions().subscribe({ next: sessions => (this.sessions = sessions), error: e => (this.error = apiErrorMessage(e)) });
+    this.account.sessions().subscribe({ next: sessions => (this.sessions.set(sessions)), error: e => (this.error.set(apiErrorMessage(e))) });
   }
 
-  private begin(): void { this.saving = true; this.error = ''; this.message = ''; }
+  private begin(): void { this.saving.set(true); this.error.set(''); this.message.set(''); }
 
   private releaseAvatar(): void {
-    if (this.avatarUrl) URL.revokeObjectURL(this.avatarUrl);
-    this.avatarUrl = null;
+    const url = this.avatarUrl();
+    if (url) URL.revokeObjectURL(url);
+    this.avatarUrl.set(null);
   }
 }
 

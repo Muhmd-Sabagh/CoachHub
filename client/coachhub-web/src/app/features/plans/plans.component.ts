@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize, forkJoin } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
@@ -38,29 +38,28 @@ import {
 } from './plans.service';
 const id = () => crypto.randomUUID();
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-plans', templateUrl: './plans.component.html', standalone: false })
+  selector: 'app-plans', templateUrl: './plans.component.html', standalone: false })
 export class PlansComponent implements OnInit, OnDestroy {
-  page: PagedResult<SavedPlan> = emptyPage();
-  search = '';
-  clientSearch = '';
-  type = '';
-  loading = false;
-  saving = false;
-  error = '';
-  editorOpen = false;
-  editorType: PlanType = 'Diet';
-  editingId: string | null = null;
-  editor: any = null;
+  readonly page = signal<PagedResult<SavedPlan>>(emptyPage());
+  readonly search = signal('');
+  readonly clientSearch = signal('');
+  readonly type = signal('');
+  readonly loading = signal(false);
+  readonly saving = signal(false);
+  readonly error = signal('');
+  readonly editorOpen = signal(false);
+  readonly editorType = signal<PlanType>('Diet');
+  readonly editingId = signal<string | null>(null);
+  readonly editor = signal<any>(null);
   /** The version shown in the editor; archived versions open read-only (D4). */
-  version: PlanVersion | null = null;
-  currentVersionNumber: number | null = null;
-  history: PlanVersion[] = [];
-  historyOpen = false;
-  clients: Client[] = [];
-  foods: CatalogItem[] = [];
-  exercises: CatalogItem[] = [];
-  pdfUrl: SafeResourceUrl | null = null;
+  readonly version = signal<PlanVersion | null>(null);
+  readonly currentVersionNumber = signal<number | null>(null);
+  readonly history = signal<PlanVersion[]>([]);
+  readonly historyOpen = signal(false);
+  readonly clients = signal<Client[]>([]);
+  readonly foods = signal<CatalogItem[]>([]);
+  readonly exercises = signal<CatalogItem[]>([]);
+  readonly pdfUrl = signal<SafeResourceUrl | null>(null);
   private pdfObjectUrl: string | null = null;
   readonly mealTypes = mealTypes;
   readonly activityLevels: { value: ActivityLevel; label: string }[] = [
@@ -71,15 +70,15 @@ export class PlansComponent implements OnInit, OnDestroy {
     { value: 'ExtraActive', label: 'Extra active' },
   ];
   /** Uses the coach's activity factors, deficit/surplus and g/kg defaults (§14, §49). */
-  calculator = {
+  readonly calculator = signal({
     age: 30,
     sex: 'Male',
     weightKg: 75,
     heightCm: 175,
     activityLevel: 'ModeratelyActive' as ActivityLevel,
     goal: 'Maintain',
-  };
-  targetsMessage = '';
+  });
+  readonly targetsMessage = signal('');
   constructor(
     private data: PlansService,
     private clientData: ClientsService,
@@ -93,9 +92,9 @@ export class PlansComponent implements OnInit, OnDestroy {
       foods: this.catalogs.list('foods', { pageSize: 100, isActive: true }),
       exercises: this.catalogs.list('exercises', { pageSize: 100, isActive: true }),
     }).subscribe((x) => {
-      this.clients = x.clients.items;
-      this.foods = x.foods.items;
-      this.exercises = x.exercises.items;
+      this.clients.set(x.clients.items);
+      this.foods.set(x.foods.items);
+      this.exercises.set(x.exercises.items);
     });
     this.load();
   }
@@ -103,46 +102,46 @@ export class PlansComponent implements OnInit, OnDestroy {
     if (this.pdfObjectUrl) URL.revokeObjectURL(this.pdfObjectUrl);
   }
   load(pageNumber = 1) {
-    this.loading = true;
+    this.loading.set(true);
     this.data
       .list({
         pageNumber,
         pageSize: 10,
-        planName: this.search.trim(),
-        clientName: this.clientSearch.trim(),
-        planType: this.type,
+        planName: this.search().trim(),
+        clientName: this.clientSearch().trim(),
+        planType: this.type(),
       })
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({ next: (x) => (this.page = x), error: (e) => (this.error = apiErrorMessage(e)) });
+      .pipe(finalize(() => (this.loading.set(false))))
+      .subscribe({ next: (x) => (this.page.set(x)), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   reset() {
-    this.search = '';
-    this.clientSearch = '';
-    this.type = '';
+    this.search.set('');
+    this.clientSearch.set('');
+    this.type.set('');
     this.load();
   }
   get readOnly() {
-    return !!this.version?.isReadOnly;
+    return !!this.version()?.isReadOnly;
   }
   create(type: PlanType) {
-    this.editorType = type;
-    this.editingId = null;
-    this.version = null;
-    this.currentVersionNumber = null;
-    this.historyOpen = false;
-    this.editor = type === 'Diet' ? this.newDiet() : this.newWorkout();
-    this.editorOpen = true;
+    this.editorType.set(type);
+    this.editingId.set(null);
+    this.version.set(null);
+    this.currentVersionNumber.set(null);
+    this.historyOpen.set(false);
+    this.editor.set(type === 'Diet' ? this.newDiet() : this.newWorkout());
+    this.editorOpen.set(true);
   }
   edit(p: SavedPlan) {
-    this.editorType = p.planType;
-    this.historyOpen = false;
+    this.editorType.set(p.planType);
+    this.historyOpen.set(false);
     this.data.get(p.planType, p.id).subscribe({
       next: (x) => {
-        this.editingId = p.id;
+        this.editingId.set(p.id);
         this.show(x);
-        this.editorOpen = true;
+        this.editorOpen.set(true);
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   /**
@@ -150,79 +149,85 @@ export class PlansComponent implements OnInit, OnDestroy {
    * it (read-only from then on) and creates the next one. New plans start at version 1.
    */
   save(mode: 'inPlace' | 'newVersion' = 'inPlace') {
+    const editingId = this.editingId();
     if (this.readOnly) return;
     if (this.hasInvalidTempo()) {
-      this.error = 'Write tempo as four numbers, for example 3-1-1-0.';
+      this.error.set('Write tempo as four numbers, for example 3-1-1-0.');
       return;
     }
-    this.saving = true;
-    this.error = '';
+    this.saving.set(true);
+    this.error.set('');
     this.normalizeOrders();
-    const request = !this.editingId
-      ? this.data.create(this.editorType, this.editor)
+    const request = !editingId
+      ? this.data.create(this.editorType(), this.editor())
       : mode === 'newVersion'
-        ? this.data.saveAsNewVersion(this.editorType, this.editingId, this.editor)
-        : this.data.saveInPlace(this.editorType, this.editingId, this.editor);
-    request.pipe(finalize(() => (this.saving = false))).subscribe({
+        ? this.data.saveAsNewVersion(this.editorType(), editingId, this.editor())
+        : this.data.saveInPlace(this.editorType(), editingId, this.editor());
+    request.pipe(finalize(() => (this.saving.set(false)))).subscribe({
       next: () => {
-        this.editorOpen = false;
+        this.editorOpen.set(false);
         this.load();
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   openHistory() {
-    if (!this.editingId) return;
-    this.data.versions(this.editorType, this.editingId).subscribe({
+    const editingId = this.editingId();
+    if (!editingId) return;
+    this.data.versions(this.editorType(), editingId).subscribe({
       next: (x) => {
-        this.history = x;
-        this.historyOpen = true;
+        this.history.set(x);
+        this.historyOpen.set(true);
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   viewVersion(v: PlanVersion) {
-    if (!this.editingId) return;
+    const editingId = this.editingId();
+    if (!editingId) return;
     const request = v.isCurrent
-      ? this.data.get(this.editorType, this.editingId)
-      : this.data.version(this.editorType, this.editingId, v.versionNumber);
+      ? this.data.get(this.editorType(), editingId)
+      : this.data.version(this.editorType(), editingId, v.versionNumber);
     request.subscribe({
       next: (x) => {
         this.show(x);
-        this.historyOpen = false;
+        this.historyOpen.set(false);
       },
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   backToCurrent() {
-    if (!this.editingId) return;
-    this.data.get(this.editorType, this.editingId).subscribe({
+    const editingId = this.editingId();
+    if (!editingId) return;
+    this.data.get(this.editorType(), editingId).subscribe({
       next: (x) => this.show(x),
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   /** Brings an archived version back as the next version; the archive itself stays untouched. */
   restoreAsNewVersion() {
-    if (!this.editingId || !this.version?.isReadOnly) return;
-    this.saving = true;
+    const editingId = this.editingId();
+    if (!editingId || !this.version()?.isReadOnly) return;
+    this.saving.set(true);
     this.data
-      .saveAsNewVersion(this.editorType, this.editingId, { ...this.editor, status: 'Active' })
-      .pipe(finalize(() => (this.saving = false)))
+      .saveAsNewVersion(this.editorType(), editingId, { ...this.editor(), status: 'Active' })
+      .pipe(finalize(() => (this.saving.set(false))))
       .subscribe({
         next: (x) => {
           this.show(x);
           this.load();
         },
-        error: (e) => (this.error = apiErrorMessage(e)),
+        error: (e) => (this.error.set(apiErrorMessage(e))),
       });
   }
   previewVersion(v: PlanVersion, language = 'English') {
-    if (this.editingId) this.openPdf(this.editorType, this.editingId, language, v.versionNumber);
+    const editingId = this.editingId();
+    if (editingId) this.openPdf(this.editorType(), editingId, language, v.versionNumber);
   }
   private show(plan: any) {
-    this.editor = toEditorInput(plan);
-    this.version = plan.revision ?? null;
-    this.currentVersionNumber = plan.currentVersionNumber ?? null;
+    this.editor.set(toEditorInput(plan));
+    this.version.set(plan.revision ?? null);
+    this.currentVersionNumber.set(plan.currentVersionNumber ?? null);
   }
   copy(p: SavedPlan) {
     const name = prompt('Copy name', `${p.nameEn} Copy`);
@@ -244,7 +249,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     if (confirm(`Delete ${p.nameEn}?`))
       this.data
         .delete(p.planType, p.id)
-        .subscribe({ next: () => this.load(), error: (e) => (this.error = apiErrorMessage(e)) });
+        .subscribe({ next: () => this.load(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   preview(p: SavedPlan, language = 'English') {
     this.openPdf(p.planType, p.id, language);
@@ -253,7 +258,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     this.data.pdf(type, planId, 'preview', language, version).subscribe((blob) => {
       if (this.pdfObjectUrl) URL.revokeObjectURL(this.pdfObjectUrl);
       this.pdfObjectUrl = URL.createObjectURL(blob);
-      this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfObjectUrl);
+      this.pdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfObjectUrl));
     });
   }
   download(p: SavedPlan, language = 'English') {
@@ -266,27 +271,27 @@ export class PlansComponent implements OnInit, OnDestroy {
     });
   }
   closePdf() {
-    this.pdfUrl = null;
+    this.pdfUrl.set(null);
     if (this.pdfObjectUrl) {
       URL.revokeObjectURL(this.pdfObjectUrl);
       this.pdfObjectUrl = null;
     }
   }
   calculate() {
-    this.data.calculate(this.calculator).subscribe({
+    this.data.calculate(this.calculator()).subscribe({
       next: (x) => this.calc.result.set(x),
-      error: (e) => (this.error = apiErrorMessage(e)),
+      error: (e) => (this.error.set(apiErrorMessage(e))),
     });
   }
   addNote() {
-    this.editor.notes.push({ id: id(), text: '', order: this.editor.notes.length, isActive: true });
+    this.editor().notes.push({ id: id(), text: '', order: this.editor().notes.length, isActive: true });
   }
   addVariant() {
-    this.editor.variants.push({
+    this.editor().variants.push({
       id: id(),
       nameEn: 'Plan variant',
       nameAr: null,
-      order: this.editor.variants.length,
+      order: this.editor().variants.length,
       isActiveForPdf: true,
       notes: null,
       meals: [this.newMeal()],
@@ -314,7 +319,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     if (food) row.quantity = food.servingSize;
   }
   food(foodId: string | null | undefined): NutritionFood | undefined {
-    return this.foods.find((x) => x.id === foodId) as NutritionFood | undefined;
+    return this.foods().find((x) => x.id === foodId) as NutritionFood | undefined;
   }
   // Live totals (§6): recomputed as quantities change; the server's totals win on save.
   rowTotals(row: any): NutritionTotals {
@@ -349,7 +354,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     return variant.meals.find((m: any) => m.id === group.targetMealId)?.foodItems ?? [];
   }
   foodName(foodId: string): string {
-    return this.foods.find((x) => x.id === foodId)?.nameEn ?? 'Food';
+    return this.foods().find((x) => x.id === foodId)?.nameEn ?? 'Food';
   }
   variantTotals(variant: any): NutritionTotals {
     return sumTotals(variant.meals.map((meal: any) => this.mealTotals(meal)));
@@ -361,25 +366,25 @@ export class PlansComponent implements OnInit, OnDestroy {
     return difference(planned, target);
   }
   targetMacroCalories(): number {
-    const t = this.editor?.targets ?? {};
+    const t = this.editor()?.targets ?? {};
     return macroCalories(t.protein ?? 0, t.carbohydrates ?? 0, t.fat ?? 0);
   }
   /** Fills the version's targets from the assigned client's profile and macro mode (§4, §14, §15). */
   useClientTargets() {
-    if (!this.editor?.clientId) return;
-    this.targetsMessage = '';
-    this.data.clientTargets(this.editor.clientId).subscribe({
+    if (!this.editor()?.clientId) return;
+    this.targetsMessage.set('');
+    this.data.clientTargets(this.editor().clientId).subscribe({
       next: (x) => {
-        this.editor.targets = {
-          ...(this.editor.targets ?? {}),
+        this.editor().targets = {
+          ...(this.editor().targets ?? {}),
           calories: x.goalCalories,
           protein: x.protein,
           carbohydrates: x.carbohydrates,
           fat: x.fat,
         };
-        this.targetsMessage = `From the profile: TDEE ${x.maintenanceCalories} kcal, ${x.adjustmentPercent}% for the goal.`;
+        this.targetsMessage.set(`From the profile: TDEE ${x.maintenanceCalories} kcal, ${x.adjustmentPercent}% for the goal.`);
       },
-      error: (e) => (this.targetsMessage = apiErrorMessage(e)),
+      error: (e) => (this.targetsMessage.set(apiErrorMessage(e))),
     });
   }
   addReplacement(v: any) {
@@ -409,13 +414,13 @@ export class PlansComponent implements OnInit, OnDestroy {
     });
   }
   addDay() {
-    this.editor.days.push({
+    this.editor().days.push({
       id: id(),
-      nameEn: `Day ${this.editor.days.length + 1}`,
+      nameEn: `Day ${this.editor().days.length + 1}`,
       nameAr: null,
       subtitle: null,
       notes: null,
-      order: this.editor.days.length,
+      order: this.editor().days.length,
       exercises: [],
       setGroups: [],
     });
@@ -473,7 +478,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     if (tempo !== undefined) s.tempo = tempo;
   }
   hasInvalidTempo(): boolean {
-    return this.editorType === 'Workout' && (this.editor?.days ?? []).some((d: any) =>
+    return this.editorType() === 'Workout' && (this.editor()?.days ?? []).some((d: any) =>
       d.exercises.some((e: any) => (e.sets ?? []).some((s: PrescribedSet & { tempoInvalid?: boolean }) => s.tempoInvalid)));
   }
   removeFrom(items: any[], index: number) {
@@ -490,11 +495,11 @@ export class PlansComponent implements OnInit, OnDestroy {
   }
   private normalizeOrders() {
     // An empty date input yields '', which is not a date; an open program end is null.
-    this.editor.startDate ||= null;
-    this.editor.endDate ||= null;
-    this.editor.notes.forEach((x: any, i: number) => (x.order = i));
-    if (this.editorType === 'Diet')
-      this.editor.variants.forEach((v: any, vi: number) => {
+    this.editor().startDate ||= null;
+    this.editor().endDate ||= null;
+    this.editor().notes.forEach((x: any, i: number) => (x.order = i));
+    if (this.editorType() === 'Diet')
+      this.editor().variants.forEach((v: any, vi: number) => {
         v.order = vi;
         v.meals.forEach((m: any, mi: number) => {
           m.order = mi;
@@ -507,7 +512,7 @@ export class PlansComponent implements OnInit, OnDestroy {
         });
       });
     else
-      this.editor.days.forEach((d: any, di: number) => {
+      this.editor().days.forEach((d: any, di: number) => {
         d.order = di;
         d.exercises.forEach((e: any, ei: number) => {
           e.order = ei;

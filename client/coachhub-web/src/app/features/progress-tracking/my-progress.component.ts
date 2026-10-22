@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
@@ -22,8 +22,6 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
  * sleep, steps and water against the coach's targets.
  */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-my-progress',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent, ClientReportsComponent],
@@ -81,16 +79,16 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
           <label><span>Day</span><input type="date" [(ngModel)]="date" name="bodyDate" [max]="tomorrow" /></label>
           <div class="entry-row">
             <label><span>Weight (kg)</span><input type="number" inputmode="decimal" min="20" max="400" step="0.1" [(ngModel)]="weightKg" name="weightKg" /></label>
-            <button class="button button-primary" type="button" [disabled]="busy() || !weightKg" (click)="saveWeight()">Save weight</button>
+            <button class="button button-primary" type="button" [disabled]="busy() || !weightKg()" (click)="saveWeight()">Save weight</button>
           </div>
           <div class="entry-row">
             <label><span>Body fat (%)</span><input type="number" inputmode="decimal" min="2" max="75" step="0.1" [(ngModel)]="bodyFat" name="bodyFat" /></label>
-            <button class="button button-secondary" type="button" [disabled]="busy() || !bodyFat" (click)="saveBodyFat()">Save body fat</button>
+            <button class="button button-secondary" type="button" [disabled]="busy() || !bodyFat()" (click)="saveBodyFat()">Save body fat</button>
           </div>
           <small class="muted">{{ notice }}</small>
           <fieldset class="sites"><legend>Measurements (cm)</legend>
             @for (site of sites; track site) {
-              <label><span>{{ site }}</span><input type="number" inputmode="decimal" min="5" max="300" step="0.1" [(ngModel)]="measurements[site]" [name]="'m' + site" /></label>
+              <label><span>{{ site }}</span><input type="number" inputmode="decimal" min="5" max="300" step="0.1" [(ngModel)]="measurements()[site]" [name]="'m' + site" /></label>
             }
           </fieldset>
           <button class="button button-secondary" type="button" [disabled]="busy() || !hasMeasurements()" (click)="saveMeasurements()">Save measurements</button>
@@ -131,13 +129,13 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
               <thead><tr><th>Site</th><th>Starting</th><th>Current</th><th>Difference</th></tr></thead>
               <tbody>
                 @for (m of b.measurements; track m.site) {
-                  <tr [class.chosen]="m.site === chartSite" (click)="chartSite = m.site"><td>{{ m.site }}</td>
+                  <tr [class.chosen]="m.site === chartSite()" (click)="chartSite.set(m.site)"><td>{{ m.site }}</td>
                     <td>{{ m.summary.start?.value ?? '–' }}</td><td>{{ m.summary.current?.value ?? '–' }}</td><td>{{ change(m.summary, 'cm') }}</td></tr>
                 }
               </tbody>
             </table></div>
             @if (siteSeries(b); as s) {
-              @if (s.entries.length) { <app-trend-chart [points]="s.entries" [series]="chartSite" unit="cm" [label]="chartSite + ' measurement trend'" /> }
+              @if (s.entries.length) { <app-trend-chart [points]="s.entries" [series]="chartSite()" unit="cm" [label]="chartSite() + ' measurement trend'" /> }
             }
           </section>
         } @else if (loading()) { <p class="table-message">Loading…</p> }
@@ -149,10 +147,10 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
           <div class="entry-row">
             <label><span>Day</span><input type="date" [(ngModel)]="photoDate" name="photoDate" [max]="tomorrow" /></label>
             <label><span>Pose</span><select [(ngModel)]="pose" name="pose">@for (p of poses; track p) { <option [ngValue]="p">{{ p }}</option> }</select></label>
-            @if (pose === 'Custom') { <label><span>Label</span><input [(ngModel)]="poseLabel" name="poseLabel" maxlength="50" /></label> }
+            @if (pose() === 'Custom') { <label><span>Label</span><input [(ngModel)]="poseLabel" name="poseLabel" maxlength="50" /></label> }
           </div>
           <label class="file"><span>Photo</span><input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" (change)="pick($event)" /></label>
-          <button class="button button-primary" type="button" [disabled]="busy() || !file" (click)="upload()">Upload</button>
+          <button class="button button-primary" type="button" [disabled]="busy() || !file()" (click)="upload()">Upload</button>
           <small class="muted">Only you and your coach can see your photos.</small>
         </section>
         <section class="card workbench"><app-photo-compare [photos]="photos()" [deletable]="true" (deleted)="deletePhoto($event)" /></section>
@@ -176,7 +174,7 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
                   <button class="button button-secondary" type="button" [disabled]="busy()" (click)="addWater(250)">+250 ml</button>
                   <button class="button button-secondary" type="button" [disabled]="busy()" (click)="addWater(500)">+500 ml</button>
                   <input type="number" min="1" max="10000" [(ngModel)]="waterMl" name="waterMl" aria-label="Water in ml" />
-                  <button class="button button-secondary" type="button" [disabled]="busy() || !waterMl" (click)="addWater(waterMl!)">Add</button>
+                  <button class="button button-secondary" type="button" [disabled]="busy() || !waterMl()" (click)="addWater(waterMl()!)">Add</button>
                 </div>
                 <ul class="plain-list">
                   @for (w of day.water; track w.id) {
@@ -189,14 +187,14 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
           }
           <div class="entry-row">
             <label><span>Steps</span><input type="number" inputmode="numeric" min="0" max="200000" [(ngModel)]="steps" name="steps" /></label>
-            <button class="button button-primary" type="button" [disabled]="busy() || steps === null" (click)="saveSteps()">Save steps</button>
+            <button class="button button-primary" type="button" [disabled]="busy() || steps() === null" (click)="saveSteps()">Save steps</button>
           </div>
           <div class="entry-row">
             <label><span>Bedtime</span><input type="time" [(ngModel)]="bedtime" name="bedtime" /></label>
             <label><span>Wake time</span><input type="time" [(ngModel)]="wakeTime" name="wakeTime" /></label>
             <label><span>Or hours</span><input type="number" min="0" max="24" step="0.25" [(ngModel)]="sleepHours" name="sleepHours" /></label>
             <label><span>Quality (1–5)</span><input type="number" min="1" max="5" [(ngModel)]="sleepQuality" name="sleepQuality" /></label>
-            <button class="button button-primary" type="button" [disabled]="busy() || !(sleepHours || (bedtime && wakeTime))" (click)="saveSleep()">Save sleep</button>
+            <button class="button button-primary" type="button" [disabled]="busy() || !(sleepHours() || (bedtime() && wakeTime()))" (click)="saveSleep()">Save sleep</button>
           </div>
         </section>
         @if (lifestyle(); as l) {
@@ -270,21 +268,21 @@ export class MyProgressComponent implements OnInit {
   readonly error = signal('');
   readonly message = signal('');
 
-  date = this.today;
-  weightKg: number | null = null;
-  bodyFat: number | null = null;
-  measurements: Partial<Record<MeasurementSite, number | null>> = {};
-  chartSite: MeasurementSite = 'Waist';
-  photoDate = this.today;
-  pose: PhotoPose = 'Front';
-  poseLabel = '';
-  file: File | null = null;
-  steps: number | null = null;
-  bedtime = '';
-  wakeTime = '';
-  sleepHours: number | null = null;
-  sleepQuality: number | null = null;
-  waterMl: number | null = null;
+  readonly date = signal(this.today);
+  readonly weightKg = signal<number | null>(null);
+  readonly bodyFat = signal<number | null>(null);
+  readonly measurements = signal<Partial<Record<MeasurementSite, number | null>>>({});
+  readonly chartSite = signal<MeasurementSite>('Waist');
+  readonly photoDate = signal(this.today);
+  readonly pose = signal<PhotoPose>('Front');
+  readonly poseLabel = signal('');
+  readonly file = signal<File | null>(null);
+  readonly steps = signal<number | null>(null);
+  readonly bedtime = signal('');
+  readonly wakeTime = signal('');
+  readonly sleepHours = signal<number | null>(null);
+  readonly sleepQuality = signal<number | null>(null);
+  readonly waterMl = signal<number | null>(null);
 
   constructor(private readonly api: ProgressTrackingService) {}
 
@@ -302,15 +300,15 @@ export class MyProgressComponent implements OnInit {
   }
 
   hasMeasurements(): boolean {
-    return Object.values(this.measurements).some(x => x !== null && x !== undefined);
+    return Object.values(this.measurements()).some(x => x !== null && x !== undefined);
   }
 
   siteSeries(body: BodyProgress) {
-    return body.measurements.find(x => x.site === this.chartSite) ?? null;
+    return body.measurements.find(x => x.site === this.chartSite()) ?? null;
   }
 
   saveWeight(): void {
-    this.save(this.api.setWeight(this.date, this.weightKg!), 'Weight saved.', () => this.loadBody());
+    this.save(this.api.setWeight(this.date(), this.weightKg()!), 'Weight saved.', () => this.loadBody());
   }
 
   deleteWeight(date: string): void {
@@ -318,23 +316,24 @@ export class MyProgressComponent implements OnInit {
   }
 
   saveBodyFat(): void {
-    this.save(this.api.setBodyFat(this.date, this.bodyFat!), 'Body fat saved.', () => this.loadBody());
+    this.save(this.api.setBodyFat(this.date(), this.bodyFat()!), 'Body fat saved.', () => this.loadBody());
   }
 
   saveMeasurements(): void {
-    const values = this.sites.filter(site => this.measurements[site] !== null && this.measurements[site] !== undefined)
-      .map(site => ({ site, valueCm: this.measurements[site]! }));
-    this.save(this.api.setMeasurements(this.date, values), 'Measurements saved.', () => { this.measurements = {}; this.loadBody(); });
+    const values = this.sites.filter(site => this.measurements()[site] !== null && this.measurements()[site] !== undefined)
+      .map(site => ({ site, valueCm: this.measurements()[site]! }));
+    this.save(this.api.setMeasurements(this.date(), values), 'Measurements saved.', () => { this.measurements.set({}); this.loadBody(); });
   }
 
   pick(event: Event): void {
-    this.file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    this.file.set((event.target as HTMLInputElement).files?.[0] ?? null);
   }
 
   upload(): void {
-    if (!this.file) return;
-    this.save(this.api.uploadPhoto(this.file, this.photoDate, this.pose, this.pose === 'Custom' ? this.poseLabel : null), 'Photo added.', () => {
-      this.file = null;
+    const file = this.file();
+    if (!file) return;
+    this.save(this.api.uploadPhoto(file, this.photoDate(), this.pose(), this.pose() === 'Custom' ? this.poseLabel() : null), 'Photo added.', () => {
+      this.file.set(null);
       this.open('photos');
     });
   }
@@ -344,7 +343,7 @@ export class MyProgressComponent implements OnInit {
   }
 
   dayOf(lifestyle: Lifestyle) {
-    return lifestyle.days.find(x => x.date === this.date) ?? null;
+    return lifestyle.days.find(x => x.date === this.date()) ?? null;
   }
 
   remaining(target: number, consumed: number): number {
@@ -352,7 +351,7 @@ export class MyProgressComponent implements OnInit {
   }
 
   addWater(ml: number): void {
-    this.save(this.api.addWater(this.date, ml), '', () => { this.waterMl = null; this.loadLifestyle(); });
+    this.save(this.api.addWater(this.date(), ml), '', () => { this.waterMl.set(null); this.loadLifestyle(); });
   }
 
   deleteWater(id: string): void {
@@ -360,14 +359,14 @@ export class MyProgressComponent implements OnInit {
   }
 
   saveSteps(): void {
-    this.save(this.api.setSteps(this.date, this.steps!), 'Steps saved.', () => this.loadLifestyle());
+    this.save(this.api.setSteps(this.date(), this.steps()!), 'Steps saved.', () => this.loadLifestyle());
   }
 
   saveSleep(): void {
-    const times = this.bedtime && this.wakeTime;
-    this.save(this.api.setSleep(this.date, {
-      hours: this.sleepHours || null, quality: this.sleepQuality || null,
-      bedtime: times ? this.bedtime : null, wakeTime: times ? this.wakeTime : null,
+    const times = this.bedtime() && this.wakeTime();
+    this.save(this.api.setSleep(this.date(), {
+      hours: this.sleepHours() || null, quality: this.sleepQuality() || null,
+      bedtime: times ? this.bedtime() : null, wakeTime: times ? this.wakeTime() : null,
     }), 'Sleep saved.', () => this.loadLifestyle());
   }
 
@@ -376,15 +375,15 @@ export class MyProgressComponent implements OnInit {
   waterPoints(l: Lifestyle) { return l.days.map(x => ({ date: x.date, value: x.waterMl || null })); }
 
   loadLifestyle(): void {
-    const to = this.date > this.today ? this.date : this.today;
+    const to = this.date() > this.today ? this.date() : this.today;
     this.load(this.api.lifestyle(addDays(to, -13), to), l => {
       this.lifestyle.set(l);
-      const day = l.days.find(x => x.date === this.date);
-      this.steps = day?.steps?.steps ?? null;
-      this.sleepHours = day?.sleep?.hours ?? null;
-      this.sleepQuality = day?.sleep?.quality ?? null;
-      this.bedtime = day?.sleep?.bedtime?.slice(0, 5) ?? '';
-      this.wakeTime = day?.sleep?.wakeTime?.slice(0, 5) ?? '';
+      const day = l.days.find(x => x.date === this.date());
+      this.steps.set(day?.steps?.steps ?? null);
+      this.sleepHours.set(day?.sleep?.hours ?? null);
+      this.sleepQuality.set(day?.sleep?.quality ?? null);
+      this.bedtime.set(day?.sleep?.bedtime?.slice(0, 5) ?? '');
+      this.wakeTime.set(day?.sleep?.wakeTime?.slice(0, 5) ?? '');
     });
   }
 

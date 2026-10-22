@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
@@ -7,25 +7,23 @@ import { apiErrorMessage } from '../../shared/services/api-error';
 import { AuditRecord, AuditService } from './audit.service';
 
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-audit',
   templateUrl: './audit.component.html',
   standalone: true,
   imports: [CommonModule, FormsModule],
 })
 export class AuditComponent implements OnInit {
-  page: PagedResult<AuditRecord> = emptyPage();
-  search = '';
-  entityType = '';
-  clientId = '';
-  operation = '';
-  expanded: string | null = null;
-  actorKind = '';
-  occurredFrom = '';
-  occurredTo = '';
-  loading = false;
-  error = '';
+  readonly page = signal<PagedResult<AuditRecord>>(emptyPage());
+  readonly search = signal('');
+  readonly entityType = signal('');
+  readonly clientId = signal('');
+  readonly operation = signal('');
+  readonly expanded = signal<string | null>(null);
+  readonly actorKind = signal('');
+  readonly occurredFrom = signal('');
+  readonly occurredTo = signal('');
+  readonly loading = signal(false);
+  readonly error = signal('');
 
   private applied = this.filters();
 
@@ -41,33 +39,33 @@ export class AuditComponent implements OnInit {
   }
 
   reset(): void {
-    this.search = '';
-    this.entityType = '';
-    this.clientId = '';
-    this.operation = '';
-    this.actorKind = '';
-    this.occurredFrom = '';
-    this.occurredTo = '';
+    this.search.set('');
+    this.entityType.set('');
+    this.clientId.set('');
+    this.operation.set('');
+    this.actorKind.set('');
+    this.occurredFrom.set('');
+    this.occurredTo.set('');
     this.applySearch();
   }
 
-  load(pageNumber = this.page.pageNumber): void {
-    this.loading = true;
-    this.error = '';
+  load(pageNumber = this.page().pageNumber): void {
+    this.loading.set(true);
+    this.error.set('');
     this.data.list({ pageNumber, pageSize: 20, ...this.applied })
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.loading.set(false))))
       .subscribe({
-        next: (page) => (this.page = page),
-        error: (error) => (this.error = apiErrorMessage(error)),
+        next: (page) => (this.page.set(page)),
+        error: (error) => (this.error.set(apiErrorMessage(error))),
       });
   }
 
   previous(): void {
-    if (this.page.pageNumber > 1) this.load(this.page.pageNumber - 1);
+    if (this.page().pageNumber > 1) this.load(this.page().pageNumber - 1);
   }
 
   next(): void {
-    if (this.page.pageNumber < this.page.totalPages) this.load(this.page.pageNumber + 1);
+    if (this.page().pageNumber < this.page().totalPages) this.load(this.page().pageNumber + 1);
   }
 
   actor(record: AuditRecord): string {
@@ -76,12 +74,12 @@ export class AuditComponent implements OnInit {
   }
 
   toggle(record: AuditRecord): void {
-    this.expanded = this.expanded === record.id ? null : record.id;
+    this.expanded.set(this.expanded() === record.id ? null : record.id);
   }
 
   /** Shows only this client's history (§58: the affected client). */
   showClient(clientId: string): void {
-    this.clientId = clientId;
+    this.clientId.set(clientId);
     this.applySearch();
   }
 
@@ -89,13 +87,13 @@ export class AuditComponent implements OnInit {
 
   private filters() {
     return {
-      searchTerm: this.search.trim() || undefined,
-      entityType: this.entityType || undefined,
-      clientId: this.clientId.trim() || undefined,
-      operation: this.operation || undefined,
-      actorKind: this.actorKind || undefined,
-      occurredFrom: this.occurredFrom || undefined,
-      occurredTo: this.occurredTo || undefined,
+      searchTerm: this.search().trim() || undefined,
+      entityType: this.entityType() || undefined,
+      clientId: this.clientId().trim() || undefined,
+      operation: this.operation() || undefined,
+      actorKind: this.actorKind() || undefined,
+      occurredFrom: this.occurredFrom() || undefined,
+      occurredTo: this.occurredTo() || undefined,
     };
   }
 }

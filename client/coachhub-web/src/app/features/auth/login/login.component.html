@@ -17,10 +17,10 @@
       <p class="muted">{{ 'auth.subtitle' | translate }}</p>
       <label><span>{{ 'auth.login' | translate }}</span><input type="text" formControlName="login" autocomplete="username" /></label>
       <label><span>{{ 'auth.password' | translate }}</span><span class="password-field"><input [type]="showPassword ? 'text' : 'password'" formControlName="password" autocomplete="current-password" /><button type="button" (click)="showPassword = !showPassword" [attr.aria-label]="'auth.togglePassword' | translate">{{ showPassword ? 'Hide' : 'Show' }}</button></span></label>
-      @if (failed) { <p class="form-error" role="alert">{{ 'auth.error' | translate }}</p> }
+      @if (failed()) { <p class="form-error" role="alert">{{ 'auth.error' | translate }}</p> }
       <a routerLink="/forgot-password">Forgot password?</a>
-      <button class="button button-primary button-block" type="submit" [disabled]="submitting">
-        {{ (submitting ? 'auth.signingIn' : 'auth.signIn') | translate }}
+      <button class="button button-primary button-block" type="submit" [disabled]="submitting()">
+        {{ (submitting() ? 'auth.signingIn' : 'auth.signIn') | translate }}
       </button>
     </form>
   </section>

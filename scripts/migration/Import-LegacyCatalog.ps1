@@ -43,7 +43,7 @@ function Upload-Media([string] $folder, [string] $imagePath) {
     $fileContent.Headers.ContentType=New-Object System.Net.Http.Headers.MediaTypeHeaderValue((Content-Type $name))
     $multipart.Add($fileContent,'file',$name)
     try {
-        $response=$client.PostAsync("$ApiBaseUrl/api/media",$multipart).GetAwaiter().GetResult(); $text=$response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        $response=$client.PostAsync("$ApiBaseUrl/api/v1/media",$multipart).GetAwaiter().GetResult(); $text=$response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
         if(-not $response.IsSuccessStatusCode){throw "Media upload failed for $name`: HTTP $([int]$response.StatusCode) $text"}
         return ($text | ConvertFrom-Json).id
     } finally { $multipart.Dispose(); $fileContent.Dispose(); $stream.Dispose() }
@@ -51,7 +51,7 @@ function Upload-Media([string] $folder, [string] $imagePath) {
 
 $receipt=[ordered]@{schemaVersion=1;startedAtUtc=[DateTimeOffset]::UtcNow.ToString('O');apiBaseUrl=$ApiBaseUrl;items=@()}
 if(Test-Path -LiteralPath $ReceiptPath){$existing=Get-Content -Raw -Encoding utf8 -LiteralPath $ReceiptPath | ConvertFrom-Json; foreach($item in $existing.items){$receipt.items += $item}}
-foreach($catalog in @([ordered]@{name='food';file='foods.import.json';folder='FoodItems';endpoint='api/nutrition/foods/legacy-import'},[ordered]@{name='exercise';file='exercises.import.json';folder='Exercises';endpoint='api/training/exercises/legacy-import'})) {
+foreach($catalog in @([ordered]@{name='food';file='foods.import.json';folder='FoodItems';endpoint='api/v1/nutrition/foods/legacy-import'},[ordered]@{name='exercise';file='exercises.import.json';folder='Exercises';endpoint='api/v1/training/exercises/legacy-import'})) {
     $rows=Get-Content -Raw -Encoding utf8 -LiteralPath (Join-Path $ExportRoot $catalog.file) | ConvertFrom-Json
     foreach($row in $rows) {
         if(@($receipt.items | Where-Object {$_.catalog -eq $catalog.name -and $_.legacyId -eq $row.legacyId -and $_.status -in @('Imported','AlreadyImported')}).Count -gt 0){continue}

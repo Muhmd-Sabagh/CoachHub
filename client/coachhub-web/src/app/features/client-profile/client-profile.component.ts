@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
@@ -28,8 +28,7 @@ interface TabItem { id: Tab; label: string; arrivesIn?: string; }
 
 /** Everything about one client in one place (§40), starting with the structured profile (§3). */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager, selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent, ClientTestsComponent, ChatThreadComponent, ClientFilesComponent, CoachCalendarComponent, ClientReportsComponent], templateUrl: './client-profile.component.html' })
+  selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent, ClientTestsComponent, ChatThreadComponent, ClientFilesComponent, CoachCalendarComponent, ClientReportsComponent], templateUrl: './client-profile.component.html' })
 export class ClientProfileComponent implements OnInit {
   readonly tabs: TabItem[] = [
     { id: 'overview', label: 'Overview' }, { id: 'profile', label: 'Profile' },
@@ -44,28 +43,28 @@ export class ClientProfileComponent implements OnInit {
   readonly goals = ['LoseFat', 'BuildMuscle', 'Recomposition', 'Maintain', 'Performance', 'GeneralHealth'];
   readonly activityLevels = ['Sedentary', 'LightlyActive', 'ModeratelyActive', 'VeryActive', 'ExtraActive'];
   readonly locations = ['Gym', 'Home', 'Outdoor', 'Mixed'];
-  tab: Tab = 'overview';
-  id = '';
-  detail: ClientDetail | null = null;
-  profile: ClientProfile | null = null;
-  form: ClientProfileInput | null = null;
-  equipment: ReferenceRecord[] = [];
-  chosenEquipment = new Set<string>();
-  preferred: NamedReference[] = [];
-  disliked: NamedReference[] = [];
-  foodSearch = '';
-  foodResults: NamedReference[] = [];
-  submissions: SubmissionSummary[] = [];
-  statusChoice: ClientStatus = 'NeedsReview';
-  statusUntil = '';
-  saving = false;
-  error = '';
-  message = '';
+  readonly tab = signal<Tab>('overview');
+  readonly id = signal('');
+  readonly detail = signal<ClientDetail | null>(null);
+  readonly profile = signal<ClientProfile | null>(null);
+  readonly form = signal<ClientProfileInput | null>(null);
+  readonly equipment = signal<ReferenceRecord[]>([]);
+  readonly chosenEquipment = signal(new Set<string>());
+  readonly preferred = signal<NamedReference[]>([]);
+  readonly disliked = signal<NamedReference[]>([]);
+  readonly foodSearch = signal('');
+  readonly foodResults = signal<NamedReference[]>([]);
+  readonly submissions = signal<SubmissionSummary[]>([]);
+  readonly statusChoice = signal<ClientStatus>('NeedsReview');
+  readonly statusUntil = signal('');
+  readonly saving = signal(false);
+  readonly error = signal('');
+  readonly message = signal('');
   /** '' means the coach's defaults (§15). */
-  macroMode: '' | MacroMode = '';
-  macro = emptyMacro();
-  targets: EnergyTargets | null = null;
-  targetsError = '';
+  readonly macroMode = signal<'' | MacroMode>('');
+  readonly macro = signal(emptyMacro());
+  readonly targets = signal<EnergyTargets | null>(null);
+  readonly targetsError = signal('');
 
   constructor(
     route: ActivatedRoute,
@@ -75,97 +74,100 @@ export class ClientProfileComponent implements OnInit {
     private readonly assessments: AssessmentsService,
     private readonly plans: PlansService,
   ) {
-    this.id = route.snapshot.paramMap.get('id') ?? '';
+    this.id.set(route.snapshot.paramMap.get('id') ?? '');
   }
 
   ngOnInit(): void {
     this.loadDetail();
-    this.clients.profile(this.id).subscribe({ next: profile => this.showProfile(profile), error: e => (this.error = apiErrorMessage(e)) });
-    this.references.list('equipment', { pageSize: 100, isActive: true }).subscribe(page => (this.equipment = page.items));
-    this.assessments.listSubmissions({ clientId: this.id, pageSize: 50 }).subscribe(page => (this.submissions = page.items));
+    this.clients.profile(this.id()).subscribe({ next: profile => this.showProfile(profile), error: e => (this.error.set(apiErrorMessage(e))) });
+    this.references.list('equipment', { pageSize: 100, isActive: true }).subscribe(page => (this.equipment.set(page.items)));
+    this.assessments.listSubmissions({ clientId: this.id(), pageSize: 50 }).subscribe(page => (this.submissions.set(page.items)));
   }
 
-  open(tab: Tab): void { this.tab = tab; this.message = ''; }
+  open(tab: Tab): void { this.tab.set(tab); this.message.set(''); }
   arrivesIn(tab: Tab): string | undefined { return this.tabs.find(item => item.id === tab)?.arrivesIn; }
 
   invite(): void {
-    this.run(this.clients.invite(this.id), account => {
-      if (this.detail) this.detail = { ...this.detail, account };
+    this.run(this.clients.invite(this.id()), account => {
+      this.detail.update(detail => detail && { ...detail, account });
       return 'Invitation sent. The link is valid for 7 days.';
     });
   }
 
   setStatus(): void {
-    this.run(this.clients.setStatus(this.id, this.statusChoice, this.statusUntil || null), client => {
-      if (this.detail) this.detail = { ...this.detail, client };
+    this.run(this.clients.setStatus(this.id(), this.statusChoice(), this.statusUntil() || null), client => {
+      this.detail.update(detail => detail && { ...detail, client });
       return 'Status set.';
     });
   }
 
   clearStatus(): void {
-    this.run(this.clients.clearStatus(this.id), client => {
-      if (this.detail) this.detail = { ...this.detail, client };
+    this.run(this.clients.clearStatus(this.id()), client => {
+      this.detail.update(detail => detail && { ...detail, client });
       return 'Status returned to automatic.';
     });
   }
 
-  toggleEquipment(id: string, on: boolean): void { if (on) this.chosenEquipment.add(id); else this.chosenEquipment.delete(id); }
+  toggleEquipment(id: string, on: boolean): void { if (on) this.chosenEquipment().add(id); else this.chosenEquipment().delete(id); }
   toggleRestriction(name: string, on: boolean): void {
-    if (!this.form) return;
-    const set = new Set(this.form.dietaryRestrictions);
+    const form = this.form();
+    if (!form) return;
+    const set = new Set(form.dietaryRestrictions);
     if (on) set.add(name); else set.delete(name);
-    this.form.dietaryRestrictions = [...set];
+    form.dietaryRestrictions = [...set];
   }
 
   searchFoods(): void {
-    const term = this.foodSearch.trim();
-    if (!term) { this.foodResults = []; return; }
+    const term = this.foodSearch().trim();
+    if (!term) { this.foodResults.set([]); return; }
     this.catalog.list('foods', { searchTerm: term, pageSize: 10, isActive: true })
-      .subscribe(page => (this.foodResults = page.items.map(item => ({ id: item.id, nameEn: item.nameEn, nameAr: item.nameAr }))));
+      .subscribe(page => (this.foodResults.set(page.items.map(item => ({ id: item.id, nameEn: item.nameEn, nameAr: item.nameAr })))));
   }
 
   addFood(food: NamedReference, list: 'preferred' | 'disliked'): void {
     // A food is either preferred or disliked, never both.
-    this.preferred = this.preferred.filter(item => item.id !== food.id);
-    this.disliked = this.disliked.filter(item => item.id !== food.id);
-    (list === 'preferred' ? this.preferred : this.disliked).push(food);
+    this.preferred.set(this.preferred().filter(item => item.id !== food.id));
+    this.disliked.set(this.disliked().filter(item => item.id !== food.id));
+    (list === 'preferred' ? this.preferred() : this.disliked()).push(food);
   }
 
   removeFood(food: NamedReference): void {
-    this.preferred = this.preferred.filter(item => item.id !== food.id);
-    this.disliked = this.disliked.filter(item => item.id !== food.id);
+    this.preferred.set(this.preferred().filter(item => item.id !== food.id));
+    this.disliked.set(this.disliked().filter(item => item.id !== food.id));
   }
 
   saveProfile(): void {
-    if (!this.form) return;
+    const form = this.form();
+    if (!form) return;
+    const macroMode = this.macroMode();
     const input: ClientProfileInput = {
-      ...this.form,
-      equipmentIds: [...this.chosenEquipment],
-      preferredFoodIds: this.preferred.map(food => food.id),
-      dislikedFoodIds: this.disliked.map(food => food.id),
-      bedtime: time(this.form.bedtime), wakeTime: time(this.form.wakeTime),
-      dateOfBirth: this.form.dateOfBirth || null,
-      macros: this.macroMode ? { mode: this.macroMode, ...numbers(this.macro) } : null,
+      ...form,
+      equipmentIds: [...this.chosenEquipment()],
+      preferredFoodIds: this.preferred().map(food => food.id),
+      dislikedFoodIds: this.disliked().map(food => food.id),
+      bedtime: time(form.bedtime), wakeTime: time(form.wakeTime),
+      dateOfBirth: form.dateOfBirth || null,
+      macros: macroMode ? { mode: macroMode, ...numbers(this.macro()) } : null,
     };
-    this.run(this.clients.saveProfile(this.id, input), profile => { this.showProfile(profile); this.calculateTargets(); return 'Profile saved.'; });
+    this.run(this.clients.saveProfile(this.id(), input), profile => { this.showProfile(profile); this.calculateTargets(); return 'Profile saved.'; });
   }
 
   /** The client's calorie and macro targets from the saved profile and the coach's settings (§14, §15). */
   calculateTargets(): void {
-    this.targetsError = '';
-    this.plans.clientTargets(this.id).subscribe({
-      next: targets => (this.targets = targets),
-      error: e => { this.targets = null; this.targetsError = apiErrorMessage(e); },
+    this.targetsError.set('');
+    this.plans.clientTargets(this.id()).subscribe({
+      next: targets => (this.targets.set(targets)),
+      error: e => { this.targets.set(null); this.targetsError.set(apiErrorMessage(e)); },
     });
   }
 
   private loadDetail(): void {
-    this.clients.get(this.id).subscribe({ next: detail => (this.detail = detail), error: e => (this.error = apiErrorMessage(e)) });
+    this.clients.get(this.id()).subscribe({ next: detail => (this.detail.set(detail)), error: e => (this.error.set(apiErrorMessage(e))) });
   }
 
   private showProfile(profile: ClientProfile): void {
-    this.profile = profile;
-    this.form = {
+    this.profile.set(profile);
+    this.form.set({
       dateOfBirth: profile.dateOfBirth, sex: profile.sex, heightCm: profile.heightCm, startingWeightKg: profile.startingWeightKg,
       startingBodyFatPercent: profile.startingBodyFatPercent, goal: profile.goal, activityLevel: profile.activityLevel,
       trainingDaysPerWeek: profile.trainingDaysPerWeek, averageDailySteps: profile.averageDailySteps,
@@ -176,19 +178,19 @@ export class ClientProfileComponent implements OnInit {
       bedtime: profile.bedtime?.slice(0, 5) ?? null, wakeTime: profile.wakeTime?.slice(0, 5) ?? null,
       lifestyleNotes: profile.lifestyleNotes, equipmentIds: [], preferredFoodIds: [], dislikedFoodIds: [],
       macros: profile.macros,
-    };
-    this.macroMode = profile.macros?.mode ?? '';
-    this.macro = { ...emptyMacro(), ...(profile.macros ?? {}) };
-    this.chosenEquipment = new Set(profile.equipment.map(item => item.id));
-    this.preferred = [...profile.preferredFoods];
-    this.disliked = [...profile.dislikedFoods];
+    });
+    this.macroMode.set(profile.macros?.mode ?? '');
+    this.macro.set({ ...emptyMacro(), ...(profile.macros ?? {}) });
+    this.chosenEquipment.set(new Set(profile.equipment.map(item => item.id)));
+    this.preferred.set([...profile.preferredFoods]);
+    this.disliked.set([...profile.dislikedFoods]);
   }
 
   private run<T>(request: Observable<T>, done: (value: T) => string): void {
-    this.saving = true; this.error = ''; this.message = '';
-    request.pipe(finalize(() => (this.saving = false))).subscribe({
-      next: value => (this.message = done(value)),
-      error: e => (this.error = apiErrorMessage(e)),
+    this.saving.set(true); this.error.set(''); this.message.set('');
+    request.pipe(finalize(() => (this.saving.set(false)))).subscribe({
+      next: value => (this.message.set(done(value))),
+      error: e => (this.error.set(apiErrorMessage(e))),
     });
   }
 }

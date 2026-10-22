@@ -44,8 +44,8 @@
     <button class="button button-primary" (click)="create()">Add client</button>
     <button class="button button-secondary" type="button" (click)="exportList()">Export CSV</button>
   </div>
-  @if (error) {
-    <p class="form-error">{{ error }}</p>
+  @if (error()) {
+    <p class="form-error">{{ error() }}</p>
   }
   <div class="table-scroll">
     <table>
@@ -58,12 +58,12 @@
         </tr>
       </thead>
       <tbody>
-        @if (loading) {
+        @if (loading()) {
           <tr>
             <td colspan="4" class="table-message">Loading…</td>
           </tr>
         }
-        @for (c of page.items; track c.id) {
+        @for (c of page().items; track c.id) {
           <tr>
             <td>
               <a [routerLink]="['/clients', c.id]"><strong>{{ c.name }}</strong></a
@@ -84,7 +84,7 @@
             </td>
           </tr>
         }
-        @if (!loading && !page.items.length) {
+        @if (!loading() && !page().items.length) {
           <tr>
             <td colspan="4" class="table-message">No clients match the applied filters.</td>
           </tr>
@@ -93,80 +93,80 @@
     </table>
   </div>
   <app-pagination
-    [page]="page.pageNumber"
-    [totalPages]="page.totalPages"
-    [totalCount]="page.totalCount"
+    [page]="page().pageNumber"
+    [totalPages]="page().totalPages"
+    [totalCount]="page().totalCount"
     (pageChange)="load($event)"
   />
 </section>
-@if (editorOpen) {
+@if (editorOpen()) {
   <div class="modal-backdrop">
     <section class="modal-card">
       <header>
-        <h2>{{ editingId ? 'Edit client' : 'New client' }}</h2>
-        <button class="icon-button" (click)="editorOpen = false">×</button>
+        <h2>{{ editingId() ? 'Edit client' : 'New client' }}</h2>
+        <button class="icon-button" (click)="editorOpen.set(false)">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="save()">
-        @if (isAdmin && !editingId) {
-          <label><span>Coach *</span><select name="coachId" [(ngModel)]="editor.coachId" required><option value="">Choose a coach</option>@for (coach of coaches; track coach.id) {<option [value]="coach.id">{{ coach.displayName }}</option>}</select></label>
+        @if (isAdmin && !editingId()) {
+          <label><span>Coach *</span><select name="coachId" [(ngModel)]="editor().coachId" required><option value="">Choose a coach</option>@for (coach of coaches(); track coach.id) {<option [value]="coach.id">{{ coach.displayName }}</option>}</select></label>
         }
-        <label><span>Name *</span><input name="name" [(ngModel)]="editor.name" required /></label
+        <label><span>Name *</span><input name="name" [(ngModel)]="editor().name" required /></label
         ><label
           ><span>Join date</span
           ><input
             type="date"
             name="joinDate"
-            [(ngModel)]="editor.joinDate"
-            [disabled]="!!editingId" /></label
-        ><label><span>Phone</span><input name="phone" [(ngModel)]="editor.phone" /></label
+            [(ngModel)]="editor().joinDate"
+            [disabled]="!!editingId()" /></label
+        ><label><span>Phone</span><input name="phone" [(ngModel)]="editor().phone" /></label
         ><label
-          ><span>Email</span><input type="email" name="email" [(ngModel)]="editor.email"
+          ><span>Email</span><input type="email" name="email" [(ngModel)]="editor().email"
         /></label>
-        @if (!editingId) {
-          <label class="checkbox-row span-2"><input type="checkbox" name="invite" [(ngModel)]="editor.invite" [disabled]="!editor.email" />
+        @if (!editingId()) {
+          <label class="checkbox-row span-2"><input type="checkbox" name="invite" [(ngModel)]="editor().invite" [disabled]="!editor().email" />
             <span>Invite the client to sign in (emails a link to choose a password)</span></label>
         }
-        @if (editingId) {
+        @if (editingId()) {
           <label class="checkbox-row span-2"
-            ><input type="checkbox" name="active" [(ngModel)]="editor.isActive" /> Active</label
+            ><input type="checkbox" name="active" [(ngModel)]="editor().isActive" /> Active</label
           >
         }
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="editorOpen = false">
+          <button class="button button-secondary" type="button" (click)="editorOpen.set(false)">
             Cancel</button
-          ><button class="button button-primary" [disabled]="saving">Save</button>
+          ><button class="button button-primary" [disabled]="saving()">Save</button>
         </footer>
       </form>
     </section>
   </div>
 }
-@if (detailOpen && detail) {
+@if (detailOpen() && detail(); as d) {
   <div class="modal-backdrop">
     <section class="modal-card extra-wide">
       <header>
         <div>
           <p class="eyebrow">Client file</p>
-          <h2>{{ detail.client.name }}</h2>
+          <h2>{{ d.client.name }}</h2>
         </div>
-        <button class="icon-button" (click)="detailOpen = false">×</button>
+        <button class="icon-button" (click)="detailOpen.set(false)">×</button>
       </header>
       <div class="detail-grid">
         <div>
-          <span>Status</span><app-status-badge [value]="detail.client.status" />
-          <a class="link-button" [routerLink]="['/clients', detail.client.id]">Open client profile</a>
+          <span>Status</span><app-status-badge [value]="d.client.status" />
+          <a class="link-button" [routerLink]="['/clients', d.client.id]">Open client profile</a>
         </div>
         <div>
-          <span>Joined</span><strong>{{ detail.client.joinDate }}</strong>
+          <span>Joined</span><strong>{{ d.client.joinDate }}</strong>
         </div>
         <div>
-          <span>Subscription</span><app-status-badge [value]="detail.client.subscriptionStatus" />
+          <span>Subscription</span><app-status-badge [value]="d.client.subscriptionStatus" />
         </div>
       </div>
       @if (isAdmin) {
         <form class="filter-row" (ngSubmit)="transfer()">
-          <label><span>Coach</span><strong>{{ coachName(detail.client.coachId) }}</strong></label>
-          <label><span>Transfer to</span><select name="transferCoachId" [(ngModel)]="transferCoachId"><option value="">Choose a coach</option>@for (coach of coaches; track coach.id) {@if (coach.id !== detail.client.coachId) {<option [value]="coach.id">{{ coach.displayName }}</option>}}</select></label>
-          <button class="button button-secondary" type="submit" [disabled]="!transferCoachId || saving">Transfer client</button>
+          <label><span>Coach</span><strong>{{ coachName(d.client.coachId) }}</strong></label>
+          <label><span>Transfer to</span><select name="transferCoachId" [(ngModel)]="transferCoachId"><option value="">Choose a coach</option>@for (coach of coaches(); track coach.id) {@if (coach.id !== d.client.coachId) {<option [value]="coach.id">{{ coach.displayName }}</option>}}</select></label>
+          <button class="button button-secondary" type="submit" [disabled]="!transferCoachId() || saving()">Transfer client</button>
         </form>
         <p class="muted">Plans, assessments and deliveries move with the client. Subscriptions and invoices stay with the coach who sold them.</p>
       }
@@ -187,13 +187,13 @@
             </tr>
           </thead>
           <tbody>
-            @for (s of detail.subscriptions; track s.id) {
+            @for (s of d.subscriptions; track s.id) {
               <tr>
-                <td>{{ nameOf(packages, s.packageId) }}</td>
+                <td>{{ nameOf(packages(), s.packageId) }}</td>
                 <td>{{ s.startDate }} to {{ s.endDate }}</td>
                 <td><app-status-badge [value]="s.status" /><small class="block">{{ paymentLabels[s.paymentStatus] }}</small>
                   @if (s.suspensionReason) { <small class="block muted">{{ s.suspensionReason }}</small> }</td>
-                <td>{{ s.price }} {{ nameOf(currencies, s.currencyId) }}</td>
+                <td>{{ s.price }} {{ nameOf(currencies(), s.currencyId) }}</td>
                 <td>{{ s.renewalCount }}</td>
                 <td class="actions">
                   <button class="link-button" (click)="openRenewal(s)">Renew</button>
@@ -219,8 +219,8 @@
                           <span>Renewal #{{ renewal.sequenceNumber }}</span>
                           <strong>{{ renewal.previousEndDate }} to {{ renewal.newEndDate }}</strong>
                           <small>
-                            {{ renewal.price }} {{ nameOf(currencies, renewal.currencyId) }}
-                            via {{ nameOf(accounts, renewal.paymentAccountId) }}
+                            {{ renewal.price }} {{ nameOf(currencies(), renewal.currencyId) }}
+                            via {{ nameOf(accounts(), renewal.paymentAccountId) }}
                           </small>
                         </div>
                       }
@@ -229,7 +229,7 @@
                 </tr>
               }
             }
-            @if (!detail.subscriptions.length) {
+            @if (!d.subscriptions.length) {
               <tr>
                 <td colspan="6" class="table-message">No subscriptions yet.</td>
               </tr>
@@ -240,55 +240,55 @@
     </section>
   </div>
 }
-@if (subscriptionOpen && detail) {
+@if (subscriptionOpen() && detail()) {
   <div class="modal-backdrop top-layer">
     <section class="modal-card">
       <header>
-        <h2>{{ editingSubscriptionId ? 'Edit' : 'Add' }} subscription</h2>
-        <button class="icon-button" (click)="subscriptionOpen = false">×</button>
+        <h2>{{ editingSubscriptionId() ? 'Edit' : 'Add' }} subscription</h2>
+        <button class="icon-button" (click)="subscriptionOpen.set(false)">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="saveSubscription()">
         <label
           ><span>Package *</span
-          ><select name="package" [(ngModel)]="subscription.packageId" required>
+          ><select name="package" [(ngModel)]="subscription().packageId" required>
             <option value="">Select</option>
-            @for (x of packages; track x.id) {
+            @for (x of packages(); track x.id) {
               <option [value]="x.id">{{ x.nameEn }}</option>
             }
           </select></label
         ><label
           ><span>Start date *</span
-          ><input type="date" name="start" [(ngModel)]="subscription.startDate" required /></label
+          ><input type="date" name="start" [(ngModel)]="subscription().startDate" required /></label
         ><label
           ><span>Duration months *</span
           ><input
             type="number"
             min="1"
             name="duration"
-            [(ngModel)]="subscription.durationMonths" />
-          <span class="presets">@for (m of durationPresets; track m) { <button type="button" class="link-button" (click)="subscription.durationMonths = m">{{ m }} mo</button> }</span></label
+            [(ngModel)]="subscription().durationMonths" />
+          <span class="presets">@for (m of durationPresets(); track m) { <button type="button" class="link-button" (click)="subscription().durationMonths = m">{{ m }} mo</button> }</span></label
         ><label
           ><span>Price *</span
-          ><input type="number" min="0" name="price" [(ngModel)]="subscription.price" /></label
+          ><input type="number" min="0" name="price" [(ngModel)]="subscription().price" /></label
         ><label
           ><span>Currency *</span
-          ><select name="currency" [(ngModel)]="subscription.currencyId" required>
+          ><select name="currency" [(ngModel)]="subscription().currencyId" required>
             <option value="">Select</option>
-            @for (x of currencies; track x.id) {
+            @for (x of currencies(); track x.id) {
               <option [value]="x.id">{{ x.code }} {{ x.name }}</option>
             }
           </select></label
         ><label
           ><span>Payment account</span
-          ><select name="account" [(ngModel)]="subscription.paymentAccountId">
+          ><select name="account" [(ngModel)]="subscription().paymentAccountId">
             <option value="">None</option>
-            @for (x of accounts; track x.id) {
+            @for (x of accounts(); track x.id) {
               <option [value]="x.id">{{ x.name }}</option>
             }
           </select></label>
 
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="subscriptionOpen = false">
+          <button class="button button-secondary" type="button" (click)="subscriptionOpen.set(false)">
             Cancel</button
           ><button class="button button-primary">Save</button>
         </footer>
@@ -296,7 +296,7 @@
     </section>
   </div>
 }
-@if (renewalOpen && detail && renewingSubscription) {
+@if (renewalOpen() && detail() && renewingSubscription(); as renewing) {
   <div class="modal-backdrop top-layer">
     <section class="modal-card">
       <header>
@@ -304,42 +304,42 @@
           <p class="eyebrow">Subscription renewal</p>
           <h2>Extend coverage</h2>
         </div>
-        <button class="icon-button" (click)="renewalOpen = false">Close</button>
+        <button class="icon-button" (click)="renewalOpen.set(false)">Close</button>
       </header>
       <p>
-        Current end date: <strong>{{ renewingSubscription.endDate }}</strong>.
+        Current end date: <strong>{{ renewing.endDate }}</strong>.
         The renewal is recorded permanently and extends from this date.
       </p>
       <form class="form-grid" (ngSubmit)="saveRenewal()">
         <label>
           <span>Additional months *</span>
-          <input type="number" min="1" max="120" name="renewalDuration" [(ngModel)]="renewal.durationMonths" required />
+          <input type="number" min="1" max="120" name="renewalDuration" [(ngModel)]="renewal().durationMonths" required />
         </label>
         <label>
           <span>Renewal price *</span>
-          <input type="number" min="0.01" step="0.01" name="renewalPrice" [(ngModel)]="renewal.price" required />
+          <input type="number" min="0.01" step="0.01" name="renewalPrice" [(ngModel)]="renewal().price" required />
         </label>
         <label>
           <span>Currency *</span>
-          <select name="renewalCurrency" [(ngModel)]="renewal.currencyId" required>
+          <select name="renewalCurrency" [(ngModel)]="renewal().currencyId" required>
             <option value="">Select</option>
-            @for (x of currencies; track x.id) {
+            @for (x of currencies(); track x.id) {
               <option [value]="x.id">{{ x.code }} {{ x.name }}</option>
             }
           </select>
         </label>
         <label>
           <span>Payment account</span>
-          <select name="renewalAccount" [(ngModel)]="renewal.paymentAccountId">
+          <select name="renewalAccount" [(ngModel)]="renewal().paymentAccountId">
             <option value="">None</option>
-            @for (x of accounts; track x.id) {
+            @for (x of accounts(); track x.id) {
               <option [value]="x.id">{{ x.name }}</option>
             }
           </select>
         </label>
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="renewalOpen = false">Cancel</button>
-          <button class="button button-primary" [disabled]="saving">Record renewal</button>
+          <button class="button button-secondary" type="button" (click)="renewalOpen.set(false)">Cancel</button>
+          <button class="button button-primary" [disabled]="saving()">Record renewal</button>
         </footer>
       </form>
     </section>

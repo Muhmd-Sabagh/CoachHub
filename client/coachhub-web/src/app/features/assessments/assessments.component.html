@@ -4,11 +4,11 @@
   <p>Build versioned forms and review the answers preserved at submission time.</p>
 </section>
 <div class="resource-tabs">
-  <button [class.active]="tab === 'forms'" (click)="tab = 'forms'; search = ''; appliedSearch = ''">
+  <button [class.active]="tab() === 'forms'" (click)="tab.set('forms'); search.set(''); appliedSearch.set('')">
     Form builder</button
   ><button
-    [class.active]="tab === 'submissions'"
-    (click)="tab = 'submissions'; search = ''; appliedSearch = ''"
+    [class.active]="tab() === 'submissions'"
+    (click)="tab.set('submissions'); search.set(''); appliedSearch.set('')"
   >
     Client responses
   </button>
@@ -20,14 +20,14 @@
       ><button class="button button-primary">Search</button
       ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
     </form>
-    @if (tab === 'forms') {
-      <button class="button button-primary" (click)="formEditor = true">Create form</button>
+    @if (tab() === 'forms') {
+      <button class="button button-primary" (click)="formEditor.set(true)">Create form</button>
     }
   </div>
-  @if (error) {
-    <p class="form-error">{{ error }}</p>
+  @if (error()) {
+    <p class="form-error">{{ error() }}</p>
   }
-  @if (tab === 'forms') {
+  @if (tab() === 'forms') {
     <div class="table-scroll">
       <table>
         <thead>
@@ -39,7 +39,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (f of forms.items; track f.id) {
+          @for (f of forms().items; track f.id) {
             <tr>
               <td>
                 <strong>{{ f.name }}</strong>
@@ -58,9 +58,9 @@
       </table>
     </div>
     <app-pagination
-      [page]="forms.pageNumber"
-      [totalPages]="forms.totalPages"
-      [totalCount]="forms.totalCount"
+      [page]="forms().pageNumber"
+      [totalPages]="forms().totalPages"
+      [totalCount]="forms().totalCount"
       (pageChange)="loadForms($event)"
     />
   } @else {
@@ -76,7 +76,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (s of submissions.items; track s.id) {
+          @for (s of submissions().items; track s.id) {
             <tr>
               <td>
                 <strong>{{ s.clientName }}</strong>
@@ -93,33 +93,33 @@
       </table>
     </div>
     <app-pagination
-      [page]="submissions.pageNumber"
-      [totalPages]="submissions.totalPages"
-      [totalCount]="submissions.totalCount"
+      [page]="submissions().pageNumber"
+      [totalPages]="submissions().totalPages"
+      [totalCount]="submissions().totalCount"
       (pageChange)="loadSubmissions($event)"
     />
   }
 </section>
-@if (formEditor) {
+@if (formEditor()) {
   <div class="modal-backdrop">
     <section class="modal-card">
       <header>
         <h2>Create assessment form</h2>
-        <button class="icon-button" (click)="formEditor = false">×</button>
+        <button class="icon-button" (click)="formEditor.set(false)">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="createForm()">
         <label class="span-2"
-          ><span>Name *</span><input name="name" [(ngModel)]="newForm.name" required /></label
+          ><span>Name *</span><input name="name" [(ngModel)]="newForm().name" required /></label
         ><label class="span-2"
           ><span>Form type</span
-          ><select name="type" [(ngModel)]="newForm.formType">
+          ><select name="type" [(ngModel)]="newForm().formType">
             <option>InitialAssessment</option>
             <option>UpdateAssessment</option>
             <option value="CheckIn">CheckIn (scheduled per client)</option>
           </select></label
         >
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="formEditor = false">
+          <button class="button button-secondary" type="button" (click)="formEditor.set(false)">
             Cancel</button
           ><button class="button button-primary">Create</button>
         </footer>
@@ -127,26 +127,26 @@
     </section>
   </div>
 }
-@if (builder) {
+@if (builder(); as b) {
   <div class="modal-backdrop">
     <section class="modal-card extra-wide">
       <header>
         <div>
-          <p class="eyebrow">Version {{ builder.versionNumber }} · {{ builder.status }}</p>
-          <h2>{{ builder.name }}</h2>
+          <p class="eyebrow">Version {{ b.versionNumber }} · {{ b.status }}</p>
+          <h2>{{ b.name }}</h2>
         </div>
-        <button class="icon-button" (click)="builder = null">×</button>
+        <button class="icon-button" (click)="builder.set(null)">×</button>
       </header>
       <div class="toolbar">
         <form class="inline-add" (ngSubmit)="addSection()">
           <input
             name="section"
-            [(ngModel)]="section.title"
+            [(ngModel)]="section().title"
             placeholder="New section title"
           /><button class="button button-secondary">Add section</button>
         </form>
         <div class="actions">
-          @if (builder.status === 'Draft') {
+          @if (b.status === 'Draft') {
             <button class="button button-secondary" (click)="addQuestion()">Add question</button
             ><button class="button button-primary" (click)="publish()">Publish version</button>
           } @else {
@@ -157,14 +157,14 @@
         </div>
       </div>
       <div class="builder-list">
-        @for (q of builder.questions; track q.id) {
+        @for (q of b.questions; track q.id) {
           <article>
             <span class="drag-handle" aria-hidden="true">⋮⋮</span>
             <div>
               <strong>{{ q.text }}</strong
               ><small>{{ q.questionType }} · {{ q.isRequired ? 'Required' : 'Optional' }}{{ q.metric ? ' · records ' + metricLabel(q.metric) : '' }}</small>
             </div>
-            @if (builder.status === 'Draft') {
+            @if (b.status === 'Draft') {
               <div class="actions">
                 <button class="icon-button" title="Move up" (click)="move(q, -1)">↑</button
                 ><button class="icon-button" title="Move down" (click)="move(q, 1)">↓</button
@@ -174,27 +174,27 @@
             }
           </article>
         }
-        @if (!builder.questions.length) {
+        @if (!b.questions.length) {
           <div class="empty-inline">Add the first question to this draft.</div>
         }
       </div>
     </section>
   </div>
 }
-@if (questionOpen && builder) {
+@if (questionOpen() && builder(); as b) {
   <div class="modal-backdrop top-layer">
     <section class="modal-card">
       <header>
-        <h2>{{ editingQuestionId ? 'Edit' : 'Add' }} question</h2>
-        <button class="icon-button" (click)="questionOpen = false">×</button>
+        <h2>{{ editingQuestionId() ? 'Edit' : 'Add' }} question</h2>
+        <button class="icon-button" (click)="questionOpen.set(false)">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="saveQuestion()">
         <label class="span-2"
           ><span>Question *</span
-          ><textarea name="text" [(ngModel)]="question.text" required></textarea></label
+          ><textarea name="text" [(ngModel)]="question().text" required></textarea></label
         ><label
           ><span>Type</span
-          ><select name="qtype" [(ngModel)]="question.questionType">
+          ><select name="qtype" [(ngModel)]="question().questionType">
             @for (
               t of [
                 'ShortText',
@@ -213,37 +213,37 @@
           </select></label
         ><label
           ><span>Section</span
-          ><select name="sectionId" [(ngModel)]="question.sectionId">
+          ><select name="sectionId" [(ngModel)]="question().sectionId">
             <option value="">No section</option>
-            @for (s of builder.sections; track s.id) {
+            @for (s of b.sections; track s.id) {
               <option [value]="s.id">{{ s.title }}</option>
             }
           </select></label
         >
-        @if (metricsFor(question.questionType).length) {
+        @if (metricsFor(question().questionType).length) {
           <label
             ><span>Records</span
-            ><select name="metric" [(ngModel)]="question.metric">
+            ><select name="metric" [(ngModel)]="question().metric">
               <option [ngValue]="null">Nothing (answer only)</option>
-              @for (m of metricsFor(question.questionType); track m.value) {
+              @for (m of metricsFor(question().questionType); track m.value) {
                 <option [ngValue]="m.value">{{ m.label }}</option>
               }
             </select></label
           >
         }
         <label class="checkbox-row span-2"
-          ><input type="checkbox" name="required" [(ngModel)]="question.isRequired" />
+          ><input type="checkbox" name="required" [(ngModel)]="question().isRequired" />
           Required</label
         >
         @if (
-          question.questionType === 'SingleChoice' || question.questionType === 'MultipleChoice'
+          question().questionType === 'SingleChoice' || question().questionType === 'MultipleChoice'
         ) {
           <div class="span-2 option-editor">
             <div class="toolbar">
               <strong>Options</strong
               ><button class="link-button" type="button" (click)="addOption()">Add option</button>
             </div>
-            @for (o of question.options; track $index) {
+            @for (o of question().options; track $index) {
               <div>
                 <input [name]="'value' + $index" [(ngModel)]="o.value" placeholder="Value" /><input
                   [name]="'label' + $index"
@@ -255,7 +255,7 @@
           </div>
         }
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="questionOpen = false">
+          <button class="button button-secondary" type="button" (click)="questionOpen.set(false)">
             Cancel</button
           ><button class="button button-primary">Save question</button>
         </footer>

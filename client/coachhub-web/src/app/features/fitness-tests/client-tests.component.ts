@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input, OnChanges, signal } from '@angular/core';
+import { Component, Input, OnChanges, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { apiErrorMessage } from '../../shared/services/api-error';
@@ -17,8 +17,6 @@ interface ResultDraft { testDefinitionId: string; date: string; value: number | 
  * and override their classification, and follow each test's previous-against-current progress over time.
  */
 @Component({
-  // Pre-signal screen: checked eagerly (P10A, see core/http/view-refresh.interceptor.ts).
-  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-client-tests',
   standalone: true,
   imports: [CommonModule, FormsModule, TrendChartComponent],
@@ -32,19 +30,19 @@ interface ResultDraft { testDefinitionId: string; date: string; value: number | 
             <option value="">Choose a test…</option>
             @for (t of unassigned(); track t.id) { <option [value]="t.id">{{ t.kind }} · {{ t.nameEn }}</option> }
           </select></label>
-        <button type="submit" class="button button-secondary" [disabled]="!assignId || busy()">Assign to client</button>
+        <button type="submit" class="button button-secondary" [disabled]="!assignId() || busy()">Assign to client</button>
       </form>
       <form class="form-grid record" (ngSubmit)="saveResult()">
         <label><span>Result for</span>
-          <select [(ngModel)]="draft.testDefinitionId" name="test" [disabled]="!!editing()">
+          <select [(ngModel)]="draft().testDefinitionId" name="test" [disabled]="!!editing()">
             <option value="">Choose a test…</option>
             @for (t of library(); track t.id) { <option [value]="t.id">{{ t.kind }} · {{ t.nameEn }} ({{ unitLabel[t.unit] }})</option> }
           </select></label>
-        <label><span>Date</span><input type="date" [(ngModel)]="draft.date" name="date" required /></label>
-        <label><span>Value</span><input type="number" min="0" step="0.01" [(ngModel)]="draft.value" name="value" required /></label>
-        <label><span>Notes</span><input [(ngModel)]="draft.notes" name="notes" maxlength="1000" /></label>
+        <label><span>Date</span><input type="date" [(ngModel)]="draft().date" name="date" required /></label>
+        <label><span>Value</span><input type="number" min="0" step="0.01" [(ngModel)]="draft().value" name="value" required /></label>
+        <label><span>Notes</span><input [(ngModel)]="draft().notes" name="notes" maxlength="1000" /></label>
         <div class="actions">
-          <button type="submit" class="button button-primary" [disabled]="!draft.testDefinitionId || draft.value === null || busy()">
+          <button type="submit" class="button button-primary" [disabled]="!draft().testDefinitionId || draft().value === null || busy()">
             {{ editing() ? 'Save result' : 'Record result' }}</button>
           @if (editing()) { <button type="button" class="button button-secondary" (click)="resetDraft()">Cancel</button> }
         </div>
@@ -125,8 +123,8 @@ export class ClientTestsComponent implements OnChanges {
   readonly editing = signal<TestResult | null>(null);
   readonly busy = signal(false);
   readonly error = signal('');
-  assignId = '';
-  draft: ResultDraft = this.emptyDraft();
+  readonly assignId = signal('');
+  readonly draft = signal<ResultDraft>(this.emptyDraft());
 
   constructor(private readonly api: FitnessTestsService) {}
 
@@ -149,7 +147,7 @@ export class ClientTestsComponent implements OnChanges {
 
   points(test: ClientTest) { return [...test.results].reverse().map(r => ({ date: r.date, value: r.value })); }
 
-  assign(): void { this.run(this.api.assign(this.clientId, this.assignId), () => { this.assignId = ''; }); }
+  assign(): void { this.run(this.api.assign(this.clientId, this.assignId()), () => { this.assignId.set(''); }); }
 
   unassign(test: ClientTest): void {
     if (!confirm(`Unassign "${test.nameEn}"? Its results stay.`)) return;
@@ -157,7 +155,7 @@ export class ClientTestsComponent implements OnChanges {
   }
 
   saveResult(): void {
-    const { testDefinitionId, date, value, notes } = this.draft;
+    const { testDefinitionId, date, value, notes } = this.draft();
     if (value === null) return;
     const editing = this.editing();
     const request = editing
@@ -168,10 +166,10 @@ export class ClientTestsComponent implements OnChanges {
 
   edit(result: TestResult): void {
     this.editing.set(result);
-    this.draft = { testDefinitionId: result.testDefinitionId, date: result.date, value: result.value, notes: result.notes ?? '' };
+    this.draft.set({ testDefinitionId: result.testDefinitionId, date: result.date, value: result.value, notes: result.notes ?? '' });
   }
 
-  resetDraft(): void { this.editing.set(null); this.draft = this.emptyDraft(); }
+  resetDraft(): void { this.editing.set(null); this.draft.set(this.emptyDraft()); }
 
   classify(result: TestResult, value: TestClassification | ''): void {
     this.run(this.api.classify(this.clientId, result.id, value || null));
