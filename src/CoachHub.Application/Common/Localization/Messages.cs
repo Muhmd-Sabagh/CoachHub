@@ -57,7 +57,9 @@ public static partial class Messages
         {
             var match = pattern.Match(english);
             if (!match.Success) continue;
-            var values = match.Groups.Cast<Group>().Skip(1).Select(group => (object?)group.Value).ToArray();
+            var values = match.Groups.Cast<Group>().Skip(1)
+                .Select(group => (object?)(language == UiCulture.Arabic && ArabicUnits.TryGetValue(group.Value, out var unit) ? unit : group.Value))
+                .ToArray();
             var template = language == UiCulture.Arabic ? entry.Arabic : entry.English;
             return new LocalizedMessage(entry.Code, string.Format(CultureInfo.InvariantCulture, template, values));
         }
@@ -94,6 +96,12 @@ public static partial class Messages
         templates.Sort((a, b) => b.Item2.English.Length.CompareTo(a.Item2.English.Length));
         return new Catalog(entries, exact, templates);
     }
+
+    /// <summary>Unit symbols inside English messages, written as the Arabic interface writes them (P19 glossary).</summary>
+    private static readonly Dictionary<string, string> ArabicUnits = new(StringComparer.Ordinal)
+    {
+        ["kg"] = "كغ", ["g"] = "غ", ["cm"] = "سم", ["ml"] = "مل", ["kcal"] = "سعرة"
+    };
 
     /// <summary>Code prefixes of entries used only through <see cref="Text"/>.</summary>
     public static readonly string[] RenderedOnly = ["notice.", "access.", "calendar.restDay", "calendar.checkIn", "calendar.diet", "calendar.workout"];

@@ -63,6 +63,9 @@ public sealed partial class MessagesTests
         var english = Messages.Localize("A workout has at most 20 exercises.", UiCulture.English);
         Assert.Equal("A workout has at most 20 exercises.", english!.Text);
 
+        // Unit symbols inside a message follow the Arabic glossary.
+        Assert.Equal("أدخل قيمة من 20 إلى 400 كغ بحد أقصى 2 خانات عشرية.", Messages.Localize("Enter 20–400 kg with at most 2 decimals.", UiCulture.Arabic)!.Text);
+
         Assert.Null(Messages.Localize("A message nobody wrote.", UiCulture.Arabic));
         // Texts the code renders itself never match thrown messages.
         Assert.Null(Messages.Localize("The test is not available.", UiCulture.Arabic));
