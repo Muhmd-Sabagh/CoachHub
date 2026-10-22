@@ -127,7 +127,7 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
           </section>
           <section class="card workbench">
             <h2>Measurements</h2>
-            <div class="table-scroll"><table>
+            <div class="table-scroll"><table class="compact-table">
               <thead><tr><th>Site</th><th>Starting</th><th>Current</th><th>Difference</th></tr></thead>
               <tbody>
                 @for (m of b.measurements; track m.site) {

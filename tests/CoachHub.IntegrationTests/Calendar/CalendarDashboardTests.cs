@@ -151,6 +151,8 @@ public sealed class CalendarDashboardTests(CoachHubSqlApiFactory factory) : ICla
         Assert.Equal((s.ClientId, PlanKind.Workout, Today.AddDays(-7)), (expired.ClientId, expired.Kind, expired.EndedOn));
         Assert.NotEmpty(coach.RecentActivity);
         Assert.Contains(coach.RecentActivity, x => x.ClientId == s.ClientId && x.ClientName == s.ClientName);
+        // P18: sign-ins and notifications stay in the audit trail but not in the dashboard's recent activity.
+        Assert.DoesNotContain(coach.RecentActivity, x => x.EntityType is "UserSession" or "Notification");
         var revenue = Assert.Single(coach.Revenue);
         Assert.Equal((currency.Code, 900m, 100m, 800m), (revenue.CurrencyCode, revenue.Settled, revenue.Refunded, revenue.Net));
         Assert.Empty((await s.OtherCoach.GetFromJsonAsync<CoachDashboard>("/api/v1/dashboard/coach"))!.Revenue);

@@ -219,6 +219,18 @@ input:focus {
   border-color: #9cb9ff;
   box-shadow: 0 0 0 4px rgba(70, 95, 255, 0.12);
 }
+/* P18: checkboxes and radios keep their own size wherever they sit (they inherited the text-field width). */
+input[type='checkbox'],
+input[type='radio'] {
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  margin: 0;
+  margin-inline-end: 6px;
+  vertical-align: middle;
+  box-shadow: none;
+  accent-color: var(--brand);
+}
 .form-error {
   color: var(--error);
   background: #fef3f2;
@@ -1530,3 +1542,7 @@ textarea:focus {
 .dashboard-hero > .button, .dashboard-hero > .hero-actions { position: relative; z-index: 1; }
 .report-metrics strong { overflow-wrap: anywhere; }
 @media (max-width: 760px) { .report-metrics strong { font-size: 24px; } }
+
+/* P18: short tables on the client's phone screens fit the width instead of scrolling (tables default to 760px). */
+.compact-table { min-width: 0; }
+.compact-table th, .compact-table td { overflow-wrap: anywhere; }

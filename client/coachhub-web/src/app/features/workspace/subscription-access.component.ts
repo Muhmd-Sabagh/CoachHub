@@ -41,14 +41,14 @@ export class SubscriptionSettingsService {
       @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
       @if (saved()) { <p class="success-message" role="status">Saved.</p> }
       <label><span>Duration presets (months, comma separated)</span>
-        <input [(ngModel)]="presets" name="presets" placeholder="1, 3, 6, 12" /></label>
-      <div class="table-scroll"><table>
+        <input [(ngModel)]="presets" name="presets" placeholder="1, 3, 6, 12" dir="ltr" /></label>
+      <div class="table-scroll"><table class="access-grid">
         <thead><tr><th>Feature</th>@for (s of statuses; track s) { <th>{{ statusLabel[s] }}</th> }</tr></thead>
         <tbody>
           @for (f of features; track f) {
-            <tr><td>{{ featureLabel[f] }}</td>
+            <tr><th scope="row">{{ featureLabel[f] }}</th>
               @for (s of statuses; track s) {
-                <td><select [ngModel]="cell(s, f)" (ngModelChange)="set(s, f, $event)" [name]="s + f" [attr.aria-label]="featureLabel[f] + ' when ' + statusLabel[s]">
+                <td [attr.data-label]="statusLabel[s]"><select [ngModel]="cell(s, f)" (ngModelChange)="set(s, f, $event)" [name]="s + f" [attr.aria-label]="featureLabel[f] + ' when ' + statusLabel[s]">
                   <option value="Full">Full</option><option value="ReadOnly">Read-only</option><option value="Blocked">Blocked</option>
                 </select></td>
               }
@@ -63,7 +63,20 @@ export class SubscriptionSettingsService {
       </div>
     </section>
   `,
-  styles: [`.access { display: grid; gap: 12px; } .access label { display: grid; gap: 4px; max-width: 320px; }`],
+  styles: [`
+    .access { display: grid; gap: 12px; } .access label { display: grid; gap: 4px; max-width: 320px; }
+    /* P18: on phones each feature becomes a card of labelled choices instead of a sideways-scrolling grid. */
+    @media (max-width: 760px) {
+      .access-grid { min-width: 0; }
+      .access-grid thead { display: none; }
+      .access-grid, .access-grid tbody, .access-grid tr, .access-grid th, .access-grid td { display: block; width: 100%; }
+      .access-grid tr { padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
+      .access-grid th[scope=row] { padding: 0 0 6px; text-align: start; }
+      .access-grid td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; border: 0; }
+      .access-grid td::before { content: attr(data-label); color: var(--gray-600); font-size: 14px; }
+      .access-grid select { max-width: 60%; }
+    }
+  `],
 })
 export class SubscriptionAccessComponent implements OnInit {
   readonly statuses: RestrictableStatus[] = ['Expired', 'Suspended', 'Pending', 'Inactive'];

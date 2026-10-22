@@ -354,6 +354,8 @@ Added 2026-10-21 after P10. These are issues found outside P10's scope, collecte
 
 ### P18: Hardening and release (M), covering §53–§55, §60
 
+**Delivered 2026-10-22** (see `docs/product/phases/P18_HARDENING_RELEASE.md`). The production sign-off itself is the owner's, on staging.
+
 - **Mobile UX.** A full pass at phone width covering accessibility, RTL and performance (indexes, query plans on SQL).
 - **Security review.** Use `/security-review` and the `ControllerAuthorizationTests` audit.
 - **AI-readiness checklist.** All analysed data is typed and relational, with stable IDs and timestamps; no AI is built.

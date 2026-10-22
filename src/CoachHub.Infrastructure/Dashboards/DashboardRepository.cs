@@ -8,6 +8,7 @@ using CoachHub.Domain.ClientFiles;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Coaches;
 using CoachHub.Domain.Common;
+using CoachHub.Domain.Communications;
 using CoachHub.Domain.DietPlanning;
 using CoachHub.Domain.FoodTracking;
 using CoachHub.Domain.PlanDelivery;
@@ -24,13 +25,17 @@ public sealed class DashboardRepository(CoachHubDbContext dbContext) : IDashboar
 {
     private const int RecentActivityCount = 15;
 
+    // Account and delivery bookkeeping (sign-ins, session refreshes, notifications) stays in the audit trail but would
+    // crowd the coaching changes out of the dashboard's recent activity (P18).
+    private static readonly string[] BookkeepingTypes = [nameof(UserSession), nameof(Notification)];
+
     public Task<IReadOnlyList<RevenueRow>> RevenueRowsAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken) =>
         RevenueQuery.RowsAsync(dbContext, from, to, cancellationToken);
 
     public async Task<CoachFigures> CoachAsync(DateOnly from, DateOnly to, DateOnly today, int checkInOpensDaysBefore, CancellationToken cancellationToken)
     {
         // Every query runs under the caller's tenant filters: a coach sees their own clients and records.
-        var clients = dbContext.Set<Client>().AsNoTracking();
+        var clients = dbContext.Set<Client>().AsNoTracking().SeekCoach(dbContext);
         var total = await clients.CountAsync(cancellationToken);
         var active = await clients.CountAsync(x => x.IsActive, cancellationToken);
         var statuses = new List<StatusCount>();
@@ -39,14 +44,15 @@ public sealed class DashboardRepository(CoachHubDbContext dbContext) : IDashboar
 
         var openUntil = today.AddDays(checkInOpensDaysBefore);
         var checkIns = new CheckInCounts(
-            await dbContext.Set<CheckIn>().AsNoTracking().CountAsync(x => x.Status == CheckInStatus.AwaitingReview, cancellationToken),
+            await dbContext.Set<CheckIn>().AsNoTracking().SeekCoach(dbContext).CountAsync(x => x.Status == CheckInStatus.AwaitingReview, cancellationToken),
             await clients.CountAsync(x => x.IsActive && x.CheckInDueOn != null && x.CheckInDueOn >= today && x.CheckInDueOn <= openUntil, cancellationToken),
             await clients.CountAsync(x => x.IsActive && x.CheckInDueOn != null && x.CheckInDueOn < today, cancellationToken));
 
         var names = await clients.Where(x => x.IsActive).ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
         var expired = Expired(await CurrentPlansAsync(cancellationToken), names, today);
 
-        var audit = await dbContext.Set<AuditEntry>().AsNoTracking().OrderByDescending(x => x.OccurredAt).Take(RecentActivityCount)
+        var audit = await dbContext.Set<AuditEntry>().AsNoTracking().SeekOptionalCoach(dbContext).Where(x => !BookkeepingTypes.Contains(x.EntityType))
+            .OrderByDescending(x => x.OccurredAt).Take(RecentActivityCount)
             .ToArrayAsync(cancellationToken);
         var auditClients = audit.Where(x => x.ClientId is { } id && !names.ContainsKey(id)).Select(x => x.ClientId!.Value).Distinct().ToArray();
         var otherNames = await clients.Where(x => auditClients.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);

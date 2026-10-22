@@ -94,6 +94,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Catalog entries (`ICatalogEntry`, P7: foods; P9: exercises): platform rows (no coach) are visible to every signed-in user; a coach's rows to that coach and their clients. A plan may keep the previous coach's entries after a transfer (`FindReferenced*Async`).
   - Commercial records keep the selling coach forever; coaching records follow the client on transfer (D7).
   - Tenant-isolation tests run on SQL Server (`CoachHubSqlApiFactory`); see `tests/CoachHub.IntegrationTests/Tenancy`.
+  - Query plans (P18): the parameterised filter (`@unrestricted = 1 OR CoachId = @coach …`) makes SQL Server scan coach-wide lists. For lists that grow with the tenant (audit trail, dashboard counts), add `SeekCoach`/`SeekOptionalCoach` (`Persistence/TenantSeek.cs`), which repeats the coach's key as a plain predicate; it only narrows. Queries that already name a client seek on their own.
 - **Ownership (§62):** every endpoint verifies the caller may access the specific client's data, files and photos, not only that they hold a permission.
 - **Structured data (D3):** use typed numeric or enum fields for prescriptions (sets, rep min/max, load, RIR, RPE, tempo, rest, duration, set grouping, block type), profile data, and all tracking time-series. Free-text notes go alongside, never instead.
 - **Versioning (D4)** — implemented in P6; see `docs/product/phases/P06_PLAN_VERSIONS.md`.
@@ -154,9 +155,9 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 ## Current state vs target
 
-The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P17. Known gaps against REQUIREMENTS.md:
+The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P18. Known gaps against REQUIREMENTS.md:
 
-- the product phases P0–P17 and P10A are delivered; P18 (hardening and release) remains.
+- all product phases (P0–P18, P10A) are delivered. What remains is the owner's production sign-off on staging (`docs/deployment/PRODUCTION_SIGNOFF.md`) and the scale-out work it names (one API instance until SignalR has a backplane and the workers are coordinated).
 
 Treat these as planned rework, not conventions to preserve.
 
@@ -173,6 +174,7 @@ Treat these as planned rework, not conventions to preserve.
 - Tracked `appsettings.json` keeps an empty JWT `SigningKey`, `BootstrapAdmin.Enabled=false` and `Media.Provider=S3`. `Verify-Release.ps1` fails otherwise.
 - FileSystem media is allowed only in Development and Testing.
 - Media is served only through authorized endpoints; there is no static file middleware.
+- Hosting (P18): every API response is `Cache-Control: no-store` unless the endpoint sets its own (only public brand images). Forwarded headers are trusted only from `ReverseProxy` known proxies/networks (`Common/Hosting/ReverseProxy.cs`); per-address rate limits depend on it. Version 1 runs as one API instance (SignalR has no backplane; the notification workers are not coordinated).
 - Never commit secrets or connection strings.
 
 ## Testing
@@ -191,7 +193,8 @@ Treat these as planned rework, not conventions to preserve.
 - Visual language comes from TailAdmin through CSS custom properties; see `docs/design/TAILADMIN_ANGULAR_ADAPTATION.md`. Per-coach branding (D1) must override these tokens at runtime, so never hard-code colors in features.
 - Charts use ApexCharts (pinned exactly, P8), imported lazily inside the chart component. Series colors come from the theme tokens at render time, one y-axis per chart, and a table carries the same numbers.
 - **Change detection (P10A):** the app is zoneless and Angular 22 makes components OnPush by default. New screens keep asynchronous state in signals and stay OnPush. Older screens that set plain fields from HTTP callbacks declare `ChangeDetectionStrategy.Eager` (as do `App` and both shells), and `viewRefreshInterceptor` checks the app from its root after each response. Never set plain fields from callbacks in a new screen.
-- **Browser smoke test (P10A):** `scripts/smoke` (Playwright, outside the app build) signs in as every role at phone and desktop widths and flags screens stuck on "Loading", horizontal scrolling, console errors and API failures. Run it after UI changes; see its README.
+- **Browser smoke test (P10A, P18):** `scripts/smoke` (Playwright, outside the app build) signs in as every role at phone and desktop widths, in English and Arabic (RTL), and flags screens stuck on "Loading", horizontal scrolling, client tables that scroll sideways on a phone, accessibility gaps (unlabelled controls, unnamed buttons, images without alt, wrong `lang`/`dir`), console errors and API failures. Run it after UI changes; see its README.
+- **Phone tables (P18):** tables default to 760 px and scroll inside `.table-scroll`; short tables on client screens use `.compact-table`. Checkboxes and radios keep their own size; use logical properties (`margin-inline-*`) so RTL works.
 - The access token lives in `sessionStorage`; the refresh token is an HttpOnly cookie that scripts never see. `AuthService` refreshes silently (interceptor, guards, app initializer). The API is the authorization boundary; route guards are UX only.
 
 ## Workflow
