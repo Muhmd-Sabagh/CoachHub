@@ -123,6 +123,8 @@ public sealed class CheckInService(
     public async Task<PagedResult<CheckInSummary>> ListAsync(CheckInQuery query, CancellationToken cancellationToken)
     {
         if (query.ClientId is { } clientId) await RequiredClientAsync(clientId, cancellationToken);
+        if (query.DueFrom > query.DueTo) throw Validation("dueTo", "The end date cannot be before the start date.");
+        if (query.SubmittedFrom > query.SubmittedTo) throw Validation("submittedTo", "The end date cannot be before the start date.");
         var page = await repository.PageAsync(query.Normalize(), cancellationToken);
         var clients = await repository.FindClientNamesAsync(page.Items.Select(x => x.ClientId).Distinct().ToArray(), cancellationToken);
         var formNames = await repository.FindFormNamesAsync(page.Items.Select(x => x.FormDefinitionId).Distinct().ToArray(), cancellationToken);

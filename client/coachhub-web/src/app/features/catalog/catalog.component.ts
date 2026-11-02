@@ -2,6 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import {
@@ -15,7 +17,8 @@ import { CatalogKind, CatalogService } from './catalog.service';
   selector: 'app-catalog', templateUrl: './catalog.component.html', standalone: false })
 export class CatalogComponent implements OnInit {
   readonly kind: CatalogKind;
-  readonly title: string;
+  readonly titleKey: TranslationKey;
+  readonly addKey: TranslationKey;
   readonly categoryKey: ReferenceKey;
   readonly page = signal<PagedResult<CatalogItem>>(emptyPage());
   readonly categories = signal<ReferenceRecord[]>([]);
@@ -36,6 +39,9 @@ export class CatalogComponent implements OnInit {
   readonly editingId = signal<string | null>(null);
   readonly error = signal('');
   readonly editor = signal(this.emptyEditor());
+  /** The edited exercise's uploaded video (P20); changed at once, apart from Save. */
+  readonly videoMediaId = signal<string | null>(null);
+  readonly uploading = signal(false);
   readonly isAdmin: boolean;
   /** Administrators manage the platform catalogs; coaches add custom foods and exercises of their own (§5, §17). */
   readonly canCreate: boolean;
@@ -44,11 +50,15 @@ export class CatalogComponent implements OnInit {
     private readonly data: CatalogService,
     private readonly references: ReferenceDataService,
     auth: AuthService,
+    private readonly i18n: I18nService,
   ) {
     this.isAdmin = auth.isAdmin();
     this.kind = route.snapshot.data['kind'] as CatalogKind;
     this.canCreate = true;
-    this.title = this.kind === 'foods' ? 'Foods' : 'Exercises';
+    this.titleKey = this.kind === 'foods' ? 'catalog.foods' : 'catalog.exercises';
+    this.addKey = this.kind === 'foods'
+      ? (this.isAdmin ? 'catalog.addFood' : 'catalog.addCustomFood')
+      : (this.isAdmin ? 'catalog.addExercise' : 'catalog.addCustomExercise');
     this.categoryKey = this.kind === 'foods' ? 'food-categories' : 'exercise-categories';
   }
   ngOnInit(): void {
@@ -92,11 +102,13 @@ export class CatalogComponent implements OnInit {
   }
   create(): void {
     this.editingId.set(null);
+    this.videoMediaId.set(null);
     this.editor.set(this.emptyEditor());
     this.editorOpen.set(true);
   }
   edit(item: CatalogItem): void {
     this.editingId.set(item.id);
+    this.videoMediaId.set(item.videoMediaId ?? null);
     this.editor.set({
       nameEn: item.nameEn,
       nameAr: item.nameAr ?? '',
@@ -193,7 +205,7 @@ export class CatalogComponent implements OnInit {
     });
   }
   remove(item: CatalogItem): void {
-    if (confirm(`Delete ${item.nameEn}?`))
+    if (confirm(this.i18n.translate('catalog.confirmDelete', { name: this.i18n.name(item) })))
       this.data
         .delete(this.kind, item.id)
         .subscribe({ next: () => this.load(), error: (e) => (this.error.set(apiErrorMessage(e))) });
@@ -206,8 +218,42 @@ export class CatalogComponent implements OnInit {
     if (set.has(id)) set.delete(id);
     else set.add(id);
   }
+  /** Uploads the exercise's video at once; it replaces the previous one. */
+  uploadVideo(id: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploading.set(true);
+    this.error.set('');
+    this.data.uploadVideo(id, file).pipe(finalize(() => { this.uploading.set(false); input.value = ''; })).subscribe({
+      next: (item) => { this.videoMediaId.set(item.videoMediaId ?? null); this.load(); },
+      error: (e) => this.error.set(apiErrorMessage(e)),
+    });
+  }
+  removeVideo(id: string): void {
+    this.uploading.set(true);
+    this.data.removeVideo(id).pipe(finalize(() => this.uploading.set(false))).subscribe({
+      next: () => { this.videoMediaId.set(null); this.load(); },
+      error: (e) => this.error.set(apiErrorMessage(e)),
+    });
+  }
+  localName(record: ReferenceRecord): string {
+    return this.i18n.name({ nameEn: record.nameEn ?? record.name ?? '', nameAr: record.nameAr });
+  }
   muscleName(id?: string | null): string {
-    return this.muscles().find((x) => x.id === id)?.nameEn ?? '—';
+    const muscle = this.muscles().find((x) => x.id === id);
+    return muscle ? this.localName(muscle) : '—';
+  }
+  /** A food's base unit in the interface language: g / جم, ml / مل, or the piece's name. */
+  baseUnitLabel(item: CatalogItem): string {
+    if (item.baseUnit === 'Piece') return this.i18n.name({ nameEn: item.pieceNameEn ?? item.baseUnitLabel ?? '', nameAr: item.pieceNameAr });
+    return this.i18n.translate(item.baseUnit === 'Milliliter' ? 'unit.ml' : 'unit.g');
+  }
+  /** The editor's base unit: g / ml, or the piece's name (pieces when unnamed). */
+  editorUnit(): string {
+    const editor = this.editor();
+    if (editor.baseUnit === 'Piece') return editor.pieceNameEn || this.i18n.translate('catalog.piecesUnit');
+    return this.i18n.translate(editor.baseUnit === 'Gram' ? 'unit.g' : 'unit.ml');
   }
   addUnit(): void {
     this.editor().units.push({ id: null, nameEn: '', nameAr: '', baseQuantity: 1 });
@@ -217,14 +263,14 @@ export class CatalogComponent implements OnInit {
   }
   /** What "per 100" means for the chosen base unit. */
   per100(): string {
-    return this.editor().baseUnit === 'Gram'
-      ? '100 g'
-      : this.editor().baseUnit === 'Milliliter'
-        ? '100 ml'
-        : `100 × ${this.editor().pieceNameEn || 'piece'}`;
+    const editor = this.editor();
+    return editor.baseUnit === 'Piece'
+      ? this.i18n.translate('catalog.per100Pieces', { piece: editor.pieceNameEn || this.i18n.translate('catalog.piece') })
+      : this.i18n.translate('catalog.per100', { unit: this.editorUnit() });
   }
   categoryName(id?: string): string {
-    return this.categories().find((x) => x.id === id)?.nameEn ?? '—';
+    const category = this.categories().find((x) => x.id === id);
+    return category ? this.localName(category) : '—';
   }
   private emptyEditor() {
     return {

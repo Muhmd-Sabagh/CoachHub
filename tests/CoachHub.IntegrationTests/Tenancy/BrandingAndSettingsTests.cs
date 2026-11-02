@@ -156,7 +156,7 @@ public sealed class BrandingAndSettingsTests(CoachHubSqlApiFactory factory) : IC
         try
         {
             (await admin.PutAsJsonAsync("/api/v1/settings/platform",
-                new PlatformSettingsInput("en", UnitSystem.Metric, false, true, null))).EnsureSuccessStatusCode();
+                new PlatformSettingsInput("en", false, true, null))).EnsureSuccessStatusCode();
 
             var email = await coach.PostAsJsonAsync("/api/v1/notifications",
                 new NotificationInput(client.Id, NotificationChannel.Email, "client@example.test", "Hello", "Body", null));
@@ -165,12 +165,12 @@ public sealed class BrandingAndSettingsTests(CoachHubSqlApiFactory factory) : IC
 
             Assert.Equal(HttpStatusCode.Conflict, email.StatusCode);
             Assert.Equal(HttpStatusCode.Created, whatsApp.StatusCode);
-            Assert.Equal(UnitSystem.Metric, (await coach.GetFromJsonAsync<WorkspaceSettingsResponse>("/api/v1/settings"))!.Units);
+            Assert.Equal("en", (await coach.GetFromJsonAsync<WorkspaceSettingsResponse>("/api/v1/settings"))!.DefaultLanguage);
         }
         finally
         {
             (await admin.PutAsJsonAsync("/api/v1/settings/platform",
-                new PlatformSettingsInput("en", UnitSystem.Metric, true, true, null))).EnsureSuccessStatusCode();
+                new PlatformSettingsInput("en", true, true, null))).EnsureSuccessStatusCode();
         }
     }
 

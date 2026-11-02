@@ -99,6 +99,10 @@ The owner settled these on 2026-10-22. They are binding too:
 - **§62 "unless the Admin grants permission".** There is no cross-coach access. A coach never sees another coach's clients or their data, and the Administrator cannot grant it. Moving a client to another coach remains a transfer (§56).
 - **§1, §49 Language.** Every screen is bilingual (English and Arabic, right to left). Arabic text uses Western digits (0–9). The terms are in `docs/design/ARABIC_GLOSSARY.md`.
 
+The owner settled this on 2026-11-02:
+
+- **§49 Units.** The platform is metric only. There are no imperial units (inches, feet, pounds, fluid ounces) and no units setting. English shows kg, g, cm, m and ml; Arabic shows كجم, جم, سم, م and مل.
+
 ---
 
 # Requirements

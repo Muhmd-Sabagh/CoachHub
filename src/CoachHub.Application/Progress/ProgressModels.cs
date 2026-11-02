@@ -70,9 +70,13 @@ public sealed record BodyDashboard(
     SeriesSummary Weight, SeriesSummary BodyFat, IReadOnlyList<MeasurementChange> Measurements,
     int PhotoCount, ProgressPhotoResponse? FirstPhoto, ProgressPhotoResponse? LatestPhoto);
 
-/// <summary>Training for the dashboard: the period's figures, the latest PRs, and the current e1RM bests (strength).</summary>
+/// <summary>
+/// Training for the dashboard: the period's figures, the latest PRs, the current e1RM bests (strength), and the
+/// mobility, strength and endurance tests as of the period's end (P20).
+/// </summary>
 public sealed record TrainingDashboard(
-    TrainingPeriodSummary Summary, IReadOnlyList<PersonalRecordResponse> RecentRecords, IReadOnlyList<PersonalRecordResponse> Strength);
+    TrainingPeriodSummary Summary, IReadOnlyList<PersonalRecordResponse> RecentRecords, IReadOnlyList<PersonalRecordResponse> Strength,
+    IReadOnlyList<FitnessTests.TestSummaryResponse> Tests);
 
 /// <summary>The check-in part of the dashboard (§37): the latest check-in, check-in adherence, and the coach's latest feedback.</summary>
 public sealed record CheckInDashboard(

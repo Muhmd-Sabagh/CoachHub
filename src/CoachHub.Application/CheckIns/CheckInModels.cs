@@ -24,14 +24,30 @@ public sealed record CheckInScheduleResponse(
     [property: JsonConverter(typeof(JsonStringEnumConverter<DayOfWeek>))] DayOfWeek DueWeekday, DateOnly StartsOn,
     DateOnly? NextDueOn, DateOnly? OpensOn, CheckInDueState? State);
 
+/// <summary>
+/// Submitted check-ins (§29, §50): by client, client name, form, review status, due date and submission date (UTC days).
+/// Date ranges include both ends.
+/// </summary>
 public sealed record CheckInQuery
 {
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public Guid? ClientId { get; init; }
     public CheckInStatus? Status { get; init; }
+    /// <summary>Part of the client's name.</summary>
+    public string? SearchTerm { get; init; }
+    public Guid? FormDefinitionId { get; init; }
+    public DateOnly? DueFrom { get; init; }
+    public DateOnly? DueTo { get; init; }
+    public DateOnly? SubmittedFrom { get; init; }
+    public DateOnly? SubmittedTo { get; init; }
 
-    public CheckInQuery Normalize() => this with { PageNumber = Math.Max(1, PageNumber), PageSize = Math.Clamp(PageSize, 1, 100) };
+    public CheckInQuery Normalize() => this with
+    {
+        PageNumber = Math.Max(1, PageNumber),
+        PageSize = Math.Clamp(PageSize, 1, 100),
+        SearchTerm = string.IsNullOrWhiteSpace(SearchTerm) ? null : SearchTerm.Trim()
+    };
 }
 
 public sealed record CheckInDueQuery
@@ -42,7 +58,15 @@ public sealed record CheckInDueQuery
     /// <summary>Pending (open or upcoming) or Overdue; all scheduled clients when left out.</summary>
     public CheckInDueState? State { get; init; }
 
-    public CheckInDueQuery Normalize() => this with { PageNumber = Math.Max(1, PageNumber), PageSize = Math.Clamp(PageSize, 1, 100) };
+    /// <summary>Part of the client's name (§50).</summary>
+    public string? SearchTerm { get; init; }
+
+    public CheckInDueQuery Normalize() => this with
+    {
+        PageNumber = Math.Max(1, PageNumber),
+        PageSize = Math.Clamp(PageSize, 1, 100),
+        SearchTerm = string.IsNullOrWhiteSpace(SearchTerm) ? null : SearchTerm.Trim()
+    };
 }
 
 /// <summary>A scheduled client's next check-in, for the coach's pending and overdue lists (§29).</summary>

@@ -20,6 +20,7 @@ import { ReferenceDataComponent } from './features/settings/reference-data.compo
 import { PaginationComponent } from './shared/components/pagination/pagination.component';
 import { SearchFilterComponent } from './shared/components/search-filter/search-filter.component';
 import { StatusBadgeComponent } from './shared/components/status-badge/status-badge.component';
+import { MediaVideoComponent } from './shared/components/media-video/media-video.component';
 import { I18N_PIPES } from './shared/pipes/translate.pipe';
 import { NotificationBellComponent } from './features/notifications/notification-bell.component';
 @NgModule({
@@ -37,7 +38,7 @@ import { NotificationBellComponent } from './features/notifications/notification
     SearchFilterComponent,
     StatusBadgeComponent,
   ],
-  imports: [BrowserModule, FormsModule, ReactiveFormsModule, AppRoutingModule, NotificationBellComponent, ...I18N_PIPES],
+  imports: [BrowserModule, FormsModule, ReactiveFormsModule, AppRoutingModule, NotificationBellComponent, MediaVideoComponent, ...I18N_PIPES],
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withInterceptors([languageInterceptor, authInterceptor])),

@@ -24,6 +24,8 @@ export interface CatalogItem {
   units?: FoodUnit[];
   mediaId?: string | null;
   youTubeUrl?: string | null;
+  /** Exercises: an uploaded video (P20), played through /media/{id}. */
+  videoMediaId?: string | null;
   isActive: boolean;
   /** Exercises (§17). */
   difficulty?: ExerciseDifficulty | null;

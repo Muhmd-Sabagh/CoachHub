@@ -19,7 +19,7 @@ public sealed class FoodItemTests
         Assert.Equal("Chicken Breast", food.NameEn);
         Assert.Null(food.NameAr);
         Assert.True(food.IsPlatform);
-        Assert.Equal(("g", "غ"), (food.BaseUnitLabel, food.BaseUnitLabelAr));
+        Assert.Equal(("g", "جم"), (food.BaseUnitLabel, food.BaseUnitLabelAr));
         Assert.Equal(100m, food.ServingSize);
         Assert.Equal(74m, food.SodiumMgPer100);
         Assert.Null(food.PieceNameEn);

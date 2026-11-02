@@ -6,14 +6,16 @@ namespace CoachHub.Application.Media;
 
 /// <summary>
 /// What an upload may be. Standard: images and PDF up to 20 MB. Shared (P14: files a coach shares, chat
-/// attachments): also videos, Office documents and plain text, up to 50 MB.
+/// attachments): also videos, Office documents and plain text, up to 50 MB. Video (P20: exercise and test videos):
+/// MP4, WebM or MOV only, up to 50 MB.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter<MediaUploadPolicy>))]
-public enum MediaUploadPolicy { Standard, Shared }
+public enum MediaUploadPolicy { Standard, Shared, Video }
 
 public sealed class MediaService(
     IMediaStorage storage,
-    IMediaRepository repository)
+    IMediaRepository repository,
+    IImageProcessor imageProcessor)
 {
     public const long MaximumFileSizeBytes = 20 * 1024 * 1024;
     public const long MaximumSharedFileSizeBytes = 50 * 1024 * 1024;
@@ -40,6 +42,8 @@ public sealed class MediaService(
         "text/plain"
     ];
 
+    private static readonly HashSet<string> VideoContentTypes = ["video/mp4", "video/webm", "video/quicktime"];
+
     public Task<MediaMetadata> UploadAsync(
         Stream content,
         string originalFileName,
@@ -59,6 +63,16 @@ public sealed class MediaService(
         CancellationToken cancellationToken)
     {
         ValidateUpload(content, originalFileName, contentType, sizeBytes, policy);
+
+        // Photos lose their metadata (location) and are stored upright and capped; existing files are not rewritten.
+        using var rewritten = imageProcessor.Rewrites(contentType)
+            ? new MemoryStream(imageProcessor.Process(content, contentType).Content, writable: false)
+            : null;
+        if (rewritten is not null)
+        {
+            content = rewritten;
+            sizeBytes = rewritten.Length;
+        }
 
         var stored = await storage.StoreAsync(
             content,
@@ -151,8 +165,7 @@ public sealed class MediaService(
         MediaUploadPolicy policy)
     {
         var errors = new Dictionary<string, string[]>();
-        var shared = policy == MediaUploadPolicy.Shared;
-        var limit = shared ? MaximumSharedFileSizeBytes : MaximumFileSizeBytes;
+        var limit = policy == MediaUploadPolicy.Standard ? MaximumFileSizeBytes : MaximumSharedFileSizeBytes;
 
         if (!content.CanRead || sizeBytes <= 0)
         {
@@ -168,11 +181,20 @@ public sealed class MediaService(
             errors["fileName"] = ["The original file name is required."];
         }
 
-        if (!(shared ? SharedContentTypes : AllowedContentTypes).Contains(contentType))
+        var allowed = policy switch
         {
-            errors["contentType"] = [shared
-                ? "Images, PDF, MP4/WebM/MOV videos, Word, Excel, PowerPoint or text files are supported."
-                : "JPEG, PNG, WebP, GIF, or PDF files are supported."];
+            MediaUploadPolicy.Shared => SharedContentTypes,
+            MediaUploadPolicy.Video => VideoContentTypes,
+            _ => AllowedContentTypes
+        };
+        if (!allowed.Contains(contentType))
+        {
+            errors["contentType"] = [policy switch
+            {
+                MediaUploadPolicy.Shared => "Images, PDF, MP4/WebM/MOV videos, Word, Excel, PowerPoint or text files are supported.",
+                MediaUploadPolicy.Video => "MP4, WebM or MOV videos are supported.",
+                _ => "JPEG, PNG, WebP, GIF, or PDF files are supported."
+            }];
         }
         else if (content.CanRead && sizeBytes > 0 && !HasExpectedSignature(content, contentType))
         {

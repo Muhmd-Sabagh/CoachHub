@@ -51,6 +51,8 @@ public sealed class Exercise : Entity, ICatalogEntry
     /// <summary>The exercise's image.</summary>
     public Guid? MediaId { get; private set; }
     public string? YouTubeUrl { get; private set; }
+    /// <summary>An uploaded video (P20): platform media for a platform exercise, the coach's library for a custom one.</summary>
+    public Guid? VideoMediaId { get; private set; }
     public bool IsActive { get; private set; } = true;
     public ExerciseDifficulty? Difficulty { get; private set; }
     /// <summary>The muscle the exercise mainly trains; null only for exercises imported without one.</summary>
@@ -100,6 +102,13 @@ public sealed class Exercise : Entity, ICatalogEntry
             throw new ArgumentException("The primary muscle group cannot also be secondary.", "secondaryMuscleGroupIds");
         Sync(_secondaryMuscles, secondary, x => x.MuscleGroupId, id => ExerciseSecondaryMuscle.Create(Id, id));
         Sync(_equipment, Links(values.EquipmentIds, "equipmentIds"), x => x.EquipmentId, id => ExerciseEquipment.Create(Id, id));
+    }
+
+    /// <summary>Sets or clears the uploaded video; the service checks the file's owner and type.</summary>
+    public void ChangeVideo(Guid? mediaId)
+    {
+        if (mediaId == Guid.Empty) throw new ArgumentException("Media identifier cannot be empty.", nameof(mediaId));
+        VideoMediaId = mediaId;
     }
 
     public IReadOnlyList<Guid> SecondaryMuscleGroupIds => _secondaryMuscles.Select(x => x.MuscleGroupId).ToArray();

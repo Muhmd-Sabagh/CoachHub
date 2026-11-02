@@ -1,54 +1,52 @@
 <section class="page-heading">
-  <p class="eyebrow">Catalog</p>
-  <h1>{{ title }}</h1>
-  <p>Search, filter, and maintain the active coaching catalog.</p>
+  <p class="eyebrow">{{ 'catalog.eyebrow' | translate }}</p>
+  <h1>{{ titleKey | translate }}</h1>
+  <p>{{ 'catalog.intro' | translate }}</p>
 </section>
 <section class="card workbench">
   <div class="toolbar">
     <form class="filter-row" (ngSubmit)="applySearch()">
-      <label><span>Search</span><input name="search" [(ngModel)]="search" /></label
+      <label><span>{{ 'common.search' | translate }}</span><input name="search" [(ngModel)]="search" /></label
       ><label
-        ><span>Category</span
+        ><span>{{ 'catalog.category' | translate }}</span
         ><select name="category" [(ngModel)]="categoryId">
-          <option value="">All</option>
+          <option value="">{{ 'catalog.all' | translate }}</option>
           @for (c of categories(); track c.id) {
-            <option [value]="c.id">{{ c.nameEn }}</option>
+            <option [value]="c.id" translate="no">{{ localName(c) }}</option>
           }
         </select></label
       ><label
-        ><span>Status</span
+        ><span>{{ 'catalog.status' | translate }}</span
         ><select name="active" [(ngModel)]="active">
-          <option value="">All</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
+          <option value="">{{ 'catalog.all' | translate }}</option>
+          <option value="true">{{ 'catalog.active' | translate }}</option>
+          <option value="false">{{ 'catalog.inactive' | translate }}</option>
         </select></label
       >
       <label
-        ><span>Catalog</span
+        ><span>{{ 'catalog.catalog' | translate }}</span
         ><select name="scope" [(ngModel)]="scope">
-          <option value="">Platform and custom</option>
-          <option value="Platform">Platform</option>
-          <option value="Custom">My custom {{ kind === 'foods' ? 'foods' : 'exercises' }}</option>
+          <option value="">{{ 'catalog.scopeAll' | translate }}</option>
+          <option value="Platform">{{ 'catalog.scopePlatform' | translate }}</option>
+          <option value="Custom">{{ (kind === 'foods' ? 'catalog.scopeCustomFoods' : 'catalog.scopeCustomExercises') | translate }}</option>
         </select></label
       >
       @if (kind === 'exercises') {
         <label
-          ><span>Muscle</span
+          ><span>{{ 'catalog.muscle' | translate }}</span
           ><select name="muscle" [(ngModel)]="muscleGroupId">
-            <option value="">All</option>
+            <option value="">{{ 'catalog.all' | translate }}</option>
             @for (m of muscles(); track m.id) {
-              <option [value]="m.id">{{ m.nameEn }}</option>
+              <option [value]="m.id" translate="no">{{ localName(m) }}</option>
             }
           </select></label
         >
       }
-      <button class="button button-primary">Search</button
-      ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+      <button class="button button-primary">{{ 'common.search' | translate }}</button
+      ><button class="button button-secondary" type="button" (click)="reset()">{{ 'catalog.reset' | translate }}</button>
     </form>
     @if (canCreate) {
-      <button class="button button-primary" type="button" (click)="create()">
-        {{ !isAdmin ? (kind === 'foods' ? 'Add custom food' : 'Add custom exercise') : 'Add ' + title }}
-      </button>
+      <button class="button button-primary" type="button" (click)="create()">{{ addKey | translate }}</button>
     }
   </div>
   @if (error()) {
@@ -58,78 +56,72 @@
     <table>
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Category</th>
+          <th>{{ 'catalog.name' | translate }}</th>
+          <th>{{ 'catalog.category' | translate }}</th>
           @if (kind === 'foods') {
-            <th>Nutrition / 100 base units</th>
+            <th>{{ 'catalog.nutritionPer100' | translate }}</th>
           } @else {
-            <th>Muscles / video</th>
+            <th>{{ 'catalog.musclesVideo' | translate }}</th>
           }
-          <th>Status</th>
-          <th class="actions">Actions</th>
+          <th>{{ 'catalog.status' | translate }}</th>
+          <th class="actions">{{ 'catalog.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         @if (loading()) {
           <tr>
-            <td colspan="5" class="table-message">Loading…</td>
+            <td colspan="5" class="table-message">{{ 'catalog.loading' | translate }}</td>
           </tr>
         }
         @for (item of page().items; track item.id) {
           <tr>
             <td>
-              <strong>{{ item.nameEn }}</strong
+              <strong translate="no">{{ item.nameEn }}</strong
               ><small
-                >{{ item.nameAr || '—' }}
-                @if (item.isCustom) {
-                  · Custom
-                }
+                ><span translate="no">{{ item.nameAr || '—' }}</span>@if (item.isCustom) {{{ 'catalog.custom' | translate }}}
               </small>
             </td>
-            <td>{{ categoryName(item.foodCategoryId || item.exerciseCategoryId) }}</td>
+            <td translate="no">{{ categoryName(item.foodCategoryId || item.exerciseCategoryId) }}</td>
             @if (kind === 'foods') {
               <td>
-                <span class="metric"
-                  >{{ item.caloriesPer100 }} kcal / 100 {{ item.baseUnitLabel }}</span
+                <span class="metric">{{ 'catalog.kcalPer100' | translate: { kcal: (item.caloriesPer100 | localNumber), unit: baseUnitLabel(item) } }}</span
                 ><small
-                  >P {{ item.proteinPer100 }} · C {{ item.carbohydratesPer100 }} · F
-                  {{ item.fatPer100 }}
-                  @if (item.fiberPer100 !== null && item.fiberPer100 !== undefined) {
-                    · Fiber {{ item.fiberPer100 }}
-                  }
-                  @if (item.units?.length) {
-                    · {{ item.units!.length }} unit(s)
-                  }
+                  >{{ 'catalog.macros' | translate: { protein: (item.proteinPer100 | localNumber), carbs: (item.carbohydratesPer100 | localNumber), fat: (item.fatPer100 | localNumber) } }}@if (item.fiberPer100 !== null && item.fiberPer100 !== undefined) {{{ 'catalog.fiber' | translate: { value: (item.fiberPer100 | localNumber) } }}}@if (item.units?.length) {{{ 'catalog.unitsCount' | translate: { count: item.units!.length } }}}
                 </small>
               </td>
             } @else {
               <td>
-                <span class="metric">{{ muscleName(item.primaryMuscleGroupId) }}</span
+                <span class="metric" translate="no">{{ muscleName(item.primaryMuscleGroupId) }}</span
                 ><small>
                   @if (item.secondaryMuscleGroupIds?.length) {
-                    + {{ item.secondaryMuscleGroupIds!.length }} secondary ·
+                    {{ 'catalog.secondaryCount' | translate: { count: item.secondaryMuscleGroupIds!.length } }} ·
                   }
-                  {{ item.difficulty ?? '' }}
+                  {{ item.difficulty | enumLabel: 'difficulty' }}
+                  @if (item.videoMediaId) {
+                    <span class="badge">{{ 'catalog.hasVideo' | translate }}</span>
+                  }
                   @if (item.youTubeUrl) {
-                    <a class="link-button" [href]="item.youTubeUrl" target="_blank" rel="noopener"
-                      >Video</a
-                    >
+                    <a class="link-button" [href]="item.youTubeUrl" target="_blank" rel="noopener">{{ 'catalog.youTubeLink' | translate }}</a>
                   }
                 </small>
               </td>
             }
-            <td><app-status-badge [value]="item.isActive ? 'Active' : 'Inactive'" /></td>
+            <td>
+              <span class="status-badge" [class.success]="item.isActive" [class.neutral]="!item.isActive">{{
+                (item.isActive ? 'catalog.active' : 'catalog.inactive') | translate
+              }}</span>
+            </td>
             <td class="actions">
               @if (canEdit(item)) {
-                <button class="link-button" (click)="edit(item)">Edit</button
-                ><button class="link-button danger" (click)="remove(item)">Delete</button>
+                <button class="link-button" (click)="edit(item)">{{ 'catalog.edit' | translate }}</button
+                ><button class="link-button danger" (click)="remove(item)">{{ 'catalog.delete' | translate }}</button>
               }
             </td>
           </tr>
         }
         @if (!loading() && !page().items.length) {
           <tr>
-            <td colspan="5" class="table-message">No records match the applied filters.</td>
+            <td colspan="5" class="table-message">{{ 'catalog.noMatch' | translate }}</td>
           </tr>
         }
       </tbody>
@@ -144,177 +136,124 @@
 </section>
 @if (editorOpen()) {
   <div class="modal-backdrop">
-    <section class="modal-card wide" role="dialog" aria-modal="true">
+    <section class="modal-card wide" role="dialog" aria-modal="true" [attr.aria-label]="titleKey | translate">
       <header>
         <div>
-          <p class="eyebrow">{{ editingId() ? 'Edit' : 'New' }}</p>
-          <h2>{{ title }}</h2>
+          <p class="eyebrow">{{ (editingId() ? 'catalog.editEyebrow' : 'catalog.newEyebrow') | translate }}</p>
+          <h2>{{ titleKey | translate }}</h2>
         </div>
-        <button class="icon-button" (click)="close()">×</button>
+        <button class="icon-button" type="button" [attr.aria-label]="'catalog.close' | translate" (click)="close()">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="save()">
         <label
-          ><span>English name *</span
+          ><span>{{ 'catalog.nameEn' | translate }}</span
           ><input name="nameEn" [(ngModel)]="editor().nameEn" required /></label
         ><label
-          ><span>Arabic name</span
+          ><span>{{ 'catalog.nameAr' | translate }}</span
           ><input name="nameAr" [(ngModel)]="editor().nameAr" dir="rtl" /></label
         ><label
-          ><span>Category *</span
+          ><span>{{ 'catalog.categoryRequired' | translate }}</span
           ><select name="categoryId" [(ngModel)]="editor().categoryId" required>
-            <option value="">Select</option>
+            <option value="">{{ 'catalog.select' | translate }}</option>
             @for (c of categories(); track c.id) {
-              <option [value]="c.id">{{ c.nameEn }}</option>
+              <option [value]="c.id" translate="no">{{ localName(c) }}</option>
             }
           </select></label
         >
         @if (kind === 'foods') {
           <label
-            ><span>Measured per *</span
+            ><span>{{ 'catalog.measuredPer' | translate }}</span
             ><select name="baseUnit" [(ngModel)]="editor().baseUnit">
-              <option value="Gram">Grams (g)</option>
-              <option value="Milliliter">Millilitres (ml)</option>
-              <option value="Piece">Pieces (slice, egg, scoop…)</option>
+              <option value="Gram">{{ 'catalog.grams' | translate }}</option>
+              <option value="Milliliter">{{ 'catalog.millilitres' | translate }}</option>
+              <option value="Piece">{{ 'catalog.pieces' | translate }}</option>
             </select></label
           >
           @if (editor().baseUnit === 'Piece') {
             <label
-              ><span>Piece name *</span
-              ><input
-                name="pieceEn"
-                [(ngModel)]="editor().pieceNameEn"
-                placeholder="slice"
-                required /></label
+              ><span>{{ 'catalog.pieceName' | translate }}</span
+              ><input name="pieceEn" [(ngModel)]="editor().pieceNameEn" [placeholder]="'catalog.pieceExample' | translate" required /></label
             ><label
-              ><span>Piece name (Arabic)</span
+              ><span>{{ 'catalog.pieceNameAr' | translate }}</span
               ><input name="pieceAr" [(ngModel)]="editor().pieceNameAr" dir="rtl"
             /></label>
           }
           <label
-            ><span
-              >Serving size ({{
-                editor().baseUnit === 'Piece' ? 'pieces' : editor().baseUnit === 'Gram' ? 'g' : 'ml'
-              }})</span
-            ><input
-              type="number"
-              name="serving"
-              [(ngModel)]="editor().servingSize"
-              min="0.01"
-              step="any" /></label
+            ><span>{{ 'catalog.servingSize' | translate: { unit: editorUnit() } }}</span
+            ><input type="number" name="serving" [(ngModel)]="editor().servingSize" min="0.01" step="any" /></label
           ><label
-            ><span>Calories / {{ per100() }}</span
-            ><input
-              type="number"
-              name="calories"
-              [(ngModel)]="editor().calories"
-              min="0"
-              step="any" /></label
+            ><span>{{ 'catalog.caloriesPer' | translate: { per: per100() } }}</span
+            ><input type="number" name="calories" [(ngModel)]="editor().calories" min="0" step="any" /></label
           ><label
-            ><span>Protein g / {{ per100() }}</span
-            ><input
-              type="number"
-              name="protein"
-              [(ngModel)]="editor().protein"
-              min="0"
-              step="any" /></label
+            ><span>{{ 'catalog.proteinPer' | translate: { per: per100() } }}</span
+            ><input type="number" name="protein" [(ngModel)]="editor().protein" min="0" step="any" /></label
           ><label
-            ><span>Carbohydrates g / {{ per100() }}</span
-            ><input
-              type="number"
-              name="carbs"
-              [(ngModel)]="editor().carbs"
-              min="0"
-              step="any" /></label
+            ><span>{{ 'catalog.carbsPer' | translate: { per: per100() } }}</span
+            ><input type="number" name="carbs" [(ngModel)]="editor().carbs" min="0" step="any" /></label
           ><label
-            ><span>Fat g / {{ per100() }}</span
+            ><span>{{ 'catalog.fatPer' | translate: { per: per100() } }}</span
             ><input type="number" name="fat" [(ngModel)]="editor().fat" min="0" step="any" /></label
           ><label
-            ><span>Fiber g / {{ per100() }}</span
-            ><input
-              type="number"
-              name="fiber"
-              [(ngModel)]="editor().fiber"
-              min="0"
-              step="any"
-              placeholder="Not recorded" /></label
+            ><span>{{ 'catalog.fiberPer' | translate: { per: per100() } }}</span
+            ><input type="number" name="fiber" [(ngModel)]="editor().fiber" min="0" step="any" [placeholder]="'catalog.notRecorded' | translate" /></label
           ><label
-            ><span>Sugar g / {{ per100() }}</span
-            ><input
-              type="number"
-              name="sugar"
-              [(ngModel)]="editor().sugar"
-              min="0"
-              step="any"
-              placeholder="Not recorded" /></label
+            ><span>{{ 'catalog.sugarPer' | translate: { per: per100() } }}</span
+            ><input type="number" name="sugar" [(ngModel)]="editor().sugar" min="0" step="any" [placeholder]="'catalog.notRecorded' | translate" /></label
           ><label
-            ><span>Sodium mg / {{ per100() }}</span
-            ><input
-              type="number"
-              name="sodium"
-              [(ngModel)]="editor().sodium"
-              min="0"
-              step="any"
-              placeholder="Not recorded"
+            ><span>{{ 'catalog.sodiumPer' | translate: { per: per100() } }}</span
+            ><input type="number" name="sodium" [(ngModel)]="editor().sodium" min="0" step="any" [placeholder]="'catalog.notRecorded' | translate"
           /></label>
           <div class="span-2">
             <div class="toolbar">
-              <strong>Household units</strong
-              ><button class="link-button" type="button" (click)="addUnit()">Add unit</button>
+              <strong>{{ 'catalog.householdUnits' | translate }}</strong
+              ><button class="link-button" type="button" (click)="addUnit()">{{ 'catalog.addUnit' | translate }}</button>
             </div>
             @for (u of editor().units; track $index; let ui = $index) {
               <div class="nested-row">
                 <input
                   [name]="'unitEn' + ui"
                   [(ngModel)]="u.nameEn"
-                  placeholder="cup"
-                  aria-label="Unit name"
+                  [placeholder]="'catalog.unitExample' | translate"
+                  [attr.aria-label]="'catalog.unitName' | translate"
                   required
                 /><input
                   [name]="'unitAr' + ui"
                   [(ngModel)]="u.nameAr"
                   dir="rtl"
                   placeholder="كوب"
-                  aria-label="Unit name (Arabic)"
+                  [attr.aria-label]="'catalog.unitNameAr' | translate"
                 /><input
                   type="number"
                   [name]="'unitQty' + ui"
                   [(ngModel)]="u.baseQuantity"
                   min="0.001"
                   step="any"
-                  aria-label="Base units per unit"
-                /><small>{{
-                  editor().baseUnit === 'Piece'
-                    ? editor().pieceNameEn || 'pieces'
-                    : editor().baseUnit === 'Gram'
-                      ? 'g'
-                      : 'ml'
-                }}</small
-                ><button class="link-button danger" type="button" (click)="removeUnit(ui)">
-                  Remove
-                </button>
+                  [attr.aria-label]="'catalog.baseUnitsPerUnit' | translate"
+                /><small>{{ editorUnit() }}</small
+                ><button class="link-button danger" type="button" (click)="removeUnit(ui)">{{ 'catalog.remove' | translate }}</button>
               </div>
             }
           </div>
         } @else {
           <label
-            ><span>Primary muscle</span
+            ><span>{{ 'catalog.primaryMuscle' | translate }}</span
             ><select name="primaryMuscle" [(ngModel)]="editor().primaryMuscleGroupId" required>
-              <option value="">Select</option>
+              <option value="">{{ 'catalog.select' | translate }}</option>
               @for (m of muscles(); track m.id) {
-                <option [value]="m.id">{{ m.nameEn }}</option>
+                <option [value]="m.id" translate="no">{{ localName(m) }}</option>
               }
             </select></label
           ><label
-            ><span>Difficulty</span
+            ><span>{{ 'catalog.difficulty' | translate }}</span
             ><select name="difficulty" [(ngModel)]="editor().difficulty">
-              <option value="">Not set</option>
+              <option value="">{{ 'catalog.notSet' | translate }}</option>
               @for (d of difficulties; track d) {
-                <option [value]="d">{{ d }}</option>
+                <option [value]="d">{{ d | enumLabel: 'difficulty' }}</option>
               }
             </select></label
           >
           <fieldset class="span-2 plain-fieldset">
-            <legend>Secondary muscles</legend>
+            <legend>{{ 'catalog.secondaryMuscles' | translate }}</legend>
             <div class="checkbox-grid">
               @for (m of muscles(); track m.id) {
                 @if (m.id !== editor().primaryMuscleGroupId) {
@@ -324,14 +263,14 @@
                       [checked]="editor().secondaryMuscleGroupIds.has(m.id)"
                       (change)="toggle(editor().secondaryMuscleGroupIds, m.id)"
                     />
-                    {{ m.nameEn }}</label
+                    <span translate="no">{{ localName(m) }}</span></label
                   >
                 }
               }
             </div>
           </fieldset>
           <fieldset class="span-2 plain-fieldset">
-            <legend>Equipment</legend>
+            <legend>{{ 'catalog.equipment' | translate }}</legend>
             <div class="checkbox-grid">
               @for (e of equipment(); track e.id) {
                 <label class="checkbox-row"
@@ -340,49 +279,63 @@
                     [checked]="editor().equipmentIds.has(e.id)"
                     (change)="toggle(editor().equipmentIds, e.id)"
                   />
-                  {{ e.nameEn }}</label
+                  <span translate="no">{{ localName(e) }}</span></label
                 >
               } @empty {
-                <small class="muted">No equipment defined yet.</small>
+                <small class="muted">{{ 'catalog.noEquipment' | translate }}</small>
               }
             </div>
           </fieldset>
           <label
-            ><span>Instructions</span
+            ><span>{{ 'catalog.instructions' | translate }}</span
             ><textarea name="instructionsEn" rows="3" maxlength="4000" [(ngModel)]="editor().instructionsEn"></textarea></label
           ><label
-            ><span>Instructions (Arabic)</span
+            ><span>{{ 'catalog.instructionsAr' | translate }}</span
             ><textarea name="instructionsAr" rows="3" maxlength="4000" dir="rtl" [(ngModel)]="editor().instructionsAr"></textarea></label
           ><label
-            ><span>Coaching cues</span
+            ><span>{{ 'catalog.cues' | translate }}</span
             ><textarea name="cuesEn" rows="2" maxlength="4000" [(ngModel)]="editor().coachingCuesEn"></textarea></label
           ><label
-            ><span>Coaching cues (Arabic)</span
+            ><span>{{ 'catalog.cuesAr' | translate }}</span
             ><textarea name="cuesAr" rows="2" maxlength="4000" dir="rtl" [(ngModel)]="editor().coachingCuesAr"></textarea></label
           ><label
-            ><span>Common mistakes</span
+            ><span>{{ 'catalog.mistakes' | translate }}</span
             ><textarea name="mistakesEn" rows="2" maxlength="4000" [(ngModel)]="editor().commonMistakesEn"></textarea></label
           ><label
-            ><span>Common mistakes (Arabic)</span
+            ><span>{{ 'catalog.mistakesAr' | translate }}</span
             ><textarea name="mistakesAr" rows="2" maxlength="4000" dir="rtl" [(ngModel)]="editor().commonMistakesAr"></textarea></label
           ><label class="span-2"
-            ><span>YouTube URL</span
+            ><span>{{ 'catalog.youTube' | translate }}</span
             ><input name="youtube" [(ngModel)]="editor().youTubeUrl" type="url"
           /></label>
+          <fieldset class="span-2 plain-fieldset video-field">
+            <legend>{{ 'catalog.uploadedVideo' | translate }}</legend>
+            @if (editingId(); as id) {
+              @if (videoMediaId(); as video) {
+                <app-media-video [mediaId]="video" [label]="editor().nameEn" />
+                <button class="link-button danger" type="button" [disabled]="uploading()" (click)="removeVideo(id)">{{ 'catalog.removeVideo' | translate }}</button>
+              } @else {
+                <small class="muted">{{ 'catalog.noVideo' | translate }}</small>
+              }
+              <label
+                ><span>{{ (uploading() ? 'catalog.uploading' : 'catalog.uploadVideo') | translate }}</span
+                ><input type="file" name="video" accept="video/mp4,video/webm,video/quicktime" [disabled]="uploading()" (change)="uploadVideo(id, $event)"
+              /></label>
+            } @else {
+              <small class="muted">{{ 'catalog.saveFirst' | translate }}</small>
+            }
+          </fieldset>
         }
         <label
-          ><span>Media ID</span
-          ><input
-            name="media"
-            [(ngModel)]="editor().mediaId"
-            placeholder="Optional uploaded media ID" /></label
+          ><span>{{ 'catalog.mediaId' | translate }}</span
+          ><input name="media" [(ngModel)]="editor().mediaId" [placeholder]="'catalog.mediaIdHint' | translate" /></label
         ><label class="checkbox-row"
-          ><input type="checkbox" name="isActive" [(ngModel)]="editor().isActive" /> Active</label
+          ><input type="checkbox" name="isActive" [(ngModel)]="editor().isActive" /> {{ 'catalog.active' | translate }}</label
         >
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="close()">Cancel</button
+          <button class="button button-secondary" type="button" (click)="close()">{{ 'catalog.cancel' | translate }}</button
           ><button class="button button-primary" [disabled]="saving()">
-            {{ saving() ? 'Saving…' : 'Save' }}
+            {{ (saving() ? 'catalog.saving' : 'catalog.save') | translate }}
           </button>
         </footer>
       </form>

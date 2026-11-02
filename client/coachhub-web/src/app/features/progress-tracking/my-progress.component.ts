@@ -6,6 +6,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
+import { TestSummaryComponent } from '../fitness-tests/test-summary.component';
 import { addDays, isoDate } from '../nutrition-tracking/nutrition-tracking.service';
 import { PersonalRecord, recordText } from '../training-tracking/training-tracking.service';
 import { PhotoCompareComponent } from './photo-compare.component';
@@ -26,7 +27,7 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
 @Component({
   selector: 'app-my-progress',
   standalone: true,
-  imports: [FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent, ClientReportsComponent, ...I18N_PIPES],
+  imports: [FormsModule, RouterLink, TrendChartComponent, PhotoCompareComponent, ClientReportsComponent, TestSummaryComponent, ...I18N_PIPES],
   template: `
     <section class="dashboard-hero"><div><p class="eyebrow">{{ 'progress.eyebrow' | translate }}</p><h1>{{ 'progress.title' | translate }}</h1></div>
       <a class="button button-secondary" routerLink="/app/tests">{{ 'progress.myTests' | translate }}</a></section>
@@ -71,6 +72,9 @@ type Section = 'overview' | 'body' | 'photos' | 'lifestyle';
           @if (d.training.recentRecords.length) {
             <section class="card workbench"><h2>{{ 'progress.recentPrs' | translate }}</h2>
               <ul class="plain-list">@for (r of d.training.recentRecords; track r.id) { <li>{{ recordText(r) }}</li> }</ul></section>
+          }
+          @if (d.training.tests.length) {
+            <section class="card workbench"><h2>{{ 'testSummary.title' | translate }}</h2><app-test-summary [tests]="d.training.tests" /></section>
           }
         } @else if (loading()) { <p class="table-message">{{ 'common.loading' | translate }}</p> }
       }

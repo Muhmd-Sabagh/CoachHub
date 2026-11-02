@@ -70,10 +70,10 @@ public sealed class FoodItem : Entity, ICatalogEntry
         _ => PieceNameEn ?? "piece"
     };
 
-    /// <summary>The Arabic label of the base unit: "غ", "مل", or the piece name.</summary>
+    /// <summary>The Arabic label of the base unit: "جم", "مل", or the piece name.</summary>
     public string BaseUnitLabelAr => BaseUnit switch
     {
-        FoodBaseUnit.Gram => "غ",
+        FoodBaseUnit.Gram => "جم",
         FoodBaseUnit.Milliliter => "مل",
         _ => PieceNameAr ?? PieceNameEn ?? "قطعة"
     };

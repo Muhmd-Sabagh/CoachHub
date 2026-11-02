@@ -20,6 +20,21 @@ public sealed class ExerciseTests
         Assert.Equal("https://youtu.be/example", exercise.YouTubeUrl);
     }
 
+    [Fact]
+    public void An_uploaded_video_is_set_and_cleared_apart_from_the_other_values()
+    {
+        var exercise = Exercise.Create(null, new ExerciseValues("Squat", null, Guid.NewGuid()));
+        var video = Guid.NewGuid();
+
+        exercise.ChangeVideo(video);
+        exercise.Update(new ExerciseValues("Back squat", null, exercise.ExerciseCategoryId));
+        Assert.Equal(video, exercise.VideoMediaId);
+
+        exercise.ChangeVideo(null);
+        Assert.Null(exercise.VideoMediaId);
+        Assert.Throws<ArgumentException>(() => exercise.ChangeVideo(Guid.Empty));
+    }
+
     [Theory]
     [InlineData("http://youtube.com/watch?v=x")]
     [InlineData("https://youtube.com.evil.example/watch?v=x")]

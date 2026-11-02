@@ -120,4 +120,17 @@ public sealed class FitnessTestTests
         Assert.Throws<ArgumentException>(() => TestAssignment.Create(Coach, Guid.Empty, Guid.NewGuid(), Now));
         Assert.Throws<ArgumentException>(() => TestAssignment.Create(Coach, Client, Guid.Empty, Now));
     }
+
+    [Fact]
+    public void A_test_takes_an_uploaded_video()
+    {
+        var test = TestDefinition.Create(Coach, new TestDefinitionValues(TestKind.Mobility, "Reach", null, TestUnit.Centimeters, true));
+        var video = Guid.NewGuid();
+
+        test.ChangeVideo(video);
+        Assert.Equal(video, test.VideoMediaId);
+        test.ChangeVideo(null);
+        Assert.Null(test.VideoMediaId);
+        Assert.Throws<ArgumentException>(() => test.ChangeVideo(Guid.Empty));
+    }
 }

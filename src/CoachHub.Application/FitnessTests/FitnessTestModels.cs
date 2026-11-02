@@ -35,7 +35,8 @@ public sealed record TestDefinitionResponse(
     string? YouTubeUrl,
     bool IsActive,
     Guid? CoachId,
-    bool IsCustom);
+    bool IsCustom,
+    Guid? VideoMediaId = null);
 
 /// <summary>Which tests a search covers: both libraries (default), the platform's, or the coach's own.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<TestScope>))]
@@ -99,6 +100,20 @@ public sealed record TestProgressResponse(
     decimal? ChangeFromFirst,
     decimal? PercentChangeFromFirst,
     TestTrend? Trend);
+
+/// <summary>
+/// A test in the progress dashboard and reports (§37, §44, P20): the progress of its results up to the period's end
+/// and the latest result's classification. Name, unit and direction are the latest result's copy, as recorded.
+/// </summary>
+public sealed record TestSummaryResponse(
+    Guid TestDefinitionId,
+    TestKind Kind,
+    string NameEn,
+    string? NameAr,
+    TestUnit Unit,
+    bool HigherIsBetter,
+    TestProgressResponse Progress,
+    TestClassification? Classification);
 
 /// <summary>
 /// One of the client's tests: assigned, or with results. <see cref="Definition"/> is null when the test is no longer

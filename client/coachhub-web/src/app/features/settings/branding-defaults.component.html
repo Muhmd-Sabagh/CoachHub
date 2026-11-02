@@ -115,7 +115,6 @@
     <div class="section-heading"><h2>Platform settings</h2></div>
     <form class="form-grid" (ngSubmit)="savePlatform()">
       <label><span>Default language</span><select name="language" [(ngModel)]="p.defaultLanguage"><option value="en">English</option><option value="ar">العربية</option></select></label>
-      <label><span>Units</span><select name="units" [(ngModel)]="p.units"><option value="Metric">Metric</option><option value="Imperial">Imperial</option></select></label>
       <label><span>Email sender name</span><input name="sender" [(ngModel)]="p.emailSenderName" maxlength="100" placeholder="Defaults to the brand name" /></label>
       <label><span><input type="checkbox" name="email" [(ngModel)]="p.emailNotificationsEnabled" /> Coach email notifications</span></label>
       <label><span><input type="checkbox" name="whatsapp" [(ngModel)]="p.whatsAppNotificationsEnabled" /> Coach WhatsApp notifications</span></label>

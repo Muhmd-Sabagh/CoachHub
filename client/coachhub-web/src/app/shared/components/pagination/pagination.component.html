@@ -1,21 +1,11 @@
-<div class="pagination" [attr.aria-label]="'Pagination, ' + totalCount + ' records'">
-  <span>{{ totalCount }} records</span>
+<nav class="pagination" [attr.aria-label]="'common.pagination' | translate">
+  <span>{{ 'common.records' | translate: { count: totalCount } }}</span>
   <div>
-    <button
-      class="button button-secondary"
-      type="button"
-      (click)="previous()"
-      [disabled]="page <= 1"
-    >
-      Previous</button
-    ><span>Page {{ page }} of {{ totalPages || 1 }}</span
-    ><button
-      class="button button-secondary"
-      type="button"
-      (click)="next()"
-      [disabled]="page >= totalPages"
-    >
-      Next
+    <button class="button button-secondary" type="button" (click)="previous()" [disabled]="page <= 1">
+      {{ 'common.previous' | translate }}</button
+    ><span>{{ 'common.pageOf' | translate: { page: page, pages: totalPages || 1 } }}</span
+    ><button class="button button-secondary" type="button" (click)="next()" [disabled]="page >= totalPages">
+      {{ 'common.next' | translate }}
     </button>
   </div>
-</div>
+</nav>

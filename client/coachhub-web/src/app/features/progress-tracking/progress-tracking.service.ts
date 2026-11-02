@@ -4,6 +4,7 @@ import { map } from 'rxjs';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { environment } from '../../../environments/environment';
 import { NutritionPeriod } from '../nutrition-tracking/nutrition-tracking.service';
+import { TestSummary } from '../fitness-tests/fitness-tests.service';
 import { PersonalRecord, TrainingPeriod } from '../training-tracking/training-tracking.service';
 import { Adherence, CheckInAdherence, CheckInReply, CheckInSchedule, MyCheckIn } from '../check-ins/check-ins.service';
 
@@ -92,7 +93,7 @@ export interface ProgressDashboard {
     latestPhoto: ProgressPhoto | null;
   };
   nutrition: NutritionPeriod;
-  training: { summary: TrainingPeriod; recentRecords: PersonalRecord[]; strength: PersonalRecord[] };
+  training: { summary: TrainingPeriod; recentRecords: PersonalRecord[]; strength: PersonalRecord[]; tests: TestSummary[] };
   lifestyle: LifestyleSummary;
   targets: LifestyleTargets;
   checkIn: { latest: MyCheckIn | null; schedule: CheckInSchedule | null; adherence: CheckInAdherence; latestFeedback: CheckInReply | null };

@@ -5,10 +5,13 @@ using System.Text;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Billing;
 using CoachHub.Application.Clients;
+using CoachHub.Application.FitnessTests;
 using CoachHub.Application.Progress;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Reports;
 using CoachHub.Domain.Auditing;
+using CoachHub.Domain.FitnessTests;
+using CoachHub.Infrastructure.FitnessTests;
 using CoachHub.Infrastructure.Persistence;
 using CoachHub.IntegrationTests.Auth;
 using CoachHub.IntegrationTests.Persistence;
@@ -81,7 +84,7 @@ public sealed class ReportsExportTests(CoachHubSqlApiFactory factory) : IClassFi
         var zip = await s.Coach.GetAsync($"/api/v1/exports/clients/{s.ClientId}/All");
         Assert.Equal("application/zip", zip.Content.Headers.ContentType!.MediaType);
         using (var archive = new ZipArchive(await zip.Content.ReadAsStreamAsync()))
-            Assert.Equal(["checkins", "client", "nutrition", "progress", "workouts"],
+            Assert.Equal(["checkins", "client", "nutrition", "progress", "tests", "workouts"],
                 archive.Entries.Select(x => x.Name.Split('-')[^1].Replace(".csv", "")).Order());
         Assert.Equal(HttpStatusCode.NotFound, (await s.OtherCoach.GetAsync($"/api/v1/exports/clients/{s.ClientId}/Progress")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await s.Coach.GetAsync($"/api/v1/exports/clients/{s.ClientId}/Everything")).StatusCode);
@@ -117,6 +120,38 @@ public sealed class ReportsExportTests(CoachHubSqlApiFactory factory) : IClassFi
         Assert.Contains(audited, x => x.ClientId == s.ClientId && x.CoachId == s.CoachId && x.ChangesJson!.Contains("All"));
         Assert.Contains(audited, x => x.ChangesJson!.Contains("ClientList") && x.CoachId == s.CoachId);
         Assert.Contains(audited, x => x.ChangesJson!.Contains("PlatformRevenue"));
+    }
+
+    [Fact]
+    public async Task Tests_appear_in_the_dashboard_the_reports_and_the_export()
+    {
+        var s = await SetUpAsync();
+        var plank = TestDefinitionSeed.All.Single(x => x.NameEn == "Plank hold").Id;
+        (await s.Coach.PutAsync($"/api/v1/clients/{s.ClientId}/fitness-tests/assignments/{plank}", null)).EnsureSuccessStatusCode();
+        foreach (var (date, seconds) in new[] { (Monday.AddDays(-14), 60m), (Monday.AddDays(-7), 75m), (Today, 90m) })
+            (await s.Coach.PostAsJsonAsync($"/api/v1/clients/{s.ClientId}/fitness-tests/results", new TestResultInput(plank, date, seconds))).EnsureSuccessStatusCode();
+
+        // Last week's report sees the results up to its end: 75 s after 60 s, improved (§37, §44).
+        var lastWeek = (await s.Coach.GetFromJsonAsync<ClientReport>($"{s.ReportPath}?period=Week&date={Monday.AddDays(-7):yyyy-MM-dd}"))!;
+        var test = Assert.Single(lastWeek.Progress.Training.Tests);
+        Assert.Equal((plank, TestUnit.Seconds, 75m, 60m, 15m, TestTrend.Improved),
+            (test.TestDefinitionId, test.Unit, test.Progress.Current!.Value, test.Progress.Previous!.Value, test.Progress.ChangeFromPrevious!.Value, test.Progress.Trend!.Value));
+
+        // This week's dashboard and the client's own report show the latest result.
+        var dashboard = (await s.Portal.GetFromJsonAsync<ProgressDashboardResponse>(
+            $"/api/v1/me/progress/dashboard?from={Monday:yyyy-MM-dd}&to={Today:yyyy-MM-dd}"))!;
+        Assert.Equal(90m, Assert.Single(dashboard.Training.Tests).Progress.Current!.Value);
+        var pdf = await s.Portal.GetAsync($"/api/v1/me/reports/pdf?period=Week&date={Today:yyyy-MM-dd}&language=Arabic");
+        Assert.Equal(HttpStatusCode.OK, pdf.StatusCode);
+        Assert.StartsWith("%PDF", Encoding.ASCII.GetString((await pdf.Content.ReadAsByteArrayAsync())[..4]));
+
+        // The results export (§51): one row per result, values in the test's unit.
+        var csv = await CsvAsync(s.Coach, $"/api/v1/exports/clients/{s.ClientId}/Tests");
+        var lines = csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal("Date,Test,Kind,Value,Unit,Higher is better,Classification,Classified by coach,Recorded by,Notes,Recorded (UTC)", lines[0]);
+        Assert.Equal(4, lines.Length);
+        Assert.StartsWith($"{Today:yyyy-MM-dd},Plank hold,Endurance,90,Seconds,Yes,", lines[3]);
+        Assert.Equal(HttpStatusCode.NotFound, (await s.OtherCoach.GetAsync($"/api/v1/exports/clients/{s.ClientId}/Tests")).StatusCode);
     }
 
     private static async Task<string> CsvAsync(HttpClient http, string path)

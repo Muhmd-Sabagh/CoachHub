@@ -1,10 +1,13 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { MediaVideoComponent } from '../../shared/components/media-video/media-video.component';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import {
-  FitnessTestsService, TestDefinition, TestDefinitionInput, TestKind, TestScope, cutOffText, testKinds, testUnits, unitLabels,
+  FitnessTestsService, TestDefinition, TestDefinitionInput, TestKind, TestScope, TestUnit, localCutOffText, localUnit, testKinds, testUnits,
 } from './fitness-tests.service';
 
 const blank = (): TestDefinitionInput => ({
@@ -14,75 +17,90 @@ const blank = (): TestDefinitionInput => ({
 
 /**
  * The test library (§34–§36): the platform's starter tests and the coach's own. Coaches add and edit their custom
- * tests; administrators also manage the platform tests. Assign tests to a client from the client's Tests tab.
+ * tests; administrators also manage the platform tests. Assign tests to a client from the client's Tests tab. A
+ * saved test takes an uploaded video (P20).
  */
 @Component({
   selector: 'app-test-library',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, MediaVideoComponent, ...I18N_PIPES],
   template: `
-    <section class="dashboard-hero"><div><p class="eyebrow">Coaching</p><h1>Tests</h1>
-      <p>Mobility, strength and endurance tests. Assign them to clients from the client's Tests tab.</p></div>
-      <button type="button" class="button button-primary" (click)="startNew()">New test</button></section>
+    <section class="dashboard-hero"><div><p class="eyebrow">{{ 'testLibrary.eyebrow' | translate }}</p><h1>{{ 'testLibrary.title' | translate }}</h1>
+      <p>{{ 'testLibrary.intro' | translate }}</p></div>
+      <button type="button" class="button button-primary" (click)="startNew()">{{ 'testLibrary.new' | translate }}</button></section>
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
 
     @if (draft(); as d) {
       <form class="card workbench editor" (ngSubmit)="save(d)">
-        <h2>{{ editingId() ? 'Edit test' : 'New test' }}</h2>
+        <h2>{{ (editingId() ? 'testLibrary.edit' : 'testLibrary.new') | translate }}</h2>
         <div class="form-grid">
-          <label><span>Name (English)</span><input [(ngModel)]="d.nameEn" name="nameEn" required maxlength="255" /></label>
-          <label><span>Name (Arabic)</span><input [(ngModel)]="d.nameAr" name="nameAr" maxlength="255" dir="rtl" /></label>
-          <label><span>Kind</span><select [(ngModel)]="d.kind" name="kind">@for (k of kinds; track k) { <option [value]="k">{{ k }}</option> }</select></label>
-          <label><span>Unit</span><select [(ngModel)]="d.unit" name="unit">@for (u of units; track u) { <option [value]="u">{{ u }} ({{ unitLabel[u] }})</option> }</select></label>
-          <label><span>Better result</span>
-            <select [(ngModel)]="d.higherIsBetter" name="direction"><option [ngValue]="true">Higher</option><option [ngValue]="false">Lower</option></select></label>
-          <label><span>Good {{ d.higherIsBetter ? 'from' : 'up to' }}</span><input type="number" min="0" step="0.01" [(ngModel)]="d.goodThreshold" name="good" /></label>
-          <label><span>Poor {{ d.higherIsBetter ? 'below' : 'above' }}</span><input type="number" min="0" step="0.01" [(ngModel)]="d.poorThreshold" name="poor" /></label>
-          <label><span>Video (YouTube)</span><input type="url" [(ngModel)]="d.youTubeUrl" name="video" placeholder="https://www.youtube.com/watch?v=…" /></label>
+          <label><span>{{ 'testLibrary.nameEn' | translate }}</span><input [(ngModel)]="d.nameEn" name="nameEn" required maxlength="255" /></label>
+          <label><span>{{ 'testLibrary.nameAr' | translate }}</span><input [(ngModel)]="d.nameAr" name="nameAr" maxlength="255" dir="rtl" /></label>
+          <label><span>{{ 'testLibrary.kind' | translate }}</span><select [(ngModel)]="d.kind" name="kind">@for (k of kinds; track k) { <option [value]="k">{{ k | enumLabel: 'testKind' }}</option> }</select></label>
+          <label><span>{{ 'testLibrary.unit' | translate }}</span><select [(ngModel)]="d.unit" name="unit">@for (u of units; track u) { <option [value]="u">{{ u | enumLabel: 'testUnit' }} ({{ unit(u) }})</option> }</select></label>
+          <label><span>{{ 'testLibrary.better' | translate }}</span>
+            <select [(ngModel)]="d.higherIsBetter" name="direction"><option [ngValue]="true">{{ 'testLibrary.higher' | translate }}</option><option [ngValue]="false">{{ 'testLibrary.lower' | translate }}</option></select></label>
+          <label><span>{{ (d.higherIsBetter ? 'testLibrary.goodFrom' : 'testLibrary.goodUpTo') | translate }}</span><input type="number" min="0" step="0.01" [(ngModel)]="d.goodThreshold" name="good" /></label>
+          <label><span>{{ (d.higherIsBetter ? 'testLibrary.poorBelow' : 'testLibrary.poorAbove') | translate }}</span><input type="number" min="0" step="0.01" [(ngModel)]="d.poorThreshold" name="poor" /></label>
+          <label><span>{{ 'testLibrary.youTube' | translate }}</span><input type="url" [(ngModel)]="d.youTubeUrl" name="video" placeholder="https://www.youtube.com/watch?v=…" /></label>
         </div>
-        <small class="muted">Leave both cut-offs empty to classify results by hand.</small>
-        <label class="wide"><span>Instructions (English)</span><textarea [(ngModel)]="d.instructionsEn" name="instructionsEn" rows="3" maxlength="4000"></textarea></label>
-        <label class="wide"><span>Instructions (Arabic)</span><textarea [(ngModel)]="d.instructionsAr" name="instructionsAr" rows="3" maxlength="4000" dir="rtl"></textarea></label>
-        <label class="check"><input type="checkbox" [(ngModel)]="d.isActive" name="active" /> Active (inactive tests take no new results)</label>
+        <small class="muted">{{ 'testLibrary.cutOffHint' | translate }}</small>
+        <label class="wide"><span>{{ 'testLibrary.instructionsEn' | translate }}</span><textarea [(ngModel)]="d.instructionsEn" name="instructionsEn" rows="3" maxlength="4000"></textarea></label>
+        <label class="wide"><span>{{ 'testLibrary.instructionsAr' | translate }}</span><textarea [(ngModel)]="d.instructionsAr" name="instructionsAr" rows="3" maxlength="4000" dir="rtl"></textarea></label>
+        <label class="check"><input type="checkbox" [(ngModel)]="d.isActive" name="active" /> {{ 'testLibrary.active' | translate }}</label>
+        <fieldset class="plain-fieldset video-field">
+          <legend>{{ 'catalog.uploadedVideo' | translate }}</legend>
+          @if (editingId(); as id) {
+            @if (videoMediaId(); as video) {
+              <app-media-video [mediaId]="video" [label]="d.nameEn" />
+              <button class="link-button danger" type="button" [disabled]="uploading()" (click)="removeVideo(id)">{{ 'catalog.removeVideo' | translate }}</button>
+            } @else { <small class="muted">{{ 'catalog.noVideo' | translate }}</small> }
+            <label class="wide"><span>{{ (uploading() ? 'catalog.uploading' : 'catalog.uploadVideo') | translate }}</span>
+              <input type="file" name="videoFile" accept="video/mp4,video/webm,video/quicktime" [disabled]="uploading()" (change)="uploadVideo(id, $event)" /></label>
+          } @else { <small class="muted">{{ 'catalog.saveFirst' | translate }}</small> }
+        </fieldset>
         <div class="actions">
-          <button type="submit" class="button button-primary" [disabled]="busy()">Save</button>
-          <button type="button" class="button button-secondary" (click)="draft.set(null)">Cancel</button>
+          <button type="submit" class="button button-primary" [disabled]="busy()">{{ 'catalog.save' | translate }}</button>
+          <button type="button" class="button button-secondary" (click)="draft.set(null)">{{ 'catalog.cancel' | translate }}</button>
         </div>
       </form>
     }
 
     <section class="card workbench">
       <form class="filters" (ngSubmit)="load()">
-        <label><span>Search</span><input [(ngModel)]="searchTerm" name="search" /></label>
-        <label><span>Kind</span><select [(ngModel)]="kind" name="kindFilter"><option value="">All kinds</option>
-          @for (k of kinds; track k) { <option [value]="k">{{ k }}</option> }</select></label>
-        <label><span>Library</span><select [(ngModel)]="scope" name="scope">
-          <option value="All">All tests</option><option value="Platform">Platform</option><option value="Custom">My tests</option></select></label>
-        <button type="submit" class="button button-secondary">Search</button>
+        <label><span>{{ 'common.search' | translate }}</span><input [(ngModel)]="searchTerm" name="search" /></label>
+        <label><span>{{ 'testLibrary.kind' | translate }}</span><select [(ngModel)]="kind" name="kindFilter"><option value="">{{ 'testLibrary.allKinds' | translate }}</option>
+          @for (k of kinds; track k) { <option [value]="k">{{ k | enumLabel: 'testKind' }}</option> }</select></label>
+        <label><span>{{ 'testLibrary.library' | translate }}</span><select [(ngModel)]="scope" name="scope">
+          <option value="All">{{ 'testLibrary.allTests' | translate }}</option><option value="Platform">{{ 'testLibrary.platform' | translate }}</option>
+          <option value="Custom">{{ 'testLibrary.mine' | translate }}</option></select></label>
+        <button type="submit" class="button button-secondary">{{ 'common.search' | translate }}</button>
       </form>
       @if (tests().length) {
         <div class="table-scroll"><table>
-          <thead><tr><th>Test</th><th>Kind</th><th>Unit</th><th>Rating</th><th>Library</th><th></th></tr></thead>
+          <thead><tr><th>{{ 'testLibrary.test' | translate }}</th><th>{{ 'testLibrary.kind' | translate }}</th><th>{{ 'testLibrary.unit' | translate }}</th>
+            <th>{{ 'testLibrary.rating' | translate }}</th><th>{{ 'testLibrary.library' | translate }}</th><th></th></tr></thead>
           <tbody>
             @for (t of tests(); track t.id) {
               <tr [class.inactive]="!t.isActive">
-                <td><strong>{{ t.nameEn }}</strong>@if (t.nameAr) { <small class="muted block" dir="rtl">{{ t.nameAr }}</small> }
-                  @if (t.youTubeUrl) { <a class="block" [href]="t.youTubeUrl" target="_blank" rel="noopener">Video</a> }</td>
-                <td>{{ t.kind }}</td>
-                <td>{{ unitLabel[t.unit] }}</td>
+                <td><strong translate="no">{{ t.nameEn }}</strong>@if (t.nameAr) { <small class="muted block" dir="rtl" translate="no">{{ t.nameAr }}</small> }
+                  @if (t.videoMediaId) { <small class="block">{{ 'catalog.hasVideo' | translate }}</small> }
+                  @if (t.youTubeUrl) { <a class="block" [href]="t.youTubeUrl" target="_blank" rel="noopener">{{ 'catalog.youTubeLink' | translate }}</a> }</td>
+                <td>{{ t.kind | enumLabel: 'testKind' }}</td>
+                <td>{{ unit(t.unit) }}</td>
                 <td><small>{{ cutOffs(t) }}</small></td>
-                <td>{{ t.isCustom ? 'Mine' : 'Platform' }}{{ t.isActive ? '' : ' · inactive' }}</td>
+                <td>{{ (t.isCustom ? 'testLibrary.mine' : 'testLibrary.platform') | translate }}@if (!t.isActive) {{{ 'testLibrary.inactive' | translate }}}</td>
                 <td class="actions">
                   @if (canEdit(t)) {
-                    <button type="button" class="link-button" (click)="edit(t)">Edit</button>
-                    <button type="button" class="link-button danger" (click)="remove(t)">Delete</button>
+                    <button type="button" class="link-button" (click)="edit(t)">{{ 'catalog.edit' | translate }}</button>
+                    <button type="button" class="link-button danger" (click)="remove(t)">{{ 'catalog.delete' | translate }}</button>
                   }
                 </td>
               </tr>
             }
           </tbody>
         </table></div>
-      } @else if (!loading()) { <p class="muted">No tests match.</p> }
+      } @else if (!loading()) { <p class="muted">{{ 'testLibrary.none' | translate }}</p> }
     </section>
   `,
   styles: [`
@@ -92,6 +110,7 @@ const blank = (): TestDefinitionInput => ({
     .check { display: flex; gap: 8px; align-items: center; }
     .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 12px; }
     .filters label { display: grid; gap: 4px; }
+    .video-field { display: grid; gap: 8px; }
     .block { display: block; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
     tr.inactive td { opacity: 0.6; }
@@ -100,21 +119,25 @@ const blank = (): TestDefinitionInput => ({
 export class TestLibraryComponent implements OnInit {
   readonly kinds = testKinds;
   readonly units = testUnits;
-  readonly unitLabel = unitLabels;
-  readonly cutOffs = cutOffText;
   readonly tests = signal<TestDefinition[]>([]);
   readonly draft = signal<TestDefinitionInput | null>(null);
   readonly editingId = signal<string | null>(null);
+  /** The edited test's uploaded video; changed at once, apart from Save. */
+  readonly videoMediaId = signal<string | null>(null);
   readonly loading = signal(false);
   readonly busy = signal(false);
+  readonly uploading = signal(false);
   readonly error = signal('');
   searchTerm = '';
   kind: TestKind | '' = '';
   scope: TestScope = 'All';
 
-  constructor(private readonly api: FitnessTestsService, private readonly auth: AuthService) {}
+  constructor(private readonly api: FitnessTestsService, private readonly auth: AuthService, private readonly i18n: I18nService) {}
 
   ngOnInit(): void { this.load(); }
+
+  unit(unit: TestUnit): string { return localUnit(unit, this.i18n); }
+  cutOffs(test: TestDefinition): string { return localCutOffText(test, this.i18n); }
 
   load(): void {
     this.loading.set(true);
@@ -126,11 +149,12 @@ export class TestLibraryComponent implements OnInit {
 
   canEdit(test: TestDefinition): boolean { return test.isCustom || this.auth.isAdmin(); }
 
-  startNew(): void { this.editingId.set(null); this.draft.set(blank()); this.error.set(''); }
+  startNew(): void { this.editingId.set(null); this.videoMediaId.set(null); this.draft.set(blank()); this.error.set(''); }
 
   edit(test: TestDefinition): void {
-    const { id: _id, coachId: _coach, isCustom: _custom, ...input } = test;
+    const { id: _id, coachId: _coach, isCustom: _custom, videoMediaId, ...input } = test;
     this.editingId.set(test.id);
+    this.videoMediaId.set(videoMediaId ?? null);
     this.draft.set({ ...input });
     this.error.set('');
   }
@@ -151,8 +175,29 @@ export class TestLibraryComponent implements OnInit {
     });
   }
 
+  /** Uploads the test's video at once; it replaces the previous one. */
+  uploadVideo(id: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploading.set(true);
+    this.error.set('');
+    this.api.uploadVideo(id, file).pipe(finalize(() => { this.uploading.set(false); input.value = ''; })).subscribe({
+      next: test => { this.videoMediaId.set(test.videoMediaId ?? null); this.load(); },
+      error: e => this.error.set(apiErrorMessage(e)),
+    });
+  }
+
+  removeVideo(id: string): void {
+    this.uploading.set(true);
+    this.api.removeVideo(id).pipe(finalize(() => this.uploading.set(false))).subscribe({
+      next: () => { this.videoMediaId.set(null); this.load(); },
+      error: e => this.error.set(apiErrorMessage(e)),
+    });
+  }
+
   remove(test: TestDefinition): void {
-    if (!confirm(`Delete "${test.nameEn}"?`)) return;
+    if (!confirm(this.i18n.translate('catalog.confirmDelete', { name: this.i18n.name(test) }))) return;
     this.api.delete(test.id).subscribe({ next: () => this.load(), error: e => this.error.set(apiErrorMessage(e)) });
   }
 }

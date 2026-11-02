@@ -19,6 +19,7 @@ public sealed class ExerciseService(
     IReferenceRepository<MuscleGroup> muscleGroups,
     IReferenceRepository<Equipment> equipment,
     IMediaRepository mediaRepository,
+    CatalogVideos videos,
     CoachOwnership ownership,
     ICurrentUser currentUser)
 {
@@ -67,6 +68,29 @@ public sealed class ExerciseService(
     {
         var exercise = await FindWritableAsync(id, cancellationToken);
         await repository.DeleteAsync(exercise, cancellationToken);
+        await videos.DeleteAsync(exercise.VideoMediaId, cancellationToken);
+    }
+
+    /// <summary>Uploads the exercise's video (§17, P20), replacing the previous one.</summary>
+    public async Task<ExerciseResponse> SetVideoAsync(Guid id, MediaUpload upload, CancellationToken cancellationToken)
+    {
+        var exercise = await FindWritableAsync(id, cancellationToken);
+        var stored = await videos.UploadAsync(exercise.CoachId, upload, cancellationToken);
+        var previous = exercise.VideoMediaId;
+        exercise.ChangeVideo(stored.Id);
+        await repository.SaveChangesAsync(cancellationToken);
+        await videos.DeleteAsync(previous, cancellationToken);
+        return Map(exercise);
+    }
+
+    public async Task<ExerciseResponse> RemoveVideoAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var exercise = await FindWritableAsync(id, cancellationToken);
+        var previous = exercise.VideoMediaId;
+        exercise.ChangeVideo(null);
+        await repository.SaveChangesAsync(cancellationToken);
+        await videos.DeleteAsync(previous, cancellationToken);
+        return Map(exercise);
     }
 
     internal static void Validate(ExerciseInput input, bool requirePrimaryMuscle = false)
@@ -113,7 +137,8 @@ public sealed class ExerciseService(
         exercise.CoachingCuesEn,
         exercise.CoachingCuesAr,
         exercise.CommonMistakesEn,
-        exercise.CommonMistakesAr);
+        exercise.CommonMistakesAr,
+        exercise.VideoMediaId);
 
     private async Task ValidateReferencesAsync(ExerciseInput input, Guid? owner, CancellationToken cancellationToken)
     {

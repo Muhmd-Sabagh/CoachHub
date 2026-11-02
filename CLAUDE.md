@@ -30,6 +30,10 @@ And on 2026-10-22:
 - No cross-coach access: a coach never sees another coach's clients or data, and the Administrator cannot grant it. This replaces the §62 clause "unless the Admin grants permission"; moving a client stays a transfer (§56).
 - Arabic is part of every phase from P19 on, with Western digits.
 
+And on 2026-11-02:
+
+- Units are metric only: no inches, feet, pounds or fluid ounces, and no units setting. Abbreviations are kg, g, cm, m, ml in English and كجم, جم, سم, م, مل in Arabic.
+
 `docs/archive/` holds the legacy migration-phase docs and the first conventions (P18A). They are history; where they conflict with REQUIREMENTS.md, the roadmap or this file, the current documents win.
 
 When a requirement is ambiguous, or a change would contradict D1–D6, stop and ask. Don't pick an interpretation silently.
@@ -163,6 +167,11 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - CSV goes through `Csv` (UTF-8 BOM, RFC 4180 quoting, formula-injection guard). Exports run under the tenant filters and are recorded in the audit trail (`DataExport`). Platform exports are AdminOnly.
 - **Calculations** belong in Application or Domain as pure, unit-tested code. That covers BMR/TDEE, macro modes, volume, e1RM and adherence. Formulas that must be swappable sit behind a strategy (for example, e1RM uses Epley by default). Coefficients come from coach or platform settings, not constants.
 - **Mobile first:** client-facing Angular screens must work at phone width first.
+- **Media and videos (P20)** — see `docs/product/phases/P20_COMPLETION.md`.
+  - Every JPEG, PNG and WebP upload goes through `IImageProcessor` (`SkiaImageProcessor`): metadata stripped, orientation applied, longest side capped. Never store an image around `MediaService`.
+  - Exercise and test videos use `CatalogVideos` and the `Video` upload policy: platform entries get platform media, a coach's entries the coach's library. Remove the old file when replacing or deleting; `MediaRepository` refuses to delete a video in use.
+  - Uploaded media plays through `app-media-video` (fetched with the session; `/media` needs the token).
+  - Check-in lists search by client name, form and dates on the server (`CheckInQuery`); the progress dashboard and reports include `Training.Tests` from `FitnessTestService.SummaryAsync`.
 - **Localisation (P19)** — see `docs/product/phases/P19_LOCALISATION.md` and the terms in `docs/design/ARABIC_GLOSSARY.md`.
   - **Bilingual delivery.** Every screen, message, notification, email and PDF a phase adds or changes ships in English and Arabic. The client area is done (P19); P21 translates the staff screens.
   - **Angular.**
@@ -182,7 +191,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P18. Known gaps against REQUIREMENTS.md:
 
-- product phases P0–P18, P10A, P18A (cleanup) and P19 (localisation; the client area in Arabic) are delivered. The completion phases P20–P23 in the roadmap close the rest: the staff screens in Arabic (P21), units, uploaded videos, tests in the dashboard and reports, check-in search and photo privacy (P20), tracking fixes (P22), and the release with the owner's production sign-off on staging (P23, `docs/deployment/PRODUCTION_SIGNOFF.md`).
+- product phases P0–P18, P10A, P18A (cleanup), P19 (localisation; the client area in Arabic) and P20 (photo privacy, check-in search, uploaded videos, tests in the dashboard and reports, metric units) are delivered. The completion phases P21–P23 in the roadmap close the rest: the staff screens in Arabic (P21), tracking fixes (P22), and the release with the owner's production sign-off on staging (P23, `docs/deployment/PRODUCTION_SIGNOFF.md`).
 - Scale-out (more than one API instance) is backlog: SignalR has no backplane and the workers are not coordinated.
 
 Treat these as planned rework, not conventions to preserve.

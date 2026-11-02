@@ -2,13 +2,13 @@
 
 Started in P19. Every Arabic text in the app follows these terms. New terms are added by the phase that introduces them, and the owner, or a reviewer the owner names, approves them before the phase merges.
 
-**Status:** draft for owner approval (P19).
+**Status:** draft for owner approval (P19). Units approved by the owner on 2026-11-02; three terms below are still open.
 
 ## Conventions
 
 - **Digits.** Arabic screens, PDFs and messages use Western digits (0–9), with "." for decimals and "," for thousands (owner decision, 2026-10-22). Angular's `ar` locale and .NET already format numbers this way.
 - **Dates.** Gregorian calendar with Arabic month and day names, for example "23 أكتوبر 2026" and "الجمعة". The neutral .NET `ar` culture defaults to the Hijri calendar, so the server pins Gregorian (`UiCulture.Formatting`).
-- **Units.** Short Arabic abbreviations next to the number: كغ, غ, سم, م, مل, ث, تكرار. "%" and "°" stay as they are. RPE, RIR, e1RM and 1RM stay in Latin letters, because they are the sport's own abbreviations.
+- **Units.** Metric only (owner decision, 2026-11-02): no inches, feet, pounds or fluid ounces anywhere. Arabic screens write short Arabic abbreviations next to the number: كجم, جم, سم, م, مل, ث, تكرار. English screens write kg, g, cm, m, ml. "%" and "°" stay as they are. RPE, RIR, e1RM and 1RM stay in Latin letters, because they are the sport's own abbreviations.
 - **Counts.** Arabic nouns change form with the number, so lines that count write the label first and the number after it, for example "المجموعات: 4" and "أيام التسجيل: 3 من 7". Phrases that must follow a number use plural forms (zero, one, two, few, many, other).
 - **Data.** Names and texts people enter (foods, exercises, plans, notes, messages, form questions) are shown as written. When the catalog has an Arabic name (`nameAr`), the Arabic interface shows it. These elements carry `translate="no"`.
 - **Direction.** Arrows that mean "previous" and "next" follow the reading direction (`.flip-rtl`). A back link points right: "→ كل النماذج".
@@ -66,5 +66,4 @@ Please confirm or correct these points:
 
 - **Check-in.** متابعة. The alternative is "تسجيل الحضور", which reads like attendance.
 - **Calf.** بطة الساق. The alternative is "ربلة الساق".
-- **Units.** Arabic abbreviations (كغ، سم، مل). The alternative is keeping kg, cm and ml in Latin letters.
 - **Calories.** "سعرة" for kcal. The alternative is "سعرة حرارية" or "س.ح".

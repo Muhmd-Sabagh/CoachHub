@@ -5,6 +5,7 @@ using CoachHub.Application.Common.Exceptions;
 using CoachHub.Domain.Assessments;
 using CoachHub.Domain.CheckIns;
 using CoachHub.Domain.Clients;
+using CoachHub.Domain.FitnessTests;
 using CoachHub.Domain.FoodTracking;
 using CoachHub.Domain.Progress;
 using CoachHub.Domain.WorkoutTracking;
@@ -20,6 +21,8 @@ public enum ClientExport
     Nutrition,
     Workouts,
     CheckIns,
+    /// <summary>Mobility, strength and endurance test results (P20).</summary>
+    Tests,
     All
 }
 
@@ -60,6 +63,7 @@ public interface IExportRepository
     Task<IReadOnlyList<FoodLogEntry>> FoodLogAsync(Guid clientId, CancellationToken cancellationToken);
     Task<(IReadOnlyList<WorkoutSession> Sessions, IReadOnlyDictionary<Guid, string> ExerciseNames)> WorkoutsAsync(Guid clientId, CancellationToken cancellationToken);
     Task<IReadOnlyList<ExportCheckIn>> CheckInsAsync(Guid clientId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<TestResult>> TestResultsAsync(Guid clientId, CancellationToken cancellationToken);
     Task<IReadOnlyList<ExportCoach>> CoachesAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<ExportSubscription>> SubscriptionsAsync(CancellationToken cancellationToken);
     Task<IReadOnlyDictionary<Guid, SubscriptionPaymentStatus>> SubscriptionPaymentsAsync(IReadOnlyCollection<Guid> subscriptionIds, CancellationToken cancellationToken);
@@ -71,7 +75,7 @@ public interface IExportRepository
 
 /// <summary>
 /// Data export (§51): CSV per dataset. The coach exports their client list and, per client, client data, progress,
-/// nutrition, workout history and check-ins (one CSV or all in a ZIP); the Administrator exports coaches, clients,
+/// nutrition, workout history, check-ins and test results (one CSV or all in a ZIP); the Administrator exports coaches, clients,
 /// subscriptions and revenue across the platform. Reports export as PDF (<c>ReportService</c>). Every export is
 /// audited.
 /// </summary>
@@ -111,6 +115,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
                 ClientExport.Progress => ProgressCsv(await repository.ProgressAsync(clientId, cancellationToken)),
                 ClientExport.Nutrition => NutritionCsv(await repository.FoodLogAsync(clientId, cancellationToken)),
                 ClientExport.Workouts => WorkoutsCsv(await repository.WorkoutsAsync(clientId, cancellationToken)),
+                ClientExport.Tests => TestsCsv(await repository.TestResultsAsync(clientId, cancellationToken)),
                 _ => CheckInsCsv(await repository.CheckInsAsync(clientId, cancellationToken))
             };
             files.Add(($"{prefix}-{part.ToString().ToLowerInvariant()}.csv", content, rows));
@@ -214,6 +219,13 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
         return (Csv.Write(["Date", "Measure", "Value", "Unit", "Source", "Notes"],
             rows.OrderBy(x => x.Date).ThenBy(x => x.Measure).Select(x => (IReadOnlyList<object?>)[x.Date, x.Measure, x.Value, x.Unit, x.Source, x.Notes])), rows.Count);
     }
+
+    /// <summary>Test results with the test's name, unit and direction as recorded; values stay in the test's unit.</summary>
+    private static (byte[], int) TestsCsv(IReadOnlyList<TestResult> results) =>
+        (Csv.Write(["Date", "Test", "Kind", "Value", "Unit", "Higher is better", "Classification", "Classified by coach", "Recorded by", "Notes", "Recorded (UTC)"],
+            results.OrderBy(x => x.Date).ThenBy(x => x.NameEn).ThenBy(x => x.CreatedAt).Select(x => (IReadOnlyList<object?>)[
+                x.Date, x.NameEn, x.Kind, x.Value, x.Unit, x.HigherIsBetter, x.Classification, x.IsClassificationOverridden, x.RecordedBy,
+                x.Notes, x.CreatedAt])), results.Count);
 
     private static (byte[], int) NutritionCsv(IReadOnlyList<FoodLogEntry> entries) =>
         (Csv.Write(["Date", "Meal", "Food", "Quantity", "Unit", "Calories", "Protein (g)", "Carbohydrates (g)", "Fat (g)", "Fiber (g)", "Source", "Logged (UTC)"],

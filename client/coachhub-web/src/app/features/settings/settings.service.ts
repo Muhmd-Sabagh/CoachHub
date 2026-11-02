@@ -34,7 +34,6 @@ export type MacroMode = 'GramsPerKg' | 'Percentages' | 'FixedGrams';
 export type ReplacementRule = 'Calories' | 'DominantMacro';
 /** The estimated one-rep max formula (§22) for PRs and strength analytics. */
 export type OneRepMaxFormula = 'Epley' | 'Brzycki';
-export type UnitSystem = 'Metric' | 'Imperial';
 
 export interface CoachDefaults {
   activityFactors: ActivityFactors;
@@ -55,7 +54,6 @@ export interface CoachDefaults {
 
 export interface PlatformSettings {
   defaultLanguage: 'en' | 'ar';
-  units: UnitSystem;
   emailNotificationsEnabled: boolean;
   whatsAppNotificationsEnabled: boolean;
   emailSenderName: string | null;

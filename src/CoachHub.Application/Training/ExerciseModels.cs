@@ -46,7 +46,8 @@ public sealed record ExerciseResponse(
     string? CoachingCuesEn = null,
     string? CoachingCuesAr = null,
     string? CommonMistakesEn = null,
-    string? CommonMistakesAr = null);
+    string? CommonMistakesAr = null,
+    Guid? VideoMediaId = null);
 
 /// <summary>Which exercises a search covers: both catalogs (default), the platform's, or the coach's own.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ExerciseScope>))]

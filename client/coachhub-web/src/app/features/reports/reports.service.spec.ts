@@ -33,6 +33,8 @@ describe('ReportsService (§44 reports, §51 exports)', () => {
   it('exports CSV for a client, the client list and the platform', () => {
     service.clientExport('c', 'All').subscribe(file => expect(file.fileName).toBe('all.zip'));
     http.expectOne('/api/v1/exports/clients/c/All').flush(new Blob(['x']));
+    service.clientExport('c', 'Tests').subscribe();
+    http.expectOne('/api/v1/exports/clients/c/Tests').flush(new Blob(['x']));
     service.clientList().subscribe();
     http.expectOne('/api/v1/exports/clients').flush(new Blob(['x']));
     service.platformExport('Revenue', '2026-10-01', '2026-10-31').subscribe();

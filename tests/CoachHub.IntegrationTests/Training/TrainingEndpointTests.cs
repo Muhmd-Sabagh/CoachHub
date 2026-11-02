@@ -6,6 +6,7 @@ using CoachHub.Application.Media;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Training;
 using CoachHub.IntegrationTests.Auth;
+using CoachHub.IntegrationTests.Me;
 using CoachHub.IntegrationTests.WorkoutPlanning;
 
 namespace CoachHub.IntegrationTests.Training;
@@ -138,7 +139,7 @@ public sealed class TrainingEndpointTests : IClassFixture<CoachHubApiFactory>
     private async Task<MediaMetadata> UploadImageAsync()
     {
         using var form = new MultipartFormDataContent();
-        using var bytes = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        using var bytes = new ByteArrayContent(MeEndpointTests.Png);
         bytes.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         form.Add(bytes, "file", "exercise.png");
         var response = await _client.PostAsync("/api/v1/media", form);

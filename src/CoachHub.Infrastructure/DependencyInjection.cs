@@ -208,6 +208,7 @@ public static class DependencyInjection
                   !string.IsNullOrWhiteSpace(value.SecretKey),
                 "Selected media provider configuration is incomplete.")
             .ValidateOnStart();
+        services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
         services.AddScoped<FileSystemMediaStorage>();
         services.AddScoped<S3MediaStorage>();
         services.AddScoped<IMediaStorage>(provider => fileSystem

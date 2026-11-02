@@ -1,5 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { enumLabelKey } from '../../core/i18n/enum-labels';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { environment } from '../../../environments/environment';
 import { PagedResult } from '../../shared/models/paged-result';
 
@@ -77,14 +79,18 @@ export class CheckInsService {
   private readonly base = `${environment.apiBaseUrl}/check-ins`;
   constructor(private readonly http: HttpClient) {}
 
-  list(params: { clientId?: string; status?: CheckInStatus | ''; pageNumber?: number }) {
+  /** Submitted check-ins; empty filters are left out (§50). */
+  list(params: CheckInFilters & { clientId?: string; status?: CheckInStatus | ''; pageNumber?: number }) {
     const query: Record<string, string | number> = { pageNumber: params.pageNumber ?? 1 };
-    if (params.clientId) query['clientId'] = params.clientId;
-    if (params.status) query['status'] = params.status;
+    for (const [key, value] of Object.entries(params)) {
+      if (key !== 'pageNumber' && typeof value === 'string' && value.trim()) query[key] = value.trim();
+    }
     return this.http.get<PagedResult<CheckInSummary>>(this.base, { params: query });
   }
-  due(state: 'Pending' | 'Overdue', pageNumber = 1) {
-    return this.http.get<PagedResult<CheckInDue>>(`${this.base}/due`, { params: { state, pageNumber } });
+  due(state: 'Pending' | 'Overdue', pageNumber = 1, searchTerm = '') {
+    const query: Record<string, string | number> = { state, pageNumber };
+    if (searchTerm.trim()) query['searchTerm'] = searchTerm.trim();
+    return this.http.get<PagedResult<CheckInDue>>(`${this.base}/due`, { params: query });
   }
   get(id: string) {
     return this.http.get<CheckInDetail>(`${this.base}/${id}`);
@@ -125,26 +131,29 @@ export class CheckInsService {
   }
 }
 
-export const statusLabels: Record<CheckInStatus, string> = {
-  AwaitingReview: 'Awaiting review',
-  Approved: 'Approved',
-  ChangesRequested: 'Changes requested',
-};
-
-export const dueStateLabels: Record<CheckInDueState, string> = { Upcoming: 'Upcoming', Pending: 'Due', Overdue: 'Overdue' };
-
-/** "Every week" / "Every 2 weeks" on a weekday. */
-export function cadenceText(schedule: Pick<CheckInSchedule, 'intervalWeeks' | 'dueWeekday'>): string {
-  return `${schedule.intervalWeeks === 1 ? 'Every week' : `Every ${schedule.intervalWeeks} weeks`} on ${schedule.dueWeekday}`;
+/** The coach's search over submitted check-ins (§50): client name, form, due and sent dates (yyyy-MM-dd). */
+export interface CheckInFilters {
+  searchTerm?: string;
+  formDefinitionId?: string;
+  dueFrom?: string;
+  dueTo?: string;
+  submittedFrom?: string;
+  submittedTo?: string;
 }
 
-/** An answer's value for reading: text, numbers and choices as written; a photo as "Photo". */
-export function answerText(answer: CheckInAnswer): string {
-  if (answer.mediaId) return 'Photo';
+/** "Every week on Sunday" / "Every 2 weeks on Friday", in the interface language. */
+export function cadenceText(schedule: Pick<CheckInSchedule, 'intervalWeeks' | 'dueWeekday'>, i18n: I18nService): string {
+  const key = enumLabelKey('weekday', schedule.dueWeekday);
+  return i18n.translate('checkIn.cadence', { count: schedule.intervalWeeks, day: key ? i18n.translate(key) : schedule.dueWeekday });
+}
+
+/** An answer's value for reading: text, numbers and choices as written; yes/no and a photo in the interface language. */
+export function answerText(answer: CheckInAnswer, i18n: I18nService): string {
+  if (answer.mediaId) return i18n.translate('checkIns.photo');
   try {
     const value = JSON.parse(answer.valueJson) as unknown;
-    if (Array.isArray(value)) return value.join(', ');
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (Array.isArray(value)) return value.join(i18n.language() === 'ar' ? '، ' : ', ');
+    if (typeof value === 'boolean') return i18n.translate(value ? 'form.yes' : 'form.no');
     return value === null || value === undefined ? '–' : String(value);
   } catch {
     return answer.valueJson;

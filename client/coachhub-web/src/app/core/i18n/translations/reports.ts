@@ -37,6 +37,7 @@ export const reports = defineTranslations({
     'reports.export.Nutrition': 'Nutrition diary',
     'reports.export.Workouts': 'Workout history',
     'reports.export.CheckIns': 'Check-ins',
+    'reports.export.Tests': 'Test results',
     'reports.export.All': 'Everything (ZIP)',
   },
   ar: {
@@ -54,7 +55,7 @@ export const reports = defineTranslations({
     'reports.daysLogged': 'أيام التسجيل: {logged} من {days}',
     'reports.training': 'التمارين',
     'reports.workouts': 'التمارين المنجزة: {done} من {scheduled}',
-    'reports.volume': 'حجم تدريب {value} كغ',
+    'reports.volume': 'حجم تدريب {value} كجم',
     'reports.steps': 'الخطوات',
     'reports.stepsPerDay': '{value} يوميًا',
     'reports.sleep': 'النوم',
@@ -74,6 +75,7 @@ export const reports = defineTranslations({
     'reports.export.Nutrition': 'سجل الطعام',
     'reports.export.Workouts': 'سجل التمارين',
     'reports.export.CheckIns': 'المتابعات',
+    'reports.export.Tests': 'نتائج الاختبارات',
     'reports.export.All': 'كل البيانات (ZIP)',
   },
 });

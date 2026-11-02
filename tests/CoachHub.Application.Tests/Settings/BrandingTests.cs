@@ -106,7 +106,7 @@ public sealed class EffectiveBrandTests
         new FakeCoachRepository(),
         TestTenancy.CoachOwnership(),
         new FakeCurrentUser(TenantScope.None),
-        new MediaService(new NullStorage(), new NullMedia()),
+        new MediaService(new NullStorage(), new NullMedia(), new NullImageProcessor()),
         new NullStorage(),
         TimeProvider.System);
 }
@@ -161,6 +161,12 @@ internal sealed class NullStorage : IMediaStorage
         Task.FromResult(new StoredMedia("stored-" + Guid.NewGuid().ToString("N")));
     public Task<Stream> OpenReadAsync(string storageKey, CancellationToken cancellationToken) => Task.FromResult<Stream>(new MemoryStream());
     public Task DeleteAsync(string storageKey, CancellationToken cancellationToken) => Task.CompletedTask;
+}
+
+internal sealed class NullImageProcessor : IImageProcessor
+{
+    public bool Rewrites(string contentType) => false;
+    public ProcessedImage Process(Stream content, string contentType) => throw new NotSupportedException();
 }
 
 internal sealed class NullMedia : IMediaRepository

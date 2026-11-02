@@ -99,7 +99,6 @@ public sealed class BrandingOptions
 
 public sealed record PlatformSettingsResponse(
     string DefaultLanguage,
-    UnitSystem Units,
     bool EmailNotificationsEnabled,
     bool WhatsAppNotificationsEnabled,
     string? EmailSenderName,
@@ -107,7 +106,6 @@ public sealed record PlatformSettingsResponse(
 
 public sealed record PlatformSettingsInput(
     string DefaultLanguage,
-    UnitSystem Units,
     bool EmailNotificationsEnabled,
     bool WhatsAppNotificationsEnabled,
     string? EmailSenderName);
@@ -141,8 +139,8 @@ public sealed record CoachSettingsInput(
     decimal SecondaryMuscleWeight = 0m,
     LifestyleTargetValues? DefaultTargets = null);
 
-/// <summary>What every signed-in screen needs: the brand name to show, units and default language.</summary>
-public sealed record WorkspaceSettingsResponse(string ProductName, string? CoachName, UnitSystem Units, string DefaultLanguage);
+/// <summary>What every signed-in screen needs: the brand name to show and the default language. Units are metric (P20).</summary>
+public sealed record WorkspaceSettingsResponse(string ProductName, string? CoachName, string DefaultLanguage);
 
 public interface ISettingsRepository
 {

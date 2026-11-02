@@ -12,7 +12,7 @@ namespace CoachHub.API.Settings;
 [Route(ApiRoutes.V1 + "/settings")]
 public sealed class SettingsController(SettingsService settings) : ControllerBase
 {
-    /// <summary>The brand name, coach name, units and default language for the signed-in user.</summary>
+    /// <summary>The brand name, coach name and default language for the signed-in user.</summary>
     [HttpGet]
     public Task<WorkspaceSettingsResponse> Get(CancellationToken cancellationToken) =>
         settings.GetWorkspaceAsync(cancellationToken);

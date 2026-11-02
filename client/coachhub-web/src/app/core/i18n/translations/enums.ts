@@ -148,7 +148,7 @@ export const enums = defineTranslations({
     'enum.testTrend.Improved': 'تحسّن',
     'enum.testTrend.Declined': 'تراجع',
     'enum.testTrend.Unchanged': 'دون تغيير',
-    'enum.testUnit.Kilograms': 'كغ',
+    'enum.testUnit.Kilograms': 'كجم',
     'enum.testUnit.Repetitions': 'تكرار',
     'enum.testUnit.Seconds': 'ثانية',
     'enum.testUnit.Meters': 'متر',

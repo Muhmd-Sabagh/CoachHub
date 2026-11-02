@@ -2,6 +2,7 @@ using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.FitnessTests;
+using CoachHub.Application.Media;
 using CoachHub.Domain.FitnessTests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,6 +42,18 @@ public sealed class FitnessTestsController(TestDefinitionService tests) : Contro
         await tests.DeleteAsync(id, token);
         return NoContent();
     }
+
+    /// <summary>Uploads the test's video (MP4, WebM or MOV, up to 50 MB), replacing the previous one.</summary>
+    [HttpPut("{id:guid}/video")]
+    [RequestSizeLimit(MediaService.MaximumSharedFileSizeBytes)]
+    public async Task<TestDefinitionResponse> SetVideo(Guid id, [FromForm] IFormFile file, CancellationToken token)
+    {
+        await using var content = file.OpenReadStream();
+        return await tests.SetVideoAsync(id, new MediaUpload(content, file.FileName, file.ContentType, file.Length), token);
+    }
+
+    [HttpDelete("{id:guid}/video")]
+    public Task<TestDefinitionResponse> RemoveVideo(Guid id, CancellationToken token) => tests.RemoveVideoAsync(id, token);
 }
 
 /// <summary>

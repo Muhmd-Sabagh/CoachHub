@@ -122,6 +122,8 @@ public sealed class TestDefinition : Entity, ICatalogEntry
     public string? InstructionsEn { get; private set; }
     public string? InstructionsAr { get; private set; }
     public string? YouTubeUrl { get; private set; }
+    /// <summary>An uploaded video (P20): platform media for a platform test, the coach's library for a custom one.</summary>
+    public Guid? VideoMediaId { get; private set; }
     public bool IsActive { get; private set; } = true;
     public bool IsPlatform => CoachId is null;
 
@@ -151,6 +153,13 @@ public sealed class TestDefinition : Entity, ICatalogEntry
         InstructionsAr = Optional(values.InstructionsAr, MaximumTextLength, "instructionsAr");
         YouTubeUrl = string.IsNullOrWhiteSpace(values.YouTubeUrl) ? null : values.YouTubeUrl.Trim();
         IsActive = values.IsActive;
+    }
+
+    /// <summary>Sets or clears the uploaded video; the service checks the file's owner and type.</summary>
+    public void ChangeVideo(Guid? mediaId)
+    {
+        if (mediaId == Guid.Empty) throw new ArgumentException("Media identifier cannot be empty.", nameof(mediaId));
+        VideoMediaId = mediaId;
     }
 
     public TestClassification? Classify(decimal value) => TestCutOffs.Classify(value, HigherIsBetter, GoodThreshold, PoorThreshold);

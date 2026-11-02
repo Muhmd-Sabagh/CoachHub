@@ -14,7 +14,7 @@ public sealed class ClientServiceTests
 
     private ClientService Service() => new(
         _repository, TestTenancy.CoachOwnership(), new FakeCoachRepository(),
-        new MediaService(new NoMediaStorage(), new NoMediaRepository()), _accounts, TimeProvider.System);
+        new MediaService(new NoMediaStorage(), new NoMediaRepository(), new Settings.NullImageProcessor()), _accounts, TimeProvider.System);
 
     [Fact]
     public async Task Creating_a_client_assigns_the_coach_and_starts_on_track()

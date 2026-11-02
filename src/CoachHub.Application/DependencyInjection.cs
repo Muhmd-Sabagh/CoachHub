@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<FoodTrackingService>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<MediaService>();
+        services.AddScoped<CatalogVideos>();
         services.AddScoped<PlanPdfService>();
         services.AddScoped<FoodService>();
         services.AddScoped<LegacyFoodImportService>();

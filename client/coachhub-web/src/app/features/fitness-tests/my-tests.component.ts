@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { MediaVideoComponent } from '../../shared/components/media-video/media-video.component';
 import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { isoDate } from '../nutrition-tracking/nutrition-tracking.service';
@@ -19,7 +20,7 @@ interface Draft { testId: string; resultId: string | null; date: string; value: 
 @Component({
   selector: 'app-my-tests',
   standalone: true,
-  imports: [FormsModule, RouterLink, TrendChartComponent, ...I18N_PIPES],
+  imports: [FormsModule, RouterLink, TrendChartComponent, MediaVideoComponent, ...I18N_PIPES],
   template: `
     <section class="dashboard-hero"><div><p class="eyebrow"><a routerLink="/app/progress">{{ 'tests.progressLink' | translate }}</a></p><h1>{{ 'tests.title' | translate }}</h1>
       <p>{{ 'tests.intro' | translate }}</p></div></section>
@@ -34,6 +35,7 @@ interface Draft { testId: string; resultId: string | null; date: string; value: 
           @if (t.definition; as def) {
             @if (instructions(def); as text) { <p class="instructions" translate="no">{{ text }}</p> }
             <small class="muted">{{ cutOffs(def) }}</small>
+            @if (def.videoMediaId) { <app-media-video [mediaId]="def.videoMediaId" [label]="def | localName" /> }
             @if (def.youTubeUrl) { <a [href]="def.youTubeUrl" target="_blank" rel="noopener">{{ 'tests.watch' | translate }}</a> }
           }
           @if (t.progress.current; as current) {

@@ -1,1 +1,1 @@
-export interface CoachHubSettings { productName: string; coachName: string | null; units?: 'Metric' | 'Imperial'; defaultLanguage?: 'en' | 'ar'; }
+export interface CoachHubSettings { productName: string; coachName: string | null; defaultLanguage?: 'en' | 'ar'; }

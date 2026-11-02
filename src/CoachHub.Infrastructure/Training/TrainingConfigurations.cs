@@ -46,6 +46,11 @@ public sealed class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
             .WithMany()
             .HasForeignKey(exercise => exercise.MediaId)
             .OnDelete(DeleteBehavior.SetNull);
+        // A second cascade path to media is not allowed on SQL Server; the service removes the video itself.
+        builder.HasOne<MediaAsset>()
+            .WithMany()
+            .HasForeignKey(exercise => exercise.VideoMediaId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
