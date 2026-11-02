@@ -1,6 +1,6 @@
 # CoachHub Product Roadmap: Phases to Implement docs/product/REQUIREMENTS.md
 
-**Status:** Approved by the owner on 2026-10-12. P0–P18 and P10A are delivered. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
+**Status:** Approved by the owner on 2026-10-12. P0–P18, P10A, P18A, P19 and P20 are delivered. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
 
 ## Context
 
@@ -443,6 +443,8 @@ The client area comes first because clients mostly use their phones (§53).
 
 ### P20: Units and requirement completion (M), covering §17, §26, §34, §37, §44, §49 (Units), §50, §51, §52
 
+**Delivered 2026-11-02** (see `docs/product/phases/P20_COMPLETION.md`).
+
 - **Units (§49).** *Changed by the owner on 2026-11-02:* the platform is **metric only**. No imperial units, conversions or units preference are built, and the unused Metric/Imperial platform setting is removed. Arabic abbreviations become كجم, جم, سم, م and مل; English stays kg, g, cm, m and ml.
 - **Uploaded videos (§17, §34).**
   - Exercises and test definitions accept an uploaded video (media) as well as a YouTube link.
@@ -548,4 +550,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 started on 2026-11-02 on branch `phase/p20-completion` (see `docs/product/phases/P20_COMPLETION.md`).
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 was delivered on 2026-11-02 on branch `phase/p20-completion`. The next phases are **P21** (Arabic for staff screens) and **P22** (tracking fixes); P21 may run alongside P22.
