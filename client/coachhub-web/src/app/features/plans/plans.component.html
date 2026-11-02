@@ -1,30 +1,27 @@
 <section class="page-heading">
-  <p class="eyebrow">Programming</p>
-  <h1>Saved plans</h1>
-  <p>
-    Design, assign, copy, review, and export diet and workout plans. Every plan keeps its version
-    history.
-  </p>
+  <p class="eyebrow">{{ 'plans.eyebrow' | translate }}</p>
+  <h1>{{ 'plans.title' | translate }}</h1>
+  <p>{{ 'plans.intro' | translate }}</p>
 </section>
 <section class="card workbench">
   <div class="toolbar">
     <form class="filter-row" (ngSubmit)="load(1)">
-      <label><span>Plan name</span><input name="search" [(ngModel)]="search" /></label
-      ><label><span>Client name</span><input name="client" [(ngModel)]="clientSearch" /></label
+      <label><span>{{ 'plans.planName' | translate }}</span><input name="search" [(ngModel)]="search" /></label
+      ><label><span>{{ 'plans.clientName' | translate }}</span><input name="client" [(ngModel)]="clientSearch" /></label
       ><label
-        ><span>Type</span
+        ><span>{{ 'plans.type' | translate }}</span
         ><select name="type" [(ngModel)]="type">
-          <option value="">All</option>
-          <option>Diet</option>
-          <option>Workout</option>
+          <option value="">{{ 'common.all' | translate }}</option>
+          <option value="Diet">{{ 'Diet' | enumLabel: 'planType' }}</option>
+          <option value="Workout">{{ 'Workout' | enumLabel: 'planType' }}</option>
         </select></label
-      ><button class="button button-primary">Search</button
-      ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+      ><button class="button button-primary">{{ 'common.search' | translate }}</button
+      ><button class="button button-secondary" type="button" (click)="reset()">{{ 'common.reset' | translate }}</button>
     </form>
     <div class="actions">
-      <button class="button button-secondary" (click)="calc.show()">Nutrition calculator</button
-      ><button class="button button-primary" (click)="create('Diet')">New diet plan</button
-      ><button class="button button-primary" (click)="create('Workout')">New workout plan</button>
+      <button class="button button-secondary" (click)="calc.show()">{{ 'plans.calculator' | translate }}</button
+      ><button class="button button-primary" (click)="create('Diet')">{{ 'plans.newDiet' | translate }}</button
+      ><button class="button button-primary" (click)="create('Workout')">{{ 'plans.newWorkout' | translate }}</button>
     </div>
   </div>
   @if (error()) {
@@ -34,10 +31,10 @@
     <table>
       <thead>
         <tr>
-          <th>Plan</th>
-          <th>Client</th>
-          <th>Summary</th>
-          <th>Created</th>
+          <th>{{ 'plans.plan' | translate }}</th>
+          <th>{{ 'plans.client' | translate }}</th>
+          <th>{{ 'plans.summary' | translate }}</th>
+          <th>{{ 'plans.created' | translate }}</th>
           <th></th>
         </tr>
       </thead>
@@ -45,46 +42,43 @@
         @for (p of page().items; track p.id) {
           <tr>
             <td>
-              <strong>{{ p.nameEn }}</strong
-              ><small>{{ p.planType }} · {{ p.nameAr || 'English only' }}</small>
+              <strong translate="no">{{ p.nameEn }}</strong
+              ><small>{{ p.planType | enumLabel: 'planType' }} · @if (p.nameAr) { <span translate="no">{{ p.nameAr }}</span> } @else { {{ 'plans.englishOnly' | translate }} }</small>
               @if (p.versionNumber) {
                 <small
-                  >V{{ p.versionNumber }} · {{ p.versionStatus }}
+                  >{{ 'plans.versionLine' | translate: { version: p.versionNumber, status: (p.versionStatus | enumLabel: 'planRevisionStatus') } }}
                   @if (p.startDate || p.endDate) {
-                    · {{ p.startDate ? (p.startDate | date: 'mediumDate') : '…' }} –
-                    {{ p.endDate ? (p.endDate | date: 'mediumDate') : '…' }}
+                    · {{ p.startDate ? (p.startDate | localDate: 'd MMM y') : '…' }} – {{ p.endDate ? (p.endDate | localDate: 'd MMM y') : '…' }}
                   }
                 </small>
               }
             </td>
             <td>
-              {{ p.clientName || 'Unassigned' }}
+              @if (p.clientName) { <span translate="no">{{ p.clientName }}</span> } @else { {{ 'plans.unassigned' | translate }} }
             </td>
             <td>
               @if (p.planType === 'Diet') {
-                <span class="metric">{{ p.totalCalories | number: '1.0-0' }} kcal</span
-                ><small
-                  >P {{ p.totalProtein }} · C {{ p.totalCarbohydrates }} · F {{ p.totalFat }}</small
-                >
+                <span class="metric">{{ 'plans.kcal' | translate: { value: (p.totalCalories | localNumber: '1.0-0') } }}</span
+                ><small>{{ 'plans.macros' | translate: { protein: (p.totalProtein | localNumber: '1.0-1'), carbs: (p.totalCarbohydrates | localNumber: '1.0-1'), fat: (p.totalFat | localNumber: '1.0-1') } }}</small>
               } @else {
-                <span class="metric">{{ p.workoutDayCount }} training days</span>
+                <span class="metric">{{ 'plans.trainingDays' | translate: { count: p.workoutDayCount } }}</span>
               }
             </td>
-            <td>{{ p.createdAt | date: 'mediumDate' }}</td>
+            <td>{{ p.createdAt | localDate: 'd MMM y' }}</td>
             <td class="actions">
-              <button class="link-button" (click)="edit(p)">Edit</button
-              ><button class="link-button" (click)="copy(p)">Copy</button
-              ><button class="link-button" (click)="assign(p)">Assign</button
-              ><button class="link-button" (click)="preview(p, 'English')">Preview EN</button
-              ><button class="link-button" (click)="preview(p, 'Arabic')">Preview AR</button
-              ><button class="link-button" (click)="download(p, 'English')">Download</button
-              ><button class="link-button danger" (click)="remove(p)">Delete</button>
+              <button class="link-button" (click)="edit(p)">{{ 'common.edit' | translate }}</button
+              ><button class="link-button" (click)="copy(p)">{{ 'plans.copy' | translate }}</button
+              ><button class="link-button" (click)="assign(p)">{{ 'plans.assign' | translate }}</button
+              ><button class="link-button" (click)="preview(p, 'English')">{{ 'plans.previewEn' | translate }}</button
+              ><button class="link-button" (click)="preview(p, 'Arabic')">{{ 'plans.previewAr' | translate }}</button
+              ><button class="link-button" (click)="download(p, i18n.language() === 'ar' ? 'Arabic' : 'English')">{{ 'plans.download' | translate }}</button
+              ><button class="link-button danger" (click)="remove(p)">{{ 'common.delete' | translate }}</button>
             </td>
           </tr>
         }
         @if (!loading() && !page().items.length) {
           <tr>
-            <td colspan="5" class="table-message">No plans match the applied filters.</td>
+            <td colspan="5" class="table-message">{{ 'plans.none' | translate }}</td>
           </tr>
         }
       </tbody>
@@ -99,61 +93,51 @@
 </section>
 @if (editorOpen() && editor()) {
   <div class="modal-backdrop">
-    <section class="modal-card plan-editor">
+    <section class="modal-card plan-editor" role="dialog" aria-modal="true" [attr.aria-label]="editorKey() | translate">
       <header>
         <div>
           <p class="eyebrow">
-            {{ editingId() ? 'Edit' : 'New' }} {{ editorType() }} plan
+            {{ editorKey() | translate }}
             @if (version(); as v) {
-              · Version {{ v.versionNumber }} · {{ v.status }}
+              {{ 'plans.versionStatus' | translate: { version: v.versionNumber, status: (v.status | enumLabel: 'planRevisionStatus') } }}
             }
           </p>
-          <h2>{{ editor().nameEn || 'Untitled plan' }}</h2>
+          @if (editor().nameEn) { <h2 translate="no">{{ editor().nameEn }}</h2> } @else { <h2>{{ 'plans.untitled' | translate }}</h2> }
         </div>
         <div class="actions">
           @if (editingId()) {
-            <button class="button button-secondary" type="button" (click)="openHistory()">
-              Version history
-            </button>
+            <button class="button button-secondary" type="button" (click)="openHistory()">{{ 'plans.history' | translate }}</button>
           }
-          <button class="icon-button" (click)="editorOpen.set(false)" aria-label="Close">×</button>
+          <button class="icon-button" type="button" (click)="editorOpen.set(false)" [attr.aria-label]="'common.close' | translate">×</button>
         </div>
       </header>
       @if (readOnly && version(); as v) {
         <p class="version-notice" role="status">
-          Version {{ v.versionNumber }} was archived on
-          {{ v.archivedAt | date: 'medium' }} and is read-only. The current version is V{{
-            currentVersionNumber()
-          }}.
+          {{ 'plans.archivedNotice' | translate: { version: v.versionNumber, date: (v.archivedAt | localDate: 'd MMM y, HH:mm'), current: currentVersionNumber() } }}
         </p>
       }
       @if (error()) {
         <p class="form-error">{{ error() }}</p>
       }
       @if (historyOpen()) {
-        <section class="nested-card version-history" aria-label="Version history">
+        <section class="nested-card version-history" [attr.aria-label]="'plans.history' | translate">
           <div class="toolbar">
-            <strong>Version history</strong
-            ><button class="link-button" type="button" (click)="historyOpen.set(false)">Close</button>
+            <strong>{{ 'plans.history' | translate }}</strong
+            ><button class="link-button" type="button" (click)="historyOpen.set(false)">{{ 'common.close' | translate }}</button>
           </div>
           <ul>
             @for (v of history(); track v.id) {
               <li class="nested-row">
                 <span
-                  ><strong>V{{ v.versionNumber }}</strong> · {{ v.status }}
+                  ><strong>V{{ v.versionNumber }}</strong> · {{ v.status | enumLabel: 'planRevisionStatus' }}
                   @if (v.startDate || v.endDate) {
-                    · {{ v.startDate || '…' }} – {{ v.endDate || '…' }}
+                    · {{ v.startDate ? (v.startDate | localDate: 'd MMM y') : '…' }} – {{ v.endDate ? (v.endDate | localDate: 'd MMM y') : '…' }}
                   }
-                  <small
-                    >Created {{ v.createdAt | date: 'medium'
-                    }}{{ v.createdByName ? ' by ' + v.createdByName : '' }}</small
-                  ></span
+                  <small>@if (v.createdByName) { {{ 'plans.createdBy' | translate: { date: (v.createdAt | localDate: 'd MMM y, HH:mm'), name: v.createdByName } }} } @else { {{ 'plans.createdOn' | translate: { date: (v.createdAt | localDate: 'd MMM y, HH:mm') } }} }</small></span
                 ><span class="actions"
                   ><button class="link-button" type="button" (click)="viewVersion(v)">
-                    {{ v.versionNumber === version()?.versionNumber ? 'Showing' : 'View' }}</button
-                  ><button class="link-button" type="button" (click)="previewVersion(v)">
-                    PDF
-                  </button></span
+                    {{ (v.versionNumber === version()?.versionNumber ? 'plans.showing' : 'plans.view') | translate }}</button
+                  ><button class="link-button" type="button" (click)="previewVersion(v, i18n.language() === 'ar' ? 'Arabic' : 'English')">{{ 'plans.pdf' | translate }}</button></span
                 >
               </li>
             }
@@ -164,223 +148,110 @@
         <fieldset class="plain-fieldset" [disabled]="readOnly">
           <div class="form-grid">
             <label
-              ><span>English name *</span
+              ><span>{{ 'plans.nameEn' | translate }}</span
               ><input name="planName" [(ngModel)]="editor().nameEn" required /></label
             ><label
-              ><span>Arabic name</span
+              ><span>{{ 'plans.nameAr' | translate }}</span
               ><input name="planNameAr" [(ngModel)]="editor().nameAr" dir="rtl" /></label
             ><label
-              ><span>Assign client</span
+              ><span>{{ 'plans.assignClient' | translate }}</span
               ><select name="clientId" [(ngModel)]="editor().clientId">
-                <option [ngValue]="null">Unassigned</option>
+                <option [ngValue]="null">{{ 'plans.unassigned' | translate }}</option>
                 @for (c of clients(); track c.id) {
-                  <option [value]="c.id">{{ c.name }}{{ c.email ? ' · ' + c.email : '' }}</option>
+                  <option [value]="c.id" translate="no">{{ c.name }}{{ c.email ? ' · ' + c.email : '' }}</option>
                 }
               </select></label
             ><label
-              ><span>Start date</span
+              ><span>{{ 'plans.startDate' | translate }}</span
               ><input type="date" name="startDate" [(ngModel)]="editor().startDate" /></label
             ><label
-              ><span>End date</span
-              ><input
-                type="date"
-                name="endDate"
-                [min]="editor().startDate || ''"
-                [(ngModel)]="editor().endDate" /></label
+              ><span>{{ 'plans.endDate' | translate }}</span
+              ><input type="date" name="endDate" [min]="editor().startDate || ''" [(ngModel)]="editor().endDate" /></label
             ><label
-              ><span>Status</span
+              ><span>{{ 'common.status' | translate }}</span
               ><select name="status" [(ngModel)]="editor().status">
-                <option value="Active">Active</option>
-                <option value="Draft">Draft</option>
+                <option value="Active">{{ 'Active' | enumLabel: 'planRevisionStatus' }}</option>
+                <option value="Draft">{{ 'Draft' | enumLabel: 'planRevisionStatus' }}</option>
               </select></label
             >
             @if (editorType() === 'Diet' && editor().targets) {
-              <fieldset class="targets span-2" aria-label="Version targets">
+              <fieldset class="targets span-2" [attr.aria-label]="'plans.versionTargets' | translate">
                 <legend>
-                  Targets for this version
-                  <button
-                    class="link-button"
-                    type="button"
-                    [disabled]="!editor().clientId"
-                    [title]="editor().clientId ? '' : 'Assign a client first'"
-                    (click)="useClientTargets()"
-                  >
-                    Use client's targets
+                  {{ 'plans.targetsTitle' | translate }}
+                  <button class="link-button" type="button" [disabled]="!editor().clientId" [title]="editor().clientId ? '' : ('plans.assignFirst' | translate)" (click)="useClientTargets()">
+                    {{ 'plans.useClientTargets' | translate }}
                   </button>
                 </legend>
-                <label
-                  ><span>Calories</span
-                  ><input
-                    type="number"
-                    min="0"
-                    step="any"
-                    name="tCalories"
-                    [(ngModel)]="editor().targets.calories" /></label
-                ><label
-                  ><span>Protein g</span
-                  ><input
-                    type="number"
-                    min="0"
-                    step="any"
-                    name="tProtein"
-                    [(ngModel)]="editor().targets.protein" /></label
-                ><label
-                  ><span>Carbohydrates g</span
-                  ><input
-                    type="number"
-                    min="0"
-                    step="any"
-                    name="tCarbs"
-                    [(ngModel)]="editor().targets.carbohydrates" /></label
-                ><label
-                  ><span>Fat g</span
-                  ><input
-                    type="number"
-                    min="0"
-                    step="any"
-                    name="tFat"
-                    [(ngModel)]="editor().targets.fat" /></label
-                ><label
-                  ><span>Meals</span
-                  ><input
-                    type="number"
-                    min="0"
-                    max="15"
-                    name="tMeals"
-                    [(ngModel)]="editor().targets.mealCount" /></label
-                ><label
-                  ><span>Snacks</span
-                  ><input
-                    type="number"
-                    min="0"
-                    max="15"
-                    name="tSnacks"
-                    [(ngModel)]="editor().targets.snackCount"
-                /></label>
-                <small class="span-2"
-                  >Macros add up to {{ targetMacroCalories() | number: '1.0-0' }} kcal.
-                  {{ targetsMessage() }}</small
-                >
+                <label><span>{{ 'plans.calories' | translate }}</span><input type="number" min="0" step="any" name="tCalories" [(ngModel)]="editor().targets.calories" /></label
+                ><label><span>{{ 'plans.proteinG' | translate }}</span><input type="number" min="0" step="any" name="tProtein" [(ngModel)]="editor().targets.protein" /></label
+                ><label><span>{{ 'plans.carbsG' | translate }}</span><input type="number" min="0" step="any" name="tCarbs" [(ngModel)]="editor().targets.carbohydrates" /></label
+                ><label><span>{{ 'plans.fatG' | translate }}</span><input type="number" min="0" step="any" name="tFat" [(ngModel)]="editor().targets.fat" /></label
+                ><label><span>{{ 'plans.meals' | translate }}</span><input type="number" min="0" max="15" name="tMeals" [(ngModel)]="editor().targets.mealCount" /></label
+                ><label><span>{{ 'plans.snacks' | translate }}</span><input type="number" min="0" max="15" name="tSnacks" [(ngModel)]="editor().targets.snackCount" /></label>
+                <small class="span-2">{{ 'plans.macroCalories' | translate: { value: (targetMacroCalories() | localNumber: '1.0-0') } }} {{ targetsMessage() }}</small>
               </fieldset>
             }
             <div class="toolbar">
-              <strong>Plan notes</strong
-              ><button class="link-button" type="button" (click)="addNote()">Add note</button>
+              <strong>{{ 'plans.notes' | translate }}</strong
+              ><button class="link-button" type="button" (click)="addNote()">{{ 'plans.addNote' | translate }}</button>
             </div>
           </div>
           @for (n of editor().notes; track n.id; let ni = $index) {
             <div class="nested-row">
-              <input [name]="'note' + ni" [(ngModel)]="n.text" placeholder="Plan note" /><label
-                class="checkbox-row"
-                ><input
-                  type="checkbox"
-                  [name]="'noteactive' + ni"
-                  [(ngModel)]="n.isActive"
-                />PDF</label
-              ><button
-                class="link-button danger"
-                type="button"
-                (click)="removeFrom(editor().notes, ni)"
-              >
-                Remove
-              </button>
+              <input [name]="'note' + ni" [(ngModel)]="n.text" [placeholder]="'plans.notePlaceholder' | translate" [attr.aria-label]="'plans.notePlaceholder' | translate" /><label class="checkbox-row"
+                ><input type="checkbox" [name]="'noteactive' + ni" [(ngModel)]="n.isActive" />{{ 'plans.inPdf' | translate }}</label
+              ><button class="link-button danger" type="button" (click)="removeFrom(editor().notes, ni)">{{ 'plans.remove' | translate }}</button>
             </div>
           }
           @if (editorType() === 'Diet') {
             @for (v of editor().variants; track v.id; let vi = $index) {
               <section class="builder-section">
                 <div class="toolbar">
-                  <input [name]="'variant' + vi" [(ngModel)]="v.nameEn" aria-label="Variant name" />
+                  <input [name]="'variant' + vi" [(ngModel)]="v.nameEn" [attr.aria-label]="'plans.variantName' | translate" />
                   <div class="actions">
-                    <button
-                      class="link-button"
-                      type="button"
-                      (click)="move(editor().variants, vi, -1)"
-                    >
-                      ↑</button
-                    ><button
-                      class="link-button"
-                      type="button"
-                      (click)="move(editor().variants, vi, 1)"
-                    >
-                      ↓</button
-                    ><button class="button button-secondary" type="button" (click)="addMeal(v)">
-                      Add meal
-                    </button>
+                    <button class="link-button" type="button" [attr.aria-label]="'plans.moveUp' | translate" (click)="move(editor().variants, vi, -1)">↑</button
+                    ><button class="link-button" type="button" [attr.aria-label]="'plans.moveDown' | translate" (click)="move(editor().variants, vi, 1)">↓</button
+                    ><button class="button button-secondary" type="button" (click)="addMeal(v)">{{ 'plans.addMeal' | translate }}</button>
                   </div>
                 </div>
                 @if (variantTotals(v); as vt) {
                   <p class="plan-summary" aria-live="polite">
-                    <strong>{{ vt.calories | number: '1.0-0' }} kcal</strong>
+                    {{ 'plans.variantTotals' | translate: {
+                      kcal: (vt.calories | localNumber: '1.0-0'), protein: (vt.protein | localNumber: '1.0-1'), carbs: (vt.carbohydrates | localNumber: '1.0-1'),
+                      fat: (vt.fat | localNumber: '1.0-1'), fiber: (vt.fiber | localNumber: '1.0-1'),
+                      meals: mealCount(v, false) + (editor().targets?.mealCount != null ? '/' + editor().targets.mealCount : ''),
+                      snacks: mealCount(v, true) + (editor().targets?.snackCount != null ? '/' + editor().targets.snackCount : '') } }}
                     @if (difference(vt.calories, editor().targets?.calories); as d) {
-                      <small [class.over]="d > 0"
-                        >({{ d > 0 ? '+' : '' }}{{ d | number: '1.0-0' }})</small
-                      >
+                      <small [class.over]="d > 0">({{ d > 0 ? '+' : '' }}{{ d | localNumber: '1.0-0' }})</small>
                     }
-                    · P {{ vt.protein | number: '1.0-1' }} g · C
-                    {{ vt.carbohydrates | number: '1.0-1' }} g · F {{ vt.fat | number: '1.0-1' }} g
-                    · Fiber {{ vt.fiber | number: '1.0-1' }} g · Meals {{ mealCount(v, false)
-                    }}{{ editor().targets?.mealCount != null ? '/' + editor().targets.mealCount : '' }}
-                    · Snacks
-                    {{ mealCount(v, true)
-                    }}{{
-                      editor().targets?.snackCount != null ? '/' + editor().targets.snackCount : ''
-                    }}
                   </p>
                 }
                 @for (m of v.meals; track m.id; let mi = $index) {
                   <article class="nested-card">
                     <div class="toolbar">
                       <span class="meal-heading"
-                        ><input
-                          [name]="'meal' + vi + '-' + mi"
-                          [(ngModel)]="m.nameEn"
-                          aria-label="Meal name"
-                        /><select
-                          [name]="'mealType' + vi + '-' + mi"
-                          [(ngModel)]="m.type"
-                          aria-label="Meal type"
-                        >
+                        ><input [name]="'meal' + vi + '-' + mi" [(ngModel)]="m.nameEn" [attr.aria-label]="'plans.mealName' | translate" /><select
+                          [name]="'mealType' + vi + '-' + mi" [(ngModel)]="m.type" [attr.aria-label]="'plans.mealType' | translate">
                           @for (type of mealTypes; track type) {
-                            <option [value]="type">{{ type }}</option>
+                            <option [value]="type">{{ type | enumLabel: 'mealType' }}</option>
                           }</select
-                        ><small>{{ mealTotals(m).calories | number: '1.0-0' }} kcal</small></span
+                        ><small>{{ 'plans.kcal' | translate: { value: (mealTotals(m).calories | localNumber: '1.0-0') } }}</small></span
                       >
                       <div class="actions">
-                        <button class="link-button" type="button" (click)="move(v.meals, mi, -1)">
-                          ↑</button
-                        ><button class="link-button" type="button" (click)="move(v.meals, mi, 1)">
-                          ↓</button
-                        ><button class="link-button" type="button" (click)="addFood(m)">
-                          Add food</button
-                        ><button class="link-button" type="button" (click)="addMealOption(m)">
-                          Add option</button
-                        ><button
-                          class="link-button danger"
-                          type="button"
-                          (click)="removeFrom(v.meals, mi)"
-                        >
-                          Remove meal
-                        </button>
+                        <button class="link-button" type="button" [attr.aria-label]="'plans.moveUp' | translate" (click)="move(v.meals, mi, -1)">↑</button
+                        ><button class="link-button" type="button" [attr.aria-label]="'plans.moveDown' | translate" (click)="move(v.meals, mi, 1)">↓</button
+                        ><button class="link-button" type="button" (click)="addFood(m)">{{ 'plans.addFood' | translate }}</button
+                        ><button class="link-button" type="button" (click)="addMealOption(m)">{{ 'plans.addOption' | translate }}</button
+                        ><button class="link-button danger" type="button" (click)="removeFrom(v.meals, mi)">{{ 'plans.removeMeal' | translate }}</button>
                       </div>
                     </div>
                     @if (m.options?.length) {
-                      <div class="meal-options" aria-label="Meal options">
+                      <div class="meal-options" [attr.aria-label]="'plans.mealOptions' | translate">
                         @for (o of m.options; track o.id; let oi = $index) {
                           <span class="meal-option"
-                            ><input
-                              [name]="'option' + vi + '-' + mi + '-' + oi"
-                              [(ngModel)]="o.nameEn"
-                              aria-label="Option name" /><small
-                              >{{ mealTotals(m, o.id).calories | number: '1.0-0' }} kcal</small
-                            ><button
-                              class="link-button danger"
-                              type="button"
-                              (click)="removeMealOption(m, oi)"
-                              aria-label="Remove option"
-                            >
-                              ×
-                            </button></span
+                            ><input [name]="'option' + vi + '-' + mi + '-' + oi" [(ngModel)]="o.nameEn" [attr.aria-label]="'plans.optionName' | translate" /><small
+                              >{{ 'plans.kcal' | translate: { value: (mealTotals(m, o.id).calories | localNumber: '1.0-0') } }}</small
+                            ><button class="link-button danger" type="button" (click)="removeMealOption(m, oi)" [attr.aria-label]="'plans.removeOption' | translate">×</button></span
                           >
                         }
                       </div>
@@ -388,223 +259,107 @@
                     @for (f of m.foodItems; track f.id; let fi = $index) {
                       <div class="nested-row">
                         @if (m.options?.length) {
-                          <select
-                            [name]="'rowoption' + vi + '-' + mi + '-' + fi"
-                            [(ngModel)]="f.mealOptionId"
-                            aria-label="Option"
-                          >
+                          <select [name]="'rowoption' + vi + '-' + mi + '-' + fi" [(ngModel)]="f.mealOptionId" [attr.aria-label]="'plans.option' | translate">
                             @for (o of m.options; track o.id) {
-                              <option [ngValue]="o.id">{{ o.nameEn }}</option>
+                              <option [ngValue]="o.id" translate="no">{{ o.nameEn }}</option>
                             }
                           </select>
                         }
-                        <select
-                          [name]="'food' + vi + '-' + mi + '-' + fi"
-                          [(ngModel)]="f.foodItemId"
-                          (ngModelChange)="foodChanged(f)"
-                          required
-                        >
-                          <option value="">Select food</option>
+                        <select [name]="'food' + vi + '-' + mi + '-' + fi" [(ngModel)]="f.foodItemId" (ngModelChange)="foodChanged(f)" required [attr.aria-label]="'plans.food' | translate">
+                          <option value="">{{ 'plans.selectFood' | translate }}</option>
                           @for (x of foods(); track x.id) {
-                            <option [value]="x.id">
-                              {{ x.nameEn }}{{ x.isCustom ? ' (custom)' : '' }}
-                            </option>
+                            <option [value]="x.id" translate="no">{{ x | localName }}{{ x.isCustom ? ('plans.custom' | translate) : '' }}</option>
                           }</select
-                        ><input
-                          type="number"
-                          min="0.01"
-                          step="any"
-                          [name]="'qty' + vi + '-' + mi + '-' + fi"
-                          [(ngModel)]="f.quantity"
-                          aria-label="Quantity"
-                        /><select
-                          [name]="'unit' + vi + '-' + mi + '-' + fi"
-                          [(ngModel)]="f.foodUnitId"
-                          aria-label="Unit"
-                        >
-                          <option [ngValue]="null">
-                            {{ food(f.foodItemId)?.baseUnitLabel ?? 'unit' }}
-                          </option>
+                        ><input type="number" min="0.01" step="any" [name]="'qty' + vi + '-' + mi + '-' + fi" [(ngModel)]="f.quantity" [attr.aria-label]="'plans.quantity' | translate" /><select
+                          [name]="'unit' + vi + '-' + mi + '-' + fi" [(ngModel)]="f.foodUnitId" [attr.aria-label]="'plans.unit' | translate">
+                          <option [ngValue]="null">{{ baseUnit(f.foodItemId) }}</option>
                           @for (u of food(f.foodItemId)?.units ?? []; track u.id) {
-                            <option [ngValue]="u.id">{{ u.nameEn }}</option>
+                            <option [ngValue]="u.id" translate="no">{{ u | localName }}</option>
                           }</select
-                        ><small class="row-kcal"
-                          >{{ rowTotals(f).calories | number: '1.0-0' }} kcal</small
-                        ><button
-                          class="link-button"
-                          type="button"
-                          (click)="move(m.foodItems, fi, -1)"
-                        >
-                          ↑</button
-                        ><button
-                          class="link-button"
-                          type="button"
-                          (click)="move(m.foodItems, fi, 1)"
-                        >
-                          ↓</button
-                        ><button
-                          class="link-button danger"
-                          type="button"
-                          (click)="removeFrom(m.foodItems, fi)"
-                        >
-                          Remove
-                        </button>
+                        ><small class="row-kcal">{{ 'plans.kcal' | translate: { value: (rowTotals(f).calories | localNumber: '1.0-0') } }}</small
+                        ><button class="link-button" type="button" [attr.aria-label]="'plans.moveUp' | translate" (click)="move(m.foodItems, fi, -1)">↑</button
+                        ><button class="link-button" type="button" [attr.aria-label]="'plans.moveDown' | translate" (click)="move(m.foodItems, fi, 1)">↓</button
+                        ><button class="link-button danger" type="button" (click)="removeFrom(m.foodItems, fi)">{{ 'plans.remove' | translate }}</button>
                       </div>
                     }
                   </article>
                 }
                 <div class="toolbar replacement-heading">
-                  <strong>Alternatives</strong
-                  ><button class="link-button" type="button" (click)="addReplacement(v)">
-                    Add alternative
-                  </button>
+                  <strong>{{ 'plans.alternatives' | translate }}</strong
+                  ><button class="link-button" type="button" (click)="addReplacement(v)">{{ 'plans.addAlternative' | translate }}</button>
                 </div>
                 @for (g of v.replacementGroups; track g.id; let gi = $index) {
                   <article class="nested-card">
                     <div class="nested-row">
-                      <input
-                        [name]="'gtitle' + vi + '-' + gi"
-                        [(ngModel)]="g.title"
-                        placeholder="Alternative title"
-                      /><select
-                        [name]="'targetmeal' + vi + '-' + gi"
-                        [(ngModel)]="g.targetMealId"
-                        (ngModelChange)="g.targetMealFoodItemId = null"
-                      >
-                        <option value="">Target meal</option>
+                      <input [name]="'gtitle' + vi + '-' + gi" [(ngModel)]="g.title" [placeholder]="'plans.alternativeTitle' | translate" [attr.aria-label]="'plans.alternativeTitle' | translate" /><select
+                        [name]="'targetmeal' + vi + '-' + gi" [(ngModel)]="g.targetMealId" (ngModelChange)="g.targetMealFoodItemId = null" [attr.aria-label]="'plans.targetMeal' | translate">
+                        <option value="">{{ 'plans.targetMeal' | translate }}</option>
                         @for (m of v.meals; track m.id) {
-                          <option [value]="m.id">{{ m.nameEn }}</option>
+                          <option [value]="m.id" translate="no">{{ m.nameEn }}</option>
                         }</select
-                      ><select
-                        [name]="'targetrow' + vi + '-' + gi"
-                        [(ngModel)]="g.targetMealFoodItemId"
-                        aria-label="Food it replaces"
-                      >
-                        <option [ngValue]="null">Whole meal</option>
+                      ><select [name]="'targetrow' + vi + '-' + gi" [(ngModel)]="g.targetMealFoodItemId" [attr.aria-label]="'plans.replaces' | translate">
+                        <option [ngValue]="null">{{ 'plans.wholeMeal' | translate }}</option>
                         @for (r of targetRows(v, g); track r.id) {
-                          <option [ngValue]="r.id">{{ foodName(r.foodItemId) }}</option>
+                          <option [ngValue]="r.id" translate="no">{{ foodName(r.foodItemId) }}</option>
                         }</select
-                      ><select
-                        [name]="'gmode' + vi + '-' + gi"
-                        [(ngModel)]="g.mode"
-                        aria-label="Alternative mode"
-                        title="Exact: the quantity you set. Flexible: calculated to match the food it replaces."
-                      >
-                        <option value="Exact">Exact quantities</option>
-                        <option value="Flexible">Flexible (calculated)</option></select
-                      ><button class="link-button" type="button" (click)="addReplacementOption(g)">
-                        Add option</button
-                      ><button
-                        class="link-button danger"
-                        type="button"
-                        (click)="removeFrom(v.replacementGroups, gi)"
-                      >
-                        Remove
-                      </button>
+                      ><select [name]="'gmode' + vi + '-' + gi" [(ngModel)]="g.mode" [attr.aria-label]="'plans.alternativeMode' | translate" [title]="'plans.modeHint' | translate">
+                        <option value="Exact">{{ 'plans.exact' | translate }}</option>
+                        <option value="Flexible">{{ 'plans.flexible' | translate }}</option></select
+                      ><button class="link-button" type="button" (click)="addReplacementOption(g)">{{ 'plans.addOption' | translate }}</button
+                      ><button class="link-button danger" type="button" (click)="removeFrom(v.replacementGroups, gi)">{{ 'plans.remove' | translate }}</button>
                     </div>
                     @for (o of g.options; track o.id; let oi = $index) {
                       <div class="nested-row replacement-row">
-                        <select
-                          [name]="'replacementfood' + vi + '-' + gi + '-' + oi"
-                          [(ngModel)]="o.replacementFoodItemId"
-                          (ngModelChange)="o.replacementMealId = null"
-                        >
-                          <option [ngValue]="null">Replacement food</option>
+                        <select [name]="'replacementfood' + vi + '-' + gi + '-' + oi" [(ngModel)]="o.replacementFoodItemId" (ngModelChange)="o.replacementMealId = null" [attr.aria-label]="'plans.replacementFood' | translate">
+                          <option [ngValue]="null">{{ 'plans.replacementFood' | translate }}</option>
                           @for (x of foods(); track x.id) {
-                            <option [value]="x.id">{{ x.nameEn }}</option>
+                            <option [value]="x.id" translate="no">{{ x | localName }}</option>
                           }</select
-                        ><select
-                          [name]="'replacementmeal' + vi + '-' + gi + '-' + oi"
-                          [(ngModel)]="o.replacementMealId"
-                          (ngModelChange)="o.replacementFoodItemId = null"
-                        >
-                          <option [ngValue]="null">Or whole meal</option>
+                        ><select [name]="'replacementmeal' + vi + '-' + gi + '-' + oi" [(ngModel)]="o.replacementMealId" (ngModelChange)="o.replacementFoodItemId = null" [attr.aria-label]="'plans.orWholeMeal' | translate">
+                          <option [ngValue]="null">{{ 'plans.orWholeMeal' | translate }}</option>
                           @for (m of v.meals; track m.id) {
-                            <option [value]="m.id">{{ m.nameEn }}</option>
+                            <option [value]="m.id" translate="no">{{ m.nameEn }}</option>
                           }</select
-                        ><input
-                          type="number"
-                          min="0.01"
-                          step="any"
-                          [disabled]="!!o.replacementMealId"
-                          [name]="'replacementqty' + vi + '-' + gi + '-' + oi"
-                          [(ngModel)]="o.quantity"
-                          [placeholder]="g.mode === 'Flexible' ? 'Calculated' : 'Quantity'"
-                        /><select
-                          [disabled]="!o.replacementFoodItemId"
-                          [name]="'replacementunit' + vi + '-' + gi + '-' + oi"
-                          [(ngModel)]="o.foodUnitId"
-                          aria-label="Unit"
-                        >
-                          <option [ngValue]="null">
-                            {{ food(o.replacementFoodItemId)?.baseUnitLabel ?? 'unit' }}
-                          </option>
+                        ><input type="number" min="0.01" step="any" [disabled]="!!o.replacementMealId" [name]="'replacementqty' + vi + '-' + gi + '-' + oi" [(ngModel)]="o.quantity"
+                          [placeholder]="(g.mode === 'Flexible' ? 'plans.calculated' : 'plans.quantity') | translate" [attr.aria-label]="'plans.quantity' | translate"
+                        /><select [disabled]="!o.replacementFoodItemId" [name]="'replacementunit' + vi + '-' + gi + '-' + oi" [(ngModel)]="o.foodUnitId" [attr.aria-label]="'plans.unit' | translate">
+                          <option [ngValue]="null">{{ baseUnit(o.replacementFoodItemId) }}</option>
                           @for (u of food(o.replacementFoodItemId)?.units ?? []; track u.id) {
-                            <option [ngValue]="u.id">{{ u.nameEn }}</option>
+                            <option [ngValue]="u.id" translate="no">{{ u | localName }}</option>
                           }</select
                         >@if (o.isCalculated && o.effectiveQuantity != null) {
-                          <small class="row-kcal"
-                            >≈ {{ o.effectiveQuantity | number: '1.0-1' }} {{ o.unitLabel }}</small
-                          >
-                        }<button
-                          class="link-button danger"
-                          type="button"
-                          (click)="removeFrom(g.options, oi)"
-                        >
-                          Remove
-                        </button>
+                          <small class="row-kcal">≈ {{ o.effectiveQuantity | localNumber: '1.0-1' }} <span translate="no">{{ o.unitLabel }}</span></small>
+                        }<button class="link-button danger" type="button" (click)="removeFrom(g.options, oi)">{{ 'plans.remove' | translate }}</button>
                       </div>
                     }
                   </article>
                 }
               </section>
             }
-            <button class="button button-secondary" type="button" (click)="addVariant()">
-              Add variant (e.g. rest day)
-            </button>
+            <button class="button button-secondary" type="button" (click)="addVariant()">{{ 'plans.addVariant' | translate }}</button>
           } @else {
             @for (d of editor().days; track d.id; let di = $index) {
               <section class="builder-section">
                 <div class="toolbar">
-                  <input [name]="'day' + di" [(ngModel)]="d.nameEn" aria-label="Day name" />
+                  <input [name]="'day' + di" [(ngModel)]="d.nameEn" [attr.aria-label]="'plans.dayName' | translate" />
                   <div class="actions">
-                    <button class="link-button" type="button" (click)="move(editor().days, di, -1)">
-                      ↑</button
-                    ><button class="link-button" type="button" (click)="move(editor().days, di, 1)">
-                      ↓</button
-                    ><button class="link-button" type="button" (click)="addSetGroup(d, 'Superset')">
-                      Add superset</button
-                    ><button class="link-button" type="button" (click)="addSetGroup(d, 'GiantSet')">
-                      Add giant set</button
-                    ><button class="button button-secondary" type="button" (click)="addExercise(d)">
-                      Add exercise
-                    </button>
+                    <button class="link-button" type="button" [attr.aria-label]="'plans.moveUp' | translate" (click)="move(editor().days, di, -1)">↑</button
+                    ><button class="link-button" type="button" [attr.aria-label]="'plans.moveDown' | translate" (click)="move(editor().days, di, 1)">↓</button
+                    ><button class="link-button" type="button" (click)="addSetGroup(d, 'Superset')">{{ 'plans.addSuperset' | translate }}</button
+                    ><button class="link-button" type="button" (click)="addSetGroup(d, 'GiantSet')">{{ 'plans.addGiantSet' | translate }}</button
+                    ><button class="button button-secondary" type="button" (click)="addExercise(d)">{{ 'plans.addExercise' | translate }}</button>
                   </div>
                 </div>
                 @if (d.setGroups?.length) {
-                  <div class="meal-options" aria-label="Set groups">
+                  <div class="meal-options" [attr.aria-label]="'plans.setGroups' | translate">
                     @for (g of d.setGroups; track g.id; let gi = $index) {
                       <span class="meal-option"
                         ><strong>{{ groupName(d, g) }}</strong
                         ><label class="inline-field"
-                          >rest
-                          <input
-                            type="number"
-                            min="0"
-                            max="3600"
-                            [name]="'grest' + di + '-' + gi"
-                            [(ngModel)]="g.restSeconds"
-                            aria-label="Rest after each round, seconds"
-                          />
-                          s</label
-                        ><button
-                          class="link-button danger"
-                          type="button"
-                          (click)="removeSetGroup(d, gi)"
-                          aria-label="Remove set group"
-                        >
-                          ×
-                        </button></span
+                          >{{ 'plans.rest' | translate }}
+                          <input type="number" min="0" max="3600" [name]="'grest' + di + '-' + gi" [(ngModel)]="g.restSeconds" [attr.aria-label]="'plans.restRound' | translate" />
+                          {{ 'plans.secondsShort' | translate }}</label
+                        ><button class="link-button danger" type="button" (click)="removeSetGroup(d, gi)" [attr.aria-label]="'plans.removeGroup' | translate">×</button></span
                       >
                     }
                   </div>
@@ -613,45 +368,35 @@
                   <article class="nested-card workout-exercise">
                     <div class="nested-row workout-row">
                       @if (groupLabel(d, e.id); as label) {
-                        <span class="group-label">{{ label }}</span>
+                        <span class="group-label" translate="no">{{ label }}</span>
                       }
-                      <select [name]="'exercise' + di + '-' + ei" [(ngModel)]="e.exerciseId" required>
-                        <option value="">Select exercise</option>
+                      <select [name]="'exercise' + di + '-' + ei" [(ngModel)]="e.exerciseId" required [attr.aria-label]="'plans.exercise' | translate">
+                        <option value="">{{ 'plans.selectExercise' | translate }}</option>
                         @for (x of exercises(); track x.id) {
-                          <option [value]="x.id">{{ x.nameEn }}{{ x.isCustom ? ' (custom)' : '' }}</option>
+                          <option [value]="x.id" translate="no">{{ x | localName }}{{ x.isCustom ? ('plans.custom' | translate) : '' }}</option>
                         }</select
-                      ><select [name]="'block' + di + '-' + ei" [(ngModel)]="e.block" aria-label="Block">
-                        @for (b of workoutBlocks; track b.value) {
-                          <option [value]="b.value">{{ b.label }}</option>
+                      ><select [name]="'block' + di + '-' + ei" [(ngModel)]="e.block" [attr.aria-label]="'plans.block' | translate">
+                        @for (b of workoutBlocks; track b) {
+                          <option [value]="b">{{ b | enumLabel: 'workoutBlock' }}</option>
                         }</select
-                      ><select [name]="'group' + di + '-' + ei" [(ngModel)]="e.setGroupId" aria-label="Set group">
-                        <option [ngValue]="null">No group</option>
+                      ><select [name]="'group' + di + '-' + ei" [(ngModel)]="e.setGroupId" [attr.aria-label]="'plans.setGroup' | translate">
+                        <option [ngValue]="null">{{ 'plans.noGroup' | translate }}</option>
                         @for (g of d.setGroups ?? []; track g.id) {
                           <option [ngValue]="g.id">{{ groupName(d, g) }}</option>
                         }</select
-                      ><input
-                        [name]="'exerciseNotes' + di + '-' + ei"
-                        [(ngModel)]="e.notes"
-                        placeholder="Notes"
+                      ><input [name]="'exerciseNotes' + di + '-' + ei" [(ngModel)]="e.notes" [placeholder]="'plans.exerciseNotes' | translate" [attr.aria-label]="'plans.exerciseNotes' | translate"
                       /><small class="row-kcal">{{ setSummary(e) }}</small
-                      ><button class="link-button" type="button" (click)="move(d.exercises, ei, -1)">
-                        ↑</button
-                      ><button class="link-button" type="button" (click)="move(d.exercises, ei, 1)">
-                        ↓</button
-                      ><button
-                        class="link-button danger"
-                        type="button"
-                        (click)="removeFrom(d.exercises, ei)"
-                      >
-                        Remove
-                      </button>
+                      ><button class="link-button" type="button" [attr.aria-label]="'plans.moveUp' | translate" (click)="move(d.exercises, ei, -1)">↑</button
+                      ><button class="link-button" type="button" [attr.aria-label]="'plans.moveDown' | translate" (click)="move(d.exercises, ei, 1)">↓</button
+                      ><button class="link-button danger" type="button" (click)="removeFrom(d.exercises, ei)">{{ 'plans.remove' | translate }}</button>
                     </div>
                     <div class="table-scroll">
                       <table class="set-table">
                         <thead>
                           <tr>
-                            <th>Set</th><th>Type</th><th>Reps</th><th>Load kg</th><th>RIR</th><th>RPE</th>
-                            <th>Tempo</th><th>Rest s</th><th>Time s</th><th>Skip</th><th>Notes</th><th></th>
+                            <th>{{ 'plans.set' | translate }}</th><th>{{ 'plans.setType' | translate }}</th><th>{{ 'plans.reps' | translate }}</th><th>{{ 'plans.loadKg' | translate }}</th>
+                            <th>RIR</th><th>RPE</th><th>{{ 'plans.tempo' | translate }}</th><th>{{ 'plans.restS' | translate }}</th><th>{{ 'plans.timeS' | translate }}</th>
+                            <th>{{ 'plans.skip' | translate }}</th><th>{{ 'plans.setNotes' | translate }}</th><th></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -659,82 +404,58 @@
                             <tr>
                               <td>{{ si + 1 }}</td>
                               <td>
-                                <select [name]="'stype' + di + '-' + ei + '-' + si" [(ngModel)]="s.type" aria-label="Set type">
-                                  @for (t of setTypes; track t.value) {
-                                    <option [value]="t.value">{{ t.label }}</option>
+                                <select [name]="'stype' + di + '-' + ei + '-' + si" [(ngModel)]="s.type" [attr.aria-label]="'plans.setTypeLabel' | translate">
+                                  @for (t of setTypes; track t) {
+                                    <option [value]="t">{{ t | enumLabel: 'setType' }}</option>
                                   }
                                 </select>
                               </td>
                               <td class="reps">
-                                <input type="number" min="0" max="1000" [name]="'rmin' + di + '-' + ei + '-' + si" [(ngModel)]="s.repsMin" aria-label="Reps (minimum)" />–<input
-                                  type="number" min="0" max="1000" [name]="'rmax' + di + '-' + ei + '-' + si" [(ngModel)]="s.repsMax" aria-label="Reps (maximum)" />
+                                <input type="number" min="0" max="1000" [name]="'rmin' + di + '-' + ei + '-' + si" [(ngModel)]="s.repsMin" [attr.aria-label]="'plans.repsMin' | translate" />–<input
+                                  type="number" min="0" max="1000" [name]="'rmax' + di + '-' + ei + '-' + si" [(ngModel)]="s.repsMax" [attr.aria-label]="'plans.repsMax' | translate" />
                               </td>
-                              <td><input type="number" min="0" max="1000" step="0.25" [name]="'load' + di + '-' + ei + '-' + si" [(ngModel)]="s.loadKg" aria-label="Load in kg" /></td>
+                              <td><input type="number" min="0" max="1000" step="0.25" [name]="'load' + di + '-' + ei + '-' + si" [(ngModel)]="s.loadKg" [attr.aria-label]="'plans.loadLabel' | translate" /></td>
                               <td><input type="number" min="0" max="10" [name]="'rir' + di + '-' + ei + '-' + si" [(ngModel)]="s.rir" aria-label="RIR" /></td>
                               <td><input type="number" min="1" max="10" step="0.5" [name]="'rpe' + di + '-' + ei + '-' + si" [(ngModel)]="s.rpe" aria-label="RPE" /></td>
                               <td>
-                                <input
-                                  class="tempo"
-                                  [class.invalid]="s.tempoInvalid"
-                                  placeholder="3-1-1-0"
-                                  [name]="'tempo' + di + '-' + ei + '-' + si"
-                                  [ngModel]="tempoText(s)"
-                                  (ngModelChange)="setTempo(s, $event)"
-                                  aria-label="Tempo: eccentric, pause, concentric, pause"
-                                />
+                                <input class="tempo" [class.invalid]="s.tempoInvalid" placeholder="3-1-1-0" [name]="'tempo' + di + '-' + ei + '-' + si" [ngModel]="tempoText(s)"
+                                  (ngModelChange)="setTempo(s, $event)" [attr.aria-label]="'plans.tempoLabel' | translate" />
                               </td>
-                              <td><input type="number" min="0" max="3600" [name]="'srest' + di + '-' + ei + '-' + si" [(ngModel)]="s.restSeconds" aria-label="Rest seconds" /></td>
-                              <td><input type="number" min="1" max="36000" [name]="'dur' + di + '-' + ei + '-' + si" [(ngModel)]="s.durationSeconds" aria-label="Duration seconds" /></td>
-                              <td><input type="checkbox" [name]="'skip' + di + '-' + ei + '-' + si" [(ngModel)]="s.isSkippable" aria-label="Client may skip" /></td>
-                              <td><input [name]="'snote' + di + '-' + ei + '-' + si" [(ngModel)]="s.notes" maxlength="500" aria-label="Set notes" /></td>
-                              <td><button class="link-button danger" type="button" [disabled]="e.sets.length === 1" (click)="removeFrom(e.sets, si)" aria-label="Remove set">×</button></td>
+                              <td><input type="number" min="0" max="3600" [name]="'srest' + di + '-' + ei + '-' + si" [(ngModel)]="s.restSeconds" [attr.aria-label]="'plans.restLabel' | translate" /></td>
+                              <td><input type="number" min="1" max="36000" [name]="'dur' + di + '-' + ei + '-' + si" [(ngModel)]="s.durationSeconds" [attr.aria-label]="'plans.durationLabel' | translate" /></td>
+                              <td><input type="checkbox" [name]="'skip' + di + '-' + ei + '-' + si" [(ngModel)]="s.isSkippable" [attr.aria-label]="'plans.skipLabel' | translate" /></td>
+                              <td><input [name]="'snote' + di + '-' + ei + '-' + si" [(ngModel)]="s.notes" maxlength="500" [attr.aria-label]="'plans.setNotesLabel' | translate" /></td>
+                              <td><button class="link-button danger" type="button" [disabled]="e.sets.length === 1" (click)="removeFrom(e.sets, si)" [attr.aria-label]="'plans.removeSet' | translate">×</button></td>
                             </tr>
                           }
                         </tbody>
                       </table>
                     </div>
-                    <button class="link-button" type="button" (click)="addSet(e)">Add set</button>
+                    <button class="link-button" type="button" (click)="addSet(e)">{{ 'plans.addSet' | translate }}</button>
                   </article>
                 }
               </section>
             }
-            <button class="button button-secondary" type="button" (click)="addDay()">
-              Add workout day
-            </button>
+            <button class="button button-secondary" type="button" (click)="addDay()">{{ 'plans.addDay' | translate }}</button>
           }
         </fieldset>
         <footer class="modal-actions">
-          <button class="button button-secondary" type="button" (click)="editorOpen.set(false)">
-            Cancel
-          </button>
+          <button class="button button-secondary" type="button" (click)="editorOpen.set(false)">{{ 'common.cancel' | translate }}</button>
           @if (readOnly) {
-            <button class="button button-secondary" type="button" (click)="backToCurrent()">
-              Back to current</button
-            ><button
-              class="button button-primary"
-              type="button"
-              [disabled]="saving()"
-              (click)="restoreAsNewVersion()"
-            >
-              Restore as V{{ (currentVersionNumber() ?? 0) + 1 }}
+            <button class="button button-secondary" type="button" (click)="backToCurrent()">{{ 'plans.backToCurrent' | translate }}</button
+            ><button class="button button-primary" type="button" [disabled]="saving()" (click)="restoreAsNewVersion()">
+              {{ 'plans.restoreAs' | translate: { version: (currentVersionNumber() ?? 0) + 1 } }}
             </button>
           } @else if (!editingId()) {
             <button class="button button-primary" [disabled]="saving() || hasInvalidTempo()">
-              {{ saving() ? 'Saving…' : 'Create plan' }}
+              {{ (saving() ? 'common.saving' : 'plans.createPlan') | translate }}
             </button>
           } @else {
-            <button
-              class="button button-secondary"
-              type="button"
-              [disabled]="saving() || hasInvalidTempo()"
-              [title]="
-                'Keep V' + version()?.versionNumber + ' read-only and save this as the next version'
-              "
-              (click)="save('newVersion')"
-            >
-              Save as new version</button
+            <button class="button button-secondary" type="button" [disabled]="saving() || hasInvalidTempo()"
+              [title]="'plans.newVersionHint' | translate: { version: version()?.versionNumber }" (click)="save('newVersion')">
+              {{ 'plans.saveNewVersion' | translate }}</button
             ><button class="button button-primary" [disabled]="saving() || hasInvalidTempo()">
-              {{ saving() ? 'Saving…' : 'Save (V' + version()?.versionNumber + ')' }}
+              {{ saving() ? ('common.saving' | translate) : ('plans.saveInPlace' | translate: { version: version()?.versionNumber }) }}
             </button>
           }
         </footer>
@@ -744,60 +465,42 @@
 }
 @if (calc.open()) {
   <div class="modal-backdrop">
-    <section class="modal-card persistent-modal">
+    <section class="modal-card persistent-modal" role="dialog" aria-modal="true" [attr.aria-label]="'plans.calcTitle' | translate">
       <header>
-        <h2>Nutrition calculator</h2>
-        <button class="icon-button" (click)="calc.close()">×</button>
+        <h2>{{ 'plans.calcTitle' | translate }}</h2>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="calc.close()">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="calculate()">
-        <label
-          ><span>Age</span><input type="number" name="age" [(ngModel)]="calculator().age" /></label
+        <label><span>{{ 'plans.age' | translate }}</span><input type="number" name="age" [(ngModel)]="calculator().age" /></label
         ><label
-          ><span>Sex</span
+          ><span>{{ 'plans.sex' | translate }}</span
           ><select name="sex" [(ngModel)]="calculator().sex">
-            <option>Male</option>
-            <option>Female</option>
+            <option value="Male">{{ 'Male' | enumLabel: 'sex' }}</option>
+            <option value="Female">{{ 'Female' | enumLabel: 'sex' }}</option>
           </select></label
+        ><label><span>{{ 'plans.weightKg' | translate }}</span><input type="number" name="weight" [(ngModel)]="calculator().weightKg" /></label
+        ><label><span>{{ 'plans.heightCm' | translate }}</span><input type="number" name="height" [(ngModel)]="calculator().heightCm" /></label
         ><label
-          ><span>Weight kg</span
-          ><input type="number" name="weight" [(ngModel)]="calculator().weightKg" /></label
-        ><label
-          ><span>Height cm</span
-          ><input type="number" name="height" [(ngModel)]="calculator().heightCm" /></label
-        ><label
-          ><span>Activity level</span
+          ><span>{{ 'plans.activity' | translate }}</span
           ><select name="activity" [(ngModel)]="calculator().activityLevel">
-            @for (level of activityLevels; track level.value) {
-              <option [value]="level.value">{{ level.label }}</option>
+            @for (level of activityLevels; track level) {
+              <option [value]="level">{{ level | enumLabel: 'activityLevel' }}</option>
             }
           </select></label
         ><label
-          ><span>Goal</span
+          ><span>{{ 'plans.goal' | translate }}</span
           ><select name="goal" [(ngModel)]="calculator().goal">
-            <option>LoseWeight</option>
-            <option>Maintain</option>
-            <option>GainWeight</option>
+            @for (goal of calculatorGoals; track goal) { <option [value]="goal">{{ goal | enumLabel: 'calculatorGoal' }}</option> }
           </select></label
-        ><button class="button button-primary span-2">Calculate</button>
+        ><button class="button button-primary span-2">{{ 'plans.calculate' | translate }}</button>
       </form>
       @if (calc.result(); as r) {
         <div class="calculator-results">
-          <div>
-            <span>Maintenance (TDEE)</span><strong>{{ r.maintenanceCalories }}</strong>
-          </div>
-          <div>
-            <span>Goal calories ({{ r.adjustmentPercent }}%)</span
-            ><strong>{{ r.goalCalories }}</strong>
-          </div>
-          <div>
-            <span>Protein</span><strong>{{ r.protein }} g</strong>
-          </div>
-          <div>
-            <span>Carbohydrates</span><strong>{{ r.carbohydrates }} g</strong>
-          </div>
-          <div>
-            <span>Fat</span><strong>{{ r.fat }} g</strong>
-          </div>
+          <div><span>{{ 'plans.maintenance' | translate }}</span><strong>{{ r.maintenanceCalories | localNumber: '1.0-0' }}</strong></div>
+          <div><span>{{ 'plans.goalCalories' | translate: { percent: r.adjustmentPercent } }}</span><strong>{{ r.goalCalories | localNumber: '1.0-0' }}</strong></div>
+          <div><span>{{ 'plans.protein' | translate }}</span><strong>{{ 'plans.grams' | translate: { value: (r.protein | localNumber: '1.0-0') } }}</strong></div>
+          <div><span>{{ 'plans.carbohydrates' | translate }}</span><strong>{{ 'plans.grams' | translate: { value: (r.carbohydrates | localNumber: '1.0-0') } }}</strong></div>
+          <div><span>{{ 'plans.fat' | translate }}</span><strong>{{ 'plans.grams' | translate: { value: (r.fat | localNumber: '1.0-0') } }}</strong></div>
         </div>
       }
     </section>
@@ -805,12 +508,12 @@
 }
 @if (pdfUrl()) {
   <div class="modal-backdrop">
-    <section class="modal-card pdf-modal">
+    <section class="modal-card pdf-modal" role="dialog" aria-modal="true" [attr.aria-label]="'plans.pdfPreview' | translate">
       <header>
-        <h2>PDF preview</h2>
-        <button class="icon-button" (click)="closePdf()">×</button>
+        <h2>{{ 'plans.pdfPreview' | translate }}</h2>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="closePdf()">×</button>
       </header>
-      <iframe [src]="pdfUrl()" title="Plan PDF preview"></iframe>
+      <iframe [src]="pdfUrl()" [title]="'plans.pdfFrame' | translate"></iframe>
     </section>
   </div>
 }

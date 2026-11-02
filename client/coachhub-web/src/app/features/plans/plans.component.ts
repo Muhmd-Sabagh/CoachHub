@@ -1,6 +1,8 @@
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize, forkJoin } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { CatalogItem } from '../catalog/catalog.models';
@@ -62,13 +64,8 @@ export class PlansComponent implements OnInit, OnDestroy {
   readonly pdfUrl = signal<SafeResourceUrl | null>(null);
   private pdfObjectUrl: string | null = null;
   readonly mealTypes = mealTypes;
-  readonly activityLevels: { value: ActivityLevel; label: string }[] = [
-    { value: 'Sedentary', label: 'Sedentary' },
-    { value: 'LightlyActive', label: 'Lightly active' },
-    { value: 'ModeratelyActive', label: 'Moderately active' },
-    { value: 'VeryActive', label: 'Very active' },
-    { value: 'ExtraActive', label: 'Extra active' },
-  ];
+  readonly activityLevels: ActivityLevel[] = ['Sedentary', 'LightlyActive', 'ModeratelyActive', 'VeryActive', 'ExtraActive'];
+  readonly calculatorGoals = ['LoseWeight', 'Maintain', 'GainWeight'];
   /** Uses the coach's activity factors, deficit/surplus and g/kg defaults (§14, §49). */
   readonly calculator = signal({
     age: 30,
@@ -85,7 +82,19 @@ export class PlansComponent implements OnInit, OnDestroy {
     private catalogs: CatalogService,
     readonly calc: CalculatorStore,
     private sanitizer: DomSanitizer,
+    readonly i18n: I18nService,
   ) {}
+  /** The editor's title: new or edit, diet or workout. */
+  editorKey(): TranslationKey {
+    return `plans.${this.editingId() ? 'editPlan' : 'newPlan'}.${this.editorType()}`;
+  }
+  /** A food's base unit in the interface language: g / ml, or the piece's name. */
+  baseUnit(foodId: string | null): string {
+    const food = foodId ? this.foods().find((x) => x.id === foodId) : undefined;
+    if (!food) return this.i18n.translate('plans.unit');
+    if (food.baseUnit === 'Piece') return this.i18n.name({ nameEn: food.pieceNameEn ?? food.baseUnitLabel ?? '', nameAr: food.pieceNameAr });
+    return this.i18n.translate(food.baseUnit === 'Milliliter' ? 'unit.ml' : 'unit.g');
+  }
   ngOnInit() {
     forkJoin({
       clients: this.clientData.list({ pageSize: 100, isActive: true }),
@@ -230,7 +239,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     this.currentVersionNumber.set(plan.currentVersionNumber ?? null);
   }
   copy(p: SavedPlan) {
-    const name = prompt('Copy name', `${p.nameEn} Copy`);
+    const name = prompt(this.i18n.translate('plans.copyName'), this.i18n.translate('plans.copySuffix', { name: p.nameEn }));
     if (name)
       this.data
         .copy(p.planType, p.id, {
@@ -241,12 +250,12 @@ export class PlansComponent implements OnInit, OnDestroy {
         .subscribe(() => this.load());
   }
   assign(p: SavedPlan) {
-    const clientId = prompt('Client ID (leave blank to unassign)', p.clientId ?? '');
+    const clientId = prompt(this.i18n.translate('plans.assignPrompt'), p.clientId ?? '');
     if (clientId !== null)
       this.data.assign(p.planType, p.id, clientId || null).subscribe(() => this.load());
   }
   remove(p: SavedPlan) {
-    if (confirm(`Delete ${p.nameEn}?`))
+    if (confirm(this.i18n.translate('common.confirmDelete', { name: p.nameEn })))
       this.data
         .delete(p.planType, p.id)
         .subscribe({ next: () => this.load(), error: (e) => (this.error.set(apiErrorMessage(e))) });
@@ -289,7 +298,7 @@ export class PlansComponent implements OnInit, OnDestroy {
   addVariant() {
     this.editor().variants.push({
       id: id(),
-      nameEn: 'Plan variant',
+      nameEn: this.i18n.translate('plans.default.variant'),
       nameAr: null,
       order: this.editor().variants.length,
       isActiveForPdf: true,
@@ -336,7 +345,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     if (meal.options.length >= 10) return;
     const option = {
       id: id(),
-      nameEn: `Option ${String.fromCharCode(65 + meal.options.length)}`,
+      nameEn: this.i18n.translate('plans.default.option', { letter: String.fromCharCode(65 + meal.options.length) }),
       nameAr: null,
       order: meal.options.length,
     };
@@ -354,7 +363,8 @@ export class PlansComponent implements OnInit, OnDestroy {
     return variant.meals.find((m: any) => m.id === group.targetMealId)?.foodItems ?? [];
   }
   foodName(foodId: string): string {
-    return this.foods().find((x) => x.id === foodId)?.nameEn ?? 'Food';
+    const food = this.foods().find((x) => x.id === foodId);
+    return food ? this.i18n.name(food) : this.i18n.translate('plans.food');
   }
   variantTotals(variant: any): NutritionTotals {
     return sumTotals(variant.meals.map((meal: any) => this.mealTotals(meal)));
@@ -382,7 +392,7 @@ export class PlansComponent implements OnInit, OnDestroy {
           carbohydrates: x.carbohydrates,
           fat: x.fat,
         };
-        this.targetsMessage.set(`From the profile: TDEE ${x.maintenanceCalories} kcal, ${x.adjustmentPercent}% for the goal.`);
+        this.targetsMessage.set(this.i18n.translate('plans.fromProfile', { tdee: x.maintenanceCalories, percent: x.adjustmentPercent }));
       },
       error: (e) => (this.targetsMessage.set(apiErrorMessage(e))),
     });
@@ -395,7 +405,7 @@ export class PlansComponent implements OnInit, OnDestroy {
       id: id(),
       targetMealId: meal.id,
       targetMealFoodItemId: meal.foodItems[0]?.id ?? null,
-      title: 'Alternative',
+      title: this.i18n.translate('plans.default.alternative'),
       order: v.replacementGroups.length,
       mode: 'Flexible',
       options: [],
@@ -416,7 +426,7 @@ export class PlansComponent implements OnInit, OnDestroy {
   addDay() {
     this.editor().days.push({
       id: id(),
-      nameEn: `Day ${this.editor().days.length + 1}`,
+      nameEn: this.i18n.translate('plans.default.day', { number: this.editor().days.length + 1 }),
       nameAr: null,
       subtitle: null,
       notes: null,
@@ -462,10 +472,10 @@ export class PlansComponent implements OnInit, OnDestroy {
   groupName(d: any, group: any): string {
     const first = d.exercises.find((e: any) => e.setGroupId === group.id);
     const letter = first ? (groupLabels(d.exercises).get(first.id) ?? '').charAt(0) : '?';
-    return `${letter} · ${group.type === 'Superset' ? 'Superset' : 'Giant set'}`;
+    return this.i18n.translate('plans.group', { letter, type: this.i18n.translate(group.type === 'Superset' ? 'enum.setGroupType.Superset' : 'enum.setGroupType.GiantSet') });
   }
   setSummary(e: any): string {
-    return summarizeSets(e.sets ?? []);
+    return summarizeSets(e.sets ?? [], this.i18n);
   }
   tempoText(s: any): string {
     return s.tempoText ?? formatTempo(s.tempo);
@@ -489,9 +499,6 @@ export class PlansComponent implements OnInit, OnDestroy {
     if (j < 0 || j >= items.length) return;
     [items[index], items[j]] = [items[j], items[index]];
     this.normalizeOrders();
-  }
-  name(items: any[], itemId: string) {
-    return items.find((x) => x.id === itemId)?.nameEn ?? 'Select';
   }
   private normalizeOrders() {
     // An empty date input yields '', which is not a date; an open program end is null.
@@ -523,7 +530,7 @@ export class PlansComponent implements OnInit, OnDestroy {
   private newMeal(type = 'Breakfast') {
     return {
       id: id(),
-      nameEn: type === 'Snack' ? 'Snack' : 'Meal',
+      nameEn: this.i18n.translate(type === 'Snack' ? 'plans.default.snack' : 'plans.default.meal'),
       nameAr: null,
       type,
       order: 0,
@@ -545,7 +552,7 @@ export class PlansComponent implements OnInit, OnDestroy {
       variants: [
         {
           id: id(),
-          nameEn: 'Main plan',
+          nameEn: this.i18n.translate('plans.default.mainPlan'),
           nameAr: null,
           order: 0,
           isActiveForPdf: true,
@@ -568,7 +575,7 @@ export class PlansComponent implements OnInit, OnDestroy {
       days: [
         {
           id: id(),
-          nameEn: 'Day 1',
+          nameEn: this.i18n.translate('plans.default.day', { number: 1 }),
           nameAr: null,
           subtitle: null,
           notes: null,
