@@ -176,6 +176,40 @@ public sealed class CheckInWorkflowTests(CoachHubSqlApiFactory factory) : IClass
         Assert.Equal(HttpStatusCode.NotFound, (await admin.GetAsync($"/api/v1/check-ins/{checkIn.Id}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Coaches_search_check_ins_by_client_form_and_dates()
+    {
+        var setup = await SetUpAsync();
+        await ReadAsync<CheckInScheduleResponse>(await setup.Coach.PutAsJsonAsync(SchedulePath(setup),
+            new CheckInScheduleInput(setup.Form.DefinitionId, 1, Today.AddDays(2).DayOfWeek, Today)));
+        (await setup.Portal.PostAsJsonAsync($"/api/v1/me/forms/{setup.Form.DefinitionId}/submissions", Answers(setup, 81m, null))).EnsureSuccessStatusCode();
+        var checkIn = Assert.Single((await setup.Portal.GetFromJsonAsync<MyCheckInsResponse>("/api/v1/me/check-ins"))!.History);
+
+        async Task<IReadOnlyList<Guid>> FindAsync(HttpClient http, string filters) =>
+            (await http.GetFromJsonAsync<PagedResult<CheckInSummary>>($"/api/v1/check-ins?pageSize=100&{filters}"))!.Items.Select(x => x.Id).ToArray();
+
+        // §50: the client's name (any case), the form, the due date and the day it was sent; ranges include both ends.
+        Assert.Contains(checkIn.Id, await FindAsync(setup.Coach, $"searchTerm=CHECKER%20{setup.Tag}"));
+        Assert.Empty(await FindAsync(setup.Coach, $"searchTerm=nobody-{setup.Tag}"));
+        Assert.Contains(checkIn.Id, await FindAsync(setup.Coach, $"formDefinitionId={setup.Form.DefinitionId}"));
+        Assert.DoesNotContain(checkIn.Id, await FindAsync(setup.Coach, $"formDefinitionId={setup.InitialForm.DefinitionId}"));
+        Assert.Contains(checkIn.Id, await FindAsync(setup.Coach, $"dueFrom={Today.AddDays(2):yyyy-MM-dd}&dueTo={Today.AddDays(2):yyyy-MM-dd}"));
+        Assert.DoesNotContain(checkIn.Id, await FindAsync(setup.Coach, $"dueFrom={Today.AddDays(3):yyyy-MM-dd}"));
+        Assert.Contains(checkIn.Id, await FindAsync(setup.Coach, $"submittedFrom={Today:yyyy-MM-dd}&submittedTo={Today:yyyy-MM-dd}&status=AwaitingReview"));
+        Assert.DoesNotContain(checkIn.Id, await FindAsync(setup.Coach, $"submittedTo={Today.AddDays(-1):yyyy-MM-dd}"));
+        Assert.DoesNotContain(checkIn.Id, await FindAsync(setup.Coach, "status=Approved"));
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await setup.Coach.GetAsync($"/api/v1/check-ins?dueFrom={Today:yyyy-MM-dd}&dueTo={Today.AddDays(-1):yyyy-MM-dd}")).StatusCode);
+
+        // The scheduled clients list searches by name too.
+        var due = (await setup.Coach.GetFromJsonAsync<PagedResult<CheckInDueResponse>>($"/api/v1/check-ins/due?searchTerm=checker%20{setup.Tag}"))!;
+        Assert.Equal(setup.ClientId, Assert.Single(due.Items).ClientId);
+
+        // Another coach's search never reaches this coach's clients.
+        Assert.Empty(await FindAsync(setup.OtherCoach, $"searchTerm=Checker%20{setup.Tag}"));
+        Assert.Empty((await setup.OtherCoach.GetFromJsonAsync<PagedResult<CheckInDueResponse>>($"/api/v1/check-ins/due?searchTerm=Checker%20{setup.Tag}"))!.Items);
+    }
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() } };
 
     private static string SchedulePath(Setup setup) => $"/api/v1/clients/{setup.ClientId}/check-in-schedule";

@@ -1,10 +1,9 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { enumLabelKey } from '../../core/i18n/enum-labels';
 import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
-import { CheckInSchedule, CheckInsService, MyCheckIns } from './check-ins.service';
+import { CheckInSchedule, CheckInsService, MyCheckIns, cadenceText } from './check-ins.service';
 
 /**
  * The client's check-ins (§28, §29), mobile first: when the next one is due, a check-in to resubmit after the coach
@@ -85,8 +84,7 @@ export class MyCheckInsComponent implements OnInit {
 
   /** "Every 2 weeks on Monday", in the interface language. */
   cadence(schedule: Pick<CheckInSchedule, 'intervalWeeks' | 'dueWeekday'>): string {
-    const key = enumLabelKey('weekday', schedule.dueWeekday);
-    return this.i18n.translate('checkIn.cadence', { count: schedule.intervalWeeks, day: key ? this.i18n.translate(key) : schedule.dueWeekday });
+    return cadenceText(schedule, this.i18n);
   }
 
   ngOnInit(): void {

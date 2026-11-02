@@ -99,6 +99,24 @@ public sealed class CheckInRepository(CoachHubDbContext dbContext) : ICheckInRep
         var checkIns = dbContext.Set<CheckIn>().AsNoTracking();
         if (query.ClientId is { } clientId) checkIns = checkIns.Where(x => x.ClientId == clientId);
         if (query.Status is { } status) checkIns = checkIns.Where(x => x.Status == status);
+        if (query.FormDefinitionId is { } formId) checkIns = checkIns.Where(x => x.FormDefinitionId == formId);
+        if (query.DueFrom is { } dueFrom) checkIns = checkIns.Where(x => x.DueOn >= dueFrom);
+        if (query.DueTo is { } dueTo) checkIns = checkIns.Where(x => x.DueOn <= dueTo);
+        if (query.SubmittedFrom is { } sentFrom)
+        {
+            var start = new DateTimeOffset(sentFrom.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            checkIns = checkIns.Where(x => x.SubmittedAt >= start);
+        }
+        if (query.SubmittedTo is { } sentTo)
+        {
+            var end = new DateTimeOffset(sentTo.AddDays(1).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            checkIns = checkIns.Where(x => x.SubmittedAt < end);
+        }
+        if (query.SearchTerm is { } term)
+        {
+            // Both sides are tenant-filtered, so the name search never reaches another coach's clients.
+            checkIns = checkIns.Where(x => dbContext.Set<Client>().Any(client => client.Id == x.ClientId && client.Name.Contains(term)));
+        }
         var total = await checkIns.LongCountAsync(cancellationToken);
         var items = await checkIns.OrderByDescending(x => x.SubmittedAt)
             .Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize).ToListAsync(cancellationToken);
@@ -108,6 +126,7 @@ public sealed class CheckInRepository(CoachHubDbContext dbContext) : ICheckInRep
     public async Task<PagedResult<Client>> PageDueAsync(CheckInDueQuery query, DateOnly today, CancellationToken cancellationToken)
     {
         var clients = dbContext.Set<Client>().AsNoTracking().Where(x => x.IsActive && x.CheckInDueOn != null);
+        if (query.SearchTerm is { } term) clients = clients.Where(x => x.Name.Contains(term));
         clients = query.State switch
         {
             CheckInDueState.Overdue => clients.Where(x => x.CheckInDueOn < today),
