@@ -13,7 +13,8 @@ public enum MediaUploadPolicy { Standard, Shared }
 
 public sealed class MediaService(
     IMediaStorage storage,
-    IMediaRepository repository)
+    IMediaRepository repository,
+    IImageProcessor imageProcessor)
 {
     public const long MaximumFileSizeBytes = 20 * 1024 * 1024;
     public const long MaximumSharedFileSizeBytes = 50 * 1024 * 1024;
@@ -59,6 +60,16 @@ public sealed class MediaService(
         CancellationToken cancellationToken)
     {
         ValidateUpload(content, originalFileName, contentType, sizeBytes, policy);
+
+        // Photos lose their metadata (location) and are stored upright and capped; existing files are not rewritten.
+        using var rewritten = imageProcessor.Rewrites(contentType)
+            ? new MemoryStream(imageProcessor.Process(content, contentType).Content, writable: false)
+            : null;
+        if (rewritten is not null)
+        {
+            content = rewritten;
+            sizeBytes = rewritten.Length;
+        }
 
         var stored = await storage.StoreAsync(
             content,

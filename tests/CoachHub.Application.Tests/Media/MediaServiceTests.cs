@@ -11,7 +11,7 @@ public sealed class MediaServiceTests
     {
         var storage = new StubStorage();
         var repository = new StubRepository();
-        var service = new MediaService(storage, repository);
+        var service = new MediaService(storage, repository, new KeepImages());
         await using var content = new MemoryStream([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
 
         var result = await service.UploadAsync(
@@ -31,7 +31,7 @@ public sealed class MediaServiceTests
     public async Task Legacy_gif_image_is_supported_for_exercise_migration()
     {
         var storage = new StubStorage();
-        var service = new MediaService(storage, new StubRepository());
+        var service = new MediaService(storage, new StubRepository(), new KeepImages());
         await using var content = new MemoryStream("GIF89a"u8.ToArray());
 
         await service.UploadAsync(
@@ -49,7 +49,7 @@ public sealed class MediaServiceTests
     public async Task Unsupported_content_type_is_rejected_before_storage()
     {
         var storage = new StubStorage();
-        var service = new MediaService(storage, new StubRepository());
+        var service = new MediaService(storage, new StubRepository(), new KeepImages());
         await using var content = new MemoryStream([1]);
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
@@ -69,7 +69,7 @@ public sealed class MediaServiceTests
     public async Task Declared_content_type_must_match_the_file_signature()
     {
         var storage = new StubStorage();
-        var service = new MediaService(storage, new StubRepository());
+        var service = new MediaService(storage, new StubRepository(), new KeepImages());
         await using var content = new MemoryStream("not-a-real-png"u8.ToArray());
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
@@ -89,7 +89,7 @@ public sealed class MediaServiceTests
     public async Task Oversized_content_is_rejected_without_allocating_the_declared_size()
     {
         var storage = new StubStorage();
-        var service = new MediaService(storage, new StubRepository());
+        var service = new MediaService(storage, new StubRepository(), new KeepImages());
         await using var content = new MemoryStream("%PDF-1.7"u8.ToArray());
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
@@ -109,7 +109,7 @@ public sealed class MediaServiceTests
     public async Task Upload_records_the_owner_of_the_file()
     {
         var repository = new StubRepository();
-        var service = new MediaService(new StubStorage(), repository);
+        var service = new MediaService(new StubStorage(), repository, new KeepImages());
         await using var content = new MemoryStream([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
         var owner = MediaOwner.OfClient(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
@@ -125,7 +125,7 @@ public sealed class MediaServiceTests
     {
         var media = MediaAsset.Create("stored", "a.png", "image/png", 8, DateTimeOffset.UtcNow, null, null, null);
         var storage = new StubStorage();
-        var service = new MediaService(storage, new StubRepository(media, refuseDelete: true));
+        var service = new MediaService(storage, new StubRepository(media, refuseDelete: true), new KeepImages());
 
         await Assert.ThrowsAsync<ConflictException>(() => service.DeleteAsync(media.Id, CancellationToken.None));
 
@@ -136,7 +136,7 @@ public sealed class MediaServiceTests
     public async Task Delete_content_continues_past_storage_failures()
     {
         var storage = new StubStorage { FailOn = "first" };
-        var service = new MediaService(storage, new StubRepository());
+        var service = new MediaService(storage, new StubRepository(), new KeepImages());
 
         await service.DeleteContentAsync(["first", "second"], CancellationToken.None);
 
@@ -165,7 +165,7 @@ public sealed class MediaServiceTests
     public async Task Shared_uploads_accept_videos_documents_and_text(string contentType, byte[] bytes)
     {
         var storage = new StubStorage();
-        var service = new MediaService(storage, new StubRepository());
+        var service = new MediaService(storage, new StubRepository(), new KeepImages());
         await using var content = new MemoryStream(bytes);
 
         await service.UploadAsync(content, "file", contentType, content.Length, MediaOwner.Platform(null), MediaUploadPolicy.Shared, CancellationToken.None);
@@ -180,7 +180,7 @@ public sealed class MediaServiceTests
     public async Task Shared_uploads_still_check_types_and_signatures(string contentType, byte[] bytes, string field)
     {
         var storage = new StubStorage();
-        var service = new MediaService(storage, new StubRepository());
+        var service = new MediaService(storage, new StubRepository(), new KeepImages());
         await using var content = new MemoryStream(bytes);
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() => service.UploadAsync(
@@ -193,7 +193,7 @@ public sealed class MediaServiceTests
     [Fact]
     public async Task Size_limits_depend_on_the_upload_policy()
     {
-        var service = new MediaService(new StubStorage(), new StubRepository());
+        var service = new MediaService(new StubStorage(), new StubRepository(), new KeepImages());
         await using var content = new MemoryStream([0x25, 0x50, 0x44, 0x46, 0x2D]);
 
         var standard = await Assert.ThrowsAsync<ValidationException>(() => service.UploadAsync(content, "big.pdf", "application/pdf",
@@ -206,12 +206,58 @@ public sealed class MediaServiceTests
         Assert.Contains("50 MB", Assert.Single(shared.Errors["file"]));
     }
 
+    [Fact]
+    public async Task Rewritten_images_are_stored_with_their_new_content_and_size()
+    {
+        var storage = new StubStorage();
+        var repository = new StubRepository();
+        var processor = new KeepImages { Output = [1, 2, 3] };
+        var service = new MediaService(storage, repository, processor);
+        await using var content = new MemoryStream([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+
+        await service.UploadAsync(content, "photo.png", "image/png", content.Length, MediaOwner.Platform(null), CancellationToken.None);
+
+        Assert.Equal([1, 2, 3], storage.ReceivedBytes);
+        Assert.Equal(3, repository.Added!.SizeBytes);
+        Assert.Equal("image/png", processor.Processed);
+    }
+
+    [Fact]
+    public async Task Files_the_processor_does_not_rewrite_are_stored_as_sent()
+    {
+        var storage = new StubStorage();
+        var processor = new KeepImages { Output = [1] };
+        var service = new MediaService(storage, new StubRepository(), processor);
+        await using var content = new MemoryStream("%PDF-1.7"u8.ToArray());
+
+        await service.UploadAsync(content, "plan.pdf", "application/pdf", content.Length, MediaOwner.Platform(null), CancellationToken.None);
+
+        Assert.Equal("%PDF-1.7"u8.ToArray(), storage.ReceivedBytes);
+        Assert.Null(processor.Processed);
+    }
+
+    /// <summary>Rewrites PNG uploads into <see cref="Output"/> when set; leaves everything else alone.</summary>
+    private sealed class KeepImages : IImageProcessor
+    {
+        public byte[]? Output { get; init; }
+        public string? Processed { get; private set; }
+
+        public bool Rewrites(string contentType) => Output is not null && contentType == "image/png";
+
+        public ProcessedImage Process(Stream content, string contentType)
+        {
+            Processed = contentType;
+            return new ProcessedImage(Output!);
+        }
+    }
+
     private sealed class StubStorage : IMediaStorage
     {
         public List<string> Deleted { get; } = [];
         public string? FailOn { get; init; }
         public bool StoreCalled { get; private set; }
         public string? ReceivedContentType { get; private set; }
+        public byte[]? ReceivedBytes { get; private set; }
 
         public Task<StoredMedia> StoreAsync(
             Stream content,
@@ -221,6 +267,11 @@ public sealed class MediaServiceTests
         {
             StoreCalled = true;
             ReceivedContentType = contentType;
+            using var copy = new MemoryStream();
+            var start = content.Position;
+            content.CopyTo(copy);
+            content.Position = start;
+            ReceivedBytes = copy.ToArray();
             return Task.FromResult(new StoredMedia("generated.png"));
         }
 

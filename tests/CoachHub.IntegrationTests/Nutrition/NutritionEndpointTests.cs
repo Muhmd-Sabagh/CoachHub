@@ -7,6 +7,7 @@ using CoachHub.Application.Nutrition;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Domain.Nutrition;
 using CoachHub.IntegrationTests.Auth;
+using CoachHub.IntegrationTests.Me;
 
 namespace CoachHub.IntegrationTests.Nutrition;
 
@@ -118,7 +119,7 @@ public sealed class NutritionEndpointTests : IClassFixture<CoachHubApiFactory>
     private async Task<MediaMetadata> UploadImageAsync()
     {
         using var form = new MultipartFormDataContent();
-        using var bytes = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        using var bytes = new ByteArrayContent(MeEndpointTests.Png);
         bytes.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         form.Add(bytes, "file", "food.png");
         var response = await _client.PostAsync("/api/v1/media", form);

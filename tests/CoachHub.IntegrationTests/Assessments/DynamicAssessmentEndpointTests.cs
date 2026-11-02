@@ -8,6 +8,7 @@ using CoachHub.Domain.Assessments;
 using CoachHub.Domain.Clients;
 using CoachHub.Infrastructure.Persistence;
 using CoachHub.IntegrationTests.Auth;
+using CoachHub.IntegrationTests.Me;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -185,7 +186,7 @@ public sealed class DynamicAssessmentEndpointTests : IClassFixture<CoachHubApiFa
     private static async Task<CoachHub.Application.Media.MediaMetadata> UploadMediaAsync(HttpClient portal)
     {
         using var form = new MultipartFormDataContent();
-        using var bytes = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        using var bytes = new ByteArrayContent(MeEndpointTests.Png);
         bytes.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         form.Add(bytes, "file", "assessment.png");
         var response = await portal.PostAsync("/api/v1/me/forms/media", form);

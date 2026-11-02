@@ -148,6 +148,8 @@
   "media.tooLarge": { "en": "The file exceeds the {0} MB limit.", "ar": "حجم الملف يتجاوز الحد المسموح ({0} ميغابايت)." },
   "media.nameRequired": { "en": "The original file name is required.", "ar": "اسم الملف مطلوب." },
   "media.contentMismatch": { "en": "The file content does not match its declared content type.", "ar": "محتوى الملف لا يطابق نوعه." },
+  "media.imageUnreadable": { "en": "The image could not be read.", "ar": "تعذّرت قراءة الصورة." },
+  "media.imageTooLarge": { "en": "The image has more than {0} megapixels.", "ar": "دقة الصورة تتجاوز {0} ميغابكسل." },
   "media.unsupported": { "en": "Unsupported media content type.", "ar": "نوع الملف غير مدعوم." },
   "notifications.signIn": { "en": "Sign in to see notifications.", "ar": "سجّل الدخول لرؤية الإشعارات." },
   "notifications.unknownEvent": { "en": "Unknown event.", "ar": "حدث غير معروف." },
