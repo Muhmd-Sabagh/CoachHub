@@ -60,8 +60,8 @@ import {
       @if (clientId) {
         <h3>{{ 'reports.exportTitle' | translate }}</h3>
         <div class="actions">
-          @for (e of exports; track e.id) {
-            <button type="button" class="button button-secondary" (click)="export(e.id)" [disabled]="busy()">{{ exportLabel(e.id) | translate }}</button>
+          @for (e of exports; track e) {
+            <button type="button" class="button button-secondary" (click)="export(e)" [disabled]="busy()">{{ exportLabel(e) | translate }}</button>
           }
         </div>
       }

@@ -1,9 +1,11 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { AdminDashboard, CoachDashboard, DashboardService } from './dashboard.service';
-import { PlatformExport, ReportsService, platformExports, saveFile } from '../reports/reports.service';
+import { PlatformExport, ReportsService, saveFile } from '../reports/reports.service';
 
 @Component({ selector: 'app-dashboard', templateUrl: './dashboard.component.html', standalone: false })
 export class DashboardComponent implements OnInit {
@@ -14,13 +16,11 @@ export class DashboardComponent implements OnInit {
   readonly admin = signal<AdminDashboard | null>(null);
   readonly loading = signal(false);
   readonly error = signal('');
-  readonly statusLabels: Record<string, string> = {
-    OnTrack: 'On track', NeedsReview: 'Needs review', CheckInOverdue: 'Check-in overdue', SubscriptionExpired: 'Subscription expired', Inactive: 'Inactive',
-  };
-  readonly platformExports = platformExports;
+  readonly platformExports: PlatformExport[] = ['Coaches', 'Clients', 'Subscriptions', 'Revenue'];
 
   constructor(
     readonly auth: AuthService,
+    readonly i18n: I18nService,
     private readonly router: Router,
     private readonly data: DashboardService,
     private readonly reports: ReportsService,
@@ -46,10 +46,7 @@ export class DashboardComponent implements OnInit {
     void this.router.navigate(['/clients'], { queryParams: term ? { search: term } : {} });
   }
 
-  activityText(item: CoachDashboard['recentActivity'][number]): string {
-    const verb = item.operation === 'Create' ? 'added' : item.operation === 'Delete' ? 'removed' : 'updated';
-    return `${item.actor} ${verb} ${item.entityType.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()}`;
-  }
+  exportKey(dataset: PlatformExport): TranslationKey { return `export.${dataset}`; }
 
   /** Platform CSV exports (§51); revenue follows the selected period. */
   exportPlatform(dataset: PlatformExport): void {

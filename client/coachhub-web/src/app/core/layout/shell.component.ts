@@ -7,6 +7,7 @@ import { ThemeService } from '../theme/theme.service';
 
 import { Role } from '../auth/auth.models';
 import { TranslationKey } from '../i18n/translations';
+import { enumLabelKey } from '../i18n/enum-labels';
 
 interface NavItem { route: string; label: TranslationKey; icon: string; roles: Role[]; }
 const coachOrAdmin: Role[] = ['Administrator', 'Coach'];
@@ -38,4 +39,11 @@ export class ShellComponent implements OnInit {
   readonly initials = brandInitials;
   ngOnInit(): void { this.config.load().subscribe(); }
   closeSidebar(): void { this.sidebarOpen = false; }
+  /** The signed-in user's roles in the interface language. */
+  roles(): string {
+    return (this.auth.currentUser()?.roles ?? []).map(role => {
+      const key = enumLabelKey('role', role);
+      return key ? this.i18n.translate(key) : role;
+    }).join(this.i18n.language() === 'ar' ? '، ' : ', ');
+  }
 }

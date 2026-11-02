@@ -30,6 +30,21 @@ export const enumValues = {
   planLanguage: ['English', 'Arabic'],
   checkInDueState: ['Upcoming', 'Pending', 'Overdue'],
   weekday: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  clientStatus: ['OnTrack', 'NeedsReview', 'Inactive', 'SubscriptionExpired', 'CheckInOverdue'],
+  paymentStatus: ['NoInvoice', 'Unpaid', 'PartiallyPaid', 'Paid', 'Refunded'],
+  role: ['Administrator', 'Coach', 'Client'],
+  auditOperation: ['Create', 'Update', 'Delete'],
+  actorKind: ['Administrator', 'Coach', 'Client', 'System'],
+  entityType: [
+    'AuditEntry', 'BodyFatEntry', 'BodyMeasurement', 'Brand', 'CalendarEvent', 'ChatAttachment', 'ChatMessage', 'CheckIn', 'CheckInReply',
+    'CheckInSchedule', 'CheckInSubmission', 'Client', 'ClientEquipment', 'ClientFile', 'ClientFoodPreference', 'ClientProfile', 'Coach',
+    'CoachSettings', 'Conversation', 'DataExport', 'DeliveredPlan', 'DietPlan', 'DietPlanNote', 'DietPlanRevision', 'DietPlanVariant',
+    'DietReplacementGroup', 'DietReplacementOption', 'Exercise', 'FoodItem', 'FoodLogEntry', 'FormDefinition', 'FormSubmission', 'Invoice',
+    'LifestyleTargets', 'LoggedExercise', 'LoggedSet', 'Meal', 'MealFoodItem', 'MealOption', 'MediaAsset', 'Notification', 'NutritionDay',
+    'Payment', 'PersonalRecord', 'PlatformSettings', 'PrescribedSet', 'ProgressPhoto', 'Refund', 'SleepEntry', 'StepsEntry', 'Subscription',
+    'SubscriptionRenewal', 'TestAssignment', 'TestDefinition', 'TestResult', 'TrainingDays', 'User', 'WaterEntry', 'WeightEntry', 'WorkoutDay',
+    'WorkoutExercise', 'WorkoutPlan', 'WorkoutPlanNote', 'WorkoutPlanRevision', 'WorkoutSession', 'WorkoutSetGroup',
+  ],
   notificationEvent: ['NewWorkout', 'NewDiet', 'NewProgram', 'ProgramUpdated', 'CheckInRequired', 'CheckInReviewed', 'NewMessage', 'SubscriptionExpired'],
 } as const;
 

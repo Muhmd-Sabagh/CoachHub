@@ -1,7 +1,7 @@
 <section class="dashboard-hero">
   <div>
     <p class="eyebrow">{{ 'dashboard.eyebrow' | translate }}</p>
-    <h1>{{ 'dashboard.title' | translate }}, {{ auth.currentUser()?.displayName || auth.currentUser()?.email }}.</h1>
+    <h1>{{ 'dashboard.title' | translate }}<span translate="no">{{ i18n.language() === 'ar' ? '،' : ',' }} {{ auth.currentUser()?.displayName || auth.currentUser()?.email }}</span>.</h1>
     <p>{{ 'dashboard.subtitle' | translate }}</p>
   </div>
   <div class="hero-accent" aria-hidden="true"><span>CH</span></div>
@@ -13,96 +13,96 @@
   </article>
   <article class="card period-card">
     <form class="filter-row" (ngSubmit)="load()">
-      <label><span>From</span><input type="date" name="periodFrom" [(ngModel)]="from" required /></label>
-      <label><span>To</span><input type="date" name="periodTo" [(ngModel)]="to" required /></label>
-      <button class="button button-primary" [disabled]="loading()">Apply</button>
+      <label><span>{{ 'common.from' | translate }}</span><input type="date" name="periodFrom" [(ngModel)]="from" required /></label>
+      <label><span>{{ 'common.to' | translate }}</span><input type="date" name="periodTo" [(ngModel)]="to" required /></label>
+      <button class="button button-primary" [disabled]="loading()">{{ 'common.apply' | translate }}</button>
     </form>
-    <p class="muted">Revenue is payments settled in the period minus refunds recorded in it, per currency.</p>
+    <p class="muted">{{ 'dashboard.revenueRule' | translate }}</p>
   </article>
 </section>
 @if (error()) { <p class="form-error">{{ error() }}</p> }
-@if (loading() && !coach() && !admin()) { <p class="table-message">Loading…</p> }
+@if (loading() && !coach() && !admin()) { <p class="table-message">{{ 'common.loading' | translate }}</p> }
 @if (coach(); as c) {
   <section class="card workbench">
-    <div class="section-heading"><div><p class="eyebrow">Coach dashboard</p><h2>Your clients today</h2></div><a routerLink="/calendar">Open calendar</a></div>
+    <div class="section-heading"><div><p class="eyebrow">{{ 'dashboard.coachEyebrow' | translate }}</p><h2>{{ 'dashboard.yourClients' | translate }}</h2></div><a routerLink="/calendar">{{ 'dashboard.openCalendar' | translate }}</a></div>
     <div class="report-metrics">
-      <article><span>Total clients</span><strong>{{ c.clients.total }}</strong><small>{{ c.clients.active }} active · {{ c.clients.inactive }} inactive</small></article>
+      <article><span>{{ 'dashboard.totalClients' | translate }}</span><strong>{{ c.clients.total }}</strong><small>{{ 'dashboard.activeInactive' | translate: { active: c.clients.active, inactive: c.clients.inactive } }}</small></article>
       @for (s of c.statuses; track s.status) {
-        <a class="metric-link" routerLink="/clients" [queryParams]="{ status: s.status }"><span>{{ statusLabels[s.status] || s.status }}</span><strong>{{ s.count }}</strong><small>Show clients</small></a>
+        <a class="metric-link" routerLink="/clients" [queryParams]="{ status: s.status }"><span>{{ s.status | enumLabel: 'clientStatus' }}</span><strong>{{ s.count }}</strong><small>{{ 'dashboard.showClients' | translate }}</small></a>
       }
-      <a class="metric-link" routerLink="/check-ins"><span>Check-ins awaiting review</span><strong>{{ c.checkIns.awaitingReview }}</strong><small>{{ c.checkIns.due }} due now · {{ c.checkIns.overdue }} overdue</small></a>
-      <article><span>Expired programs</span><strong>{{ c.expiredProgramCount }}</strong><small>Active plans past their end date</small></article>
+      <a class="metric-link" routerLink="/check-ins"><span>{{ 'dashboard.awaitingReview' | translate }}</span><strong>{{ c.checkIns.awaitingReview }}</strong><small>{{ 'dashboard.dueOverdue' | translate: { due: c.checkIns.due, overdue: c.checkIns.overdue } }}</small></a>
+      <article><span>{{ 'dashboard.expiredPrograms' | translate }}</span><strong>{{ c.expiredProgramCount }}</strong><small>{{ 'dashboard.expiredHint' | translate }}</small></article>
     </div>
     <div class="report-columns">
       <section>
-        <div class="section-heading"><h3>Expired programs</h3></div>
-        <div class="table-scroll"><table><thead><tr><th>Client</th><th>Plan</th><th>Ended</th></tr></thead><tbody>
-          @for (p of c.expiredPrograms; track p.planId) { <tr><td><a [routerLink]="['/clients', p.clientId]">{{ p.clientName }}</a></td><td>{{ p.kind }} · {{ p.planName }}</td><td>{{ p.endedOn | date: 'd MMM y' }}</td></tr> }
-          @if (!c.expiredPrograms.length) { <tr><td colspan="3" class="table-message">No expired programs.</td></tr> }
+        <div class="section-heading"><h3>{{ 'dashboard.expiredPrograms' | translate }}</h3></div>
+        <div class="table-scroll"><table><thead><tr><th>{{ 'common.client' | translate }}</th><th>{{ 'dashboard.plan' | translate }}</th><th>{{ 'dashboard.ended' | translate }}</th></tr></thead><tbody>
+          @for (p of c.expiredPrograms; track p.planId) { <tr><td><a [routerLink]="['/clients', p.clientId]" translate="no">{{ p.clientName }}</a></td><td>{{ p.kind | enumLabel: 'planType' }} · <span translate="no">{{ p.planName }}</span></td><td>{{ p.endedOn | localDate: 'd MMM y' }}</td></tr> }
+          @if (!c.expiredPrograms.length) { <tr><td colspan="3" class="table-message">{{ 'dashboard.noExpired' | translate }}</td></tr> }
         </tbody></table></div>
       </section>
       <section>
-        <div class="section-heading"><h3>Recent activity</h3></div>
+        <div class="section-heading"><h3>{{ 'dashboard.recentActivity' | translate }}</h3></div>
         <ul class="activity">
           @for (a of c.recentActivity; track $index) {
-            <li><span>{{ activityText(a) }}@if (a.clientName) { · <a [routerLink]="['/clients', a.clientId]">{{ a.clientName }}</a> }</span><small class="muted">{{ a.at | date: 'd MMM, HH:mm' }}</small></li>
-          } @empty { <li class="muted">No activity yet.</li> }
+            <li><span><span translate="no">{{ a.actor }}</span>: {{ a.operation | enumLabel: 'auditOperation' }} · {{ a.entityType | enumLabel: 'entityType' }}@if (a.clientName) { · <a [routerLink]="['/clients', a.clientId]" translate="no">{{ a.clientName }}</a> }</span><small class="muted">{{ a.at | localDate: 'd MMM, HH:mm' }}</small></li>
+          } @empty { <li class="muted">{{ 'dashboard.noActivity' | translate }}</li> }
         </ul>
       </section>
     </div>
-    <div class="section-heading"><h3>Revenue</h3><span>{{ c.from }} to {{ c.to }}</span></div>
-    <div class="table-scroll"><table><thead><tr><th>Currency</th><th>Settled</th><th>Refunded</th><th>Net</th></tr></thead><tbody>
-      @for (r of c.revenue; track r.key) { <tr><td><strong>{{ r.currencyCode }}</strong></td><td>{{ r.settled | number: '1.2-2' }}</td><td>{{ r.refunded | number: '1.2-2' }}</td><td><strong>{{ r.net | number: '1.2-2' }}</strong></td></tr> }
-      @if (!c.revenue.length) { <tr><td colspan="4" class="table-message">No revenue in this period.</td></tr> }
+    <div class="section-heading"><h3>{{ 'dashboard.revenue' | translate }}</h3><span>{{ 'common.range' | translate: { from: (c.from | localDate: 'd MMM y'), to: (c.to | localDate: 'd MMM y') } }}</span></div>
+    <div class="table-scroll"><table><thead><tr><th>{{ 'dashboard.currency' | translate }}</th><th>{{ 'dashboard.settled' | translate }}</th><th>{{ 'dashboard.refunded' | translate }}</th><th>{{ 'dashboard.net' | translate }}</th></tr></thead><tbody>
+      @for (r of c.revenue; track r.key) { <tr><td><strong translate="no">{{ r.currencyCode }}</strong></td><td>{{ r.settled | localNumber: '1.2-2' }}</td><td>{{ r.refunded | localNumber: '1.2-2' }}</td><td><strong>{{ r.net | localNumber: '1.2-2' }}</strong></td></tr> }
+      @if (!c.revenue.length) { <tr><td colspan="4" class="table-message">{{ 'dashboard.noRevenue' | translate }}</td></tr> }
     </tbody></table></div>
   </section>
 }
 @if (admin(); as a) {
   <section class="card workbench">
-    <div class="section-heading"><div><p class="eyebrow">Platform</p><h2>Administrator dashboard</h2></div><span>{{ a.from }} to {{ a.to }}</span></div>
+    <div class="section-heading"><div><p class="eyebrow">{{ 'dashboard.platform' | translate }}</p><h2>{{ 'dashboard.adminTitle' | translate }}</h2></div><span>{{ 'common.range' | translate: { from: (a.from | localDate: 'd MMM y'), to: (a.to | localDate: 'd MMM y') } }}</span></div>
     <div class="report-metrics">
-      <article><span>Clients</span><strong>{{ a.clients }}</strong><small>{{ a.newUsers.clients }} new in period</small></article>
-      <article><span>Coaches</span><strong>{{ a.coaches }}</strong><small>{{ a.activeCoaches }} active · {{ a.newUsers.coaches }} new</small></article>
-      <article><span>Active users</span><strong>{{ a.activeUsers }}</strong><small>Signed in or made a change</small></article>
-      <article><span>Expired subscriptions</span><strong>{{ a.expiredSubscriptions.clients }}</strong><small>{{ a.expiredSubscriptions.endedInPeriod }} ended in period</small></article>
+      <article><span>{{ 'dashboard.clients' | translate }}</span><strong>{{ a.clients }}</strong><small>{{ 'dashboard.newInPeriod' | translate: { count: a.newUsers.clients } }}</small></article>
+      <article><span>{{ 'dashboard.coaches' | translate }}</span><strong>{{ a.coaches }}</strong><small>{{ 'dashboard.activeNew' | translate: { active: a.activeCoaches, count: a.newUsers.coaches } }}</small></article>
+      <article><span>{{ 'dashboard.activeUsers' | translate }}</span><strong>{{ a.activeUsers }}</strong><small>{{ 'dashboard.activeUsersHint' | translate }}</small></article>
+      <article><span>{{ 'dashboard.expiredSubscriptions' | translate }}</span><strong>{{ a.expiredSubscriptions.clients }}</strong><small>{{ 'dashboard.endedInPeriod' | translate: { count: a.expiredSubscriptions.endedInPeriod } }}</small></article>
     </div>
     <div class="report-columns">
       <section>
-        <div class="section-heading"><h3>Revenue by coach</h3></div>
-        <div class="table-scroll"><table><thead><tr><th>Coach</th><th>Settled</th><th>Refunded</th><th>Net</th></tr></thead><tbody>
-          @for (r of a.revenueByCoach; track r.key + r.currencyCode) { <tr><td>{{ r.label }}</td><td>{{ r.settled | number: '1.2-2' }}</td><td>{{ r.refunded | number: '1.2-2' }}</td><td><strong>{{ r.net | number: '1.2-2' }} {{ r.currencyCode }}</strong></td></tr> }
-          @if (!a.revenueByCoach.length) { <tr><td colspan="4" class="table-message">No revenue in this period.</td></tr> }
+        <div class="section-heading"><h3>{{ 'dashboard.revenueByCoach' | translate }}</h3></div>
+        <div class="table-scroll"><table><thead><tr><th>{{ 'common.coach' | translate }}</th><th>{{ 'dashboard.settled' | translate }}</th><th>{{ 'dashboard.refunded' | translate }}</th><th>{{ 'dashboard.net' | translate }}</th></tr></thead><tbody>
+          @for (r of a.revenueByCoach; track r.key + r.currencyCode) { <tr><td translate="no">{{ r.label }}</td><td>{{ r.settled | localNumber: '1.2-2' }}</td><td>{{ r.refunded | localNumber: '1.2-2' }}</td><td><strong>{{ r.net | localNumber: '1.2-2' }} <span translate="no">{{ r.currencyCode }}</span></strong></td></tr> }
+          @if (!a.revenueByCoach.length) { <tr><td colspan="4" class="table-message">{{ 'dashboard.noRevenue' | translate }}</td></tr> }
         </tbody></table></div>
       </section>
       <section>
-        <div class="section-heading"><h3>Platform usage</h3></div>
+        <div class="section-heading"><h3>{{ 'dashboard.usage' | translate }}</h3></div>
         <div class="table-scroll"><table><tbody>
-          <tr><td>Workouts logged</td><td>{{ a.usage.workoutsLogged }}</td></tr>
-          <tr><td>Food entries</td><td>{{ a.usage.foodEntries }}</td></tr>
-          <tr><td>Body and lifestyle entries</td><td>{{ a.usage.progressEntries }}</td></tr>
-          <tr><td>Check-ins sent</td><td>{{ a.usage.checkInsSent }}</td></tr>
-          <tr><td>Form submissions</td><td>{{ a.usage.formSubmissions }}</td></tr>
-          <tr><td>Chat messages</td><td>{{ a.usage.chatMessages }}</td></tr>
-          <tr><td>Files shared</td><td>{{ a.usage.filesShared }}</td></tr>
-          <tr><td>Plans delivered</td><td>{{ a.usage.plansDelivered }}</td></tr>
+          <tr><td>{{ 'dashboard.workoutsLogged' | translate }}</td><td>{{ a.usage.workoutsLogged }}</td></tr>
+          <tr><td>{{ 'dashboard.foodEntries' | translate }}</td><td>{{ a.usage.foodEntries }}</td></tr>
+          <tr><td>{{ 'dashboard.progressEntries' | translate }}</td><td>{{ a.usage.progressEntries }}</td></tr>
+          <tr><td>{{ 'dashboard.checkInsSent' | translate }}</td><td>{{ a.usage.checkInsSent }}</td></tr>
+          <tr><td>{{ 'dashboard.formSubmissions' | translate }}</td><td>{{ a.usage.formSubmissions }}</td></tr>
+          <tr><td>{{ 'dashboard.chatMessages' | translate }}</td><td>{{ a.usage.chatMessages }}</td></tr>
+          <tr><td>{{ 'dashboard.filesShared' | translate }}</td><td>{{ a.usage.filesShared }}</td></tr>
+          <tr><td>{{ 'dashboard.plansDelivered' | translate }}</td><td>{{ a.usage.plansDelivered }}</td></tr>
         </tbody></table></div>
       </section>
     </div>
-    <div class="section-heading"><h3>Platform exports (CSV)</h3><span>Revenue covers {{ a.from }} to {{ a.to }}</span></div>
+    <div class="section-heading"><h3>{{ 'dashboard.exports' | translate }}</h3><span>{{ 'dashboard.revenueCovers' | translate: { from: (a.from | localDate: 'd MMM y'), to: (a.to | localDate: 'd MMM y') } }}</span></div>
     <div class="quick-exports">
-      @for (e of platformExports; track e.id) { <button type="button" class="button button-secondary" (click)="exportPlatform(e.id)">{{ e.label }}</button> }
+      @for (e of platformExports; track e) { <button type="button" class="button button-secondary" (click)="exportPlatform(e)">{{ exportKey(e) | translate }}</button> }
     </div>
-    <div class="section-heading"><h3>User activity</h3><span>Active accounts per day</span></div>
-    <div class="activity-bars" role="img" [attr.aria-label]="'Active users per day, up to ' + maxActive()">
-      @for (d of a.userActivity; track d.date) { <span [style.height.%]="(d.activeUsers / maxActive()) * 100" [title]="d.date + ': ' + d.activeUsers + ' users, ' + d.changes + ' changes'"></span> }
+    <div class="section-heading"><h3>{{ 'dashboard.userActivity' | translate }}</h3><span>{{ 'dashboard.perDay' | translate }}</span></div>
+    <div class="activity-bars" role="img" [attr.aria-label]="'dashboard.activityChart' | translate: { max: maxActive() }">
+      @for (d of a.userActivity; track d.date) { <span [style.height.%]="(d.activeUsers / maxActive()) * 100" [title]="'dashboard.activityBar' | translate: { date: d.date, users: d.activeUsers, changes: d.changes }"></span> }
     </div>
-    <div class="table-scroll"><table><thead><tr><th>Day</th><th>Active users</th><th>Changes</th></tr></thead><tbody>
-      @for (d of a.userActivity.slice(-7); track d.date) { <tr><td>{{ d.date | date: 'EEE d MMM' }}</td><td>{{ d.activeUsers }}</td><td>{{ d.changes }}</td></tr> }
+    <div class="table-scroll"><table><thead><tr><th>{{ 'dashboard.day' | translate }}</th><th>{{ 'dashboard.activeUsers' | translate }}</th><th>{{ 'dashboard.changes' | translate }}</th></tr></thead><tbody>
+      @for (d of a.userActivity.slice(-7); track d.date) { <tr><td>{{ d.date | localDate: 'EEE d MMM' }}</td><td>{{ d.activeUsers }}</td><td>{{ d.changes }}</td></tr> }
     </tbody></table></div>
   </section>
 }
 <section><div class="section-heading"><h2>{{ 'dashboard.quickActions' | translate }}</h2></div><div class="quick-actions">
-  <a routerLink="/clients" [queryParams]="{ action: 'new' }"><span class="action-icon">+</span><strong>{{ 'dashboard.addClient' | translate }}</strong><span class="arrow">Go</span></a>
-  <a routerLink="/assessments"><span class="action-icon">AS</span><strong>{{ 'dashboard.reviewAssessments' | translate }}</strong><span class="arrow">Go</span></a>
-  <a routerLink="/plans"><span class="action-icon">PL</span><strong>{{ 'dashboard.buildPlan' | translate }}</strong><span class="arrow">Go</span></a>
+  <a routerLink="/clients" [queryParams]="{ action: 'new' }"><span class="action-icon" aria-hidden="true">+</span><strong>{{ 'dashboard.addClient' | translate }}</strong><span class="arrow">{{ 'common.go' | translate }}</span></a>
+  <a routerLink="/assessments"><span class="action-icon" aria-hidden="true">AS</span><strong>{{ 'dashboard.reviewAssessments' | translate }}</strong><span class="arrow">{{ 'common.go' | translate }}</span></a>
+  <a routerLink="/plans"><span class="action-icon" aria-hidden="true">PL</span><strong>{{ 'dashboard.buildPlan' | translate }}</strong><span class="arrow">{{ 'common.go' | translate }}</span></a>
 </div></section>
