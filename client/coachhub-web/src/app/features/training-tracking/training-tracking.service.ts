@@ -65,6 +65,8 @@ export interface LoggedExercise {
   exerciseNameAr: string | null;
   mediaId: string | null;
   youTubeUrl: string | null;
+  /** An uploaded video of the exercise (P20). */
+  videoMediaId?: string | null;
   plannedExerciseId: string | null;
   order: number;
   block: WorkoutBlock;

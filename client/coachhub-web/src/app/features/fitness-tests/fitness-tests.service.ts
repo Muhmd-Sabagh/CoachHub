@@ -35,8 +35,10 @@ export interface TestDefinition {
   isActive: boolean;
   coachId: string | null;
   isCustom: boolean;
+  /** An uploaded video (P20), played through /media/{id}. */
+  videoMediaId?: string | null;
 }
-export type TestDefinitionInput = Omit<TestDefinition, 'id' | 'coachId' | 'isCustom'>;
+export type TestDefinitionInput = Omit<TestDefinition, 'id' | 'coachId' | 'isCustom' | 'videoMediaId'>;
 export interface TestQuery { pageNumber?: number; searchTerm?: string; kind?: TestKind | ''; scope?: TestScope; isActive?: boolean | null; }
 export interface TestResult {
   id: string;
@@ -139,6 +141,13 @@ export class FitnessTestsService {
   create(input: TestDefinitionInput) { return this.http.post<TestDefinition>(`${this.api}/fitness-tests`, input); }
   update(id: string, input: TestDefinitionInput) { return this.http.put<TestDefinition>(`${this.api}/fitness-tests/${id}`, input); }
   delete(id: string) { return this.http.delete<void>(`${this.api}/fitness-tests/${id}`); }
+  /** The test's uploaded video (P20): MP4, WebM or MOV up to 50 MB, replacing the previous one. */
+  uploadVideo(id: string, file: File) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.put<TestDefinition>(`${this.api}/fitness-tests/${id}/video`, form);
+  }
+  removeVideo(id: string) { return this.http.delete<TestDefinition>(`${this.api}/fitness-tests/${id}/video`); }
 
   /** The client's tests; without a client, the signed-in client's own. */
   clientTests(clientId?: string) { return this.http.get<ClientTests>(this.base(clientId)); }

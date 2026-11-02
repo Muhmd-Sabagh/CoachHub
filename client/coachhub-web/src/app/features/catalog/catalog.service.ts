@@ -25,4 +25,13 @@ export class CatalogService {
   delete(kind: CatalogKind, id: string) {
     return this.http.delete<void>(`${this.url(kind)}/${id}`);
   }
+  /** An exercise's uploaded video (P20): MP4, WebM or MOV up to 50 MB, replacing the previous one. */
+  uploadVideo(id: string, file: File) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.put<CatalogItem>(`${this.url('exercises')}/${id}/video`, form);
+  }
+  removeVideo(id: string) {
+    return this.http.delete<CatalogItem>(`${this.url('exercises')}/${id}/video`);
+  }
 }

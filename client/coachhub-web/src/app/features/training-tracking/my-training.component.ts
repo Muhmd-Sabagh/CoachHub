@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, finalize } from 'rxjs';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { MediaVideoComponent } from '../../shared/components/media-video/media-video.component';
 import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { PrescribedSet, summarizeSets } from '../plans/workout-math';
@@ -20,7 +21,7 @@ import {
 @Component({
   selector: 'app-my-training',
   standalone: true,
-  imports: [FormsModule, ...I18N_PIPES],
+  imports: [FormsModule, MediaVideoComponent, ...I18N_PIPES],
   template: `
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
 
@@ -56,6 +57,7 @@ import {
               @if (e.youTubeUrl) { <a class="link-button" [href]="e.youTubeUrl" target="_blank" rel="noopener">{{ 'training.video' | translate }}</a> }
             </div>
           </div>
+          @if (e.videoMediaId) { <app-media-video [mediaId]="e.videoMediaId" [label]="exerciseName(e)" /> }
 
           @if (historyFor() === e.exerciseId) {
             <div class="history" [attr.aria-label]="'training.exerciseHistory' | translate">

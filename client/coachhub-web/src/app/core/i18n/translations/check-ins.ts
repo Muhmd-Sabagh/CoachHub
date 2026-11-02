@@ -58,10 +58,6 @@ export const checkIns = defineTranslations({
     'checkIns.requestChanges': 'Request changes',
     'checkIns.notes': 'Private notes (only you see these)',
     'checkIns.saveNotes': 'Save notes',
-    'common.previous': 'Previous',
-    'common.next': 'Next',
-    'common.pageOf': 'Page {page} of {pages}',
-    'common.pagination': 'Pages',
   },
   ar: {
     'checkIns.eyebrow': 'التدريب',
@@ -119,9 +115,5 @@ export const checkIns = defineTranslations({
     'checkIns.requestChanges': 'طلب تعديلات',
     'checkIns.notes': 'ملاحظات خاصة (تراها أنت فقط)',
     'checkIns.saveNotes': 'حفظ الملاحظات',
-    'common.previous': 'السابق',
-    'common.next': 'التالي',
-    'common.pageOf': 'الصفحة {page} من {pages}',
-    'common.pagination': 'الصفحات',
   },
 });

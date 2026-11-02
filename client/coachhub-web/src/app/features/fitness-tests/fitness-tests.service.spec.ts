@@ -24,6 +24,16 @@ describe('FitnessTestsService (§34–§36: mobility, strength and endurance tes
     expect(http.expectOne('/api/v1/fitness-tests/t').request.method).toBe('DELETE');
   });
 
+  it('uploads and removes a test video (P20)', () => {
+    service.uploadVideo('t', new File(['x'], 'reach.mp4', { type: 'video/mp4' })).subscribe();
+    const upload = http.expectOne('/api/v1/fitness-tests/t/video');
+    expect(upload.request.method).toBe('PUT');
+    expect((upload.request.body as FormData).get('file')).toBeInstanceOf(File);
+    upload.flush({});
+    service.removeVideo('t').subscribe();
+    expect(http.expectOne('/api/v1/fitness-tests/t/video').request.method).toBe('DELETE');
+  });
+
   it('assigns, records and classifies for a client as the coach', () => {
     service.clientTests('c').subscribe();
     http.expectOne('/api/v1/clients/c/fitness-tests').flush({ clientId: 'c', tests: [] });
