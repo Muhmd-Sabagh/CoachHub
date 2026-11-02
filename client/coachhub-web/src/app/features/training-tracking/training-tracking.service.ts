@@ -311,12 +311,6 @@ export function recordText(record: PersonalRecord, i18n?: I18nService): string {
   return `${record.exerciseNameEn} — ${value}`;
 }
 
-export const recordTypeLabels: Record<PersonalRecordType, string> = {
-  Weight: 'Heaviest weight',
-  Reps: 'Most reps',
-  Volume: 'Most volume',
-  EstimatedOneRepMax: 'Estimated 1RM',
-};
 
 /** Seconds as m:ss ("1:30", "0:45"). */
 export function clock(seconds: number): string {

@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Component, Injectable, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
+import { TranslationKey } from '../../core/i18n/translations';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 
 export type RestrictableStatus = 'Expired' | 'Suspended' | 'Pending' | 'Inactive';
@@ -11,11 +13,6 @@ export type FeatureAccess = 'Full' | 'ReadOnly' | 'Blocked';
 export interface AccessRule { status: RestrictableStatus; feature: ClientFeature; access: FeatureAccess; isDefault?: boolean; }
 export interface SubscriptionSettings { durationPresets: number[]; rules: AccessRule[]; }
 
-export const statusLabels: Record<RestrictableStatus, string> = { Expired: 'Expired', Suspended: 'Suspended', Pending: 'Pending', Inactive: 'No subscription' };
-export const featureLabels: Record<ClientFeature, string> = {
-  Nutrition: 'Nutrition', Training: 'Training', Progress: 'Progress & tests', FormsAndCheckIns: 'Forms & check-ins', Chat: 'Chat',
-  Files: 'Files', Calendar: 'Calendar',
-};
 
 /** Subscription presets and access rules (§47, §57). */
 @Injectable({ providedIn: 'root' })
@@ -34,32 +31,33 @@ export class SubscriptionSettingsService {
 @Component({
   selector: 'app-subscription-access',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ...I18N_PIPES],
   template: `
     <section class="card workbench access">
-      <div class="section-heading"><h2>Subscription access</h2><span>Active subscriptions always have full access</span></div>
+      <div class="section-heading"><h2>{{ 'access.title' | translate }}</h2><span>{{ 'access.hint' | translate }}</span></div>
       @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
-      @if (saved()) { <p class="success-message" role="status">Saved.</p> }
-      <label><span>Duration presets (months, comma separated)</span>
+      @if (saved()) { <p class="success-message" role="status">{{ 'access.saved' | translate }}</p> }
+      <label><span>{{ 'access.presets' | translate }}</span>
         <input [(ngModel)]="presets" name="presets" placeholder="1, 3, 6, 12" dir="ltr" /></label>
       <div class="table-scroll"><table class="access-grid">
-        <thead><tr><th>Feature</th>@for (s of statuses; track s) { <th>{{ statusLabel[s] }}</th> }</tr></thead>
+        <thead><tr><th>{{ 'access.feature' | translate }}</th>@for (s of statuses; track s) { <th>{{ statusKey(s) | translate }}</th> }</tr></thead>
         <tbody>
           @for (f of features; track f) {
-            <tr><th scope="row">{{ featureLabel[f] }}</th>
+            <tr><th scope="row">{{ f | enumLabel: 'clientFeature' }}</th>
               @for (s of statuses; track s) {
-                <td [attr.data-label]="statusLabel[s]"><select [ngModel]="cell(s, f)" (ngModelChange)="set(s, f, $event)" [name]="s + f" [attr.aria-label]="featureLabel[f] + ' when ' + statusLabel[s]">
-                  <option value="Full">Full</option><option value="ReadOnly">Read-only</option><option value="Blocked">Blocked</option>
+                <td [attr.data-label]="statusKey(s) | translate"><select [ngModel]="cell(s, f)" (ngModelChange)="set(s, f, $event)" [name]="s + f"
+                  [attr.aria-label]="'access.cellLabel' | translate: { feature: (f | enumLabel: 'clientFeature'), status: (statusKey(s) | translate) }">
+                  <option value="Full">{{ 'access.full' | translate }}</option><option value="ReadOnly">{{ 'access.readOnly' | translate }}</option><option value="Blocked">{{ 'access.blocked' | translate }}</option>
                 </select></td>
               }
             </tr>
           }
         </tbody>
       </table></div>
-      <p class="muted">Read-only keeps the client's history visible and blocks logging, forms and messages. Client data is never deleted.</p>
+      <p class="muted">{{ 'access.explain' | translate }}</p>
       <div class="form-actions">
-        <button type="button" class="button button-primary" (click)="save()" [disabled]="busy()">Save access rules</button>
-        <button type="button" class="button button-secondary" (click)="reset()" [disabled]="busy()">Restore defaults</button>
+        <button type="button" class="button button-primary" (click)="save()" [disabled]="busy()">{{ 'access.save' | translate }}</button>
+        <button type="button" class="button button-secondary" (click)="reset()" [disabled]="busy()">{{ 'access.restore' | translate }}</button>
       </div>
     </section>
   `,
@@ -81,8 +79,6 @@ export class SubscriptionSettingsService {
 export class SubscriptionAccessComponent implements OnInit {
   readonly statuses: RestrictableStatus[] = ['Expired', 'Suspended', 'Pending', 'Inactive'];
   readonly features: ClientFeature[] = ['Nutrition', 'Training', 'Progress', 'FormsAndCheckIns', 'Chat', 'Files', 'Calendar'];
-  readonly statusLabel = statusLabels;
-  readonly featureLabel = featureLabels;
   readonly rules = signal<AccessRule[]>([]);
   readonly busy = signal(false);
   readonly saved = signal(false);
@@ -90,6 +86,8 @@ export class SubscriptionAccessComponent implements OnInit {
   presets = '';
 
   constructor(private readonly api: SubscriptionSettingsService) {}
+
+  statusKey(status: RestrictableStatus): TranslationKey { return `access.status.${status}`; }
 
   ngOnInit(): void { this.api.get().subscribe({ next: x => this.show(x), error: e => this.error.set(apiErrorMessage(e)) }); }
 

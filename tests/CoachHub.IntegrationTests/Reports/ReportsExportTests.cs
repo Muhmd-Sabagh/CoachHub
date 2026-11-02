@@ -152,6 +152,13 @@ public sealed class ReportsExportTests(CoachHubSqlApiFactory factory) : IClassFi
         Assert.Equal(4, lines.Length);
         Assert.StartsWith($"{Today:yyyy-MM-dd},Plank hold,Endurance,90,Seconds,Yes,", lines[3]);
         Assert.Equal(HttpStatusCode.NotFound, (await s.OtherCoach.GetAsync($"/api/v1/exports/clients/{s.ClientId}/Tests")).StatusCode);
+
+        // P21: an Arabic request gets Arabic column names; the values stay as they are.
+        using var arabicRequest = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/exports/clients/{s.ClientId}/Tests");
+        arabicRequest.Headers.AcceptLanguage.ParseAdd("ar");
+        var arabicCsv = Encoding.UTF8.GetString((await (await s.Coach.SendAsync(arabicRequest)).Content.ReadAsByteArrayAsync())[3..]);
+        Assert.StartsWith("التاريخ,الاختبار,النوع,القيمة,الوحدة,", arabicCsv);
+        Assert.Contains($"{Today:yyyy-MM-dd},Plank hold,Endurance,90,Seconds,Yes,", arabicCsv);
     }
 
     private static async Task<string> CsvAsync(HttpClient http, string path)

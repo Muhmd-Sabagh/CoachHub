@@ -1,27 +1,21 @@
 <section class="page-heading">
-  <p class="eyebrow">Assessments</p>
-  <h1>Forms & client responses</h1>
-  <p>Build versioned forms and review the answers preserved at submission time.</p>
+  <p class="eyebrow">{{ 'assess.eyebrow' | translate }}</p>
+  <h1>{{ 'assess.title' | translate }}</h1>
+  <p>{{ 'assess.intro' | translate }}</p>
 </section>
 <div class="resource-tabs">
-  <button [class.active]="tab() === 'forms'" (click)="tab.set('forms'); search.set(''); appliedSearch.set('')">
-    Form builder</button
-  ><button
-    [class.active]="tab() === 'submissions'"
-    (click)="tab.set('submissions'); search.set(''); appliedSearch.set('')"
-  >
-    Client responses
-  </button>
+  <button type="button" [class.active]="tab() === 'forms'" (click)="tab.set('forms'); search.set(''); appliedSearch.set('')">{{ 'assess.builderTab' | translate }}</button
+  ><button type="button" [class.active]="tab() === 'submissions'" (click)="tab.set('submissions'); search.set(''); appliedSearch.set('')">{{ 'assess.responsesTab' | translate }}</button>
 </div>
 <section class="card workbench">
   <div class="toolbar">
     <form class="filter-row" (ngSubmit)="searchNow()">
-      <label><span>Search</span><input name="search" [(ngModel)]="search" /></label
-      ><button class="button button-primary">Search</button
-      ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+      <label><span>{{ 'common.search' | translate }}</span><input name="search" [(ngModel)]="search" /></label
+      ><button class="button button-primary">{{ 'common.search' | translate }}</button
+      ><button class="button button-secondary" type="button" (click)="reset()">{{ 'common.reset' | translate }}</button>
     </form>
     @if (tab() === 'forms') {
-      <button class="button button-primary" (click)="formEditor.set(true)">Create form</button>
+      <button class="button button-primary" (click)="formEditor.set(true)">{{ 'assess.create' | translate }}</button>
     }
   </div>
   @if (error()) {
@@ -32,96 +26,76 @@
       <table>
         <thead>
           <tr>
-            <th>Form</th>
-            <th>Type</th>
-            <th>Status</th>
+            <th>{{ 'assess.form' | translate }}</th>
+            <th>{{ 'assess.type' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           @for (f of forms().items; track f.id) {
             <tr>
-              <td>
-                <strong>{{ f.name }}</strong>
-              </td>
-              <td>{{ f.formType }}</td>
-              <td><app-status-badge [value]="f.isArchived ? 'Archived' : 'Active'" /></td>
+              <td><strong translate="no">{{ f.name }}</strong></td>
+              <td>{{ f.formType | enumLabel: 'assessmentFormType' }}</td>
+              <td><app-status-badge [label]="f.isArchived ? 'assess.archived' : 'common.active'" [success]="!f.isArchived" /></td>
               <td class="actions">
-                <button class="link-button" (click)="openForm(f)">Build / preview</button
-                ><button class="link-button" (click)="archive(f)">
-                  {{ f.isArchived ? 'Restore' : 'Archive' }}
-                </button>
+                <button class="link-button" (click)="openForm(f)">{{ 'assess.build' | translate }}</button
+                ><button class="link-button" (click)="archive(f)">{{ (f.isArchived ? 'assess.restore' : 'assess.archive') | translate }}</button>
               </td>
             </tr>
           }
         </tbody>
       </table>
     </div>
-    <app-pagination
-      [page]="forms().pageNumber"
-      [totalPages]="forms().totalPages"
-      [totalCount]="forms().totalCount"
-      (pageChange)="loadForms($event)"
-    />
+    <app-pagination [page]="forms().pageNumber" [totalPages]="forms().totalPages" [totalCount]="forms().totalCount" (pageChange)="loadForms($event)" />
   } @else {
     <div class="table-scroll">
       <table>
         <thead>
           <tr>
-            <th>Client</th>
-            <th>Form</th>
-            <th>Submitted</th>
-            <th>Answers</th>
+            <th>{{ 'common.client' | translate }}</th>
+            <th>{{ 'assess.form' | translate }}</th>
+            <th>{{ 'assess.submitted' | translate }}</th>
+            <th>{{ 'assess.answers' | translate }}</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           @for (s of submissions().items; track s.id) {
             <tr>
-              <td>
-                <strong>{{ s.clientName }}</strong>
-              </td>
-              <td>
-                {{ s.formName }}<small>{{ s.formType }} · {{ s.source }}</small>
-              </td>
-              <td>{{ s.submittedAt | date: 'medium' }}</td>
+              <td><strong translate="no">{{ s.clientName }}</strong></td>
+              <td><span translate="no">{{ s.formName }}</span><small>{{ s.formType | enumLabel: 'assessmentFormType' }} · {{ s.source | enumLabel: 'submissionSource' }}</small></td>
+              <td>{{ s.submittedAt | localDate: 'd MMM y, HH:mm' }}</td>
               <td>{{ s.answerCount }}</td>
-              <td><button class="link-button" (click)="reviewSubmission(s)">Review</button></td>
+              <td><button class="link-button" (click)="reviewSubmission(s)">{{ 'assess.review' | translate }}</button></td>
             </tr>
           }
         </tbody>
       </table>
     </div>
-    <app-pagination
-      [page]="submissions().pageNumber"
-      [totalPages]="submissions().totalPages"
-      [totalCount]="submissions().totalCount"
-      (pageChange)="loadSubmissions($event)"
-    />
+    <app-pagination [page]="submissions().pageNumber" [totalPages]="submissions().totalPages" [totalCount]="submissions().totalCount" (pageChange)="loadSubmissions($event)" />
   }
 </section>
 @if (formEditor()) {
   <div class="modal-backdrop">
-    <section class="modal-card">
+    <section class="modal-card" role="dialog" aria-modal="true" [attr.aria-label]="'assess.createTitle' | translate">
       <header>
-        <h2>Create assessment form</h2>
-        <button class="icon-button" (click)="formEditor.set(false)">×</button>
+        <h2>{{ 'assess.createTitle' | translate }}</h2>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="formEditor.set(false)">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="createForm()">
-        <label class="span-2"
-          ><span>Name *</span><input name="name" [(ngModel)]="newForm().name" required /></label
+        <label class="span-2"><span>{{ 'assess.nameRequired' | translate }}</span><input name="name" [(ngModel)]="newForm().name" required /></label
         ><label class="span-2"
-          ><span>Form type</span
+          ><span>{{ 'assess.formType' | translate }}</span
           ><select name="type" [(ngModel)]="newForm().formType">
-            <option>InitialAssessment</option>
-            <option>UpdateAssessment</option>
-            <option value="CheckIn">CheckIn (scheduled per client)</option>
+            <option value="InitialAssessment">{{ 'InitialAssessment' | enumLabel: 'assessmentFormType' }}</option>
+            <option value="UpdateAssessment">{{ 'UpdateAssessment' | enumLabel: 'assessmentFormType' }}</option>
+            <option value="CheckIn">{{ 'CheckIn' | enumLabel: 'assessmentFormType' }}{{ 'assess.checkInHint' | translate }}</option>
           </select></label
         >
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="formEditor.set(false)">
-            Cancel</button
-          ><button class="button button-primary">Create</button>
+          <button class="button button-secondary" type="button" (click)="formEditor.set(false)">{{ 'common.cancel' | translate }}</button
+          ><button class="button button-primary">{{ 'assess.createButton' | translate }}</button>
         </footer>
       </form>
     </section>
@@ -129,30 +103,24 @@
 }
 @if (builder(); as b) {
   <div class="modal-backdrop">
-    <section class="modal-card extra-wide">
+    <section class="modal-card extra-wide" role="dialog" aria-modal="true" [attr.aria-label]="b.name">
       <header>
         <div>
-          <p class="eyebrow">Version {{ b.versionNumber }} · {{ b.status }}</p>
-          <h2>{{ b.name }}</h2>
+          <p class="eyebrow">{{ 'assess.versionLine' | translate: { version: b.versionNumber, status: (b.status | enumLabel: 'formVersionStatus') } }}</p>
+          <h2 translate="no">{{ b.name }}</h2>
         </div>
-        <button class="icon-button" (click)="builder.set(null)">×</button>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="builder.set(null)">×</button>
       </header>
       <div class="toolbar">
         <form class="inline-add" (ngSubmit)="addSection()">
-          <input
-            name="section"
-            [(ngModel)]="section().title"
-            placeholder="New section title"
-          /><button class="button button-secondary">Add section</button>
+          <input name="section" [(ngModel)]="section().title" [placeholder]="'assess.sectionTitle' | translate" [attr.aria-label]="'assess.sectionTitle' | translate" /><button class="button button-secondary">{{ 'assess.addSection' | translate }}</button>
         </form>
         <div class="actions">
           @if (b.status === 'Draft') {
-            <button class="button button-secondary" (click)="addQuestion()">Add question</button
-            ><button class="button button-primary" (click)="publish()">Publish version</button>
+            <button class="button button-secondary" (click)="addQuestion()">{{ 'assess.addQuestion' | translate }}</button
+            ><button class="button button-primary" (click)="publish()">{{ 'assess.publish' | translate }}</button>
           } @else {
-            <button class="button button-primary" (click)="createDraft()">
-              Create editable draft
-            </button>
+            <button class="button button-primary" (click)="createDraft()">{{ 'assess.createDraft' | translate }}</button>
           }
         </div>
       </div>
@@ -161,21 +129,21 @@
           <article>
             <span class="drag-handle" aria-hidden="true">⋮⋮</span>
             <div>
-              <strong>{{ q.text }}</strong
-              ><small>{{ q.questionType }} · {{ q.isRequired ? 'Required' : 'Optional' }}{{ q.metric ? ' · records ' + metricLabel(q.metric) : '' }}</small>
+              <strong translate="no">{{ q.text }}</strong
+              ><small>{{ q.questionType | enumLabel: 'questionType' }} · {{ (q.isRequired ? 'assess.required' : 'assess.optional') | translate }}@if (q.metric) {{{ 'assess.records' | translate: { metric: (q.metric | enumLabel: 'questionMetric') } }}}</small>
             </div>
             @if (b.status === 'Draft') {
               <div class="actions">
-                <button class="icon-button" title="Move up" (click)="move(q, -1)">↑</button
-                ><button class="icon-button" title="Move down" (click)="move(q, 1)">↓</button
-                ><button class="link-button" (click)="editQuestion(q)">Edit</button
-                ><button class="link-button danger" (click)="removeQuestion(q)">Delete</button>
+                <button class="icon-button" type="button" [title]="'assess.moveUp' | translate" [attr.aria-label]="'assess.moveUp' | translate" (click)="move(q, -1)">↑</button
+                ><button class="icon-button" type="button" [title]="'assess.moveDown' | translate" [attr.aria-label]="'assess.moveDown' | translate" (click)="move(q, 1)">↓</button
+                ><button class="link-button" (click)="editQuestion(q)">{{ 'common.edit' | translate }}</button
+                ><button class="link-button danger" (click)="removeQuestion(q)">{{ 'common.delete' | translate }}</button>
               </div>
             }
           </article>
         }
         @if (!b.questions.length) {
-          <div class="empty-inline">Add the first question to this draft.</div>
+          <div class="empty-inline">{{ 'assess.firstQuestion' | translate }}</div>
         }
       </div>
     </section>
@@ -183,81 +151,58 @@
 }
 @if (questionOpen() && builder(); as b) {
   <div class="modal-backdrop top-layer">
-    <section class="modal-card">
+    <section class="modal-card" role="dialog" aria-modal="true" [attr.aria-label]="(editingQuestionId() ? 'assess.editQuestion' : 'assess.newQuestion') | translate">
       <header>
-        <h2>{{ editingQuestionId() ? 'Edit' : 'Add' }} question</h2>
-        <button class="icon-button" (click)="questionOpen.set(false)">×</button>
+        <h2>{{ (editingQuestionId() ? 'assess.editQuestion' : 'assess.newQuestion') | translate }}</h2>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="questionOpen.set(false)">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="saveQuestion()">
-        <label class="span-2"
-          ><span>Question *</span
-          ><textarea name="text" [(ngModel)]="question().text" required></textarea></label
+        <label class="span-2"><span>{{ 'assess.question' | translate }}</span><textarea name="text" [(ngModel)]="question().text" required></textarea></label
         ><label
-          ><span>Type</span
+          ><span>{{ 'assess.type' | translate }}</span
           ><select name="qtype" [(ngModel)]="question().questionType">
-            @for (
-              t of [
-                'ShortText',
-                'LongText',
-                'Number',
-                'Date',
-                'Boolean',
-                'SingleChoice',
-                'MultipleChoice',
-                'MediaUpload',
-              ];
-              track t
-            ) {
-              <option>{{ t }}</option>
+            @for (t of questionTypes; track t) {
+              <option [value]="t">{{ t | enumLabel: 'questionType' }}</option>
             }
           </select></label
         ><label
-          ><span>Section</span
+          ><span>{{ 'assess.section' | translate }}</span
           ><select name="sectionId" [(ngModel)]="question().sectionId">
-            <option value="">No section</option>
+            <option value="">{{ 'assess.noSection' | translate }}</option>
             @for (s of b.sections; track s.id) {
-              <option [value]="s.id">{{ s.title }}</option>
+              <option [value]="s.id" translate="no">{{ s.title }}</option>
             }
           </select></label
         >
         @if (metricsFor(question().questionType).length) {
           <label
-            ><span>Records</span
+            ><span>{{ 'assess.recordsLabel' | translate }}</span
             ><select name="metric" [(ngModel)]="question().metric">
-              <option [ngValue]="null">Nothing (answer only)</option>
+              <option [ngValue]="null">{{ 'assess.nothing' | translate }}</option>
               @for (m of metricsFor(question().questionType); track m.value) {
-                <option [ngValue]="m.value">{{ m.label }}</option>
+                <option [ngValue]="m.value">{{ m.value | enumLabel: 'questionMetric' }}</option>
               }
             </select></label
           >
         }
-        <label class="checkbox-row span-2"
-          ><input type="checkbox" name="required" [(ngModel)]="question().isRequired" />
-          Required</label
-        >
-        @if (
-          question().questionType === 'SingleChoice' || question().questionType === 'MultipleChoice'
-        ) {
+        <label class="checkbox-row span-2"><input type="checkbox" name="required" [(ngModel)]="question().isRequired" /> {{ 'assess.required' | translate }}</label>
+        @if (question().questionType === 'SingleChoice' || question().questionType === 'MultipleChoice') {
           <div class="span-2 option-editor">
             <div class="toolbar">
-              <strong>Options</strong
-              ><button class="link-button" type="button" (click)="addOption()">Add option</button>
+              <strong>{{ 'assess.options' | translate }}</strong
+              ><button class="link-button" type="button" (click)="addOption()">{{ 'assess.addOption' | translate }}</button>
             </div>
             @for (o of question().options; track $index) {
               <div>
-                <input [name]="'value' + $index" [(ngModel)]="o.value" placeholder="Value" /><input
-                  [name]="'label' + $index"
-                  [(ngModel)]="o.label"
-                  placeholder="Label"
-                />
+                <input [name]="'value' + $index" [(ngModel)]="o.value" [placeholder]="'assess.optionValue' | translate" [attr.aria-label]="'assess.optionValue' | translate" /><input
+                  [name]="'label' + $index" [(ngModel)]="o.label" [placeholder]="'assess.optionLabel' | translate" [attr.aria-label]="'assess.optionLabel' | translate" />
               </div>
             }
           </div>
         }
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="questionOpen.set(false)">
-            Cancel</button
-          ><button class="button button-primary">Save question</button>
+          <button class="button button-secondary" type="button" (click)="questionOpen.set(false)">{{ 'common.cancel' | translate }}</button
+          ><button class="button button-primary">{{ 'assess.saveQuestion' | translate }}</button>
         </footer>
       </form>
     </section>
@@ -265,24 +210,23 @@
 }
 @if (review.detail(); as d) {
   <div class="modal-backdrop">
-    <section class="modal-card extra-wide persistent-modal">
+    <section class="modal-card extra-wide persistent-modal" role="dialog" aria-modal="true" [attr.aria-label]="d.submission.formName">
       <header>
         <div>
-          <p class="eyebrow">{{ d.submission.formType }} · {{ d.submission.source }}</p>
-          <h2>{{ d.submission.clientName }} — {{ d.submission.formName }}</h2>
+          <p class="eyebrow">{{ d.submission.formType | enumLabel: 'assessmentFormType' }} · {{ d.submission.source | enumLabel: 'submissionSource' }}</p>
+          <h2 translate="no">{{ d.submission.clientName }} — {{ d.submission.formName }}</h2>
         </div>
-        <button class="icon-button" (click)="review.close()">×</button>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="review.close()">×</button>
       </header>
       <div class="answer-list">
         @for (a of d.answers; track a.id) {
           <article>
-            <span>{{ a.questionText }}</span
-            ><strong>{{ displayValue(a.valueJson) }}</strong>
+            <span translate="no">{{ a.questionText }}</span><strong [attr.translate]="isBoolean(a.valueJson) ? null : 'no'">{{ displayValue(a.valueJson) }}</strong>
             @if (a.externalMediaUrl) {
-              <a [href]="a.externalMediaUrl" target="_blank">Open media</a>
+              <a [href]="a.externalMediaUrl" target="_blank" rel="noopener">{{ 'assess.openMedia' | translate }}</a>
             }
             @if (a.mediaId) {
-              <a [href]="'/api/v1/media/' + a.mediaId" target="_blank">Open upload</a>
+              <a [href]="'/api/v1/media/' + a.mediaId" target="_blank" rel="noopener">{{ 'assess.openUpload' | translate }}</a>
             }
           </article>
         }

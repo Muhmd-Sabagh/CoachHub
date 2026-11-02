@@ -47,6 +47,21 @@ public sealed class LocalizationTests(CoachHubApiFactory factory) : IClassFixtur
     }
 
     [Fact]
+    public async Task Staff_validation_and_conflict_messages_come_back_in_Arabic()
+    {
+        // P21: messages only the coach or the Administrator meets are in the catalog too.
+        var coach = await factory.CreateCoachClientAsync();
+        var invalid = await ProblemAsync(await SendAsync(coach, HttpMethod.Post, "/api/v1/clients", "ar", new { name = "", phone = (string?)null, email = (string?)null, joinDate = (string?)null }),
+            HttpStatusCode.BadRequest);
+        Assert.Contains("اسم العميل مطلوب.", invalid.GetProperty("errors").EnumerateObject().SelectMany(x => x.Value.EnumerateArray()).Select(x => x.GetString()));
+
+        var platformTest = await SendAsync(coach, HttpMethod.Delete, "/api/v1/fitness-tests/" + CoachHub.Infrastructure.FitnessTests.TestDefinitionSeed.All[0].Id, "ar");
+        var forbidden = await ProblemAsync(platformTest, HttpStatusCode.Forbidden);
+        Assert.Equal("يدير المسؤولون اختبارات المنصة. أنشئ اختبارًا مخصصًا بدلًا من ذلك.", forbidden.GetProperty("detail").GetString());
+        Assert.Equal("staff.tests.2", forbidden.GetProperty("code").GetString());
+    }
+
+    [Fact]
     public async Task A_missing_resource_is_reported_in_Arabic_with_its_code()
     {
         var coach = await factory.CreateCoachClientAsync();

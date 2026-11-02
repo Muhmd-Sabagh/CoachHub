@@ -82,6 +82,8 @@ The client's reports belong to the Progress feature, so the subscription rules (
 
 **Status after P18A (2026-10-22).** Closed: browser smoke test (P10A, P18). Open: English labels in Arabic PDFs and CSV headers (P21); scheduled reports, PDF charts and streaming (backlog).
 
+**Status after P21 (2026-11-02).** Closed: Arabic labels in PDFs and CSV headers in the requester's language. Open: scheduled reports, PDF charts and streaming (backlog).
+
 ## Verification
 
 | Check | Result |

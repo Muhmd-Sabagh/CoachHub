@@ -5,7 +5,10 @@ using CoachHub.Application.FitnessTests;
 using CoachHub.Application.Pdf;
 using CoachHub.Application.Progress;
 using CoachHub.Application.Reports;
+using CoachHub.Domain.CheckIns;
 using CoachHub.Domain.FitnessTests;
+using CoachHub.Domain.Progress;
+using CoachHub.Domain.WorkoutTracking;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 
@@ -62,7 +65,7 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
                     Tile(row, T(language, "Overall adherence", "الالتزام العام"), Percent(p.Adherence.OverallPercent), brand, language);
                     Tile(row, T(language, "Workouts", "التمارين"), $"{p.Training.Summary.CompletedSessions} / {p.Training.Summary.ScheduledSessions}", brand, language);
                     Tile(row, T(language, "Avg calories", "متوسط السعرات"), p.Nutrition.AverageConsumed is { } eaten ? N(eaten.Calories, 0) : "–", brand, language);
-                    Tile(row, T(language, "Weight change", "تغير الوزن"), Signed(p.Body.Weight.Change, " kg"), brand, language);
+                    Tile(row, T(language, "Weight change", "تغير الوزن"), Signed(p.Body.Weight.Change, " " + T(language, "kg", "كجم")), brand, language);
                 });
 
                 Section(column, T(language, "Body", "الجسم"), brand, language, table =>
@@ -71,7 +74,7 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
                     Series(table, T(language, "Weight (kg)", "الوزن (كجم)"), p.Body.Weight, language);
                     Series(table, T(language, "Body fat (%)", "نسبة الدهون (%)"), p.Body.BodyFat, language);
                     foreach (var site in p.Body.Measurements.Where(x => x.Summary.Count > 0))
-                        Series(table, $"{site.Site} (cm)", site.Summary, language);
+                        Series(table, $"{SiteName(site.Site, language)} ({T(language, "cm", "سم")})", site.Summary, language);
                 });
 
                 Section(column, T(language, "Nutrition", "التغذية"), brand, language, table =>
@@ -90,7 +93,7 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
                         N(p.Training.Summary.Sets), N(p.Training.Summary.Reps), N(p.Training.Summary.VolumeKg, 0));
                     foreach (var record in p.Training.RecentRecords.Where(x => x.AchievedOn >= report.From && x.AchievedOn <= report.To).Take(8))
                         Row(table, language, T(language, "New record", "رقم قياسي"), PdfLanguageText.Name(record.ExerciseNameEn, record.ExerciseNameAr, language),
-                            record.Type.ToString(), N(record.Value));
+                            RecordName(record.Type, language), N(record.Value));
                 });
 
                 if (p.Training.Tests.Count > 0)
@@ -127,7 +130,7 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
                     Head(table, language, T(language, "Due", "الموعد"), T(language, "Sent", "أُرسلت"), T(language, "Status", "الحالة"), T(language, "Replies", "الردود"));
                     foreach (var checkIn in report.CheckIns)
                         Row(table, language, D(checkIn.DueOn), checkIn.SubmittedAt.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) +
-                            (checkIn.IsLate ? T(language, " (late)", " (متأخرة)") : ""), checkIn.Status.ToString(), N(checkIn.Replies));
+                            (checkIn.IsLate ? T(language, " (late)", " (متأخرة)") : ""), StatusName(checkIn.Status, language), N(checkIn.Replies));
                     var adherence = p.CheckIn.Adherence;
                     Row(table, language, T(language, "Done", "المنجزة"), $"{adherence.Completed} / {adherence.Due}", Percent(adherence.Percent), "");
                     if (p.CheckIn.LatestFeedback is { } feedback)
@@ -182,8 +185,8 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
         Row(table, language, label, summary.Start is { } start ? N(start.Value) : "–", summary.Current is { } current ? N(current.Value) : "–", Signed(summary.Change, ""));
 
     private static void Macro(TableDescriptor table, string label, Application.FoodTracking.MacroAmounts? macros, PlanPdfLanguage language) =>
-        Row(table, language, label, macros is null ? "–" : N(macros.Calories, 0), macros is null ? "–" : N(macros.Protein, 0) + " g",
-            macros is null ? "–" : $"{N(macros.Carbohydrates, 0)} / {N(macros.Fat, 0)} g");
+        Row(table, language, label, macros is null ? "–" : N(macros.Calories, 0), macros is null ? "–" : N(macros.Protein, 0) + " " + T(language, "g", "جم"),
+            macros is null ? "–" : $"{N(macros.Carbohydrates, 0)} / {N(macros.Fat, 0)} {T(language, "g", "جم")}");
 
     /// <summary>A test's latest result with its date, the change from the previous one, and its classification.</summary>
     private static void TestRow(TableDescriptor table, TestSummaryResponse test, PlanPdfLanguage language)
@@ -213,6 +216,35 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
         TestClassification.NeedsImprovement => T(language, "Needs improvement", "يحتاج إلى تحسين"),
         TestClassification.Poor => T(language, "Poor", "ضعيف"),
         _ => "–"
+    };
+
+    private static string SiteName(MeasurementSite site, PlanPdfLanguage language) => site switch
+    {
+        MeasurementSite.Waist => T(language, "Waist", "الخصر"),
+        MeasurementSite.Chest => T(language, "Chest", "الصدر"),
+        MeasurementSite.Arm => T(language, "Arm", "الذراع"),
+        MeasurementSite.Thigh => T(language, "Thigh", "الفخذ"),
+        MeasurementSite.Hip => T(language, "Hip", "الورك"),
+        MeasurementSite.Neck => T(language, "Neck", "الرقبة"),
+        MeasurementSite.Calf => T(language, "Calf", "بطة الساق"),
+        _ => site.ToString()
+    };
+
+    private static string RecordName(PersonalRecordType type, PlanPdfLanguage language) => type switch
+    {
+        PersonalRecordType.Weight => T(language, "Heaviest weight", "أثقل وزن"),
+        PersonalRecordType.Reps => T(language, "Most reps", "أكثر تكرارات"),
+        PersonalRecordType.Volume => T(language, "Most volume", "أكبر حجم"),
+        PersonalRecordType.EstimatedOneRepMax => T(language, "Estimated 1RM", "الحد الأقصى المقدّر (1RM)"),
+        _ => type.ToString()
+    };
+
+    private static string StatusName(CheckInStatus status, PlanPdfLanguage language) => status switch
+    {
+        CheckInStatus.AwaitingReview => T(language, "Awaiting review", "بانتظار المراجعة"),
+        CheckInStatus.Approved => T(language, "Approved", "تمت الموافقة"),
+        CheckInStatus.ChangesRequested => T(language, "Changes requested", "مطلوب تعديلات"),
+        _ => status.ToString()
     };
 
     private static string AreaName(AdherenceArea area, PlanPdfLanguage language) => area switch

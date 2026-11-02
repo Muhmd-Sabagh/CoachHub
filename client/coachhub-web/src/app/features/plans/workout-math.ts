@@ -7,16 +7,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
 export type WorkoutBlock = 'WarmUp' | 'Main' | 'Cooldown';
 export type SetType = 'Normal' | 'WarmUp' | 'Drop';
 export type SetGroupType = 'Superset' | 'GiantSet';
-export const workoutBlocks: { value: WorkoutBlock; label: string }[] = [
-  { value: 'WarmUp', label: 'Warm-up' },
-  { value: 'Main', label: 'Main' },
-  { value: 'Cooldown', label: 'Cool-down' },
-];
-export const setTypes: { value: SetType; label: string }[] = [
-  { value: 'Normal', label: 'Working' },
-  { value: 'WarmUp', label: 'Warm-up' },
-  { value: 'Drop', label: 'Drop' },
-];
+/** Labels: `enum.workoutBlock.<value>` (P21). */
+export const workoutBlocks: WorkoutBlock[] = ['WarmUp', 'Main', 'Cooldown'];
+/** Labels: `enum.setType.<value>` (P21). */
+export const setTypes: SetType[] = ['Normal', 'WarmUp', 'Drop'];
 
 export interface Tempo {
   eccentric: number;

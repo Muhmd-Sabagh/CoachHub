@@ -1,8 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { AuditRecord, AuditService } from './audit.service';
 
@@ -10,7 +10,7 @@ import { AuditRecord, AuditService } from './audit.service';
   selector: 'app-audit',
   templateUrl: './audit.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, ...I18N_PIPES],
 })
 export class AuditComponent implements OnInit {
   readonly page = signal<PagedResult<AuditRecord>>(emptyPage());
@@ -68,9 +68,16 @@ export class AuditComponent implements OnInit {
     if (this.page().pageNumber < this.page().totalPages) this.load(this.page().pageNumber + 1);
   }
 
+  readonly entityTypes = [
+    'Client', 'ClientTransfer', 'Subscription', 'Invoice', 'Payment', 'FormDefinition', 'FormSubmission', 'DietPlan', 'Meal', 'WorkoutPlan',
+    'WorkoutDay', 'FoodItem', 'Exercise', 'Package', 'MediaAsset', 'User', 'UserSession',
+  ];
+  readonly operations = ['Create', 'Update', 'Delete'];
+  readonly actorKinds = ['Administrator', 'Coach', 'Client', 'System'];
+
+  /** The actor's name; without one, the role is shown in the next line only. */
   actor(record: AuditRecord): string {
-    return record.actorDisplayName ||
-      (record.actorKind === 'PublicClient' ? 'Public client' : record.actorKind);
+    return record.actorDisplayName || '—';
   }
 
   toggle(record: AuditRecord): void {

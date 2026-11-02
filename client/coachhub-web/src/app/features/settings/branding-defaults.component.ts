@@ -1,10 +1,12 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionAccessComponent } from './subscription-access.component';
 import { Observable, finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { BrandingService } from '../../core/branding/branding.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { isHexColor } from '../../core/theme/theme.service';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { Coach, CoachesService } from '../coaches/coaches.service';
@@ -17,25 +19,13 @@ import {
  * Administrator edits the platform brand and settings, or any coach's brand, hosts and defaults.
  */
 @Component({
-  selector: 'app-branding-defaults', standalone: true, imports: [CommonModule, FormsModule, SubscriptionAccessComponent], templateUrl: './branding-defaults.component.html' })
+  selector: 'app-branding-defaults', standalone: true, imports: [FormsModule, SubscriptionAccessComponent, ...I18N_PIPES], templateUrl: './branding-defaults.component.html' })
 export class BrandingDefaultsComponent implements OnInit {
   readonly isAdmin: boolean;
-  readonly images: { kind: BrandImage; label: string }[] = [
-    { kind: 'Logo', label: 'Logo' }, { kind: 'Favicon', label: 'Favicon' }, { kind: 'DefaultAvatar', label: 'Default profile image' },
-  ];
-  readonly macroModes: { value: MacroMode; label: string }[] = [
-    { value: 'GramsPerKg', label: 'Protein and fat in g/kg' },
-    { value: 'Percentages', label: 'Percentages of calories' },
-    { value: 'FixedGrams', label: 'Fixed grams' },
-  ];
-  readonly replacementRules: { value: ReplacementRule; label: string }[] = [
-    { value: 'Calories', label: 'Match calories' },
-    { value: 'DominantMacro', label: 'Match the dominant macro' },
-  ];
-  readonly oneRepMaxFormulas: { value: OneRepMaxFormula; label: string }[] = [
-    { value: 'Epley', label: 'Epley: weight × (1 + reps / 30)' },
-    { value: 'Brzycki', label: 'Brzycki: weight × 36 / (37 − reps)' },
-  ];
+  readonly images: BrandImage[] = ['Logo', 'Favicon', 'DefaultAvatar'];
+  readonly macroModes: MacroMode[] = ['GramsPerKg', 'Percentages', 'FixedGrams'];
+  readonly replacementRules: ReplacementRule[] = ['Calories', 'DominantMacro'];
+  readonly oneRepMaxFormulas: OneRepMaxFormula[] = ['Epley', 'Brzycki'];
   readonly coaches = signal<Coach[]>([]);
   /** '' is the platform for administrators; otherwise a coach ID. Coaches always edit their own. */
   readonly target = signal('');
@@ -53,9 +43,15 @@ export class BrandingDefaultsComponent implements OnInit {
     private readonly branding: BrandingService,
     private readonly coachDirectory: CoachesService,
     auth: AuthService,
+    private readonly i18n: I18nService,
   ) {
     this.isAdmin = auth.isAdmin();
   }
+
+  imageKey(image: BrandImage): TranslationKey { return `brand.image.${image}`; }
+  modeKey(mode: MacroMode): TranslationKey { return `brand.mode.${mode}`; }
+  ruleKey(rule: ReplacementRule): TranslationKey { return `brand.rule.${rule}`; }
+  formulaKey(formula: OneRepMaxFormula): TranslationKey { return `brand.formula.${formula}`; }
 
   ngOnInit(): void {
     if (this.isAdmin) this.coachDirectory.list({ pageSize: 100, isActive: true }).subscribe(page => (this.coaches.set(page.items)));
@@ -79,13 +75,13 @@ export class BrandingDefaultsComponent implements OnInit {
   }
 
   saveBrand(): void {
-    this.run(this.data.saveBrand(this.scope, clean(this.brandForm())), brand => { this.showBrand(brand); this.refreshOwnBrand(); return 'Brand saved.'; });
+    this.run(this.data.saveBrand(this.scope, clean(this.brandForm())), brand => { this.showBrand(brand); this.refreshOwnBrand(); return this.i18n.translate('brand.brandSaved'); });
   }
 
   saveHosts(): void {
     if (this.scope.kind !== 'coach' || !this.scope.coachId) return;
     this.run(this.data.setHosts(this.scope.coachId, this.hosts().subdomain.trim() || null, this.hosts().customDomain.trim() || null),
-      brand => { this.showBrand(brand); return 'Hosts saved.'; });
+      brand => { this.showBrand(brand); return this.i18n.translate('brand.hostsSaved'); });
   }
 
   upload(image: BrandImage, event: Event): void {
@@ -93,11 +89,11 @@ export class BrandingDefaultsComponent implements OnInit {
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    this.run(this.data.setImage(this.scope, image, file), brand => { this.showBrand(brand); this.refreshOwnBrand(); return 'Image updated.'; });
+    this.run(this.data.setImage(this.scope, image, file), brand => { this.showBrand(brand); this.refreshOwnBrand(); return this.i18n.translate('brand.imageUpdated'); });
   }
 
   removeImage(image: BrandImage): void {
-    this.run(this.data.removeImage(this.scope, image), brand => { this.showBrand(brand); this.refreshOwnBrand(); return 'Image removed.'; });
+    this.run(this.data.removeImage(this.scope, image), brand => { this.showBrand(brand); this.refreshOwnBrand(); return this.i18n.translate('brand.imageRemoved'); });
   }
 
   imageUrl(image: BrandImage): string | null {
@@ -110,16 +106,16 @@ export class BrandingDefaultsComponent implements OnInit {
   saveDefaults(): void {
     const defaults = this.defaults();
     if (!defaults) return;
-    if (this.weightsTotal !== 100) { this.error.set('Adherence weights must add up to 100.'); return; }
+    if (this.weightsTotal !== 100) { this.error.set(this.i18n.translate('brand.weightsError')); return; }
     const coachId = this.scope.kind === 'coach' ? this.scope.coachId : null;
-    this.run(this.data.saveCoachDefaults(coachId, defaults), saved => { this.defaults.set(saved); return 'Coaching defaults saved.'; });
+    this.run(this.data.saveCoachDefaults(coachId, defaults), saved => { this.defaults.set(saved); return this.i18n.translate('brand.defaultsSaved'); });
   }
 
   savePlatform(): void {
     const platform = this.platform();
     if (!platform) return;
     this.run(this.data.savePlatformSettings({ ...platform, emailSenderName: platform.emailSenderName?.trim() || null }),
-      saved => { this.platform.set(saved); return 'Platform settings saved.'; });
+      saved => { this.platform.set(saved); return this.i18n.translate('brand.platformSaved'); });
   }
 
   colorValue(value: string | null, fallback: string): string { return isHexColor(value) ? value : fallback; }

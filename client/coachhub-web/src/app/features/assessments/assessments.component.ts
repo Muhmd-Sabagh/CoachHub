@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { finalize } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import {
@@ -32,6 +33,7 @@ export class AssessmentsComponent implements OnInit {
   constructor(
     private data: AssessmentsService,
     readonly review: AssessmentReviewStore,
+    private readonly i18n: I18nService,
   ) {}
   ngOnInit() {
     this.loadForms();
@@ -145,7 +147,7 @@ export class AssessmentsComponent implements OnInit {
   }
   removeQuestion(q: Question) {
     const builder = this.builder();
-    if (builder && confirm('Delete this question?'))
+    if (builder && confirm(this.i18n.translate('assess.confirmDelete')))
       this.data.deleteQuestion(builder.definitionId, q.id).subscribe(() => this.refresh());
   }
   move(q: Question, delta: number) {
@@ -169,13 +171,18 @@ export class AssessmentsComponent implements OnInit {
   reviewSubmission(s: SubmissionSummary) {
     this.data.getSubmission(s.id).subscribe((x) => this.review.open(x));
   }
+  readonly questionTypes = ['ShortText', 'LongText', 'Number', 'Date', 'Boolean', 'SingleChoice', 'MultipleChoice', 'MediaUpload'];
   displayValue(json: string): string {
     try {
       const v = JSON.parse(json);
+      if (typeof v === 'boolean') return this.i18n.translate(v ? 'assess.yes' : 'assess.no');
       return Array.isArray(v) ? v.join(', ') : String(v);
     } catch {
       return json;
     }
+  }
+  isBoolean(json: string): boolean {
+    return json === 'true' || json === 'false';
   }
   private refresh() {
     const builder = this.builder();
@@ -198,7 +205,4 @@ export class AssessmentsComponent implements OnInit {
     return questionMetrics.filter((x) => x.type === type);
   }
 
-  metricLabel(metric: QuestionMetric | null | undefined): string {
-    return questionMetrics.find((x) => x.value === metric)?.label ?? '';
-  }
 }

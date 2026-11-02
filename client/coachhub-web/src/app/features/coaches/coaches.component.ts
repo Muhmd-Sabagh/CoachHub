@@ -1,14 +1,15 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { Coach, CoachesService } from './coaches.service';
 
 /** Administrators manage coaches (tenants) and their login accounts (§2 Admin, §56). */
 @Component({
-  selector: 'app-coaches', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './coaches.component.html' })
+  selector: 'app-coaches', standalone: true, imports: [FormsModule, ...I18N_PIPES], templateUrl: './coaches.component.html' })
 export class CoachesComponent implements OnInit {
   readonly page = signal<PagedResult<Coach>>(emptyPage());
   readonly search = signal('');
@@ -18,7 +19,7 @@ export class CoachesComponent implements OnInit {
   readonly message = signal('');
   readonly editor = signal(this.emptyEditor());
 
-  constructor(private readonly data: CoachesService) {}
+  constructor(private readonly data: CoachesService, private readonly i18n: I18nService) {}
 
   ngOnInit(): void { this.load(1); }
 
@@ -37,7 +38,7 @@ export class CoachesComponent implements OnInit {
       userName: this.editor().userName.trim() || null,
       password: this.editor().password || null
     }).pipe(finalize(() => (this.saving.set(false)))).subscribe({
-      next: coach => { this.message.set(`${coach.displayName} can now sign in.`); this.editor.set(this.emptyEditor()); this.load(1); },
+      next: coach => { this.message.set(this.i18n.translate('coaches.created', { name: coach.displayName })); this.editor.set(this.emptyEditor()); this.load(1); },
       error: e => (this.error.set(apiErrorMessage(e)))
     });
   }
@@ -45,7 +46,7 @@ export class CoachesComponent implements OnInit {
   toggle(coach: Coach): void {
     this.error.set(''); this.message.set('');
     this.data.update(coach.id, { displayName: coach.displayName, isActive: !coach.isActive }).subscribe({
-      next: updated => { this.message.set(`${updated.displayName} is now ${updated.isActive ? 'active' : 'inactive'}.`); this.load(); },
+      next: updated => { this.message.set(this.i18n.translate(updated.isActive ? 'coaches.nowActive' : 'coaches.nowInactive', { name: updated.displayName })); this.load(); },
       error: e => (this.error.set(apiErrorMessage(e)))
     });
   }

@@ -1,56 +1,56 @@
 <section class="dashboard-hero">
   <div>
-    <p class="eyebrow">Platform administration</p>
-    <h1>Coaches</h1>
-    <p>Each coach runs an independent workspace with their own clients, plans, packages and revenue.</p>
+    <p class="eyebrow">{{ 'coaches.eyebrow' | translate }}</p>
+    <h1>{{ 'coaches.title' | translate }}</h1>
+    <p>{{ 'coaches.intro' | translate }}</p>
   </div>
-  <div class="hero-accent"><span>CO</span></div>
+  <div class="hero-accent" aria-hidden="true"><span>CO</span></div>
 </section>
 @if (error()) { <p class="form-error">{{ error() }}</p> }
 @if (message()) { <p class="success-message">{{ message() }}</p> }
 
 <section class="card workbench">
-  <div class="section-heading"><h2>Add coach</h2><span>Creates the workspace and its login</span></div>
+  <div class="section-heading"><h2>{{ 'coaches.add' | translate }}</h2><span>{{ 'coaches.addHint' | translate }}</span></div>
   <form class="form-grid" (ngSubmit)="create()">
-    <label><span>Display name *</span><input name="displayName" [(ngModel)]="editor().displayName" required maxlength="200" /></label>
-    <label><span>Email *</span><input type="email" name="email" [(ngModel)]="editor().email" required /></label>
-    <label><span>User name</span><input name="userName" [(ngModel)]="editor().userName" placeholder="Defaults to the email" /></label>
-    <label><span>Password</span><input type="password" name="password" [(ngModel)]="editor().password" autocomplete="new-password" placeholder="Leave empty to send a reset later" /></label>
-    <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving()">Add coach</button></div>
+    <label><span>{{ 'coaches.displayName' | translate }}</span><input name="displayName" [(ngModel)]="editor().displayName" required maxlength="200" /></label>
+    <label><span>{{ 'coaches.email' | translate }}</span><input type="email" name="email" [(ngModel)]="editor().email" required /></label>
+    <label><span>{{ 'coaches.userName' | translate }}</span><input name="userName" [(ngModel)]="editor().userName" [placeholder]="'coaches.userNameHint' | translate" /></label>
+    <label><span>{{ 'coaches.password' | translate }}</span><input type="password" name="password" [(ngModel)]="editor().password" autocomplete="new-password" [placeholder]="'coaches.passwordHint' | translate" /></label>
+    <div class="form-actions"><button class="button button-primary" type="submit" [disabled]="saving()">{{ 'coaches.add' | translate }}</button></div>
   </form>
 </section>
 
 <section class="card workbench">
   <div class="section-heading toolbar">
-    <h2>All coaches</h2>
+    <h2>{{ 'coaches.all' | translate }}</h2>
     <form class="filter-row" (ngSubmit)="load(1)">
-      <label><span>Search</span><input name="search" [(ngModel)]="search" placeholder="Coach name" /></label>
-      <button class="button button-secondary" type="submit">Search</button>
+      <label><span>{{ 'common.search' | translate }}</span><input name="search" [(ngModel)]="search" [placeholder]="'coaches.namePlaceholder' | translate" /></label>
+      <button class="button button-secondary" type="submit">{{ 'common.search' | translate }}</button>
     </form>
   </div>
   <div class="table-scroll">
     <table>
-      <thead><tr><th>Coach</th><th>Login</th><th>Clients</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>{{ 'common.coach' | translate }}</th><th>{{ 'coaches.login' | translate }}</th><th>{{ 'coaches.clients' | translate }}</th><th>{{ 'common.status' | translate }}</th><th></th></tr></thead>
       <tbody>
         @for (coach of page().items; track coach.id) {
           <tr>
-            <td><strong>{{ coach.displayName }}</strong></td>
-            <td>{{ coach.userName || coach.email || '—' }}</td>
+            <td><strong translate="no">{{ coach.displayName }}</strong></td>
+            <td translate="no">{{ coach.userName || coach.email || '—' }}</td>
             <td>{{ coach.clientCount }}</td>
-            <td>{{ coach.isActive ? 'Active' : 'Inactive' }}</td>
-            <td><button class="link-button" type="button" (click)="toggle(coach)">{{ coach.isActive ? 'Deactivate' : 'Activate' }}</button></td>
+            <td>{{ (coach.isActive ? 'common.active' : 'common.inactive') | translate }}</td>
+            <td><button class="link-button" type="button" (click)="toggle(coach)">{{ (coach.isActive ? 'coaches.deactivate' : 'coaches.activate') | translate }}</button></td>
           </tr>
         } @empty {
-          <tr><td colspan="5">{{ loading() ? 'Loading…' : 'No coaches yet.' }}</td></tr>
+          <tr><td colspan="5">{{ (loading() ? 'common.loading' : 'coaches.none') | translate }}</td></tr>
         }
       </tbody>
     </table>
   </div>
   @if (page().totalPages > 1) {
     <div class="toolbar">
-      <button class="button button-secondary" type="button" [disabled]="page().pageNumber <= 1" (click)="load(page().pageNumber - 1)">Previous</button>
-      <span>Page {{ page().pageNumber }} of {{ page().totalPages }}</span>
-      <button class="button button-secondary" type="button" [disabled]="page().pageNumber >= page().totalPages" (click)="load(page().pageNumber + 1)">Next</button>
+      <button class="button button-secondary" type="button" [disabled]="page().pageNumber <= 1" (click)="load(page().pageNumber - 1)">{{ 'common.previous' | translate }}</button>
+      <span>{{ 'common.pageOf' | translate: { page: page().pageNumber, pages: page().totalPages } }}</span>
+      <button class="button button-secondary" type="button" [disabled]="page().pageNumber >= page().totalPages" (click)="load(page().pageNumber + 1)">{{ 'common.next' | translate }}</button>
     </div>
   }
 </section>

@@ -1,13 +1,14 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { addDays, isoDate } from '../nutrition-tracking/nutrition-tracking.service';
 import { TrainingChartComponent } from './training-chart.component';
 import {
-  ExerciseHistory, PersonalRecords, TrainingAnalytics, TrainingPeriod, TrainingTrackingService, WorkoutSession,
-  WorkoutSessionSummary, recordText, recordTypeLabels, setText,
+  ExerciseHistory, LoggedExercise, LoggedSet, PersonalRecord, PersonalRecords, TrainingAnalytics, TrainingPeriod, TrainingTrackingService,
+  WorkoutSession, WorkoutSessionSummary, recordText, setText,
 } from './training-tracking.service';
 
 /**
@@ -17,98 +18,101 @@ import {
 @Component({
   selector: 'app-client-training',
   standalone: true,
-  imports: [CommonModule, FormsModule, TrainingChartComponent],
+  imports: [FormsModule, TrainingChartComponent, ...I18N_PIPES],
   template: `
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     <section class="card workbench">
-      <div class="section-heading"><h2>Training</h2>
-        <label class="range"><span class="muted">Range</span>
+      <div class="section-heading"><h2>{{ 'coachTraining.title' | translate }}</h2>
+        <label class="range"><span class="muted">{{ 'range.label' | translate }}</span>
           <select [(ngModel)]="range" (ngModelChange)="loadAnalytics()" name="range">
-            <option [ngValue]="7">Last 7 days</option><option [ngValue]="28">Last 4 weeks</option>
-            <option [ngValue]="90">Last 90 days</option><option [ngValue]="365">Last 12 months</option>
+            <option [ngValue]="7">{{ 'range.7' | translate }}</option><option [ngValue]="28">{{ 'range.28' | translate }}</option>
+            <option [ngValue]="90">{{ 'range.90' | translate }}</option><option [ngValue]="365">{{ 'range.365' | translate }}</option>
           </select></label></div>
       @if (analytics(); as a) {
         <div class="report-metrics">
-          <article><small>Workouts</small><strong>{{ a.summary.completedSessions }}</strong><span>of {{ a.summary.scheduledSessions }} scheduled</span></article>
-          <article><small>Workout adherence</small><strong>{{ percent(a.summary.adherencePercent) }}</strong><span>weekly rotation</span></article>
-          <article><small>Training days</small><strong>{{ a.summary.trainingDays }}</strong><span>frequency</span></article>
-          <article><small>Sets / reps</small><strong>{{ a.summary.sets }} / {{ a.summary.reps }}</strong><span>work sets</span></article>
-          <article><small>Volume</small><strong>{{ a.summary.volumeKg | number: '1.0-0' }}</strong><span>kg (weight × reps)</span></article>
+          <article><small>{{ 'coachTraining.workouts' | translate }}</small><strong>{{ a.summary.completedSessions }}</strong><span>{{ 'coachTraining.ofScheduled' | translate: { count: a.summary.scheduledSessions } }}</span></article>
+          <article><small>{{ 'coachTraining.adherence' | translate }}</small><strong>{{ percent(a.summary.adherencePercent) }}</strong><span>{{ 'coachTraining.rotation' | translate }}</span></article>
+          <article><small>{{ 'coachTraining.trainingDays' | translate }}</small><strong>{{ a.summary.trainingDays }}</strong><span>{{ 'coachTraining.frequency' | translate }}</span></article>
+          <article><small>{{ 'coachTraining.setsReps' | translate }}</small><strong>{{ a.summary.sets }} / {{ a.summary.reps }}</strong><span>{{ 'coachTraining.workSets' | translate }}</span></article>
+          <article><small>{{ 'coachTraining.volume' | translate }}</small><strong>{{ a.summary.volumeKg | localNumber: '1.0-0' }}</strong><span>{{ 'coachTraining.volumeHint' | translate }}</span></article>
         </div>
 
-        <div class="section-heading"><h3>Volume by {{ grouping === 'weeks' ? 'week' : 'month' }}</h3>
-          <div class="segmented" role="group" aria-label="Group by">
-            <button type="button" [class.active]="grouping === 'weeks'" (click)="grouping = 'weeks'">Weekly</button>
-            <button type="button" [class.active]="grouping === 'months'" (click)="grouping = 'months'">Monthly</button>
+        <div class="section-heading"><h3>{{ (grouping === 'weeks' ? 'coachTraining.volumeByWeek' : 'coachTraining.volumeByMonth') | translate }}</h3>
+          <div class="segmented" role="group" [attr.aria-label]="'group.label' | translate">
+            <button type="button" [class.active]="grouping === 'weeks'" (click)="grouping = 'weeks'">{{ 'group.weeks' | translate }}</button>
+            <button type="button" [class.active]="grouping === 'months'" (click)="grouping = 'months'">{{ 'group.months' | translate }}</button>
           </div></div>
-        <app-training-chart [categories]="periodLabels(a)" [values]="periodVolumes(a)" series="Volume" unit="kg"
-          [label]="'Training volume by ' + (grouping === 'weeks' ? 'week' : 'month')" />
+        <app-training-chart [categories]="periodLabels(a)" [values]="periodVolumes(a)" [series]="'coachTraining.volumeSeries' | translate" [unit]="'unit.kg' | translate"
+          [label]="(grouping === 'weeks' ? 'coachTraining.volumeByWeek' : 'coachTraining.volumeByMonth') | translate" />
         <div class="table-scroll"><table>
-          <thead><tr><th>Period</th><th>Workouts</th><th>Scheduled</th><th>Adherence</th><th>Days</th><th>Sets</th><th>Reps</th><th>Volume kg</th></tr></thead>
+          <thead><tr><th>{{ 'coachTraining.period' | translate }}</th><th>{{ 'coachTraining.workouts' | translate }}</th><th>{{ 'coachTraining.scheduled' | translate }}</th>
+            <th>{{ 'coachTraining.adherenceColumn' | translate }}</th><th>{{ 'coachTraining.days' | translate }}</th><th>{{ 'coachTraining.sets' | translate }}</th>
+            <th>{{ 'coachTraining.reps' | translate }}</th><th>{{ 'coachTraining.volumeKg' | translate }}</th></tr></thead>
           <tbody>
             @for (p of periods(a).slice().reverse(); track p.start) {
-              <tr><td>{{ p.start | date: 'd MMM' }} – {{ p.end | date: 'd MMM' }}</td><td>{{ p.completedSessions }}</td><td>{{ p.scheduledSessions }}</td>
+              <tr><td>{{ p.start | localDate: 'd MMM' }} – {{ p.end | localDate: 'd MMM' }}</td><td>{{ p.completedSessions }}</td><td>{{ p.scheduledSessions }}</td>
                 <td>{{ percent(p.adherencePercent) }}</td><td>{{ p.trainingDays }}</td><td>{{ p.sets }}</td><td>{{ p.reps }}</td>
-                <td>{{ p.volumeKg | number: '1.0-0' }}</td></tr>
+                <td>{{ p.volumeKg | localNumber: '1.0-0' }}</td></tr>
             }
           </tbody>
         </table></div>
 
-        <h3>Muscle distribution</h3>
-        <p class="muted">Sets per muscle group{{ a.secondaryMuscleWeight > 0 ? '; secondary muscles count ' + a.secondaryMuscleWeight + ' of a set' : ', primary muscle only' }}.</p>
+        <h3>{{ 'coachTraining.muscles' | translate }}</h3>
+        <p class="muted">{{ a.secondaryMuscleWeight > 0 ? ('coachTraining.secondaryCounts' | translate: { weight: (a.secondaryMuscleWeight | localNumber: '1.0-2') }) : ('coachTraining.primaryOnly' | translate) }}</p>
         @if (a.summary.muscles.length) {
-          <app-training-chart [categories]="muscleNames(a)" [values]="muscleSets(a)" series="Sets" unit="sets" [horizontal]="true"
-            label="Training distribution across muscle groups" />
+          <app-training-chart [categories]="muscleNames(a)" [values]="muscleSets(a)" [series]="'coachTraining.sets' | translate" [unit]="'coachTraining.setsUnit' | translate" [horizontal]="true"
+            [label]="'coachTraining.distribution' | translate" />
         }
         <div class="table-scroll"><table>
-          <thead><tr><th>Muscle group</th><th>Sets</th><th>Share</th><th>Volume kg</th></tr></thead>
+          <thead><tr><th>{{ 'coachTraining.muscleGroup' | translate }}</th><th>{{ 'coachTraining.sets' | translate }}</th><th>{{ 'coachTraining.share' | translate }}</th><th>{{ 'coachTraining.volumeKg' | translate }}</th></tr></thead>
           <tbody>
             @for (m of a.summary.muscles; track m.muscleGroupId ?? 'none') {
-              <tr><td>{{ m.nameEn }}</td><td>{{ m.sets }}</td><td>{{ m.sharePercent }}%</td><td>{{ m.volumeKg | number: '1.0-0' }}</td></tr>
-            } @empty { <tr><td colspan="4" class="muted">No training in this range.</td></tr> }
+              <tr><td translate="no">{{ m | localName }}</td><td>{{ m.sets }}</td><td>{{ m.sharePercent }}%</td><td>{{ m.volumeKg | localNumber: '1.0-0' }}</td></tr>
+            } @empty { <tr><td colspan="4" class="muted">{{ 'coachTraining.noTraining' | translate }}</td></tr> }
           </tbody>
         </table></div>
 
-        <h3>Exercise progression</h3>
+        <h3>{{ 'coachTraining.progression' | translate }}</h3>
         @if (a.exercises.length) {
-          <label class="range"><span class="muted">Exercise</span>
+          <label class="range"><span class="muted">{{ 'coachTraining.exercise' | translate }}</span>
             <select [(ngModel)]="exerciseId" name="exercise">
-              @for (x of a.exercises; track x.exerciseId) { <option [ngValue]="x.exerciseId">{{ x.nameEn }} ({{ x.points.length }})</option> }
+              @for (x of a.exercises; track x.exerciseId) { <option [ngValue]="x.exerciseId" translate="no">{{ x | localName }} ({{ x.points.length }})</option> }
             </select></label>
           @if (progress(a); as x) {
             <div class="table-scroll"><table>
-              <thead><tr><th>Day</th><th>Top set</th><th>Most reps</th><th>e1RM ({{ a.oneRepMaxFormula }})</th><th>Sets</th><th>Reps</th><th>Volume kg</th></tr></thead>
+              <thead><tr><th>{{ 'coachTraining.day' | translate }}</th><th>{{ 'coachTraining.topSet' | translate }}</th><th>{{ 'coachTraining.mostReps' | translate }}</th>
+                <th>{{ 'coachTraining.e1rm' | translate: { formula: a.oneRepMaxFormula } }}</th><th>{{ 'coachTraining.sets' | translate }}</th><th>{{ 'coachTraining.reps' | translate }}</th><th>{{ 'coachTraining.volumeKg' | translate }}</th></tr></thead>
               <tbody>
                 @for (p of x.points.slice().reverse(); track p.workoutSessionId) {
-                  <tr><td>{{ p.date | date: 'EEE d MMM' }}</td>
-                    <td>{{ p.topWeightKg !== null ? p.topWeightKg + ' kg × ' + p.topWeightReps : '–' }}</td>
-                    <td>{{ p.maxReps ?? '–' }}</td><td>{{ p.bestEstimatedOneRepMaxKg ?? '–' }}</td>
-                    <td>{{ p.sets }}</td><td>{{ p.reps }}</td><td>{{ p.volumeKg | number: '1.0-0' }}</td></tr>
+                  <tr><td>{{ p.date | localDate: 'EEE d MMM' }}</td>
+                    <td>{{ p.topWeightKg !== null ? ('coachTraining.weightReps' | translate: { weight: (p.topWeightKg | localNumber: '1.0-2'), reps: p.topWeightReps }) : '–' }}</td>
+                    <td>{{ p.maxReps ?? '–' }}</td><td>{{ p.bestEstimatedOneRepMaxKg !== null ? (p.bestEstimatedOneRepMaxKg | localNumber: '1.0-1') : '–' }}</td>
+                    <td>{{ p.sets }}</td><td>{{ p.reps }}</td><td>{{ p.volumeKg | localNumber: '1.0-0' }}</td></tr>
                 }
               </tbody>
             </table></div>
-            <button class="link-button" type="button" (click)="openHistory(x.exerciseId)">Full history and PRs</button>
+            <button class="link-button" type="button" (click)="openHistory(x.exerciseId)">{{ 'coachTraining.fullHistory' | translate }}</button>
           }
-        } @else { <p class="muted">No exercises logged in this range.</p> }
-      } @else if (loading()) { <p class="table-message">Loading…</p> }
+        } @else { <p class="muted">{{ 'coachTraining.noExercises' | translate }}</p> }
+      } @else if (loading()) { <p class="table-message">{{ 'common.loading' | translate }}</p> }
     </section>
 
     @if (history(); as h) {
       <section class="card workbench">
-        <div class="section-heading"><h2>{{ h.nameEn }}</h2><button class="link-button" type="button" (click)="history.set(null)">Close</button></div>
-        <h3>PR history</h3>
+        <div class="section-heading"><h2 translate="no">{{ h | localName }}</h2><button class="link-button" type="button" (click)="history.set(null)">{{ 'common.close' | translate }}</button></div>
+        <h3>{{ 'coachTraining.prHistory' | translate }}</h3>
         <ul class="plain-list">
           @for (r of h.records; track r.id) {
-            <li>{{ r.achievedOn | date: 'd MMM y' }} · {{ labels[r.type] }}: {{ recordText(r) }}
-              @if (r.previousValue !== null) { <small class="muted">(was {{ r.previousValue }})</small> }</li>
-          } @empty { <li class="muted">No records yet.</li> }
+            <li>{{ r.achievedOn | localDate: 'd MMM y' }} · {{ r.type | enumLabel: 'personalRecordType' }}: {{ record(r) }}
+              @if (r.previousValue !== null) { <small class="muted">{{ 'coachTraining.was' | translate: { value: (r.previousValue | localNumber: '1.0-2') } }}</small> }</li>
+          } @empty { <li class="muted">{{ 'coachTraining.noRecords' | translate }}</li> }
         </ul>
         <div class="table-scroll"><table>
-          <thead><tr><th>Day</th><th>Sets</th><th>Reps</th><th>Volume kg</th><th>Logged sets (RIR / RPE)</th></tr></thead>
+          <thead><tr><th>{{ 'coachTraining.day' | translate }}</th><th>{{ 'coachTraining.sets' | translate }}</th><th>{{ 'coachTraining.reps' | translate }}</th><th>{{ 'coachTraining.volumeKg' | translate }}</th><th>{{ 'coachTraining.loggedSets' | translate }}</th></tr></thead>
           <tbody>
             @for (e of h.entries; track e.workoutSessionId) {
-              <tr><td>{{ e.date | date: 'EEE d MMM' }}</td><td>{{ e.sets }}</td><td>{{ e.reps }}</td><td>{{ e.volumeKg | number: '1.0-0' }}</td>
-                <td>@for (s of e.loggedSets; track s.id) { <span class="nowrap">{{ setText(s) }}{{ s.rir !== null ? ' RIR ' + s.rir : '' }}{{ s.rpe !== null ? ' RPE ' + s.rpe : '' }}</span>{{ $last ? '' : ', ' }} }</td></tr>
+              <tr><td>{{ e.date | localDate: 'EEE d MMM' }}</td><td>{{ e.sets }}</td><td>{{ e.reps }}</td><td>{{ e.volumeKg | localNumber: '1.0-0' }}</td>
+                <td>@for (s of e.loggedSets; track s.id) { <span class="nowrap">{{ set(s) }}{{ s.rir !== null ? ' RIR ' + s.rir : '' }}{{ s.rpe !== null ? ' RPE ' + s.rpe : '' }}</span>{{ $last ? '' : ', ' }} }</td></tr>
             }
           </tbody>
         </table></div>
@@ -116,53 +120,52 @@ import {
     }
 
     <section class="card workbench">
-      <h2>Personal records</h2>
+      <h2>{{ 'coachTraining.records' | translate }}</h2>
       @if (records(); as r) {
         <div class="table-scroll"><table>
-          <thead><tr><th>Exercise</th><th>Record</th><th>Best</th><th>Set</th><th>Day</th></tr></thead>
+          <thead><tr><th>{{ 'coachTraining.exercise' | translate }}</th><th>{{ 'coachTraining.record' | translate }}</th><th>{{ 'coachTraining.best' | translate }}</th><th>{{ 'coachTraining.set' | translate }}</th><th>{{ 'coachTraining.day' | translate }}</th></tr></thead>
           <tbody>
             @for (x of r.current; track x.id) {
-              <tr><td><button class="link-button" type="button" (click)="openHistory(x.exerciseId)">{{ x.exerciseNameEn }}</button></td>
-                <td>{{ labels[x.type] }}</td><td>{{ x.value }}{{ x.type === 'Reps' ? '' : ' kg' }}</td>
-                <td>{{ x.weightKg !== null && x.reps !== null ? x.weightKg + ' kg × ' + x.reps : '–' }}</td><td>{{ x.achievedOn | date: 'd MMM y' }}</td></tr>
-            } @empty { <tr><td colspan="5" class="muted">No records yet.</td></tr> }
+              <tr><td><button class="link-button" type="button" (click)="openHistory(x.exerciseId)" translate="no">{{ exerciseName(x) }}</button></td>
+                <td>{{ x.type | enumLabel: 'personalRecordType' }}</td><td>{{ x.value | localNumber: '1.0-2' }}{{ x.type === 'Reps' ? '' : ' ' + ('unit.kg' | translate) }}</td>
+                <td>{{ x.weightKg !== null && x.reps !== null ? ('coachTraining.weightReps' | translate: { weight: (x.weightKg | localNumber: '1.0-2'), reps: x.reps }) : '–' }}</td><td>{{ x.achievedOn | localDate: 'd MMM y' }}</td></tr>
+            } @empty { <tr><td colspan="5" class="muted">{{ 'coachTraining.noRecords' | translate }}</td></tr> }
           </tbody>
         </table></div>
       }
     </section>
 
     <section class="card workbench">
-      <h2>Workouts</h2>
+      <h2>{{ 'coachTraining.workoutList' | translate }}</h2>
       <ul class="session-list">
         @for (w of sessions(); track w.id) {
           <li>
-            <div><strong>{{ w.nameEn }}</strong>
-              <small class="muted">{{ w.date | date: 'EEE d MMM y' }} · {{ w.status === 'Completed' ? 'completed' : 'in progress' }}
-                · {{ w.completedSets }} sets · {{ w.volumeKg | number: '1.0-0' }} kg{{ w.versionNumber ? ' · plan v' + w.versionNumber : '' }}</small></div>
-            <button class="link-button" type="button" (click)="openSession(w.id)">{{ session()?.id === w.id ? 'Close' : 'Open' }}</button>
+            <div><strong translate="no">{{ w | localName }}</strong>
+              <small class="muted">{{ 'coachTraining.sessionLine' | translate: { date: (w.date | localDate: 'EEE d MMM y'), status: (w.status | enumLabel: 'workoutSessionStatus'), sets: w.completedSets, volume: (w.volumeKg | localNumber: '1.0-0') } }}@if (w.versionNumber) {{{ 'coachTraining.planVersion' | translate: { version: w.versionNumber } }}}</small></div>
+            <button class="link-button" type="button" (click)="openSession(w.id)">{{ (session()?.id === w.id ? 'common.close' : 'common.open') | translate }}</button>
           </li>
           @if (session()?.id === w.id) {
             @if (session(); as s) {
               <li class="session-detail">
-                @if (s.notes) { <p>“{{ s.notes }}”</p> }
-                @for (r of s.records; track r.id) { <p class="pr">🏆 {{ recordText(r) }}</p> }
+                @if (s.notes) { <p translate="no">“{{ s.notes }}”</p> }
+                @for (r of s.records; track r.id) { <p class="pr">🏆 {{ record(r) }}</p> }
                 <div class="table-scroll"><table>
-                  <thead><tr><th>Exercise</th><th>Prescribed</th><th>Logged</th><th>Volume kg</th></tr></thead>
+                  <thead><tr><th>{{ 'coachTraining.exercise' | translate }}</th><th>{{ 'coachTraining.prescribed' | translate }}</th><th>{{ 'coachTraining.logged' | translate }}</th><th>{{ 'coachTraining.volumeKg' | translate }}</th></tr></thead>
                   <tbody>
                     @for (e of s.exercises; track e.id) {
-                      <tr><td>{{ e.groupLabel ? e.groupLabel + ' ' : '' }}{{ e.exerciseNameEn }}{{ e.isSkipped ? ' (skipped)' : '' }}</td>
-                        <td>{{ e.planned.length ? e.planned.length + ' sets' : 'added by client' }}</td>
-                        <td>@for (x of e.sets; track x.id) { <span class="nowrap">{{ setText(x) }}</span>{{ $last ? '' : ', ' }} } @empty { – }</td>
-                        <td>{{ e.volumeKg | number: '1.0-0' }}</td></tr>
+                      <tr><td><span translate="no">{{ e.groupLabel ? e.groupLabel + ' ' : '' }}{{ loggedName(e) }}</span>@if (e.isSkipped) {{{ 'coachTraining.skipped' | translate }}}</td>
+                        <td>{{ e.planned.length ? ('coachTraining.prescribedSets' | translate: { count: e.planned.length }) : ('coachTraining.addedByClient' | translate) }}</td>
+                        <td>@for (x of e.sets; track x.id) { <span class="nowrap">{{ set(x) }}</span>{{ $last ? '' : ', ' }} } @empty { – }</td>
+                        <td>{{ e.volumeKg | localNumber: '1.0-0' }}</td></tr>
                     }
                   </tbody>
                 </table></div>
               </li>
             }
           }
-        } @empty { <li class="muted">No workouts logged yet.</li> }
+        } @empty { <li class="muted">{{ 'coachTraining.noWorkouts' | translate }}</li> }
       </ul>
-      @if (hasMore()) { <button class="button button-secondary" type="button" (click)="more()">Load more</button> }
+      @if (hasMore()) { <button class="button button-secondary" type="button" (click)="more()">{{ 'coachTraining.loadMore' | translate }}</button> }
     </section>
   `,
   styles: [`
@@ -179,9 +182,6 @@ import {
 export class ClientTrainingComponent implements OnChanges {
   @Input({ required: true }) clientId = '';
   readonly today = isoDate(new Date());
-  readonly labels = recordTypeLabels;
-  readonly recordText = recordText;
-  readonly setText = setText;
   readonly analytics = signal<TrainingAnalytics | null>(null);
   readonly records = signal<PersonalRecords | null>(null);
   readonly sessions = signal<WorkoutSessionSummary[]>([]);
@@ -196,7 +196,12 @@ export class ClientTrainingComponent implements OnChanges {
   exerciseId: string | null = null;
   private page = 1;
 
-  constructor(private readonly api: TrainingTrackingService) {}
+  constructor(private readonly api: TrainingTrackingService, private readonly i18n: I18nService) {}
+
+  record(record: PersonalRecord): string { return recordText(record, this.i18n); }
+  set(set: LoggedSet): string { return setText(set, this.i18n); }
+  exerciseName(record: PersonalRecord): string { return this.i18n.name({ nameEn: record.exerciseNameEn, nameAr: record.exerciseNameAr }); }
+  loggedName(exercise: LoggedExercise): string { return this.i18n.name({ nameEn: exercise.exerciseNameEn, nameAr: exercise.exerciseNameAr }); }
 
   ngOnChanges(): void {
     this.loadAnalytics();
@@ -232,7 +237,7 @@ export class ClientTrainingComponent implements OnChanges {
   }
 
   muscleNames(analytics: TrainingAnalytics): string[] {
-    return analytics.summary.muscles.map(x => x.nameEn);
+    return analytics.summary.muscles.map(x => this.i18n.name(x));
   }
 
   muscleSets(analytics: TrainingAnalytics): number[] {

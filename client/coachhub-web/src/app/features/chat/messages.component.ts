@@ -1,9 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { RealtimeService } from '../../core/realtime/realtime.service';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { ChatService, ConversationSummary } from './chat.service';
 import { ChatThreadComponent } from './chat-thread.component';
@@ -15,37 +15,37 @@ import { ChatThreadComponent } from './chat-thread.component';
 @Component({
   selector: 'app-messages',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ChatThreadComponent],
+  imports: [FormsModule, RouterLink, ChatThreadComponent, ...I18N_PIPES],
   template: `
-    <section class="dashboard-hero"><div><p class="eyebrow">Coaching</p><h1>Messages</h1>
-      <p>Chat with your clients. Start a conversation from a client's Messages tab.</p></div></section>
+    <section class="dashboard-hero"><div><p class="eyebrow">{{ 'messages.eyebrow' | translate }}</p><h1>{{ 'messages.title' | translate }}</h1>
+      <p>{{ 'messages.intro' | translate }}</p></div></section>
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     <div class="layout" [class.has-selection]="!!selected()">
       <section class="card workbench list">
         <form class="filters" (ngSubmit)="load()">
-          <input [(ngModel)]="searchTerm" name="search" placeholder="Client name" aria-label="Search clients" />
-          <label class="check"><input type="checkbox" [(ngModel)]="unreadOnly" name="unread" (change)="load()" /> Unread</label>
-          <button type="submit" class="button button-secondary">Search</button>
+          <input [(ngModel)]="searchTerm" name="search" [placeholder]="'messages.clientName' | translate" [attr.aria-label]="'messages.searchClients' | translate" />
+          <label class="check"><input type="checkbox" [(ngModel)]="unreadOnly" name="unread" (change)="load()" /> {{ 'messages.unread' | translate }}</label>
+          <button type="submit" class="button button-secondary">{{ 'common.search' | translate }}</button>
         </form>
         <ul>
           @for (c of conversations(); track c.conversationId) {
             <li>
               <button type="button" class="row" [class.active]="selected() === c.clientId" (click)="select(c.clientId)">
-                <span class="line"><strong>{{ c.clientName }}</strong>
+                <span class="line"><strong translate="no">{{ c.clientName }}</strong>
                   @if (c.unreadCount) { <span class="badge">{{ c.unreadCount }}</span> }</span>
-                <span class="muted preview">{{ c.lastSender === 'Coach' ? 'You: ' : '' }}{{ c.lastMessagePreview }}</span>
-                <small class="muted">{{ c.lastMessageAt | date: 'd MMM, HH:mm' }}</small>
+                <span class="muted preview">@if (c.lastSender === 'Coach') {{{ 'messages.you' | translate }}}<span translate="no">{{ c.lastMessagePreview }}</span></span>
+                <small class="muted">{{ c.lastMessageAt | localDate: 'd MMM, HH:mm' }}</small>
               </button>
             </li>
-          } @empty { <li class="muted empty">No conversations yet.</li> }
+          } @empty { <li class="muted empty">{{ 'messages.none' | translate }}</li> }
         </ul>
       </section>
       <div class="conversation">
         @if (selected(); as clientId) {
-          <div class="line"><button type="button" class="link-button back" (click)="select(null)">← All conversations</button>
-            <a [routerLink]="['/clients', clientId]">Open profile</a></div>
+          <div class="line"><button type="button" class="link-button back" (click)="select(null)">{{ 'messages.all' | translate }}</button>
+            <a [routerLink]="['/clients', clientId]">{{ 'messages.openProfile' | translate }}</a></div>
           <app-chat-thread [clientId]="clientId" />
-        } @else { <p class="muted placeholder">Choose a conversation.</p> }
+        } @else { <p class="muted placeholder">{{ 'messages.choose' | translate }}</p> }
       </div>
     </div>
   `,

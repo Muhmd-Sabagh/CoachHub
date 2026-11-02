@@ -1,8 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { ClientsService } from '../clients/clients.service';
 import { CalendarMonthComponent } from './calendar-month.component';
@@ -19,65 +21,65 @@ interface Draft extends CalendarEventInput { id: string | null; }
 @Component({
   selector: 'app-coach-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, CalendarMonthComponent],
+  imports: [FormsModule, CalendarMonthComponent, ...I18N_PIPES],
   template: `
     @if (!clientId) {
-      <section class="dashboard-hero"><div><p class="eyebrow">Coaching</p><h1>Calendar</h1>
-        <p>Check-ins, program dates, events and follow-ups across your clients.</p></div>
-        <button type="button" class="button button-primary" (click)="startNew()">New event</button></section>
+      <section class="dashboard-hero"><div><p class="eyebrow">{{ 'coachCalendar.eyebrow' | translate }}</p><h1>{{ 'coachCalendar.title' | translate }}</h1>
+        <p>{{ 'coachCalendar.intro' | translate }}</p></div>
+        <button type="button" class="button button-primary" (click)="startNew()">{{ 'coachCalendar.newEvent' | translate }}</button></section>
     }
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
 
     @if (clientId) {
       <section class="card workbench training">
-        <h2>Training days</h2>
-        <p class="muted">The workout rotation fills these days in order each week; the other days are rest days.</p>
-        <div class="weekdays" role="group" aria-label="Training days">
+        <h2>{{ 'coachCalendar.trainingDays' | translate }}</h2>
+        <p class="muted">{{ 'coachCalendar.trainingHint' | translate }}</p>
+        <div class="weekdays" role="group" [attr.aria-label]="'coachCalendar.trainingDays' | translate">
           @for (d of days; track d) {
-            <label><input type="checkbox" [checked]="training().includes(d)" (change)="toggleDay(d)" /> {{ d.slice(0, 3) }}</label>
+            <label><input type="checkbox" [checked]="training().includes(d)" (change)="toggleDay(d)" /> {{ d | enumLabel: 'weekday' }}</label>
           }
         </div>
         <div class="actions">
-          <button type="button" class="button button-primary" (click)="saveDays()" [disabled]="busy() || !training().length">Save training days</button>
-          <button type="button" class="button button-secondary" (click)="startNew()">New event for this client</button>
+          <button type="button" class="button button-primary" (click)="saveDays()" [disabled]="busy() || !training().length">{{ 'coachCalendar.saveDays' | translate }}</button>
+          <button type="button" class="button button-secondary" (click)="startNew()">{{ 'coachCalendar.newClientEvent' | translate }}</button>
         </div>
       </section>
     } @else {
       <section class="card workbench filters">
-        <label><span>Client</span>
+        <label><span>{{ 'coachCalendar.client' | translate }}</span>
           <select [(ngModel)]="filterClient" name="filterClient" (change)="load()">
-            <option [ngValue]="null">All clients</option>
-            @for (c of clients(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+            <option [ngValue]="null">{{ 'coachCalendar.allClients' | translate }}</option>
+            @for (c of clients(); track c.id) { <option [ngValue]="c.id" translate="no">{{ c.name }}</option> }
           </select></label>
       </section>
     }
 
     @if (draft(); as d) {
       <form class="card workbench editor" (ngSubmit)="save(d)">
-        <h2>{{ d.id ? 'Edit' : 'New' }} {{ d.kind === 'FollowUp' ? 'follow-up' : 'event' }}</h2>
+        <h2>{{ editorTitle(d) | translate }}</h2>
         <div class="form-grid">
-          <label><span>Kind</span><select [(ngModel)]="d.kind" name="kind" (change)="d.kind === 'FollowUp' && (d.visibleToClient = false)">
-            <option value="Event">Event</option><option value="FollowUp">Follow-up</option></select></label>
+          <label><span>{{ 'coachCalendar.kind' | translate }}</span><select [(ngModel)]="d.kind" name="kind" (change)="d.kind === 'FollowUp' && (d.visibleToClient = false)">
+            <option value="Event">{{ 'coachCalendar.event' | translate }}</option><option value="FollowUp">{{ 'coachCalendar.followUp' | translate }}</option></select></label>
           @if (!clientId) {
-            <label><span>Client</span><select [(ngModel)]="d.clientId" name="client" [disabled]="!!d.id">
-              <option [ngValue]="null">None (my own)</option>
-              @for (c of clients(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+            <label><span>{{ 'coachCalendar.client' | translate }}</span><select [(ngModel)]="d.clientId" name="client" [disabled]="!!d.id">
+              <option [ngValue]="null">{{ 'coachCalendar.mine' | translate }}</option>
+              @for (c of clients(); track c.id) { <option [ngValue]="c.id" translate="no">{{ c.name }}</option> }
             </select></label>
           }
-          <label><span>Title</span><input [(ngModel)]="d.title" name="title" required maxlength="200" /></label>
-          <label><span>Date</span><input type="date" [(ngModel)]="d.date" name="date" required /></label>
-          <label><span>Start</span><input type="time" [(ngModel)]="d.startTime" name="start" /></label>
-          <label><span>End</span><input type="time" [(ngModel)]="d.endTime" name="end" /></label>
+          <label><span>{{ 'coachCalendar.eventTitle' | translate }}</span><input [(ngModel)]="d.title" name="title" required maxlength="200" /></label>
+          <label><span>{{ 'coachCalendar.date' | translate }}</span><input type="date" [(ngModel)]="d.date" name="date" required /></label>
+          <label><span>{{ 'coachCalendar.start' | translate }}</span><input type="time" [(ngModel)]="d.startTime" name="start" /></label>
+          <label><span>{{ 'coachCalendar.end' | translate }}</span><input type="time" [(ngModel)]="d.endTime" name="end" /></label>
         </div>
-        <label class="wide"><span>Notes</span><textarea [(ngModel)]="d.notes" name="notes" rows="2" maxlength="1000"></textarea></label>
+        <label class="wide"><span>{{ 'coachCalendar.notes' | translate }}</span><textarea [(ngModel)]="d.notes" name="notes" rows="2" maxlength="1000"></textarea></label>
         @if (d.kind === 'Event' && d.clientId) {
-          <label class="check"><input type="checkbox" [(ngModel)]="d.visibleToClient" name="visible" /> Show on the client's calendar</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="d.visibleToClient" name="visible" /> {{ 'coachCalendar.showClient' | translate }}</label>
         }
-        @if (d.kind === 'FollowUp' && d.id) { <label class="check"><input type="checkbox" [(ngModel)]="d.isDone" name="done" /> Done</label> }
+        @if (d.kind === 'FollowUp' && d.id) { <label class="check"><input type="checkbox" [(ngModel)]="d.isDone" name="done" /> {{ 'coachCalendar.done' | translate }}</label> }
         <div class="actions">
-          <button type="submit" class="button button-primary" [disabled]="busy()">Save</button>
-          <button type="button" class="button button-secondary" (click)="draft.set(null)">Cancel</button>
-          @if (d.id) { <button type="button" class="link-button danger" (click)="remove(d)">Delete</button> }
+          <button type="submit" class="button button-primary" [disabled]="busy()">{{ 'common.save' | translate }}</button>
+          <button type="button" class="button button-secondary" (click)="draft.set(null)">{{ 'common.cancel' | translate }}</button>
+          @if (d.id) { <button type="button" class="link-button danger" (click)="remove(d)">{{ 'common.delete' | translate }}</button> }
         </div>
       </form>
     }
@@ -109,7 +111,14 @@ export class CoachCalendarComponent implements OnInit, OnChanges {
   readonly error = signal('');
   filterClient: string | null = null;
 
-  constructor(private readonly api: CalendarService, private readonly clientsApi: ClientsService, private readonly router: Router) {}
+  constructor(
+    private readonly api: CalendarService, private readonly clientsApi: ClientsService, private readonly router: Router, private readonly i18n: I18nService,
+  ) {}
+
+  editorTitle(draft: Draft): TranslationKey {
+    if (draft.kind === 'FollowUp') return draft.id ? 'coachCalendar.editFollowUp' : 'coachCalendar.newFollowUp';
+    return draft.id ? 'coachCalendar.editEvent' : 'coachCalendar.newEvent';
+  }
 
   ngOnInit(): void {
     if (this.clientId) return;
@@ -177,7 +186,7 @@ export class CoachCalendarComponent implements OnInit, OnChanges {
   }
 
   remove(draft: Draft): void {
-    if (!draft.id || !confirm(`Delete "${draft.title}"?`)) return;
+    if (!draft.id || !confirm(this.i18n.translate('coachCalendar.confirmDelete', { title: draft.title }))) return;
     this.run(this.api.deleteEvent(draft.id), () => this.draft.set(null));
   }
 

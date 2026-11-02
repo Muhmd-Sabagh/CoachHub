@@ -1,48 +1,36 @@
 <section class="page-heading">
-  <p class="eyebrow">Relationships</p>
-  <h1>{{ subscriptionsWorkspace ? 'Subscriptions' : 'Clients' }}</h1>
-  <p>
-    {{
-      subscriptionsWorkspace
-        ? 'Find a client to review and maintain subscription history.'
-        : 'Find, add and manage your clients, their profiles and subscriptions.'
-    }}
-  </p>
+  <p class="eyebrow">{{ 'clients.eyebrow' | translate }}</p>
+  <h1>{{ (subscriptionsWorkspace ? 'clients.subscriptionsTitle' : 'clients.title') | translate }}</h1>
+  <p>{{ (subscriptionsWorkspace ? 'clients.subscriptionsIntro' : 'clients.intro') | translate }}</p>
 </section>
 <section class="card workbench">
   <div class="toolbar">
     <form class="filter-row" (ngSubmit)="applySearch()">
-      <label><span>Search clients</span><input name="search" [(ngModel)]="search" /></label
+      <label><span>{{ 'clients.search' | translate }}</span><input name="search" [(ngModel)]="search" /></label
       ><label
-        ><span>Subscription</span
+        ><span>{{ 'clients.subscription' | translate }}</span
         ><select name="subscription" [(ngModel)]="subscriptionStatus">
-          <option value="">All</option>
-          <option>Active</option>
-          <option>Expired</option>
-          <option>Inactive</option>
+          <option value="">{{ 'common.all' | translate }}</option>
+          @for (s of subscriptionFilters; track s) { <option [value]="s">{{ s | enumLabel: 'subscriptionStatus' }}</option> }
         </select></label
       ><label
-        ><span>Status</span
+        ><span>{{ 'common.status' | translate }}</span
         ><select name="active" [(ngModel)]="active">
-          <option value="">All</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
+          <option value="">{{ 'common.all' | translate }}</option>
+          <option value="true">{{ 'common.active' | translate }}</option>
+          <option value="false">{{ 'common.inactive' | translate }}</option>
         </select></label
       ><label
-        ><span>Client status</span
+        ><span>{{ 'clients.clientStatus' | translate }}</span
         ><select name="clientStatus" [(ngModel)]="clientStatus">
-          <option value="">All</option>
-          <option value="OnTrack">On track</option>
-          <option value="NeedsReview">Needs review</option>
-          <option value="CheckInOverdue">Check-in overdue</option>
-          <option value="SubscriptionExpired">Subscription expired</option>
-          <option value="Inactive">Inactive</option>
+          <option value="">{{ 'common.all' | translate }}</option>
+          @for (s of clientStatuses; track s) { <option [value]="s">{{ s | enumLabel: 'clientStatus' }}</option> }
         </select></label
-      ><button class="button button-primary">Search</button
-      ><button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+      ><button class="button button-primary">{{ 'common.search' | translate }}</button
+      ><button class="button button-secondary" type="button" (click)="reset()">{{ 'common.reset' | translate }}</button>
     </form>
-    <button class="button button-primary" (click)="create()">Add client</button>
-    <button class="button button-secondary" type="button" (click)="exportList()">Export CSV</button>
+    <button class="button button-primary" (click)="create()">{{ 'clients.add' | translate }}</button>
+    <button class="button button-secondary" type="button" (click)="exportList()">{{ 'common.exportCsv' | translate }}</button>
   </div>
   @if (error()) {
     <p class="form-error">{{ error() }}</p>
@@ -51,42 +39,40 @@
     <table>
       <thead>
         <tr>
-          <th>Client</th>
-          <th>Status</th>
-          <th>Subscription</th>
-          <th class="actions">Actions</th>
+          <th>{{ 'common.client' | translate }}</th>
+          <th>{{ 'common.status' | translate }}</th>
+          <th>{{ 'clients.subscription' | translate }}</th>
+          <th class="actions">{{ 'common.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         @if (loading()) {
           <tr>
-            <td colspan="4" class="table-message">Loading…</td>
+            <td colspan="4" class="table-message">{{ 'common.loading' | translate }}</td>
           </tr>
         }
         @for (c of page().items; track c.id) {
           <tr>
             <td>
-              <a [routerLink]="['/clients', c.id]"><strong>{{ c.name }}</strong></a
-              ><small>{{ c.phone || c.email || 'No contact details' }}</small>
+              <a [routerLink]="['/clients', c.id]"><strong translate="no">{{ c.name }}</strong></a>
+              @if (c.phone || c.email) { <small translate="no">{{ c.phone || c.email }}</small> } @else { <small>{{ 'clients.noContact' | translate }}</small> }
             </td>
             <td>
-              <app-status-badge [value]="c.status" />
+              <app-status-badge [value]="c.status" enumName="clientStatus" />
             </td>
             <td>
-              <app-status-badge [value]="c.subscriptionStatus" /><small
-                >{{ c.subscriptionCount }} record(s)</small
-              >
+              <app-status-badge [value]="c.subscriptionStatus" enumName="subscriptionStatus" /><small>{{ 'clients.records' | translate: { count: c.subscriptionCount } }}</small>
             </td>
             <td class="actions">
-              <button class="link-button" (click)="openDetail(c)">Open</button
-              ><button class="link-button" (click)="edit(c)">Edit</button
-              ><button class="link-button danger" (click)="remove(c)">Delete</button>
+              <button class="link-button" (click)="openDetail(c)">{{ 'common.open' | translate }}</button
+              ><button class="link-button" (click)="edit(c)">{{ 'common.edit' | translate }}</button
+              ><button class="link-button danger" (click)="remove(c)">{{ 'common.delete' | translate }}</button>
             </td>
           </tr>
         }
         @if (!loading() && !page().items.length) {
           <tr>
-            <td colspan="4" class="table-message">No clients match the applied filters.</td>
+            <td colspan="4" class="table-message">{{ 'clients.none' | translate }}</td>
           </tr>
         }
       </tbody>
@@ -101,40 +87,33 @@
 </section>
 @if (editorOpen()) {
   <div class="modal-backdrop">
-    <section class="modal-card">
+    <section class="modal-card" role="dialog" aria-modal="true" [attr.aria-label]="(editingId() ? 'clients.edit' : 'clients.new') | translate">
       <header>
-        <h2>{{ editingId() ? 'Edit client' : 'New client' }}</h2>
-        <button class="icon-button" (click)="editorOpen.set(false)">×</button>
+        <h2>{{ (editingId() ? 'clients.edit' : 'clients.new') | translate }}</h2>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="editorOpen.set(false)">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="save()">
         @if (isAdmin && !editingId()) {
-          <label><span>Coach *</span><select name="coachId" [(ngModel)]="editor().coachId" required><option value="">Choose a coach</option>@for (coach of coaches(); track coach.id) {<option [value]="coach.id">{{ coach.displayName }}</option>}</select></label>
+          <label><span>{{ 'clients.coachRequired' | translate }}</span><select name="coachId" [(ngModel)]="editor().coachId" required><option value="">{{ 'common.chooseCoach' | translate }}</option>@for (coach of coaches(); track coach.id) {<option [value]="coach.id" translate="no">{{ coach.displayName }}</option>}</select></label>
         }
-        <label><span>Name *</span><input name="name" [(ngModel)]="editor().name" required /></label
+        <label><span>{{ 'clients.nameRequired' | translate }}</span><input name="name" [(ngModel)]="editor().name" required /></label
         ><label
-          ><span>Join date</span
-          ><input
-            type="date"
-            name="joinDate"
-            [(ngModel)]="editor().joinDate"
-            [disabled]="!!editingId()" /></label
-        ><label><span>Phone</span><input name="phone" [(ngModel)]="editor().phone" /></label
+          ><span>{{ 'clients.joinDate' | translate }}</span
+          ><input type="date" name="joinDate" [(ngModel)]="editor().joinDate" [disabled]="!!editingId()" /></label
+        ><label><span>{{ 'clients.phone' | translate }}</span><input name="phone" [(ngModel)]="editor().phone" /></label
         ><label
-          ><span>Email</span><input type="email" name="email" [(ngModel)]="editor().email"
+          ><span>{{ 'clients.email' | translate }}</span><input type="email" name="email" [(ngModel)]="editor().email"
         /></label>
         @if (!editingId()) {
           <label class="checkbox-row span-2"><input type="checkbox" name="invite" [(ngModel)]="editor().invite" [disabled]="!editor().email" />
-            <span>Invite the client to sign in (emails a link to choose a password)</span></label>
+            <span>{{ 'clients.invite' | translate }}</span></label>
         }
         @if (editingId()) {
-          <label class="checkbox-row span-2"
-            ><input type="checkbox" name="active" [(ngModel)]="editor().isActive" /> Active</label
-          >
+          <label class="checkbox-row span-2"><input type="checkbox" name="active" [(ngModel)]="editor().isActive" /> {{ 'common.active' | translate }}</label>
         }
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="editorOpen.set(false)">
-            Cancel</button
-          ><button class="button button-primary" [disabled]="saving()">Save</button>
+          <button class="button button-secondary" type="button" (click)="editorOpen.set(false)">{{ 'common.cancel' | translate }}</button
+          ><button class="button button-primary" [disabled]="saving()">{{ 'common.save' | translate }}</button>
         </footer>
       </form>
     </section>
@@ -142,71 +121,71 @@
 }
 @if (detailOpen() && detail(); as d) {
   <div class="modal-backdrop">
-    <section class="modal-card extra-wide">
+    <section class="modal-card extra-wide" role="dialog" aria-modal="true" [attr.aria-label]="'clients.file' | translate">
       <header>
         <div>
-          <p class="eyebrow">Client file</p>
-          <h2>{{ d.client.name }}</h2>
+          <p class="eyebrow">{{ 'clients.file' | translate }}</p>
+          <h2 translate="no">{{ d.client.name }}</h2>
         </div>
-        <button class="icon-button" (click)="detailOpen.set(false)">×</button>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="detailOpen.set(false)">×</button>
       </header>
       <div class="detail-grid">
         <div>
-          <span>Status</span><app-status-badge [value]="d.client.status" />
-          <a class="link-button" [routerLink]="['/clients', d.client.id]">Open client profile</a>
+          <span>{{ 'common.status' | translate }}</span><app-status-badge [value]="d.client.status" enumName="clientStatus" />
+          <a class="link-button" [routerLink]="['/clients', d.client.id]">{{ 'clients.openProfile' | translate }}</a>
         </div>
         <div>
-          <span>Joined</span><strong>{{ d.client.joinDate }}</strong>
+          <span>{{ 'clients.joined' | translate }}</span><strong>{{ d.client.joinDate | localDate: 'd MMM y' }}</strong>
         </div>
         <div>
-          <span>Subscription</span><app-status-badge [value]="d.client.subscriptionStatus" />
+          <span>{{ 'clients.subscription' | translate }}</span><app-status-badge [value]="d.client.subscriptionStatus" enumName="subscriptionStatus" />
         </div>
       </div>
       @if (isAdmin) {
         <form class="filter-row" (ngSubmit)="transfer()">
-          <label><span>Coach</span><strong>{{ coachName(d.client.coachId) }}</strong></label>
-          <label><span>Transfer to</span><select name="transferCoachId" [(ngModel)]="transferCoachId"><option value="">Choose a coach</option>@for (coach of coaches(); track coach.id) {@if (coach.id !== d.client.coachId) {<option [value]="coach.id">{{ coach.displayName }}</option>}}</select></label>
-          <button class="button button-secondary" type="submit" [disabled]="!transferCoachId() || saving()">Transfer client</button>
+          <label><span>{{ 'common.coach' | translate }}</span><strong translate="no">{{ coachName(d.client.coachId) }}</strong></label>
+          <label><span>{{ 'clients.transferTo' | translate }}</span><select name="transferCoachId" [(ngModel)]="transferCoachId"><option value="">{{ 'common.chooseCoach' | translate }}</option>@for (coach of coaches(); track coach.id) {@if (coach.id !== d.client.coachId) {<option [value]="coach.id" translate="no">{{ coach.displayName }}</option>}}</select></label>
+          <button class="button button-secondary" type="submit" [disabled]="!transferCoachId() || saving()">{{ 'clients.transfer' | translate }}</button>
         </form>
-        <p class="muted">Plans, assessments and deliveries move with the client. Subscriptions and invoices stay with the coach who sold them.</p>
+        <p class="muted">{{ 'clients.transferHint' | translate }}</p>
       }
       <div class="section-heading toolbar">
-        <h3>Subscriptions</h3>
-        <button class="button button-primary" (click)="addSubscription()">Add subscription</button>
+        <h3>{{ 'clients.subscriptions' | translate }}</h3>
+        <button class="button button-primary" (click)="addSubscription()">{{ 'clients.addSubscription' | translate }}</button>
       </div>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Package</th>
-              <th>Dates</th>
-              <th>Status</th>
-              <th>Price</th>
-              <th>Renewals</th>
+              <th>{{ 'clients.package' | translate }}</th>
+              <th>{{ 'clients.dates' | translate }}</th>
+              <th>{{ 'common.status' | translate }}</th>
+              <th>{{ 'clients.price' | translate }}</th>
+              <th>{{ 'clients.renewals' | translate }}</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             @for (s of d.subscriptions; track s.id) {
               <tr>
-                <td>{{ nameOf(packages(), s.packageId) }}</td>
-                <td>{{ s.startDate }} to {{ s.endDate }}</td>
-                <td><app-status-badge [value]="s.status" /><small class="block">{{ paymentLabels[s.paymentStatus] }}</small>
-                  @if (s.suspensionReason) { <small class="block muted">{{ s.suspensionReason }}</small> }</td>
-                <td>{{ s.price }} {{ nameOf(currencies(), s.currencyId) }}</td>
+                <td translate="no">{{ nameOf(packages(), s.packageId) }}</td>
+                <td>{{ 'common.range' | translate: { from: (s.startDate | localDate: 'd MMM y'), to: (s.endDate | localDate: 'd MMM y') } }}</td>
+                <td><app-status-badge [value]="s.status" enumName="subscriptionStatus" /><small class="block">{{ s.paymentStatus | enumLabel: 'paymentStatus' }}</small>
+                  @if (s.suspensionReason) { <small class="block muted" translate="no">{{ s.suspensionReason }}</small> }</td>
+                <td>{{ s.price | localNumber: '1.0-2' }} <span translate="no">{{ nameOf(currencies(), s.currencyId) }}</span></td>
                 <td>{{ s.renewalCount }}</td>
                 <td class="actions">
-                  <button class="link-button" (click)="openRenewal(s)">Renew</button>
+                  <button class="link-button" (click)="openRenewal(s)">{{ 'clients.renew' | translate }}</button>
                   @if (s.status === 'Suspended') {
-                    <button class="link-button" (click)="resumeSubscription(s)">Resume</button>
+                    <button class="link-button" (click)="resumeSubscription(s)">{{ 'clients.resume' | translate }}</button>
                   } @else if (s.status !== 'Expired') {
-                    <button class="link-button" (click)="suspendSubscription(s)">Suspend</button>
+                    <button class="link-button" (click)="suspendSubscription(s)">{{ 'clients.suspend' | translate }}</button>
                   }
                   @if (!s.renewals.length) {
-                    <button class="link-button" (click)="editSubscription(s)">Edit</button>
-                    <button class="link-button danger" (click)="removeSubscription(s)">Delete</button>
+                    <button class="link-button" (click)="editSubscription(s)">{{ 'common.edit' | translate }}</button>
+                    <button class="link-button danger" (click)="removeSubscription(s)">{{ 'common.delete' | translate }}</button>
                   } @else {
-                    <small>History protected</small>
+                    <small>{{ 'clients.historyProtected' | translate }}</small>
                   }
                 </td>
               </tr>
@@ -216,11 +195,11 @@
                     <div class="detail-grid">
                       @for (renewal of s.renewals; track renewal.id) {
                         <div>
-                          <span>Renewal #{{ renewal.sequenceNumber }}</span>
-                          <strong>{{ renewal.previousEndDate }} to {{ renewal.newEndDate }}</strong>
+                          <span>{{ 'clients.renewalNumber' | translate: { number: renewal.sequenceNumber } }}</span>
+                          <strong>{{ 'common.range' | translate: { from: (renewal.previousEndDate | localDate: 'd MMM y'), to: (renewal.newEndDate | localDate: 'd MMM y') } }}</strong>
                           <small>
-                            {{ renewal.price }} {{ nameOf(currencies(), renewal.currencyId) }}
-                            via {{ nameOf(accounts(), renewal.paymentAccountId) }}
+                            {{ renewal.price | localNumber: '1.0-2' }} <span translate="no">{{ nameOf(currencies(), renewal.currencyId) }}</span>
+                            · {{ 'clients.via' | translate: { account: nameOf(accounts(), renewal.paymentAccountId) } }}
                           </small>
                         </div>
                       }
@@ -231,7 +210,7 @@
             }
             @if (!d.subscriptions.length) {
               <tr>
-                <td colspan="6" class="table-message">No subscriptions yet.</td>
+                <td colspan="6" class="table-message">{{ 'clients.noSubscriptions' | translate }}</td>
               </tr>
             }
           </tbody>
@@ -242,55 +221,50 @@
 }
 @if (subscriptionOpen() && detail()) {
   <div class="modal-backdrop top-layer">
-    <section class="modal-card">
+    <section class="modal-card" role="dialog" aria-modal="true" [attr.aria-label]="(editingSubscriptionId() ? 'clients.editSubscription' : 'clients.addSubscription') | translate">
       <header>
-        <h2>{{ editingSubscriptionId() ? 'Edit' : 'Add' }} subscription</h2>
-        <button class="icon-button" (click)="subscriptionOpen.set(false)">×</button>
+        <h2>{{ (editingSubscriptionId() ? 'clients.editSubscription' : 'clients.addSubscription') | translate }}</h2>
+        <button class="icon-button" type="button" [attr.aria-label]="'common.close' | translate" (click)="subscriptionOpen.set(false)">×</button>
       </header>
       <form class="form-grid" (ngSubmit)="saveSubscription()">
         <label
-          ><span>Package *</span
+          ><span>{{ 'clients.packageRequired' | translate }}</span
           ><select name="package" [(ngModel)]="subscription().packageId" required>
-            <option value="">Select</option>
+            <option value="">{{ 'common.select' | translate }}</option>
             @for (x of packages(); track x.id) {
-              <option [value]="x.id">{{ x.nameEn }}</option>
+              <option [value]="x.id" translate="no">{{ refName(x) }}</option>
             }
           </select></label
         ><label
-          ><span>Start date *</span
+          ><span>{{ 'clients.startRequired' | translate }}</span
           ><input type="date" name="start" [(ngModel)]="subscription().startDate" required /></label
         ><label
-          ><span>Duration months *</span
-          ><input
-            type="number"
-            min="1"
-            name="duration"
-            [(ngModel)]="subscription().durationMonths" />
-          <span class="presets">@for (m of durationPresets(); track m) { <button type="button" class="link-button" (click)="subscription().durationMonths = m">{{ m }} mo</button> }</span></label
+          ><span>{{ 'clients.durationRequired' | translate }}</span
+          ><input type="number" min="1" name="duration" [(ngModel)]="subscription().durationMonths" />
+          <span class="presets">@for (m of durationPresets(); track m) { <button type="button" class="link-button" (click)="subscription().durationMonths = m">{{ 'clients.months' | translate: { count: m } }}</button> }</span></label
         ><label
-          ><span>Price *</span
+          ><span>{{ 'clients.priceRequired' | translate }}</span
           ><input type="number" min="0" name="price" [(ngModel)]="subscription().price" /></label
         ><label
-          ><span>Currency *</span
+          ><span>{{ 'clients.currencyRequired' | translate }}</span
           ><select name="currency" [(ngModel)]="subscription().currencyId" required>
-            <option value="">Select</option>
+            <option value="">{{ 'common.select' | translate }}</option>
             @for (x of currencies(); track x.id) {
-              <option [value]="x.id">{{ x.code }} {{ x.name }}</option>
+              <option [value]="x.id" translate="no">{{ x.code }} {{ x.name }}</option>
             }
           </select></label
         ><label
-          ><span>Payment account</span
+          ><span>{{ 'clients.paymentAccount' | translate }}</span
           ><select name="account" [(ngModel)]="subscription().paymentAccountId">
-            <option value="">None</option>
+            <option value="">{{ 'common.none' | translate }}</option>
             @for (x of accounts(); track x.id) {
-              <option [value]="x.id">{{ x.name }}</option>
+              <option [value]="x.id" translate="no">{{ x.name }}</option>
             }
           </select></label>
 
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="subscriptionOpen.set(false)">
-            Cancel</button
-          ><button class="button button-primary">Save</button>
+          <button class="button button-secondary" type="button" (click)="subscriptionOpen.set(false)">{{ 'common.cancel' | translate }}</button
+          ><button class="button button-primary">{{ 'common.save' | translate }}</button>
         </footer>
       </form>
     </section>
@@ -298,48 +272,45 @@
 }
 @if (renewalOpen() && detail() && renewingSubscription(); as renewing) {
   <div class="modal-backdrop top-layer">
-    <section class="modal-card">
+    <section class="modal-card" role="dialog" aria-modal="true" [attr.aria-label]="'clients.extend' | translate">
       <header>
         <div>
-          <p class="eyebrow">Subscription renewal</p>
-          <h2>Extend coverage</h2>
+          <p class="eyebrow">{{ 'clients.renewalEyebrow' | translate }}</p>
+          <h2>{{ 'clients.extend' | translate }}</h2>
         </div>
-        <button class="icon-button" (click)="renewalOpen.set(false)">Close</button>
+        <button class="icon-button" type="button" (click)="renewalOpen.set(false)">{{ 'common.close' | translate }}</button>
       </header>
-      <p>
-        Current end date: <strong>{{ renewing.endDate }}</strong>.
-        The renewal is recorded permanently and extends from this date.
-      </p>
+      <p>{{ 'clients.currentEnd' | translate: { date: (renewing.endDate | localDate: 'd MMM y') } }}</p>
       <form class="form-grid" (ngSubmit)="saveRenewal()">
         <label>
-          <span>Additional months *</span>
+          <span>{{ 'clients.additionalMonths' | translate }}</span>
           <input type="number" min="1" max="120" name="renewalDuration" [(ngModel)]="renewal().durationMonths" required />
         </label>
         <label>
-          <span>Renewal price *</span>
+          <span>{{ 'clients.renewalPrice' | translate }}</span>
           <input type="number" min="0.01" step="0.01" name="renewalPrice" [(ngModel)]="renewal().price" required />
         </label>
         <label>
-          <span>Currency *</span>
+          <span>{{ 'clients.currencyRequired' | translate }}</span>
           <select name="renewalCurrency" [(ngModel)]="renewal().currencyId" required>
-            <option value="">Select</option>
+            <option value="">{{ 'common.select' | translate }}</option>
             @for (x of currencies(); track x.id) {
-              <option [value]="x.id">{{ x.code }} {{ x.name }}</option>
+              <option [value]="x.id" translate="no">{{ x.code }} {{ x.name }}</option>
             }
           </select>
         </label>
         <label>
-          <span>Payment account</span>
+          <span>{{ 'clients.paymentAccount' | translate }}</span>
           <select name="renewalAccount" [(ngModel)]="renewal().paymentAccountId">
-            <option value="">None</option>
+            <option value="">{{ 'common.none' | translate }}</option>
             @for (x of accounts(); track x.id) {
-              <option [value]="x.id">{{ x.name }}</option>
+              <option [value]="x.id" translate="no">{{ x.name }}</option>
             }
           </select>
         </label>
         <footer class="modal-actions span-2">
-          <button class="button button-secondary" type="button" (click)="renewalOpen.set(false)">Cancel</button>
-          <button class="button button-primary" [disabled]="saving()">Record renewal</button>
+          <button class="button button-secondary" type="button" (click)="renewalOpen.set(false)">{{ 'common.cancel' | translate }}</button>
+          <button class="button button-primary" [disabled]="saving()">{{ 'clients.recordRenewal' | translate }}</button>
         </footer>
       </form>
     </section>

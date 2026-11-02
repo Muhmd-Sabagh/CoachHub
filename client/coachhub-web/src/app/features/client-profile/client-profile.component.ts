@@ -1,8 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { AssessmentsService, SubmissionSummary } from '../assessments/assessments.service';
 import { CatalogService } from '../catalog/catalog.service';
@@ -23,21 +25,16 @@ import { ReferenceDataService, ReferenceRecord } from '../settings/reference-dat
 
 type Tab = 'overview' | 'profile' | 'workout' | 'nutrition' | 'diary' | 'progress' | 'measurements' | 'photos' | 'checkins' | 'tests' | 'calendar' | 'reports' | 'messages' | 'files';
 
-/** A tab the coach sees (§40); later phases light up the ones marked with their phase. */
-interface TabItem { id: Tab; label: string; arrivesIn?: string; }
-
 /** Everything about one client in one place (§40), starting with the structured profile (§3). */
 @Component({
-  selector: 'app-client-profile', standalone: true, imports: [CommonModule, FormsModule, RouterLink, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent, ClientTestsComponent, ChatThreadComponent, ClientFilesComponent, CoachCalendarComponent, ClientReportsComponent], templateUrl: './client-profile.component.html' })
+  selector: 'app-client-profile', standalone: true, imports: [FormsModule, RouterLink, ...I18N_PIPES, ClientNutritionComponent, ClientTrainingComponent, ClientProgressComponent, CheckInsComponent, ClientTestsComponent, ChatThreadComponent, ClientFilesComponent, CoachCalendarComponent, ClientReportsComponent], templateUrl: './client-profile.component.html' })
 export class ClientProfileComponent implements OnInit {
-  readonly tabs: TabItem[] = [
-    { id: 'overview', label: 'Overview' }, { id: 'profile', label: 'Profile' },
-    { id: 'workout', label: 'Training' }, { id: 'nutrition', label: 'Nutrition' },
-    { id: 'diary', label: 'Food diary' }, { id: 'progress', label: 'Progress' },
-    { id: 'measurements', label: 'Measurements' }, { id: 'photos', label: 'Photos' },
-    { id: 'checkins', label: 'Check-ins' }, { id: 'tests', label: 'Tests' }, { id: 'calendar', label: 'Calendar' }, { id: 'reports', label: 'Reports' },
-    { id: 'messages', label: 'Messages' }, { id: 'files', label: 'Files' },
+  readonly tabs: Tab[] = [
+    'overview', 'profile', 'workout', 'nutrition', 'diary', 'progress', 'measurements', 'photos', 'checkins', 'tests', 'calendar', 'reports',
+    'messages', 'files',
   ];
+  readonly sexes = ['Female', 'Male'];
+  readonly macroModes: MacroMode[] = ['GramsPerKg', 'Percentages', 'FixedGrams'];
   readonly statuses = clientStatuses;
   readonly restrictions = dietaryRestrictions;
   readonly goals = ['LoseFat', 'BuildMuscle', 'Recomposition', 'Maintain', 'Performance', 'GeneralHealth'];
@@ -73,6 +70,7 @@ export class ClientProfileComponent implements OnInit {
     private readonly catalog: CatalogService,
     private readonly assessments: AssessmentsService,
     private readonly plans: PlansService,
+    private readonly i18n: I18nService,
   ) {
     this.id.set(route.snapshot.paramMap.get('id') ?? '');
   }
@@ -85,26 +83,28 @@ export class ClientProfileComponent implements OnInit {
   }
 
   open(tab: Tab): void { this.tab.set(tab); this.message.set(''); }
-  arrivesIn(tab: Tab): string | undefined { return this.tabs.find(item => item.id === tab)?.arrivesIn; }
+  tabKey(tab: Tab): TranslationKey { return `profile.tab.${tab}`; }
+  modeKey(mode: MacroMode): TranslationKey { return `profile.mode.${mode}`; }
+  refName(item: ReferenceRecord): string { return this.i18n.name({ nameEn: item.nameEn ?? item.name ?? '', nameAr: item.nameAr }); }
 
   invite(): void {
     this.run(this.clients.invite(this.id()), account => {
       this.detail.update(detail => detail && { ...detail, account });
-      return 'Invitation sent. The link is valid for 7 days.';
+      return this.i18n.translate('profile.inviteSent');
     });
   }
 
   setStatus(): void {
     this.run(this.clients.setStatus(this.id(), this.statusChoice(), this.statusUntil() || null), client => {
       this.detail.update(detail => detail && { ...detail, client });
-      return 'Status set.';
+      return this.i18n.translate('profile.statusSet');
     });
   }
 
   clearStatus(): void {
     this.run(this.clients.clearStatus(this.id()), client => {
       this.detail.update(detail => detail && { ...detail, client });
-      return 'Status returned to automatic.';
+      return this.i18n.translate('profile.statusCleared');
     });
   }
 
@@ -149,7 +149,7 @@ export class ClientProfileComponent implements OnInit {
       dateOfBirth: form.dateOfBirth || null,
       macros: macroMode ? { mode: macroMode, ...numbers(this.macro()) } : null,
     };
-    this.run(this.clients.saveProfile(this.id(), input), profile => { this.showProfile(profile); this.calculateTargets(); return 'Profile saved.'; });
+    this.run(this.clients.saveProfile(this.id(), input), profile => { this.showProfile(profile); this.calculateTargets(); return this.i18n.translate('profile.profileSaved'); });
   }
 
   /** The client's calorie and macro targets from the saved profile and the coach's settings (§14, §15). */

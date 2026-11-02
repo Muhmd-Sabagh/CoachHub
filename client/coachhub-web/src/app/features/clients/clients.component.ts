@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { Coach, CoachesService } from '../coaches/coaches.service';
@@ -12,6 +13,8 @@ import { ReportsService, saveFile } from '../reports/reports.service';
   selector: 'app-clients', templateUrl: './clients.component.html', standalone: false })
 export class ClientsComponent implements OnInit {
   readonly subscriptionsWorkspace: boolean;
+  readonly subscriptionFilters = ['Active', 'Expired', 'Inactive'];
+  readonly clientStatuses = ['OnTrack', 'NeedsReview', 'CheckInOverdue', 'SubscriptionExpired', 'Inactive'];
   readonly page = signal<PagedResult<Client>>(emptyPage());
   readonly search = signal('');
   readonly appliedSearch = signal('');
@@ -46,6 +49,7 @@ export class ClientsComponent implements OnInit {
     private readonly coachDirectory: CoachesService,
     auth: AuthService,
     private readonly reports: ReportsService,
+    private readonly i18n: I18nService,
   ) {
     this.isAdmin = auth.isAdmin();
     this.subscriptionsWorkspace = route.snapshot.data['workspace'] === 'subscriptions';
@@ -240,7 +244,7 @@ export class ClientsComponent implements OnInit {
   suspendSubscription(s: Subscription): void {
     const detail = this.detail();
     if (!detail) return;
-    const reason = prompt('Why is the subscription suspended? The client sees the access rules for suspended subscriptions.');
+    const reason = prompt(this.i18n.translate('clients.suspendReason'));
     if (!reason?.trim()) return;
     this.data.suspendSubscription(detail.client.id, s.id, reason.trim())
       .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error.set(apiErrorMessage(e))) });
@@ -251,9 +255,6 @@ export class ClientsComponent implements OnInit {
     this.data.resumeSubscription(detail.client.id, s.id)
       .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
-  readonly paymentLabels: Record<string, string> = {
-    NoInvoice: 'No invoice', Unpaid: 'Unpaid', PartiallyPaid: 'Partially paid', Paid: 'Paid', Refunded: 'Refunded',
-  };
   readonly durationPresets = signal<number[]>([1, 3, 6, 12]);
   /** The client list as CSV (§51); administrators get every coach's clients. */
   exportList(): void {
@@ -261,19 +262,24 @@ export class ClientsComponent implements OnInit {
   }
   removeSubscription(s: Subscription): void {
     const detail = this.detail();
-    if (detail && confirm('Delete this subscription?'))
+    if (detail && confirm(this.i18n.translate('clients.confirmDeleteSubscription')))
       this.data
         .deleteSubscription(detail.client.id, s.id)
         .subscribe(() => this.refreshDetail());
   }
   remove(c: Client): void {
-    if (confirm(`Delete ${c.name}?`))
+    if (confirm(this.i18n.translate('common.confirmDelete', { name: c.name })))
       this.data
         .delete(c.id)
         .subscribe({ next: () => this.load(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   nameOf(items: ReferenceRecord[], id?: string | null): string {
-    return items.find((x) => x.id === id)?.nameEn ?? items.find((x) => x.id === id)?.name ?? '—';
+    const item = items.find((x) => x.id === id);
+    return item ? this.refName(item) : '—';
+  }
+  /** A reference record's name in the interface language (packages are bilingual; currencies and accounts are not). */
+  refName(item: ReferenceRecord): string {
+    return item.nameEn ? this.i18n.name({ nameEn: item.nameEn, nameAr: item.nameAr }) : item.name ?? '—';
   }
   private refreshDetail(): void {
     const detail = this.detail();
