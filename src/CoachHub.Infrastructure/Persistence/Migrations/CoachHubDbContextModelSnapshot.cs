@@ -1879,11 +1879,16 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<Guid?>("VideoMediaId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("YouTubeUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("VideoMediaId");
 
                     b.HasIndex("CoachId", "Kind", "NameEn");
 
@@ -3594,6 +3599,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("PrimaryMuscleGroupId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("VideoMediaId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("YouTubeUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -3607,6 +3615,8 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasIndex("NameEn");
 
                     b.HasIndex("PrimaryMuscleGroupId");
+
+                    b.HasIndex("VideoMediaId");
 
                     b.HasIndex("ExerciseCategoryId", "IsActive");
 
@@ -5087,6 +5097,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CoachHub.Domain.Media.MediaAsset", null)
+                        .WithMany()
+                        .HasForeignKey("VideoMediaId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("CoachHub.Domain.FitnessTests.TestResult", b =>
@@ -5440,6 +5455,11 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasOne("CoachHub.Domain.ReferenceData.MuscleGroup", null)
                         .WithMany()
                         .HasForeignKey("PrimaryMuscleGroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CoachHub.Domain.Media.MediaAsset", null)
+                        .WithMany()
+                        .HasForeignKey("VideoMediaId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 

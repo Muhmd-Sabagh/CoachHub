@@ -35,7 +35,8 @@ public sealed record TestDefinitionResponse(
     string? YouTubeUrl,
     bool IsActive,
     Guid? CoachId,
-    bool IsCustom);
+    bool IsCustom,
+    Guid? VideoMediaId = null);
 
 /// <summary>Which tests a search covers: both libraries (default), the platform's, or the coach's own.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<TestScope>))]

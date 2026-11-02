@@ -3,6 +3,7 @@ using CoachHub.Application.Common.Models;
 using CoachHub.Application.FitnessTests;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.FitnessTests;
+using CoachHub.Domain.Media;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -26,6 +27,8 @@ public sealed class TestDefinitionConfiguration : IEntityTypeConfiguration<TestD
         builder.Property(x => x.GoodThreshold).HasPrecision(9, 2);
         builder.Property(x => x.PoorThreshold).HasPrecision(9, 2);
         builder.HasIndex(x => new { x.CoachId, x.Kind, x.NameEn });
+        // The service removes the video with the test; media in use cannot be deleted on its own.
+        builder.HasOne<MediaAsset>().WithMany().HasForeignKey(x => x.VideoMediaId).OnDelete(DeleteBehavior.Restrict);
         builder.HasData(TestDefinitionSeed.All.Select(x => new
         {
             x.Id,

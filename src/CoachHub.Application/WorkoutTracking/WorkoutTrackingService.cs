@@ -371,7 +371,7 @@ public sealed class WorkoutTrackingService(
                 exercise?.MediaId, exercise?.YouTubeUrl, item.PlannedExerciseId, item.Order, item.Block, item.GroupLabel,
                 group?.RestSeconds, item.IsSkipped, CanSkip(prescription), item.Notes, prescription?.Notes,
                 prescription?.Sets ?? [], item.Sets.OrderBy(x => x.Order).Select(x => Map(x, formula)).ToArray(),
-                TrainingSets.Volume(item.Sets));
+                TrainingSets.Volume(item.Sets), exercise?.VideoMediaId);
         }).ToArray();
         var summary = Summary(session);
         return new WorkoutSessionResponse(session.Id, session.Date, session.Status, session.NameEn, session.NameAr,

@@ -2,6 +2,7 @@ using CoachHub.Application.Coaches;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.Common.Tenancy;
+using CoachHub.Application.Media;
 using CoachHub.Domain.FitnessTests;
 
 namespace CoachHub.Application.FitnessTests;
@@ -12,6 +13,7 @@ namespace CoachHub.Application.FitnessTests;
 /// </summary>
 public sealed class TestDefinitionService(
     IFitnessTestRepository repository,
+    CatalogVideos videos,
     CoachOwnership ownership,
     ICurrentUser currentUser)
 {
@@ -53,11 +55,34 @@ public sealed class TestDefinitionService(
         if (await repository.IsDefinitionInUseAsync(id, cancellationToken))
             throw new ConflictException("The test is assigned to clients or has results. Deactivate it instead.");
         await repository.DeleteDefinitionAsync(test, cancellationToken);
+        await videos.DeleteAsync(test.VideoMediaId, cancellationToken);
+    }
+
+    /// <summary>Uploads the test's video (§34, P20), replacing the previous one.</summary>
+    public async Task<TestDefinitionResponse> SetVideoAsync(Guid id, MediaUpload upload, CancellationToken cancellationToken)
+    {
+        var test = await FindWritableAsync(id, cancellationToken);
+        var stored = await videos.UploadAsync(test.CoachId, upload, cancellationToken);
+        var previous = test.VideoMediaId;
+        test.ChangeVideo(stored.Id);
+        await repository.SaveChangesAsync(cancellationToken);
+        await videos.DeleteAsync(previous, cancellationToken);
+        return Map(test);
+    }
+
+    public async Task<TestDefinitionResponse> RemoveVideoAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var test = await FindWritableAsync(id, cancellationToken);
+        var previous = test.VideoMediaId;
+        test.ChangeVideo(null);
+        await repository.SaveChangesAsync(cancellationToken);
+        await videos.DeleteAsync(previous, cancellationToken);
+        return Map(test);
     }
 
     internal static TestDefinitionResponse Map(TestDefinition test) => new(
         test.Id, test.Kind, test.NameEn, test.NameAr, test.Unit, test.HigherIsBetter, test.GoodThreshold, test.PoorThreshold,
-        test.InstructionsEn, test.InstructionsAr, test.YouTubeUrl, test.IsActive, test.CoachId, !test.IsPlatform);
+        test.InstructionsEn, test.InstructionsAr, test.YouTubeUrl, test.IsActive, test.CoachId, !test.IsPlatform, test.VideoMediaId);
 
     private static TestDefinitionValues Values(TestDefinitionInput input) => new(
         input.Kind, input.NameEn, input.NameAr, input.Unit, input.HigherIsBetter, input.GoodThreshold, input.PoorThreshold,

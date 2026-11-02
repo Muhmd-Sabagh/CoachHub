@@ -1,8 +1,10 @@
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Media;
 using CoachHub.Domain.Assessments;
+using CoachHub.Domain.FitnessTests;
 using CoachHub.Domain.Media;
 using CoachHub.Domain.Settings;
+using CoachHub.Domain.Training;
 using CoachHub.Infrastructure.Auth.Persistence;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +41,12 @@ public sealed class MediaRepository(CoachHubDbContext dbContext) : IMediaReposit
             await dbContext.Set<User>().AnyAsync(user => user.AvatarMediaId == media.Id, cancellationToken))
         {
             throw new ConflictException("Media used as a brand image or profile picture cannot be deleted here.");
+        }
+        // Videos of exercises and tests (P20), also across tenants: standalone reads that return only a yes or no.
+        if (await dbContext.Set<Exercise>().IgnoreQueryFilters().AnyAsync(exercise => exercise.VideoMediaId == media.Id, cancellationToken) ||
+            await dbContext.Set<TestDefinition>().IgnoreQueryFilters().AnyAsync(test => test.VideoMediaId == media.Id, cancellationToken))
+        {
+            throw new ConflictException("Media used as an exercise or test video cannot be deleted here.");
         }
         dbContext.Set<MediaAsset>().Remove(media);
         await dbContext.SaveChangesAsync(cancellationToken);

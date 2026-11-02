@@ -94,7 +94,8 @@ public sealed record LoggedExerciseResponse(
     bool IsSkipped, bool CanSkip, string? Notes, string? PlannedNotes,
     IReadOnlyList<PrescribedSetResponse> Planned,
     IReadOnlyList<LoggedSetResponse> Sets,
-    decimal VolumeKg);
+    decimal VolumeKg,
+    Guid? VideoMediaId = null);
 
 public sealed record LoggedSetResponse(
     Guid Id, Guid? PlannedSetId, int Order, SetType Type, LoggedSetStatus Status,

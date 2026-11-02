@@ -190,6 +190,31 @@ public sealed class MediaServiceTests
         Assert.False(storage.StoreCalled);
     }
 
+    [Theory]
+    [InlineData("video/mp4", new byte[] { 0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6F, 0x6D }, null)]
+    [InlineData("video/webm", new byte[] { 0x1A, 0x45, 0xDF, 0xA3, 1, 2 }, null)]
+    [InlineData("image/png", new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }, "contentType")]
+    [InlineData("application/pdf", new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D }, "contentType")]
+    public async Task Video_uploads_accept_videos_only(string contentType, byte[] bytes, string? refusedField)
+    {
+        var storage = new StubStorage();
+        var service = new MediaService(storage, new StubRepository(), new KeepImages());
+        await using var content = new MemoryStream(bytes);
+
+        var upload = () => service.UploadAsync(content, "demo", contentType, content.Length, MediaOwner.Platform(null), MediaUploadPolicy.Video, CancellationToken.None);
+
+        if (refusedField is null)
+        {
+            await upload();
+            Assert.True(storage.StoreCalled);
+        }
+        else
+        {
+            Assert.Contains(refusedField, (await Assert.ThrowsAsync<ValidationException>(upload)).Errors);
+            Assert.False(storage.StoreCalled);
+        }
+    }
+
     [Fact]
     public async Task Size_limits_depend_on_the_upload_policy()
     {

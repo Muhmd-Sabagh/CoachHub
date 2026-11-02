@@ -2,6 +2,7 @@ using CoachHub.API.Common.Routing;
 using CoachHub.Application.Auth;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Common.Models;
+using CoachHub.Application.Media;
 using CoachHub.Application.Training;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,6 +49,19 @@ public sealed class ExercisesController(
         await exerciseService.DeleteAsync(id, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>Uploads the exercise's video (MP4, WebM or MOV, up to 50 MB), replacing the previous one.</summary>
+    [HttpPut("{id:guid}/video")]
+    [RequestSizeLimit(MediaService.MaximumSharedFileSizeBytes)]
+    public async Task<ExerciseResponse> SetVideo(Guid id, [FromForm] IFormFile file, CancellationToken cancellationToken)
+    {
+        await using var content = file.OpenReadStream();
+        return await exerciseService.SetVideoAsync(id, new MediaUpload(content, file.FileName, file.ContentType, file.Length), cancellationToken);
+    }
+
+    [HttpDelete("{id:guid}/video")]
+    public Task<ExerciseResponse> RemoveVideo(Guid id, CancellationToken cancellationToken) =>
+        exerciseService.RemoveVideoAsync(id, cancellationToken);
 
     [HttpPost("legacy-import")]
     [Authorize(Policy = AuthPolicies.AdminOnly)]
