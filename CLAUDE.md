@@ -179,7 +179,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
     - Templates use the standalone `I18N_PIPES`: `translate` (parameters and Arabic plural forms), `localDate`, `localNumber`, `localName` (`nameAr` in Arabic), `localUnitLabel` and `enumLabel`.
     - Add new enum values to `core/i18n/enum-labels.ts` and `translations/enums.ts`.
     - Never show enum names or English literals.
-    - Mark names and user text `translate="no"`; the smoke test flags any other English on an Arabic page.
+    - Mark names and user text `translate="no"`; the smoke test flags any other English on an Arabic page, for every role since P21.
   - **Server.**
     - `Accept-Language` (sent by `languageInterceptor`) sets the request's UI culture only.
     - Messages people read live in `Application/Common/Localization/messages.json` (code, English, Arabic). Thrown messages are matched there, so keep the English text and the catalog in step (`MessagesTests` fails on a stale entry).

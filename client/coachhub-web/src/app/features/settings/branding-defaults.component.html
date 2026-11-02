@@ -22,10 +22,10 @@
     <label><span>{{ 'brand.name' | translate }}</span><input name="brandName" [(ngModel)]="brandForm().brandName" required maxlength="100" /></label>
     <label><span>{{ 'brand.primary' | translate }}</span>
       <span class="filter-row"><input type="color" name="primaryPicker" [attr.aria-label]="'brand.primary' | translate" [ngModel]="colorValue(brandForm().primaryColor, '#465fff')" (ngModelChange)="brandForm().primaryColor = $event" />
-      <input name="primaryColor" [attr.aria-label]="'brand.primary' | translate" [(ngModel)]="brandForm().primaryColor" placeholder="#465fff" maxlength="7" dir="ltr" /></span></label>
+      <input name="primaryColor" translate="no" [attr.aria-label]="'brand.primary' | translate" [(ngModel)]="brandForm().primaryColor" placeholder="#465fff" maxlength="7" dir="ltr" /></span></label>
     <label><span>{{ 'brand.secondary' | translate }}</span>
       <span class="filter-row"><input type="color" name="secondaryPicker" [attr.aria-label]="'brand.secondary' | translate" [ngModel]="colorValue(brandForm().secondaryColor, '#12b76a')" (ngModelChange)="brandForm().secondaryColor = $event" />
-      <input name="secondaryColor" [attr.aria-label]="'brand.secondary' | translate" [(ngModel)]="brandForm().secondaryColor" placeholder="#12b76a" maxlength="7" dir="ltr" /></span></label>
+      <input name="secondaryColor" translate="no" [attr.aria-label]="'brand.secondary' | translate" [(ngModel)]="brandForm().secondaryColor" placeholder="#12b76a" maxlength="7" dir="ltr" /></span></label>
     <label><span>{{ 'brand.headline' | translate }}</span><input name="loginHeadline" [(ngModel)]="brandForm().loginHeadline" maxlength="150" /></label>
     <label class="span-2"><span>{{ 'brand.loginMessage' | translate }}</span><textarea name="loginMessage" [(ngModel)]="brandForm().loginMessage" maxlength="500" rows="2"></textarea></label>
     <label class="span-2"><span>{{ 'brand.welcome' | translate }}</span><textarea name="dashboardWelcome" [(ngModel)]="brandForm().dashboardWelcome" maxlength="500" rows="2"></textarea></label>
@@ -36,7 +36,7 @@
 </section>
 
 <section class="card workbench">
-  <div class="section-heading"><h2>{{ 'brand.images' | translate }}</h2><span>{{ 'brand.imageTypes' | translate }}</span></div>
+  <div class="section-heading"><h2>{{ 'brand.images' | translate }}</h2><span>{{ 'brand.imageLimit' | translate }} <span translate="no">PNG · JPEG · WebP · GIF</span></span></div>
   <div class="form-grid">
     @for (image of images; track image) {
       <div>

@@ -93,7 +93,8 @@ export class ChatThreadComponent implements OnInit, OnChanges, OnDestroy, AfterV
   ) {}
 
   me(): ChatParticipant { return this.clientId ? 'Coach' : 'Client'; }
-  otherName(): string { return this.clientId ? this.thread()?.clientName ?? this.i18n.translate('chat.theClient') : this.i18n.translate('chat.yourCoach'); }
+  /** Who the conversation is with, for screen readers; the client's name shows on the page, so the coach hears "the client". */
+  otherName(): string { return this.i18n.translate(this.clientId ? 'chat.theClient' : 'chat.yourCoach'); }
 
   private loaded = false;
 

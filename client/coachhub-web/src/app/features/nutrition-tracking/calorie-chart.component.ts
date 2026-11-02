@@ -73,5 +73,10 @@ export class CalorieChartComponent implements AfterViewInit, OnChanges, OnDestro
       this.chart = new Apex(this.host.nativeElement, options);
       await this.chart.render();
     }
+    // The library labels its legend buttons in English; name them in the interface language.
+    this.host.nativeElement.querySelectorAll<HTMLElement>('.apexcharts-legend-series').forEach(item => {
+      const name = item.querySelector('.apexcharts-legend-text')?.textContent ?? '';
+      item.setAttribute('aria-label', this.i18n.translate('chart.toggleSeries', { name }));
+    });
   }
 }

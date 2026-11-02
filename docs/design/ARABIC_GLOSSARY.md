@@ -2,7 +2,7 @@
 
 Started in P19. Every Arabic text in the app follows these terms. New terms are added by the phase that introduces them, and the owner, or a reviewer the owner names, approves them before the phase merges.
 
-**Status:** draft for owner approval (P19). Units approved by the owner on 2026-11-02; three terms below are still open.
+**Status:** draft for owner approval (P19, extended in P21). Units approved by the owner on 2026-11-02; three terms below and the staff terms are still open.
 
 ## Conventions
 
@@ -59,6 +59,30 @@ Started in P19. Every Arabic text in the app follows these terms. New terms are 
 | Calendar / Rest day | التقويم / يوم راحة | |
 | Report | تقرير | |
 | Sign in / Sign out | تسجيل الدخول / تسجيل الخروج | |
+
+## Staff terms (P21)
+
+Added with the staff screens; for owner approval with the rest.
+
+| English | Arabic | Notes |
+|---|---|---|
+| Version (of a plan or form) | الإصدار | "Save as new version" = حفظ كإصدار جديد; archived = مؤرشف |
+| Variant (of a diet plan) | البديل | For example the rest-day variant |
+| Meal option | خيار الوجبة | |
+| Set group | المجموعة المركبة | Superset سوبر سِت، Giant set جاينت سِت (the sport's own words, written in Arabic letters) |
+| Warm-up / Main / Cool-down | الإحماء / الأساسي / التهدئة | Workout blocks |
+| Tempo | الإيقاع | Written 3-1-1-0 |
+| Load | الحمل | |
+| Adherence | الالتزام | |
+| Subscription / Package | الاشتراك / الباقة | |
+| Invoice / Payment / Refund | فاتورة / دفعة / استرداد | Settled = مسدد |
+| Revenue | الإيرادات | Settled payments minus refunds (D6) |
+| Audit trail | سجل التدقيق | Actor المنفّذ، record السجل |
+| Reference data | البيانات المرجعية | |
+| Branding | الهوية | White label = العلامة الخاصة |
+| Assessment form | نموذج تقييم | Initial التقييم الأولي، update تحديث التقييم |
+| Transfer (a client) | نقل العميل | |
+| Administrator | المسؤول | |
 
 ## For the reviewer
 
