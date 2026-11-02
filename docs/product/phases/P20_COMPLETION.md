@@ -69,8 +69,7 @@ Both decisions are recorded in REQUIREMENTS.md *Confirmed clarifications*, the g
 
 ## Known limitations
 
-- **The coach's progress tab** (client profile) is not yet translated. It does not show the tests table either; P21 can drop in `app-test-summary`. The coach sees tests in the client's Tests tab and in the reports panel.
-- **The staff shell** (header and navigation for staff) is English until P21.
+- **The coach's progress tab** and **the staff shell** were English at P20's close. *Closed in P21*: both are translated and the progress tab shows the tests table.
 - **After a transfer**, a plan that keeps the previous coach's custom exercise cannot play that exercise's uploaded video for the client: it sits in the previous coach's library.
 - **GIF uploads** are stored without rewriting.
 - **Videos are not transcoded or size-reduced.** The 50 MB cap applies.

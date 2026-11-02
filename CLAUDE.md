@@ -173,7 +173,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Uploaded media plays through `app-media-video` (fetched with the session; `/media` needs the token).
   - Check-in lists search by client name, form and dates on the server (`CheckInQuery`); the progress dashboard and reports include `Training.Tests` from `FitnessTestService.SummaryAsync`.
 - **Localisation (P19)** — see `docs/product/phases/P19_LOCALISATION.md` and the terms in `docs/design/ARABIC_GLOSSARY.md`.
-  - **Bilingual delivery.** Every screen, message, notification, email and PDF a phase adds or changes ships in English and Arabic. The client area is done (P19); P21 translates the staff screens.
+  - **Bilingual delivery.** Every screen, message, notification, email, PDF and CSV header ships in English and Arabic; all screens are translated (P19 client area, P21 staff). A new screen or message ships both languages in the same change.
   - **Angular.**
     - Texts are keys in `core/i18n/translations/<area>.ts` (`defineTranslations`), so a missing or misspelt key fails the build.
     - Templates use the standalone `I18N_PIPES`: `translate` (parameters and Arabic plural forms), `localDate`, `localNumber`, `localName` (`nameAr` in Arabic), `localUnitLabel` and `enumLabel`.
@@ -182,7 +182,8 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
     - Mark names and user text `translate="no"`; the smoke test flags any other English on an Arabic page, for every role since P21.
   - **Server.**
     - `Accept-Language` (sent by `languageInterceptor`) sets the request's UI culture only.
-    - Messages people read live in `Application/Common/Localization/messages.json` (code, English, Arabic). Thrown messages are matched there, so keep the English text and the catalog in step (`MessagesTests` fails on a stale entry).
+    - Messages people read live in `Application/Common/Localization/messages.json` (code, English, Arabic). Thrown messages are matched there, so keep the English text and the catalog in step (`MessagesTests` fails on a stale entry). Add an entry for every new user-facing message; only configuration and internal errors stay English.
+    - CSV column names go through `CsvHeaders.Localize`; values stay machine-readable.
     - Text the code builds itself (notifications, access refusals, calendar titles) uses `Messages.Text(code, language, …)`.
     - Notifications are written in each recipient's language (`NoticeText`).
   - **Formats.** Arabic uses Western digits and the Gregorian calendar (`UiCulture.Formatting`, Angular's `ar` locale). Write Arabic counts as "label: number" unless a plural entry covers them.
@@ -191,7 +192,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P18. Known gaps against REQUIREMENTS.md:
 
-- product phases P0–P18, P10A, P18A (cleanup), P19 (localisation; the client area in Arabic) and P20 (photo privacy, check-in search, uploaded videos, tests in the dashboard and reports, metric units) are delivered. The completion phases P21–P23 in the roadmap close the rest: the staff screens in Arabic (P21), tracking fixes (P22), and the release with the owner's production sign-off on staging (P23, `docs/deployment/PRODUCTION_SIGNOFF.md`).
+- product phases P0–P18, P10A, P18A (cleanup), P19 (localisation; the client area in Arabic) P20 (photo privacy, check-in search, uploaded videos, tests in the dashboard and reports, metric units) and P21 (every staff screen, server message, PDF label and CSV header in Arabic) are delivered. The completion phases P22–P23 in the roadmap close the rest: tracking fixes (P22), and the release with the owner's production sign-off on staging (P23, `docs/deployment/PRODUCTION_SIGNOFF.md`).
 - Scale-out (more than one API instance) is backlog: SignalR has no backplane and the workers are not coordinated.
 
 Treat these as planned rework, not conventions to preserve.

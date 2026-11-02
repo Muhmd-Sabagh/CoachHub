@@ -1,6 +1,6 @@
 # CoachHub Product Roadmap: Phases to Implement docs/product/REQUIREMENTS.md
 
-**Status:** Approved by the owner on 2026-10-12. P0–P18, P10A, P18A, P19 and P20 are delivered. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
+**Status:** Approved by the owner on 2026-10-12. P0–P18, P10A, P18A and P19–P21 are delivered. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
 
 ## Context
 
@@ -465,6 +465,8 @@ The client area comes first because clients mostly use their phones (§53).
 
 ### P21: Arabic for staff screens (L), covering §1, §44, §49 (Language), §51, §53
 
+**Delivered 2026-11-02** (see `docs/product/phases/P21_STAFF_ARABIC.md`); the owner's glossary and review-sample approval stay open for P23.
+
 - **Screens.** Translate the Administrator and Coach screens from P4–P17 area by area: clients and profile tabs, plans and the builders, catalogs, check-ins, tests, chat and files, calendar, dashboards, subscriptions and billing, settings and branding, audit, reports.
 - **Server text.** Translate the remaining validation and error messages through the P19 mechanism.
 - **Documents.**
@@ -550,4 +552,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 was delivered on 2026-11-02 on branch `phase/p20-completion`. The next phases are **P21** (Arabic for staff screens) and **P22** (tracking fixes); P21 may run alongside P22.
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 and P21 were delivered on 2026-11-02. The next phase is **P22** (tracking correctness and operational fixes), then P23.
