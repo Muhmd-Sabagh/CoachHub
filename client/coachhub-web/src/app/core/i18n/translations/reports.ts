@@ -54,7 +54,7 @@ export const reports = defineTranslations({
     'reports.daysLogged': 'أيام التسجيل: {logged} من {days}',
     'reports.training': 'التمارين',
     'reports.workouts': 'التمارين المنجزة: {done} من {scheduled}',
-    'reports.volume': 'حجم تدريب {value} كغ',
+    'reports.volume': 'حجم تدريب {value} كجم',
     'reports.steps': 'الخطوات',
     'reports.stepsPerDay': '{value} يوميًا',
     'reports.sleep': 'النوم',

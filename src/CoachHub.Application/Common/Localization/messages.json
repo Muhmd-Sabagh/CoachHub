@@ -95,7 +95,7 @@
   "training.deleteSetsBeforeSkip": { "en": "Delete the exercise's completed sets before skipping it.", "ar": "احذف المجموعات المكتملة لهذا التمرين قبل تخطيه." },
   "training.skippedNoValues": { "en": "A skipped set has no performance values.", "ar": "المجموعة المتخطاة لا تحمل قيم أداء." },
   "training.repsOrDuration": { "en": "Enter the reps or the duration of the set.", "ar": "أدخل عدد التكرارات أو مدة المجموعة." },
-  "training.weightRange": { "en": "Weight is 0–{0} kg with at most two decimals.", "ar": "الوزن من 0 إلى {0} كغ بحد أقصى خانتين عشريتين." },
+  "training.weightRange": { "en": "Weight is 0–{0} kg with at most two decimals.", "ar": "الوزن من 0 إلى {0} كجم بحد أقصى خانتين عشريتين." },
   "training.rpeRange": { "en": "RPE is 1–10 in steps of 0.5.", "ar": "قيمة RPE من 1 إلى 10 بخطوات 0.5." },
 
   "progress.measurementRequired": { "en": "Enter at least one measurement.", "ar": "أدخل قياسًا واحدًا على الأقل." },

@@ -1,16 +1,7 @@
-using System.Text.Json.Serialization;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Common;
 
 namespace CoachHub.Domain.Settings;
-
-/// <summary>Measurement units shown to users (§49). Values are always stored metric.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<UnitSystem>))]
-public enum UnitSystem
-{
-    Metric,
-    Imperial
-}
 
 /// <summary>
 /// Platform-wide settings (§49), one row. Secrets such as SMTP credentials stay in configuration;
@@ -29,7 +20,6 @@ public sealed class PlatformSettings : Entity
 
     /// <summary>"en" or "ar".</summary>
     public string DefaultLanguage { get; private set; } = "en";
-    public UnitSystem Units { get; private set; } = UnitSystem.Metric;
 
     /// <summary>Whether coach workspace messages may be emailed. Account security emails always are.</summary>
     public bool EmailNotificationsEnabled { get; private set; } = true;
@@ -94,7 +84,6 @@ public sealed class PlatformSettings : Entity
 
     public void Update(
         string defaultLanguage,
-        UnitSystem units,
         bool emailNotificationsEnabled,
         bool whatsAppNotificationsEnabled,
         string? emailSenderName,
@@ -102,13 +91,11 @@ public sealed class PlatformSettings : Entity
     {
         var language = defaultLanguage?.Trim().ToLowerInvariant();
         if (language is not ("en" or "ar")) throw new ArgumentException("Choose English (en) or Arabic (ar).", nameof(defaultLanguage));
-        if (!Enum.IsDefined(units)) throw new ArgumentException("Choose metric or imperial units.", nameof(units));
         var sender = string.IsNullOrWhiteSpace(emailSenderName) ? null : emailSenderName.Trim();
         if (sender is { Length: > 100 } || sender?.IndexOfAny(['<', '>', '"', '\r', '\n']) >= 0)
             throw new ArgumentException("Use a plain name of at most 100 characters.", nameof(emailSenderName));
 
         DefaultLanguage = language;
-        Units = units;
         EmailNotificationsEnabled = emailNotificationsEnabled;
         WhatsAppNotificationsEnabled = whatsAppNotificationsEnabled;
         EmailSenderName = sender;

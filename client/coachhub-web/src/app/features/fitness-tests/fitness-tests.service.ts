@@ -95,7 +95,7 @@ export function cutOffText(test: Pick<TestDefinition, 'higherIsBetter' | 'goodTh
     : `${direction} · Good up to ${test.goodThreshold} ${unit} · Poor above ${test.poorThreshold} ${unit}`;
 }
 
-/** A test unit's short label in the interface language (P19), for example "kg" / "كغ". */
+/** A test unit's short label in the interface language (P19), for example "kg" / "كجم". */
 export function localUnit(unit: TestUnit, i18n: I18nService): string {
   return i18n.translate(unitKeys[unit]);
 }

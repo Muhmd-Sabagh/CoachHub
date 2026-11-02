@@ -418,7 +418,7 @@ Removes what the legacy migration (phases 0–21) and the product phases left be
 
 ### P19: Localisation foundation and the client area in Arabic (L), covering §1, §49 (Language), §53, §63
 
-**Delivered 2026-10-23** (see `docs/product/phases/P19_LOCALISATION.md`).
+**Delivered 2026-10-23** (see `docs/product/phases/P19_LOCALISATION.md`; merged in PR #23).
 
 The client area comes first because clients mostly use their phones (§53).
 
@@ -443,12 +443,7 @@ The client area comes first because clients mostly use their phones (§53).
 
 ### P20: Units and requirement completion (M), covering §17, §26, §34, §37, §44, §49 (Units), §50, §51, §52
 
-- **Units (§49).**
-  - Storage stays metric. Pure, unit-tested conversion functions handle body weight and loads (kg ↔ lb), height and measurements (cm ↔ in) and water (ml ↔ fl oz).
-  - Each account gets a units preference that defaults to the platform setting.
-  - Applies to entry and display in tracking, workout logging and builder loads, the profile, check-in measures, dashboards, reports and PDFs.
-  - CSV exports keep metric values with explicit unit columns, so the files stay comparable.
-  - Food quantities keep their catalog units.
+- **Units (§49).** *Changed by the owner on 2026-11-02:* the platform is **metric only**. No imperial units, conversions or units preference are built, and the unused Metric/Imperial platform setting is removed. Arabic abbreviations become كجم, جم, سم, م and مل; English stays kg, g, cm, m and ml.
 - **Uploaded videos (§17, §34).**
   - Exercises and test definitions accept an uploaded video (media) as well as a YouTube link.
   - Platform entries reference platform media, and a coach's entries reference the coach library.
@@ -553,4 +548,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. The next phase is **P20** on branch `phase/p20-completion`, beginning with its own short plan-mode refinement.
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 started on 2026-11-02 on branch `phase/p20-completion` (see `docs/product/phases/P20_COMPLETION.md`).

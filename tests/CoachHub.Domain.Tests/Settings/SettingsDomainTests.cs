@@ -147,13 +147,12 @@ public sealed class CoachSettingsTests
 public sealed class PlatformSettingsTests
 {
     [Fact]
-    public void Defaults_are_english_metric_with_notifications_on()
+    public void Defaults_are_english_with_notifications_on()
     {
         var settings = PlatformSettings.CreateDefault(DateTimeOffset.UtcNow);
 
         Assert.Equal(PlatformSettings.SingletonId, settings.Id);
         Assert.Equal("en", settings.DefaultLanguage);
-        Assert.Equal(UnitSystem.Metric, settings.Units);
         Assert.True(settings.EmailNotificationsEnabled);
     }
 
@@ -164,7 +163,7 @@ public sealed class PlatformSettingsTests
     public void Invalid_language_or_sender_name_is_rejected(string language, string? sender)
     {
         var settings = PlatformSettings.CreateDefault(DateTimeOffset.UtcNow);
-        Assert.Throws<ArgumentException>(() => settings.Update(language, UnitSystem.Metric, true, true, sender, DateTimeOffset.UtcNow));
+        Assert.Throws<ArgumentException>(() => settings.Update(language, true, true, sender, DateTimeOffset.UtcNow));
     }
 
     [Fact]
@@ -172,10 +171,9 @@ public sealed class PlatformSettingsTests
     {
         var settings = PlatformSettings.CreateDefault(DateTimeOffset.UtcNow);
 
-        settings.Update("AR", UnitSystem.Imperial, false, true, " CoachHub Team ", DateTimeOffset.UtcNow);
+        settings.Update("AR", false, true, " CoachHub Team ", DateTimeOffset.UtcNow);
 
         Assert.Equal("ar", settings.DefaultLanguage);
-        Assert.Equal(UnitSystem.Imperial, settings.Units);
         Assert.False(settings.EmailNotificationsEnabled);
         Assert.Equal("CoachHub Team", settings.EmailSenderName);
     }

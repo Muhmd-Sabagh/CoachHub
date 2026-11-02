@@ -40,7 +40,7 @@ public sealed class PdfLayoutRulesTests
     {
         var rows = new[]
         {
-            new MealFoodItemResponse(Guid.NewGuid(), Guid.NewGuid(), "Oats", null, null, "g", "غ", 100, 0, null, NutritionTotals.Zero),
+            new MealFoodItemResponse(Guid.NewGuid(), Guid.NewGuid(), "Oats", null, null, "g", "جم", 100, 0, null, NutritionTotals.Zero),
             new MealFoodItemResponse(Guid.NewGuid(), Guid.NewGuid(), "Eggs", null, null, "large", "كبيرة", 3, 1, "Boiled", NutritionTotals.Zero)
         };
         Assert.True(PdfColumnVisibility.DietNotes(rows));

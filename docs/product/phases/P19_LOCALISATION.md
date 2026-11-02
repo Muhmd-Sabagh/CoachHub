@@ -1,6 +1,6 @@
 # P19 — Localisation foundation and the client area in Arabic
 
-**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P19 · **Branch:** `phase/p19-localisation` · **Status:** Implemented, pending PR.
+**Roadmap:** [ROADMAP.md](../ROADMAP.md) § P19 · **Branch:** `phase/p19-localisation` · **Status:** Delivered; merged to `master` (PR #23).
 **Covers:** §1 and §49 (language), §53 (mobile first; clients mostly use phones), §63 (branding shown as written).
 
 The owner decided on 2026-10-22 that Arabic is part of every phase from P19 on, with Western digits. This phase builds the foundation and translates everything a client sees. P21 translates the staff screens.

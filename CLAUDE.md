@@ -30,6 +30,10 @@ And on 2026-10-22:
 - No cross-coach access: a coach never sees another coach's clients or data, and the Administrator cannot grant it. This replaces the §62 clause "unless the Admin grants permission"; moving a client stays a transfer (§56).
 - Arabic is part of every phase from P19 on, with Western digits.
 
+And on 2026-11-02:
+
+- Units are metric only: no inches, feet, pounds or fluid ounces, and no units setting. Abbreviations are kg, g, cm, m, ml in English and كجم, جم, سم, م, مل in Arabic.
+
 `docs/archive/` holds the legacy migration-phase docs and the first conventions (P18A). They are history; where they conflict with REQUIREMENTS.md, the roadmap or this file, the current documents win.
 
 When a requirement is ambiguous, or a change would contradict D1–D6, stop and ask. Don't pick an interpretation silently.

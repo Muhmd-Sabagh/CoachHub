@@ -100,7 +100,7 @@ public static partial class Messages
     /// <summary>Unit symbols inside English messages, written as the Arabic interface writes them (P19 glossary).</summary>
     private static readonly Dictionary<string, string> ArabicUnits = new(StringComparer.Ordinal)
     {
-        ["kg"] = "كغ", ["g"] = "غ", ["cm"] = "سم", ["ml"] = "مل", ["kcal"] = "سعرة"
+        ["kg"] = "كجم", ["g"] = "جم", ["cm"] = "سم", ["ml"] = "مل", ["kcal"] = "سعرة"
     };
 
     /// <summary>Code prefixes of entries used only through <see cref="Text"/>.</summary>

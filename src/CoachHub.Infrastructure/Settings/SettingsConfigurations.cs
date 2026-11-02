@@ -42,7 +42,6 @@ public sealed class PlatformSettingsConfiguration : IEntityTypeConfiguration<Pla
         builder.ToTable("PlatformSettings");
         builder.HasKey(settings => settings.Id);
         builder.Property(settings => settings.DefaultLanguage).HasMaxLength(5).IsRequired();
-        builder.Property(settings => settings.Units).HasConversion<string>().HasMaxLength(20);
         builder.Property(settings => settings.EmailSenderName).HasMaxLength(100);
         builder.Property(settings => settings.DurationPresetList).HasMaxLength(100).IsRequired();
         // The access rules (P16) are read on every client request, so they always load with the settings.

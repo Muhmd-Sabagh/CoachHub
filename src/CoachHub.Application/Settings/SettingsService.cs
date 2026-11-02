@@ -15,13 +15,13 @@ public sealed class SettingsService(
     ICurrentUser currentUser,
     TimeProvider timeProvider)
 {
-    /// <summary>What every signed-in screen needs: brand name, coach name, units and language.</summary>
+    /// <summary>What every signed-in screen needs: brand name, coach name and language.</summary>
     public async Task<WorkspaceSettingsResponse> GetWorkspaceAsync(CancellationToken cancellationToken)
     {
         var platform = await PlatformAsync(cancellationToken);
         var brand = await branding.EffectiveAsync(currentUser.CoachId, cancellationToken);
         var coach = currentUser.CoachId is { } coachId ? await coaches.FindAsync(coachId, cancellationToken) : null;
-        return new(brand.BrandName, coach?.DisplayName, platform.Units, platform.DefaultLanguage);
+        return new(brand.BrandName, coach?.DisplayName, platform.DefaultLanguage);
     }
 
     public async Task<PlatformSettingsResponse> GetPlatformAsync(CancellationToken cancellationToken)
@@ -39,7 +39,7 @@ public sealed class SettingsService(
         var stored = await settings.FindPlatformAsync(cancellationToken);
         var target = stored ?? PlatformSettings.CreateDefault(timeProvider.GetUtcNow());
         DomainValidation.Run(() => target.Update(
-            input.DefaultLanguage, input.Units, input.EmailNotificationsEnabled, input.WhatsAppNotificationsEnabled,
+            input.DefaultLanguage, input.EmailNotificationsEnabled, input.WhatsAppNotificationsEnabled,
             input.EmailSenderName, timeProvider.GetUtcNow()), "settings");
         if (stored is null) settings.Add(target);
         await settings.SaveChangesAsync(cancellationToken);
@@ -110,7 +110,7 @@ public sealed class SettingsService(
     }
 
     private static PlatformSettingsResponse Map(PlatformSettings value, bool saved) => new(
-        value.DefaultLanguage, value.Units, value.EmailNotificationsEnabled, value.WhatsAppNotificationsEnabled,
+        value.DefaultLanguage, value.EmailNotificationsEnabled, value.WhatsAppNotificationsEnabled,
         value.EmailSenderName, saved ? value.UpdatedAt : null);
 
     private static CoachSettingsResponse Map(CoachSettings value, bool saved) => new(

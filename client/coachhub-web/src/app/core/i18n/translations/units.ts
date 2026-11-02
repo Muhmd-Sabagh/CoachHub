@@ -17,8 +17,8 @@ export const units = defineTranslations({
     'unit.steps': 'steps',
   },
   ar: {
-    'unit.kg': 'كغ',
-    'unit.g': 'غ',
+    'unit.kg': 'كجم',
+    'unit.g': 'جم',
     'unit.cm': 'سم',
     'unit.m': 'م',
     'unit.ml': 'مل',
