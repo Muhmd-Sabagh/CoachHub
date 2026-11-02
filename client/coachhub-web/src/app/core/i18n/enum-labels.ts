@@ -33,6 +33,13 @@ export const enumValues = {
   clientStatus: ['OnTrack', 'NeedsReview', 'Inactive', 'SubscriptionExpired', 'CheckInOverdue'],
   paymentStatus: ['NoInvoice', 'Unpaid', 'PartiallyPaid', 'Paid', 'Refunded'],
   role: ['Administrator', 'Coach', 'Client'],
+  sex: ['Female', 'Male'],
+  goal: ['LoseFat', 'BuildMuscle', 'Recomposition', 'Maintain', 'Performance', 'GeneralHealth'],
+  activityLevel: ['Sedentary', 'LightlyActive', 'ModeratelyActive', 'VeryActive', 'ExtraActive'],
+  trainingLocation: ['Gym', 'Home', 'Outdoor', 'Mixed'],
+  dietaryRestriction: ['Vegetarian', 'Vegan', 'GlutenFree', 'LactoseFree', 'NutFree', 'Halal', 'Pescatarian', 'LowSodium', 'Diabetic'],
+  accountState: ['None', 'Invited', 'Active', 'Disabled'],
+  adherenceArea: ['Nutrition', 'Workout', 'CheckIn', 'Steps', 'Water', 'Sleep'],
   auditOperation: ['Create', 'Update', 'Delete'],
   actorKind: ['Administrator', 'Coach', 'Client', 'System'],
   entityType: [

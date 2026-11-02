@@ -1,13 +1,14 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { isoDate } from '../nutrition-tracking/nutrition-tracking.service';
 import { TrendChartComponent } from '../progress-tracking/trend-chart.component';
 import {
-  ClientTest, FitnessTestsService, TestClassification, TestDefinition, TestResult, changeText, classificationLabels, classifications,
-  cutOffText, unitLabels,
+  ClientTest, FitnessTestsService, TestClassification, TestDefinition, TestResult, TestUnit, classifications, localChangeText, localCutOffText,
+  localUnit,
 } from './fitness-tests.service';
 
 interface ResultDraft { testDefinitionId: string; date: string; value: number | null; notes: string; }
@@ -19,32 +20,32 @@ interface ResultDraft { testDefinitionId: string; date: string; value: number | 
 @Component({
   selector: 'app-client-tests',
   standalone: true,
-  imports: [CommonModule, FormsModule, TrendChartComponent],
+  imports: [FormsModule, TrendChartComponent, ...I18N_PIPES],
   template: `
     @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     <section class="card workbench">
-      <h2>Assign and record</h2>
+      <h2>{{ 'coachTests.assign' | translate }}</h2>
       <form class="form-grid" (ngSubmit)="assign()">
-        <label><span>Test</span>
+        <label><span>{{ 'coachTests.test' | translate }}</span>
           <select [(ngModel)]="assignId" name="assign">
-            <option value="">Choose a test…</option>
-            @for (t of unassigned(); track t.id) { <option [value]="t.id">{{ t.kind }} · {{ t.nameEn }}</option> }
+            <option value="">{{ 'coachTests.choose' | translate }}</option>
+            @for (t of unassigned(); track t.id) { <option [value]="t.id">{{ t.kind | enumLabel: 'testKind' }} · {{ t | localName }}</option> }
           </select></label>
-        <button type="submit" class="button button-secondary" [disabled]="!assignId() || busy()">Assign to client</button>
+        <button type="submit" class="button button-secondary" [disabled]="!assignId() || busy()">{{ 'coachTests.assignButton' | translate }}</button>
       </form>
       <form class="form-grid record" (ngSubmit)="saveResult()">
-        <label><span>Result for</span>
+        <label><span>{{ 'coachTests.resultFor' | translate }}</span>
           <select [(ngModel)]="draft().testDefinitionId" name="test" [disabled]="!!editing()">
-            <option value="">Choose a test…</option>
-            @for (t of library(); track t.id) { <option [value]="t.id">{{ t.kind }} · {{ t.nameEn }} ({{ unitLabel[t.unit] }})</option> }
+            <option value="">{{ 'coachTests.choose' | translate }}</option>
+            @for (t of library(); track t.id) { <option [value]="t.id">{{ t.kind | enumLabel: 'testKind' }} · {{ t | localName }} ({{ unit(t.unit) }})</option> }
           </select></label>
-        <label><span>Date</span><input type="date" [(ngModel)]="draft().date" name="date" required /></label>
-        <label><span>Value</span><input type="number" min="0" step="0.01" [(ngModel)]="draft().value" name="value" required /></label>
-        <label><span>Notes</span><input [(ngModel)]="draft().notes" name="notes" maxlength="1000" /></label>
+        <label><span>{{ 'coachTests.date' | translate }}</span><input type="date" [(ngModel)]="draft().date" name="date" required /></label>
+        <label><span>{{ 'coachTests.value' | translate }}</span><input type="number" min="0" step="0.01" [(ngModel)]="draft().value" name="value" required /></label>
+        <label><span>{{ 'coachTests.notes' | translate }}</span><input [(ngModel)]="draft().notes" name="notes" maxlength="1000" /></label>
         <div class="actions">
           <button type="submit" class="button button-primary" [disabled]="!draft().testDefinitionId || draft().value === null || busy()">
-            {{ editing() ? 'Save result' : 'Record result' }}</button>
-          @if (editing()) { <button type="button" class="button button-secondary" (click)="resetDraft()">Cancel</button> }
+            {{ (editing() ? 'coachTests.saveResult' : 'coachTests.recordResult') | translate }}</button>
+          @if (editing()) { <button type="button" class="button button-secondary" (click)="resetDraft()">{{ 'common.cancel' | translate }}</button> }
         </div>
       </form>
     </section>
@@ -53,50 +54,50 @@ interface ResultDraft { testDefinitionId: string; date: string; value: number | 
       @for (t of d.tests; track t.testDefinitionId) {
         <section class="card workbench test">
           <div class="line">
-            <div><p class="eyebrow">{{ t.kind }}</p><h3>{{ t.nameEn }}</h3>
-              <small class="muted">{{ t.definition ? cutOffs(t.definition) : 'A previous coach\\'s test' }}</small></div>
+            <div><p class="eyebrow">{{ t.kind | enumLabel: 'testKind' }}</p><h3 translate="no">{{ t | localName }}</h3>
+              <small class="muted">{{ t.definition ? cutOffs(t.definition) : ('coachTests.previousCoach' | translate) }}</small></div>
             <div class="actions">
               @if (t.isAssigned) {
-                <span class="badge ok">Assigned</span>
-                <button type="button" class="link-button danger" (click)="unassign(t)">Unassign</button>
-              } @else { <span class="badge">Not assigned</span> }
+                <span class="badge ok">{{ 'coachTests.assigned' | translate }}</span>
+                <button type="button" class="link-button danger" (click)="unassign(t)">{{ 'coachTests.unassign' | translate }}</button>
+              } @else { <span class="badge">{{ 'coachTests.notAssigned' | translate }}</span> }
             </div>
           </div>
           @if (t.progress.current; as current) {
             <div class="stats">
-              <div><small>Current</small><strong>{{ current.value }} {{ unitLabel[t.unit] }}</strong><small class="muted">{{ current.date | date: 'd MMM y' }}</small></div>
-              <div><small>Previous</small><strong>{{ t.progress.previous ? t.progress.previous.value + ' ' + unitLabel[t.unit] : '–' }}</strong>
-                <small class="muted">{{ change(t.progress.changeFromPrevious, t) ?? '' }} {{ t.progress.trend ? '· ' + t.progress.trend.toLowerCase() : '' }}</small></div>
-              <div><small>Since first</small><strong>{{ change(t.progress.changeFromFirst, t) ?? '–' }}</strong>
-                <small class="muted">{{ t.progress.percentChangeFromFirst !== null ? t.progress.percentChangeFromFirst + '%' : '' }}</small></div>
-              <div><small>Best</small><strong>{{ t.progress.best?.value }} {{ unitLabel[t.unit] }}</strong><small class="muted">{{ t.progress.best?.date | date: 'd MMM y' }}</small></div>
+              <div><small>{{ 'coachTests.current' | translate }}</small><strong>{{ current.value | localNumber: '1.0-2' }} {{ unit(t.unit) }}</strong><small class="muted">{{ current.date | localDate: 'd MMM y' }}</small></div>
+              <div><small>{{ 'coachTests.previous' | translate }}</small><strong>{{ t.progress.previous ? (t.progress.previous.value | localNumber: '1.0-2') + ' ' + unit(t.unit) : '–' }}</strong>
+                <small class="muted">{{ change(t.progress.changeFromPrevious, t) ?? '' }}@if (t.progress.trend; as trend) { · {{ trend | enumLabel: 'testTrend' }} }</small></div>
+              <div><small>{{ 'coachTests.sinceFirst' | translate }}</small><strong>{{ change(t.progress.changeFromFirst, t) ?? '–' }}</strong>
+                <small class="muted">{{ t.progress.percentChangeFromFirst !== null ? (t.progress.percentChangeFromFirst | localNumber: '1.0-1') + '%' : '' }}</small></div>
+              <div><small>{{ 'coachTests.best' | translate }}</small><strong>{{ t.progress.best?.value | localNumber: '1.0-2' }} {{ unit(t.unit) }}</strong><small class="muted">{{ t.progress.best?.date | localDate: 'd MMM y' }}</small></div>
             </div>
-            @if (t.results.length > 1) { <app-trend-chart [points]="points(t)" [series]="t.nameEn" [unit]="unitLabel[t.unit]" [label]="t.nameEn + ' over time'" /> }
+            @if (t.results.length > 1) { <app-trend-chart [points]="points(t)" [series]="t | localName" [unit]="unit(t.unit)" [label]="'tests.overTime' | translate: { name: (t | localName) }" /> }
             <div class="table-scroll"><table>
-              <thead><tr><th>Date</th><th>Result</th><th>Rating</th><th>By</th><th>Notes</th><th></th></tr></thead>
+              <thead><tr><th>{{ 'coachTests.date' | translate }}</th><th>{{ 'coachTests.result' | translate }}</th><th>{{ 'coachTests.rating' | translate }}</th><th>{{ 'coachTests.by' | translate }}</th><th>{{ 'coachTests.notes' | translate }}</th><th></th></tr></thead>
               <tbody>
                 @for (r of t.results; track r.id) {
                   <tr>
-                    <td>{{ r.date | date: 'd MMM y' }}</td>
-                    <td>{{ r.value }} {{ unitLabel[r.unit] }}</td>
+                    <td>{{ r.date | localDate: 'd MMM y' }}</td>
+                    <td>{{ r.value | localNumber: '1.0-2' }} {{ unit(r.unit) }}</td>
                     <td><select [ngModel]="r.isClassificationOverridden ? r.classification : ''" (ngModelChange)="classify(r, $event)" [name]="'c' + r.id"
-                        [attr.aria-label]="'Rating of ' + (r.date | date: 'd MMM')">
-                        <option value="">Automatic{{ !r.isClassificationOverridden && r.classification ? ' (' + labels[r.classification] + ')' : '' }}</option>
-                        @for (c of classes; track c) { <option [value]="c">{{ labels[c] }}</option> }
+                        [attr.aria-label]="'coachTests.ratingOf' | translate: { date: (r.date | localDate: 'd MMM') }">
+                        <option value="">{{ !r.isClassificationOverridden && r.classification ? ('coachTests.automaticWith' | translate: { rating: (r.classification | enumLabel: 'testClassification') }) : ('coachTests.automatic' | translate) }}</option>
+                        @for (c of classes; track c) { <option [value]="c">{{ c | enumLabel: 'testClassification' }}</option> }
                       </select></td>
-                    <td>{{ r.recordedBy }}</td>
-                    <td>{{ r.notes }}</td>
+                    <td>{{ r.recordedBy | enumLabel: 'testRecorder' }}</td>
+                    <td translate="no">{{ r.notes }}</td>
                     <td class="actions">
-                      <button type="button" class="link-button" (click)="edit(r)">Edit</button>
-                      <button type="button" class="link-button danger" (click)="removeResult(r)">Delete</button>
+                      <button type="button" class="link-button" (click)="edit(r)">{{ 'common.edit' | translate }}</button>
+                      <button type="button" class="link-button danger" (click)="removeResult(r)">{{ 'common.delete' | translate }}</button>
                     </td>
                   </tr>
                 }
               </tbody>
             </table></div>
-          } @else { <p class="muted">No results yet.</p> }
+          } @else { <p class="muted">{{ 'coachTests.noResults' | translate }}</p> }
         </section>
-      } @empty { <p class="muted">No tests assigned or recorded yet.</p> }
+      } @empty { <p class="muted">{{ 'coachTests.none' | translate }}</p> }
     }
   `,
   styles: [`
@@ -113,10 +114,7 @@ interface ResultDraft { testDefinitionId: string; date: string; value: number | 
 })
 export class ClientTestsComponent implements OnChanges {
   @Input({ required: true }) clientId!: string;
-  readonly unitLabel = unitLabels;
-  readonly labels = classificationLabels;
   readonly classes = classifications;
-  readonly cutOffs = cutOffText;
   readonly data = signal<{ tests: ClientTest[] } | null>(null);
   readonly library = signal<TestDefinition[]>([]);
   readonly unassigned = signal<TestDefinition[]>([]);
@@ -126,7 +124,10 @@ export class ClientTestsComponent implements OnChanges {
   readonly assignId = signal('');
   readonly draft = signal<ResultDraft>(this.emptyDraft());
 
-  constructor(private readonly api: FitnessTestsService) {}
+  constructor(private readonly api: FitnessTestsService, private readonly i18n: I18nService) {}
+
+  unit(unit: TestUnit): string { return localUnit(unit, this.i18n); }
+  cutOffs(test: TestDefinition): string { return localCutOffText(test, this.i18n); }
 
   ngOnChanges(): void {
     this.api.list({ isActive: true }).subscribe({
@@ -143,14 +144,14 @@ export class ClientTestsComponent implements OnChanges {
     });
   }
 
-  change(value: number | null, test: ClientTest): string | null { return changeText(value, test.unit); }
+  change(value: number | null, test: ClientTest): string | null { return localChangeText(value, test.unit, this.i18n); }
 
   points(test: ClientTest) { return [...test.results].reverse().map(r => ({ date: r.date, value: r.value })); }
 
   assign(): void { this.run(this.api.assign(this.clientId, this.assignId()), () => { this.assignId.set(''); }); }
 
   unassign(test: ClientTest): void {
-    if (!confirm(`Unassign "${test.nameEn}"? Its results stay.`)) return;
+    if (!confirm(this.i18n.translate('coachTests.confirmUnassign', { name: this.i18n.name(test) }))) return;
     this.run(this.api.unassign(this.clientId, test.testDefinitionId));
   }
 
@@ -176,7 +177,7 @@ export class ClientTestsComponent implements OnChanges {
   }
 
   removeResult(result: TestResult): void {
-    if (!confirm('Delete this result?')) return;
+    if (!confirm(this.i18n.translate('coachTests.confirmDelete'))) return;
     this.run(this.api.deleteResult(result.id, this.clientId));
   }
 

@@ -18,7 +18,6 @@ export const classifications: TestClassification[] = ['Good', 'NeedsImprovement'
 export const unitLabels: Record<TestUnit, string> = {
   Kilograms: 'kg', Repetitions: 'reps', Seconds: 's', Meters: 'm', Centimeters: 'cm', Degrees: '°', Points: 'pts', BeatsPerMinute: 'bpm',
 };
-export const classificationLabels: Record<TestClassification, string> = { Good: 'Good', NeedsImprovement: 'Needs improvement', Poor: 'Poor' };
 
 export interface TestDefinition {
   id: string;

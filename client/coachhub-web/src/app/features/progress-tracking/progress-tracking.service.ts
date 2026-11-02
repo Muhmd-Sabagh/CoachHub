@@ -16,7 +16,6 @@ export const measurementSites: MeasurementSite[] = ['Waist', 'Chest', 'Arm', 'Th
 export const photoPoses: PhotoPose[] = ['Front', 'Side', 'Back', 'Custom'];
 
 /** Shown wherever body fat appears (§27). */
-export const bodyFatNotice = 'Body fat is an estimate to guide your coaching. It is not a medical diagnosis.';
 
 export interface SeriesPoint { date: string; value: number; }
 export interface SeriesSummary {

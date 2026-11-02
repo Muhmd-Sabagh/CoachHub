@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
 import type ApexCharts from 'apexcharts';
 import type { ApexOptions } from 'apexcharts';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 /**
  * One series of bars on one axis (§20 weekly volume, §23 training distribution across muscle groups). Colours
@@ -23,6 +24,8 @@ export class TrainingChartComponent implements AfterViewInit, OnChanges, OnDestr
   @ViewChild('host', { static: true }) host!: ElementRef<HTMLElement>;
   private chart: ApexCharts | null = null;
   private ready = false;
+
+  constructor(private readonly i18n: I18nService) {}
 
   ngAfterViewInit(): void {
     this.ready = true;
@@ -60,7 +63,7 @@ export class TrainingChartComponent implements AfterViewInit, OnChanges, OnDestr
       grid: { borderColor: token(dark ? '--gray-700' : '--gray-200', '#e4e7ec'), strokeDashArray: 3 },
       legend: { show: false },
       tooltip: { y: { formatter: (value: number) => `${format(value)} ${unit}` } },
-      noData: { text: 'No training in this range' },
+      noData: { text: this.i18n.translate('coachTraining.noTraining') },
     };
     if (this.chart) {
       await this.chart.updateOptions(options, true, false);

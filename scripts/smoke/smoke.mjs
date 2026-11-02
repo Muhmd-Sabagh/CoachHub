@@ -57,8 +57,8 @@ const adminPages = (clientId) => [...staffPages(clientId), '/coaches'];
 const clientPages = ['/app', '/app/nutrition', '/app/training', '/app/progress', '/app/tests', '/app/calendar', '/app/chat', '/app/files',
   '/app/forms', '/app/account'];
 // The client profile's tabs, opened by their buttons.
-const profileTabs = ['Overview', 'Profile', 'Training', 'Nutrition', 'Food diary', 'Progress', 'Measurements', 'Photos', 'Check-ins', 'Tests',
-  'Calendar', 'Reports', 'Messages', 'Files'];
+const profileTabs = ['overview', 'profile', 'workout', 'nutrition', 'diary', 'progress', 'measurements', 'photos', 'checkins', 'tests', 'calendar',
+  'reports', 'messages', 'files'];
 
 const viewports = { phone: { width: 390, height: 844 }, desktop: { width: 1366, height: 900 } };
 
@@ -113,8 +113,8 @@ function untranslated() {
 /** "Loading…" in either language: a screen still showing it after the wait is stuck (P10A). */
 const loading = /^\s*(Loading|جارٍ التحميل)/i;
 
-/** Roles whose screens must be fully Arabic (P19: the client area; P21 adds the staff roles). */
-const translatedRoles = (process.env.SMOKE_TRANSLATED_ROLES ?? 'client').split(',').map((x) => x.trim());
+/** Roles whose screens must be fully Arabic: every role since P21. */
+const translatedRoles = (process.env.SMOKE_TRANSLATED_ROLES ?? 'admin,coachA,coachB,client').split(',').map((x) => x.trim());
 
 async function visit(page, role, viewport, path, results) {
   const errors = [];
@@ -178,7 +178,8 @@ for (const language of languages) for (const { role, who, pages } of roles.filte
     if (role === 'coachA') {
       await page.goto(`${web}/clients/${seeded.clientId}`, { waitUntil: 'networkidle' });
       for (const tab of profileTabs) {
-        const button = page.getByRole('tab', { name: tab, exact: true }).first();
+        // Tabs are found by their id (P21), so the run works in either language.
+        const button = page.locator(`[role="tab"][data-tab="${tab}"]`).first();
         if (!(await button.isVisible().catch(() => false))) { results.push({ role, language, viewport, path: `profile tab ${tab}`, stuck: false, overflow: false, a11y: [], english: [], errors: ['tab not found'], failed: [], screenshot: '' }); continue; }
         await button.click();
         await page.waitForLoadState('networkidle');
@@ -186,9 +187,10 @@ for (const language of languages) for (const { role, who, pages } of roles.filte
         const stuck = await page.getByText(loading).first().isVisible().catch(() => false);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
         const a11y = await page.evaluate(accessibility, language).catch(() => []);
+        const english = language === 'ar' && translatedRoles.includes(role) ? await page.evaluate(untranslated).catch(() => []) : [];
         const file = `${role}-${language}-${viewport}-profile-${tab.replace(/\W+/g, '_')}.png`;
         await page.screenshot({ path: `${out}/${file}`, fullPage: true });
-        results.push({ role, language, viewport, path: `profile tab ${tab}`, stuck, overflow, a11y, english: [], errors: [], failed: [], screenshot: file });
+        results.push({ role, language, viewport, path: `profile tab ${tab}`, stuck, overflow, a11y, english, errors: [], failed: [], screenshot: file });
       }
     }
     await context.close();
