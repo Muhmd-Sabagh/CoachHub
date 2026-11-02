@@ -2,13 +2,14 @@ import { Component, OnInit, signal } from '@angular/core';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppConfigService } from '../../core/config/app-config.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslationKey } from '../../core/i18n/translations';
 import { emptyPage, PagedResult } from '../../shared/models/paged-result';
 import { apiErrorMessage } from '../../shared/services/api-error';
 import { ReferenceDataService, ReferenceKey, ReferenceRecord } from './reference-data.service';
 
 interface Resource {
   key: ReferenceKey;
-  label: string;
   kind: 'bilingual' | 'package' | 'currency' | 'payment';
   /** Coach-owned data belongs to the signed-in coach; platform data is Admin-managed (D7). */
   owner: 'coach' | 'platform';
@@ -20,13 +21,13 @@ interface Resource {
 })
 export class ReferenceDataComponent implements OnInit {
   readonly resources: Resource[] = [
-    { key: 'packages', label: 'Packages', kind: 'package', owner: 'coach' },
-    { key: 'currencies', label: 'Currencies', kind: 'currency', owner: 'platform' },
-    { key: 'payment-accounts', label: 'Payment accounts', kind: 'payment', owner: 'coach' },
-    { key: 'food-categories', label: 'Food categories', kind: 'bilingual', owner: 'platform' },
-    { key: 'exercise-categories', label: 'Exercise categories', kind: 'bilingual', owner: 'platform' },
-    { key: 'equipment', label: 'Equipment', kind: 'bilingual', owner: 'platform' },
-    { key: 'muscle-groups', label: 'Muscle groups', kind: 'bilingual', owner: 'platform' },
+    { key: 'packages', kind: 'package', owner: 'coach' },
+    { key: 'currencies', kind: 'currency', owner: 'platform' },
+    { key: 'payment-accounts', kind: 'payment', owner: 'coach' },
+    { key: 'food-categories', kind: 'bilingual', owner: 'platform' },
+    { key: 'exercise-categories', kind: 'bilingual', owner: 'platform' },
+    { key: 'equipment', kind: 'bilingual', owner: 'platform' },
+    { key: 'muscle-groups', kind: 'bilingual', owner: 'platform' },
   ];
   readonly resource = signal(this.resources[0]);
   readonly page = signal<PagedResult<ReferenceRecord>>(emptyPage());
@@ -43,7 +44,9 @@ export class ReferenceDataComponent implements OnInit {
     readonly config: AppConfigService,
     private readonly data: ReferenceDataService,
     private readonly auth: AuthService,
+    private readonly i18n: I18nService,
   ) {}
+  resourceKey(resource: Resource): TranslationKey { return `ref.resource.${resource.key}`; }
   /** Coaches create their own packages and accounts; administrators create platform data. */
   get canCreate(): boolean {
     return this.resource().owner === 'platform' ? this.auth.isAdmin() : this.auth.isCoach();
@@ -128,13 +131,13 @@ export class ReferenceDataComponent implements OnInit {
     });
   }
   remove(item: ReferenceRecord): void {
-    if (!confirm(`Delete ${this.displayName(item)}?`)) return;
+    if (!confirm(this.i18n.translate('common.confirmDelete', { name: this.displayName(item) }))) return;
     this.data
       .delete(this.resource().key, item.id)
       .subscribe({ next: () => this.load(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   displayName(item: ReferenceRecord): string {
-    return item.nameEn ?? item.name ?? item.code ?? '';
+    return item.nameEn ? this.i18n.name({ nameEn: item.nameEn, nameAr: item.nameAr }) : item.name ?? item.code ?? '';
   }
   private emptyEditor() {
     return {

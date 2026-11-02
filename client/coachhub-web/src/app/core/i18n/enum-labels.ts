@@ -54,7 +54,16 @@ export const enumValues = {
     'LifestyleTargets', 'LoggedExercise', 'LoggedSet', 'Meal', 'MealFoodItem', 'MealOption', 'MediaAsset', 'Notification', 'NutritionDay',
     'Payment', 'PersonalRecord', 'PlatformSettings', 'PrescribedSet', 'ProgressPhoto', 'Refund', 'SleepEntry', 'StepsEntry', 'Subscription',
     'SubscriptionRenewal', 'TestAssignment', 'TestDefinition', 'TestResult', 'TrainingDays', 'User', 'WaterEntry', 'WeightEntry', 'WorkoutDay',
-    'WorkoutExercise', 'WorkoutPlan', 'WorkoutPlanNote', 'WorkoutPlanRevision', 'WorkoutSession', 'WorkoutSetGroup',
+    'WorkoutExercise', 'WorkoutPlan', 'WorkoutPlanNote', 'WorkoutPlanRevision', 'WorkoutSession', 'WorkoutSetGroup', 'ClientTransfer', 'Package',
+    'UserSession',
+  ],
+  assessmentFormType: ['InitialAssessment', 'UpdateAssessment', 'CheckIn'],
+  formVersionStatus: ['Draft', 'Published'],
+  questionType: ['ShortText', 'LongText', 'Number', 'Date', 'Boolean', 'SingleChoice', 'MultipleChoice', 'MediaUpload'],
+  submissionSource: ['CoachHubSystem', 'GoogleFormsExcelImport'],
+  questionMetric: [
+    'WeightKg', 'BodyFatPercent', 'WaistCm', 'ChestCm', 'ArmCm', 'ThighCm', 'HipCm', 'NeckCm', 'CalfCm', 'Steps', 'SleepHours', 'WaterMl',
+    'FrontPhoto', 'SidePhoto', 'BackPhoto',
   ],
   notificationEvent: ['NewWorkout', 'NewDiet', 'NewProgram', 'ProgramUpdated', 'CheckInRequired', 'CheckInReviewed', 'NewMessage', 'SubscriptionExpired'],
 } as const;

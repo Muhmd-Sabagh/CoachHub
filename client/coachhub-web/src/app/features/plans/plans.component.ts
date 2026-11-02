@@ -161,7 +161,7 @@ export class PlansComponent implements OnInit, OnDestroy {
     const editingId = this.editingId();
     if (this.readOnly) return;
     if (this.hasInvalidTempo()) {
-      this.error.set('Write tempo as four numbers, for example 3-1-1-0.');
+      this.error.set(this.i18n.translate('plans.tempoError'));
       return;
     }
     this.saving.set(true);

@@ -1,49 +1,44 @@
 <section class="page-heading">
-  <p class="eyebrow">Security and accountability</p>
-  <h1>Audit trail</h1>
-  <p>Who changed which record, with which role, and what the values were before and after. Passwords, tokens and access codes are never recorded.</p>
+  <p class="eyebrow">{{ 'audit.eyebrow' | translate }}</p>
+  <h1>{{ 'audit.title' | translate }}</h1>
+  <p>{{ 'audit.intro' | translate }}</p>
 </section>
 
 <section class="card workbench">
   <div class="toolbar">
     <form class="filter-row" (ngSubmit)="applySearch()">
       <label>
-        <span>Search actor or entity</span>
+        <span>{{ 'audit.search' | translate }}</span>
         <input name="search" [(ngModel)]="search" />
       </label>
       <label>
-        <span>Entity</span>
+        <span>{{ 'audit.entity' | translate }}</span>
         <select name="entityType" [(ngModel)]="entityType">
-          <option value="">All entities</option>
-          @for (type of ['Client', 'ClientTransfer', 'Subscription', 'Invoice', 'Payment', 'FormDefinition', 'FormSubmission', 'DietPlan', 'Meal', 'WorkoutPlan', 'WorkoutDay', 'FoodItem', 'Exercise', 'Package', 'MediaAsset', 'User', 'UserSession']; track type) {
-            <option [value]="type">{{ type }}</option>
+          <option value="">{{ 'audit.allEntities' | translate }}</option>
+          @for (type of entityTypes; track type) {
+            <option [value]="type">{{ type | enumLabel: 'entityType' }}</option>
           }
         </select>
       </label>
       <label>
-        <span>Operation</span>
+        <span>{{ 'audit.operation' | translate }}</span>
         <select name="operation" [(ngModel)]="operation">
-          <option value="">All operations</option>
-          <option>Create</option>
-          <option>Update</option>
-          <option>Delete</option>
+          <option value="">{{ 'audit.allOperations' | translate }}</option>
+          @for (op of operations; track op) { <option [value]="op">{{ op | enumLabel: 'auditOperation' }}</option> }
         </select>
       </label>
       <label>
-        <span>Actor</span>
+        <span>{{ 'audit.actor' | translate }}</span>
         <select name="actorKind" [(ngModel)]="actorKind">
-          <option value="">All actors</option>
-          <option>Administrator</option>
-          <option>Coach</option>
-          <option>Client</option>
-          <option>System</option>
+          <option value="">{{ 'audit.allActors' | translate }}</option>
+          @for (kind of actorKinds; track kind) { <option [value]="kind">{{ kind | enumLabel: 'actorKind' }}</option> }
         </select>
       </label>
-      <label><span>Client ID</span><input name="clientId" [(ngModel)]="clientId" placeholder="Affected client" /></label>
-      <label><span>From</span><input type="datetime-local" name="from" [(ngModel)]="occurredFrom" /></label>
-      <label><span>To</span><input type="datetime-local" name="to" [(ngModel)]="occurredTo" /></label>
-      <button class="button button-primary">Search</button>
-      <button class="button button-secondary" type="button" (click)="reset()">Reset</button>
+      <label><span>{{ 'audit.clientId' | translate }}</span><input name="clientId" [(ngModel)]="clientId" [placeholder]="'audit.affectedClient' | translate" /></label>
+      <label><span>{{ 'common.from' | translate }}</span><input type="datetime-local" name="from" [(ngModel)]="occurredFrom" /></label>
+      <label><span>{{ 'common.to' | translate }}</span><input type="datetime-local" name="to" [(ngModel)]="occurredTo" /></label>
+      <button class="button button-primary">{{ 'common.search' | translate }}</button>
+      <button class="button button-secondary" type="button" (click)="reset()">{{ 'common.reset' | translate }}</button>
     </form>
   </div>
 
@@ -53,36 +48,36 @@
     <table>
       <thead>
         <tr>
-          <th>Occurred</th>
-          <th>Operation</th>
-          <th>Entity</th>
-          <th>Actor</th>
-          <th>Client</th>
-          <th>Changes</th>
+          <th>{{ 'audit.occurred' | translate }}</th>
+          <th>{{ 'audit.operation' | translate }}</th>
+          <th>{{ 'audit.entity' | translate }}</th>
+          <th>{{ 'audit.actor' | translate }}</th>
+          <th>{{ 'audit.client' | translate }}</th>
+          <th>{{ 'audit.changes' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         @if (loading()) {
-          <tr><td colspan="6" class="table-message">Loading...</td></tr>
+          <tr><td colspan="6" class="table-message">{{ 'common.loading' | translate }}</td></tr>
         }
         @for (entry of page().items; track entry.id) {
           <tr>
-            <td><strong>{{ entry.occurredAt | date: 'medium' }}</strong></td>
-            <td><strong>{{ entry.operation }}</strong></td>
-            <td><strong>{{ entry.entityType }}</strong><small><code>{{ entry.entityId || '—' }}</code></small></td>
+            <td><strong>{{ entry.occurredAt | localDate: 'd MMM y, HH:mm:ss' }}</strong></td>
+            <td><strong>{{ entry.operation | enumLabel: 'auditOperation' }}</strong></td>
+            <td><strong>{{ entry.entityType | enumLabel: 'entityType' }}</strong><small><code translate="no">{{ entry.entityId || '—' }}</code></small></td>
             <td>
-              <strong>{{ actor(entry) }}</strong>
-              <small>{{ entry.actorKind }}</small>
+              <strong translate="no">{{ actor(entry) }}</strong>
+              <small>{{ entry.actorKind === 'PublicClient' ? ('audit.publicClient' | translate) : (entry.actorKind | enumLabel: 'actorKind') }}</small>
             </td>
             <td>
               @if (entry.clientId) {
-                <button class="link-button" type="button" (click)="showClient(entry.clientId)" title="Show this client's history"><code>{{ entry.clientId.slice(0, 8) }}</code></button>
+                <button class="link-button" type="button" (click)="showClient(entry.clientId)" [title]="'audit.showClient' | translate" [attr.aria-label]="'audit.showClient' | translate"><code translate="no">{{ entry.clientId.slice(0, 8) }}</code></button>
               } @else { — }
             </td>
             <td>
               @if (entry.changes.length) {
                 <button class="link-button" type="button" (click)="toggle(entry)" [attr.aria-expanded]="expanded() === entry.id">
-                  {{ expanded() === entry.id ? 'Hide' : 'Show' }} {{ entry.changes.length }} field(s)
+                  {{ (expanded() === entry.id ? 'audit.hideFields' : 'audit.showFields') | translate: { count: entry.changes.length } }}
                 </button>
               } @else { — }
             </td>
@@ -91,10 +86,10 @@
             <tr class="audit-diff">
               <td colspan="6">
                 <table>
-                  <thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead>
+                  <thead><tr><th>{{ 'audit.field' | translate }}</th><th>{{ 'audit.before' | translate }}</th><th>{{ 'audit.after' | translate }}</th></tr></thead>
                   <tbody>
                     @for (change of entry.changes; track change.property) {
-                      <tr><td><strong>{{ change.property }}</strong></td><td><code>{{ value(change.from) }}</code></td><td><code>{{ value(change.to) }}</code></td></tr>
+                      <tr><td><strong translate="no">{{ change.property }}</strong></td><td><code translate="no">{{ value(change.from) }}</code></td><td><code translate="no">{{ value(change.to) }}</code></td></tr>
                     }
                   </tbody>
                 </table>
@@ -103,18 +98,18 @@
           }
         }
         @if (!loading() && !page().items.length) {
-          <tr><td colspan="6" class="table-message">No audit entries match the applied filters.</td></tr>
+          <tr><td colspan="6" class="table-message">{{ 'audit.none' | translate }}</td></tr>
         }
       </tbody>
     </table>
   </div>
 
-  <div class="pagination" [attr.aria-label]="'Pagination, ' + page().totalCount + ' audit entries'">
-    <span>{{ page().totalCount }} records</span>
+  <nav class="pagination" [attr.aria-label]="'common.pagination' | translate">
+    <span>{{ 'common.records' | translate: { count: page().totalCount } }}</span>
     <div>
-      <button class="button button-secondary" type="button" (click)="previous()" [disabled]="page().pageNumber <= 1">Previous</button>
-      <span>Page {{ page().pageNumber }} of {{ page().totalPages || 1 }}</span>
-      <button class="button button-secondary" type="button" (click)="next()" [disabled]="page().pageNumber >= page().totalPages">Next</button>
+      <button class="button button-secondary" type="button" (click)="previous()" [disabled]="page().pageNumber <= 1">{{ 'common.previous' | translate }}</button>
+      <span>{{ 'common.pageOf' | translate: { page: page().pageNumber, pages: page().totalPages || 1 } }}</span>
+      <button class="button button-secondary" type="button" (click)="next()" [disabled]="page().pageNumber >= page().totalPages">{{ 'common.next' | translate }}</button>
     </div>
-  </div>
+  </nav>
 </section>
