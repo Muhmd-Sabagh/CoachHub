@@ -5,6 +5,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { I18N_PIPES } from '../../shared/pipes/translate.pipe';
 import { apiErrorMessage } from '../../shared/services/api-error';
+import { TestSummaryComponent } from '../fitness-tests/test-summary.component';
 import { isoDate } from '../nutrition-tracking/nutrition-tracking.service';
 import {
   ClientExport, ClientReport, DownloadedFile, ReportLanguage, ReportPeriod, ReportsService, clientExports, saveFile,
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-client-reports',
   standalone: true,
-  imports: [FormsModule, ...I18N_PIPES],
+  imports: [FormsModule, TestSummaryComponent, ...I18N_PIPES],
   template: `
     <section class="card workbench reports">
       <h2>{{ 'reports.title' | translate }}</h2>
@@ -51,6 +52,10 @@ import {
             <tr><th scope="row">{{ 'reports.checkIns' | translate }}</th><td>{{ 'reports.checkInsSent' | translate: { count: r.checkIns.length } }}</td><td>{{ 'reports.checkInsDue' | translate: { completed: r.progress.checkIn.adherence.completed, due: r.progress.checkIn.adherence.due } }}</td></tr>
           </tbody>
         </table></div>
+        @if (r.progress.training.tests.length) {
+          <h3>{{ 'testSummary.title' | translate }}</h3>
+          <app-test-summary [tests]="r.progress.training.tests" />
+        }
       }
       @if (clientId) {
         <h3>{{ 'reports.exportTitle' | translate }}</h3>

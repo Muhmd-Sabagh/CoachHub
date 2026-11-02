@@ -6,6 +6,7 @@ using CoachHub.Domain.Billing;
 using CoachHub.Domain.CheckIns;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Coaches;
+using CoachHub.Domain.FitnessTests;
 using CoachHub.Domain.FoodTracking;
 using CoachHub.Domain.Progress;
 using CoachHub.Domain.ReferenceData;
@@ -60,6 +61,9 @@ public sealed class ExportRepository(CoachHubDbContext dbContext, ICurrentUser c
             .ToDictionaryAsync(x => x.Id, x => x.NameEn, cancellationToken);
         return (sessions, names);
     }
+
+    public async Task<IReadOnlyList<TestResult>> TestResultsAsync(Guid clientId, CancellationToken cancellationToken) =>
+        await dbContext.Set<TestResult>().AsNoTracking().Where(x => x.ClientId == clientId).ToArrayAsync(cancellationToken);
 
     public async Task<IReadOnlyList<ExportCheckIn>> CheckInsAsync(Guid clientId, CancellationToken cancellationToken)
     {

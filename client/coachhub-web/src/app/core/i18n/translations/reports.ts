@@ -37,6 +37,7 @@ export const reports = defineTranslations({
     'reports.export.Nutrition': 'Nutrition diary',
     'reports.export.Workouts': 'Workout history',
     'reports.export.CheckIns': 'Check-ins',
+    'reports.export.Tests': 'Test results',
     'reports.export.All': 'Everything (ZIP)',
   },
   ar: {
@@ -74,6 +75,7 @@ export const reports = defineTranslations({
     'reports.export.Nutrition': 'سجل الطعام',
     'reports.export.Workouts': 'سجل التمارين',
     'reports.export.CheckIns': 'المتابعات',
+    'reports.export.Tests': 'نتائج الاختبارات',
     'reports.export.All': 'كل البيانات (ZIP)',
   },
 });

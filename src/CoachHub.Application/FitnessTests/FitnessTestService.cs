@@ -50,6 +50,28 @@ public sealed class FitnessTestService(IFitnessTestRepository repository, TimePr
             tests.OrderBy(x => x.Kind).ThenBy(x => x.NameEn, StringComparer.OrdinalIgnoreCase).ToArray());
     }
 
+    /// <summary>
+    /// Each test with results on or before <paramref name="to"/>, for the progress dashboard and reports (§37, §44):
+    /// latest, previous, change and trend from <see cref="TestProgressCalculator"/>, and the latest classification.
+    /// </summary>
+    public async Task<IReadOnlyList<TestSummaryResponse>> SummaryAsync(Guid clientId, DateOnly to, CancellationToken cancellationToken)
+    {
+        await ClientCoachAsync(clientId, cancellationToken);
+        return (await repository.ListResultsAsync(clientId, cancellationToken))
+            .Where(x => x.Date <= to)
+            .GroupBy(x => x.TestDefinitionId)
+            .Select(group =>
+            {
+                var history = group.OrderByDescending(x => x.Date).ThenByDescending(x => x.CreatedAt).ToArray();
+                var latest = history[0];
+                return new TestSummaryResponse(group.Key, latest.Kind, latest.NameEn, latest.NameAr, latest.Unit, latest.HigherIsBetter,
+                    TestProgressCalculator.Compute(history.Select(x => new TestSample(x.Date, x.Value, x.CreatedAt)), latest.HigherIsBetter),
+                    latest.Classification);
+            })
+            .OrderBy(x => x.Kind).ThenBy(x => x.NameEn, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
     /// <summary>Assigns one of the coach's tests (platform or custom) to the client; assigning twice changes nothing.</summary>
     public async Task AssignAsync(Guid clientId, Guid testId, CancellationToken cancellationToken)
     {

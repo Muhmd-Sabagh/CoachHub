@@ -64,6 +64,17 @@ export interface TestProgress {
   percentChangeFromFirst: number | null;
   trend: TestTrend | null;
 }
+/** A test in the progress dashboard and reports (P20): its progress up to the period's end and latest classification. */
+export interface TestSummary {
+  testDefinitionId: string;
+  kind: TestKind;
+  nameEn: string;
+  nameAr: string | null;
+  unit: TestUnit;
+  higherIsBetter: boolean;
+  progress: TestProgress;
+  classification: TestClassification | null;
+}
 export interface ClientTest {
   testDefinitionId: string;
   kind: TestKind;

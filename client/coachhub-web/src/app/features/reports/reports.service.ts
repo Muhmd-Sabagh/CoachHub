@@ -6,12 +6,13 @@ import { ProgressDashboard } from '../progress-tracking/progress-tracking.servic
 
 export type ReportPeriod = 'Week' | 'Month';
 export type ReportLanguage = 'English' | 'Arabic';
-export type ClientExport = 'Client' | 'Progress' | 'Nutrition' | 'Workouts' | 'CheckIns' | 'All';
+export type ClientExport = 'Client' | 'Progress' | 'Nutrition' | 'Workouts' | 'CheckIns' | 'Tests' | 'All';
 export type PlatformExport = 'Coaches' | 'Clients' | 'Subscriptions' | 'Revenue';
 
 export const clientExports: { id: ClientExport; label: string }[] = [
   { id: 'Client', label: 'Client data' }, { id: 'Progress', label: 'Progress' }, { id: 'Nutrition', label: 'Nutrition diary' },
-  { id: 'Workouts', label: 'Workout history' }, { id: 'CheckIns', label: 'Check-ins' }, { id: 'All', label: 'Everything (ZIP)' },
+  { id: 'Workouts', label: 'Workout history' }, { id: 'CheckIns', label: 'Check-ins' }, { id: 'Tests', label: 'Test results' },
+  { id: 'All', label: 'Everything (ZIP)' },
 ];
 export const platformExports: { id: PlatformExport; label: string }[] = [
   { id: 'Coaches', label: 'Coaches' }, { id: 'Clients', label: 'Clients' }, { id: 'Subscriptions', label: 'Subscriptions' },

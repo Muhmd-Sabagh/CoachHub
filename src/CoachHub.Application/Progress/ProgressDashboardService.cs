@@ -1,5 +1,6 @@
 using CoachHub.Application.Adherence;
 using CoachHub.Application.CheckIns;
+using CoachHub.Application.FitnessTests;
 using CoachHub.Application.FoodTracking;
 using CoachHub.Application.WorkoutTracking;
 using CoachHub.Domain.WorkoutTracking;
@@ -7,8 +8,8 @@ using CoachHub.Domain.WorkoutTracking;
 namespace CoachHub.Application.Progress;
 
 /// <summary>
-/// The client progress dashboard (§37): body and lifestyle (P11), nutrition (P8), training (P10), and the check-in
-/// section with adherence (P12), each from the service its detailed screen uses so the figures agree.
+/// The client progress dashboard (§37): body and lifestyle (P11), nutrition (P8), training (P10) with the tests (P20),
+/// and the check-in section with adherence (P12), each from the service its detailed screen uses so the figures agree.
 /// </summary>
 public sealed class ProgressDashboardService(
     ProgressService progress,
@@ -16,7 +17,8 @@ public sealed class ProgressDashboardService(
     FoodTrackingService nutrition,
     WorkoutTrackingService training,
     CheckInService checkIns,
-    AdherenceService adherence)
+    AdherenceService adherence,
+    FitnessTestService tests)
 {
     public const int DashboardRecords = 5;
 
@@ -28,6 +30,7 @@ public sealed class ProgressDashboardService(
         var food = await nutrition.AnalyticsAsync(clientId, from, to, cancellationToken);
         var workouts = await training.AnalyticsAsync(clientId, from, to, cancellationToken);
         var records = await training.RecordsAsync(clientId, cancellationToken);
+        var testSummary = await tests.SummaryAsync(clientId, to, cancellationToken);
         var checkInAdherence = await checkIns.AdherenceAsync(clientId, from, to, cancellationToken);
         var scores = await adherence.ScoreAsync(clientId, from, to, cancellationToken);
         var mine = await checkIns.MineAsync(clientId, cancellationToken);
@@ -39,7 +42,8 @@ public sealed class ProgressDashboardService(
             food.Summary,
             new TrainingDashboard(workouts.Summary, records.Recent.Take(DashboardRecords).ToArray(),
                 records.Current.Where(x => x.Type == PersonalRecordType.EstimatedOneRepMax)
-                    .OrderByDescending(x => x.Value).Take(DashboardRecords).ToArray()),
+                    .OrderByDescending(x => x.Value).Take(DashboardRecords).ToArray(),
+                testSummary),
             lifestyle.Summary, lifestyle.Targets,
             new CheckInDashboard(mine.History.FirstOrDefault(), mine.Schedule, checkInAdherence, feedback),
             scores);

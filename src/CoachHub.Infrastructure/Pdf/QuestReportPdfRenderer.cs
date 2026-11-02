@@ -1,9 +1,11 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using CoachHub.Application.Adherence;
+using CoachHub.Application.FitnessTests;
 using CoachHub.Application.Pdf;
 using CoachHub.Application.Progress;
 using CoachHub.Application.Reports;
+using CoachHub.Domain.FitnessTests;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 
@@ -11,7 +13,7 @@ namespace CoachHub.Infrastructure.Pdf;
 
 /// <summary>
 /// The weekly and monthly client report (§44) as a PDF: the coach's brand name and colour, then body, nutrition,
-/// training, lifestyle, adherence and check-ins for the period, in English or Arabic (right to left).
+/// training, tests (P20), lifestyle, adherence and check-ins for the period, in English or Arabic (right to left).
 /// </summary>
 public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
 {
@@ -90,6 +92,15 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
                         Row(table, language, T(language, "New record", "رقم قياسي"), PdfLanguageText.Name(record.ExerciseNameEn, record.ExerciseNameAr, language),
                             record.Type.ToString(), N(record.Value));
                 });
+
+                if (p.Training.Tests.Count > 0)
+                    Section(column, T(language, "Tests", "الاختبارات"), brand, language, table =>
+                    {
+                        Head(table, language, T(language, "Test", "الاختبار"), T(language, "Latest", "الأحدث"),
+                            T(language, "Change", "التغير"), T(language, "Rating", "التقييم"));
+                        foreach (var test in p.Training.Tests)
+                            TestRow(table, test, language);
+                    });
 
                 Section(column, T(language, "Lifestyle", "نمط الحياة"), brand, language, table =>
                 {
@@ -173,6 +184,36 @@ public sealed partial class QuestReportPdfRenderer : IReportPdfRenderer
     private static void Macro(TableDescriptor table, string label, Application.FoodTracking.MacroAmounts? macros, PlanPdfLanguage language) =>
         Row(table, language, label, macros is null ? "–" : N(macros.Calories, 0), macros is null ? "–" : N(macros.Protein, 0) + " g",
             macros is null ? "–" : $"{N(macros.Carbohydrates, 0)} / {N(macros.Fat, 0)} g");
+
+    /// <summary>A test's latest result with its date, the change from the previous one, and its classification.</summary>
+    private static void TestRow(TableDescriptor table, TestSummaryResponse test, PlanPdfLanguage language)
+    {
+        var unit = UnitText(test.Unit, language);
+        var latest = test.Progress.Current is { } current ? $"{N(current.Value)} {unit} ({D(current.Date)})" : "–";
+        Row(table, language, PdfLanguageText.Name(test.NameEn, test.NameAr, language), latest,
+            Signed(test.Progress.ChangeFromPrevious, " " + unit), ClassificationText(test.Classification, language));
+    }
+
+    private static string UnitText(TestUnit unit, PlanPdfLanguage language) => unit switch
+    {
+        TestUnit.Kilograms => T(language, "kg", "كجم"),
+        TestUnit.Repetitions => T(language, "reps", "تكرار"),
+        TestUnit.Seconds => T(language, "s", "ث"),
+        TestUnit.Meters => T(language, "m", "م"),
+        TestUnit.Centimeters => T(language, "cm", "سم"),
+        TestUnit.Degrees => "°",
+        TestUnit.Points => T(language, "pts", "نقطة"),
+        TestUnit.BeatsPerMinute => T(language, "bpm", "نبضة/د"),
+        _ => unit.ToString()
+    };
+
+    private static string ClassificationText(TestClassification? classification, PlanPdfLanguage language) => classification switch
+    {
+        TestClassification.Good => T(language, "Good", "جيد"),
+        TestClassification.NeedsImprovement => T(language, "Needs improvement", "يحتاج إلى تحسين"),
+        TestClassification.Poor => T(language, "Poor", "ضعيف"),
+        _ => "–"
+    };
 
     private static string AreaName(AdherenceArea area, PlanPdfLanguage language) => area switch
     {

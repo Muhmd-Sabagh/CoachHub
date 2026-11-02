@@ -102,6 +102,20 @@ public sealed record TestProgressResponse(
     TestTrend? Trend);
 
 /// <summary>
+/// A test in the progress dashboard and reports (§37, §44, P20): the progress of its results up to the period's end
+/// and the latest result's classification. Name, unit and direction are the latest result's copy, as recorded.
+/// </summary>
+public sealed record TestSummaryResponse(
+    Guid TestDefinitionId,
+    TestKind Kind,
+    string NameEn,
+    string? NameAr,
+    TestUnit Unit,
+    bool HigherIsBetter,
+    TestProgressResponse Progress,
+    TestClassification? Classification);
+
+/// <summary>
 /// One of the client's tests: assigned, or with results. <see cref="Definition"/> is null when the test is no longer
 /// visible (a previous coach's custom test after a transfer); the name and unit then come from the latest result.
 /// Results are newest first.
