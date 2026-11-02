@@ -89,7 +89,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
         var today = Today();
         var clients = await repository.ClientsAsync(cancellationToken);
         var file = new ExportFile(Csv.Write(
-            ["Client ID", "Name", "Phone", "Email", "Join date", "Active", "Status", "Subscription", "Coach"],
+            CsvHeaders.Localize(["Client ID", "Name", "Phone", "Email", "Join date", "Active", "Status", "Subscription", "Coach"]),
             clients.OrderBy(x => x.Client.Name).Select(x => (IReadOnlyList<object?>)[
                 x.Client.Id, x.Client.Name, x.Client.Phone, x.Client.Email, x.Client.JoinDate, x.Client.IsActive,
                 x.Client.GetStatus(today), x.Client.GetSubscriptionStatus(today), x.CoachName])),
@@ -145,13 +145,13 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
         {
             case PlatformExport.Coaches:
                 var coaches = await repository.CoachesAsync(cancellationToken);
-                csv = (Csv.Write(["Coach", "Active", "Created", "Clients"],
+                csv = (Csv.Write(CsvHeaders.Localize(["Coach", "Active", "Created", "Clients"]),
                     coaches.OrderBy(x => x.Name).Select(x => (IReadOnlyList<object?>)[x.Name, x.IsActive, x.CreatedAt, x.Clients])), coaches.Count);
                 name = "coaches";
                 break;
             case PlatformExport.Clients:
                 var clients = await repository.ClientsAsync(cancellationToken);
-                csv = (Csv.Write(["Coach", "Client ID", "Name", "Email", "Join date", "Active", "Status", "Subscription"],
+                csv = (Csv.Write(CsvHeaders.Localize(["Coach", "Client ID", "Name", "Email", "Join date", "Active", "Status", "Subscription"]),
                     clients.OrderBy(x => x.CoachName).ThenBy(x => x.Client.Name).Select(x => (IReadOnlyList<object?>)[
                         x.CoachName, x.Client.Id, x.Client.Name, x.Client.Email, x.Client.JoinDate, x.Client.IsActive,
                         x.Client.GetStatus(today), x.Client.GetSubscriptionStatus(today)])), clients.Count);
@@ -160,7 +160,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
             case PlatformExport.Subscriptions:
                 var subscriptions = await repository.SubscriptionsAsync(cancellationToken);
                 var payments = await repository.SubscriptionPaymentsAsync(subscriptions.Select(x => x.Subscription.Id).ToArray(), cancellationToken);
-                csv = (Csv.Write(["Coach", "Client ID", "Client", "Package", "Start", "End", "Months", "Status", "Payment", "Price", "Currency", "Renewals", "Suspension reason"],
+                csv = (Csv.Write(CsvHeaders.Localize(["Coach", "Client ID", "Client", "Package", "Start", "End", "Months", "Status", "Payment", "Price", "Currency", "Renewals", "Suspension reason"]),
                     subscriptions.OrderBy(x => x.CoachName).ThenBy(x => x.ClientName).ThenBy(x => x.Subscription.StartDate).Select(x => (IReadOnlyList<object?>)[
                         x.CoachName, x.Subscription.ClientId, x.ClientName, x.PackageName, x.Subscription.StartDate, x.Subscription.EndDate,
                         x.Subscription.DurationMonths, x.Subscription.StatusOn(today),
@@ -175,7 +175,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
                     throw new ValidationException(new Dictionary<string, string[]> { ["period"] = [$"Choose an ordered period of at most {MaximumRevenueDays} days."] });
                 var ledger = await repository.LedgerAsync(start, end, cancellationToken);
                 // The revenue ledger (D6): payments settled minus refunds recorded, so the amounts sum to net revenue.
-                csv = (Csv.Write(["Recorded (UTC)", "Type", "Coach", "Client", "Invoice", "Currency", "Amount", "Payment account", "Note"],
+                csv = (Csv.Write(CsvHeaders.Localize(["Recorded (UTC)", "Type", "Coach", "Client", "Invoice", "Currency", "Amount", "Payment account", "Note"]),
                     ledger.OrderBy(x => x.RecordedAt).Select(x => (IReadOnlyList<object?>)[
                         x.RecordedAt, x.IsRefund ? "Refund" : "Payment", x.CoachName, x.ClientName, x.InvoiceNumber, x.CurrencyCode,
                         x.IsRefund ? -x.Amount : x.Amount, x.PaymentAccount, x.Note])), ledger.Count);
@@ -203,7 +203,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
             ("Dietary restrictions", profile?.DietaryRestrictions), ("Dietary notes", profile?.DietaryNotes),
             ("Preferred meal count", profile?.PreferredMealCount), ("Bedtime", profile?.Bedtime), ("Wake time", profile?.WakeTime),
         ];
-        return (Csv.Write(["Field", "Value"], rows.Select(x => (IReadOnlyList<object?>)[x.Field, x.Value])), rows.Length);
+        return (Csv.Write(CsvHeaders.Localize(["Field", "Value"]), rows.Select(x => (IReadOnlyList<object?>)[CsvHeaders.Localize(x.Field), x.Value])), rows.Length);
     }
 
     private static (byte[], int) ProgressCsv(ExportProgress progress)
@@ -216,19 +216,19 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
             x.Quality is { } quality ? $"Quality {quality}/5" + (x.Notes is null ? "" : " · " + x.Notes) : x.Notes)));
         rows.AddRange(progress.Steps.Select(x => (x.Date, "Steps", (object?)x.Steps, "steps", x.Source, x.Notes)));
         rows.AddRange(progress.Water.Select(x => (x.Date, "Water", (object?)x.AmountMl, "ml", x.Source, x.Notes)));
-        return (Csv.Write(["Date", "Measure", "Value", "Unit", "Source", "Notes"],
+        return (Csv.Write(CsvHeaders.Localize(["Date", "Measure", "Value", "Unit", "Source", "Notes"]),
             rows.OrderBy(x => x.Date).ThenBy(x => x.Measure).Select(x => (IReadOnlyList<object?>)[x.Date, x.Measure, x.Value, x.Unit, x.Source, x.Notes])), rows.Count);
     }
 
     /// <summary>Test results with the test's name, unit and direction as recorded; values stay in the test's unit.</summary>
     private static (byte[], int) TestsCsv(IReadOnlyList<TestResult> results) =>
-        (Csv.Write(["Date", "Test", "Kind", "Value", "Unit", "Higher is better", "Classification", "Classified by coach", "Recorded by", "Notes", "Recorded (UTC)"],
+        (Csv.Write(CsvHeaders.Localize(["Date", "Test", "Kind", "Value", "Unit", "Higher is better", "Classification", "Classified by coach", "Recorded by", "Notes", "Recorded (UTC)"]),
             results.OrderBy(x => x.Date).ThenBy(x => x.NameEn).ThenBy(x => x.CreatedAt).Select(x => (IReadOnlyList<object?>)[
                 x.Date, x.NameEn, x.Kind, x.Value, x.Unit, x.HigherIsBetter, x.Classification, x.IsClassificationOverridden, x.RecordedBy,
                 x.Notes, x.CreatedAt])), results.Count);
 
     private static (byte[], int) NutritionCsv(IReadOnlyList<FoodLogEntry> entries) =>
-        (Csv.Write(["Date", "Meal", "Food", "Quantity", "Unit", "Calories", "Protein (g)", "Carbohydrates (g)", "Fat (g)", "Fiber (g)", "Source", "Logged (UTC)"],
+        (Csv.Write(CsvHeaders.Localize(["Date", "Meal", "Food", "Quantity", "Unit", "Calories", "Protein (g)", "Carbohydrates (g)", "Fat (g)", "Fiber (g)", "Source", "Logged (UTC)"]),
             entries.OrderBy(x => x.Date).ThenBy(x => x.Slot).ThenBy(x => x.LoggedAt).Select(x => (IReadOnlyList<object?>)[
                 x.Date, x.Slot, x.NameEn, x.Quantity ?? x.BaseAmount, x.UnitLabel, x.Calories, x.Protein, x.Carbohydrates, x.Fat, x.Fiber,
                 x.Source, x.LoggedAt])), entries.Count);
@@ -248,7 +248,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
                         set.Reps, set.WeightKg, set.Rir, set.Rpe, set.DurationSeconds, set.Notes ?? exercise.Notes]);
             }
         }
-        return (Csv.Write(["Date", "Workout", "Workout status", "Exercise", "Block", "Skipped", "Set", "Set type", "Set status", "Reps", "Weight (kg)", "RIR", "RPE", "Duration (s)", "Notes"], rows), rows.Count);
+        return (Csv.Write(CsvHeaders.Localize(["Date", "Workout", "Workout status", "Exercise", "Block", "Skipped", "Set", "Set type", "Set status", "Reps", "Weight (kg)", "RIR", "RPE", "Duration (s)", "Notes"]), rows), rows.Count);
     }
 
     private static (byte[], int) CheckInsCsv(IReadOnlyList<ExportCheckIn> checkIns)
@@ -263,7 +263,7 @@ public sealed class ExportService(IExportRepository repository, TimeProvider tim
                     AnswerText(answer.ValueJson, answer.MediaId is not null || answer.ExternalMediaUrl is not null)]);
         }
         // The coach's private notes are coaching notes, not the client's data, and are left out.
-        return (Csv.Write(["Due", "Form", "Submitted (UTC)", "Status", "Late", "Question", "Answer"], rows), rows.Count);
+        return (Csv.Write(CsvHeaders.Localize(["Due", "Form", "Submitted (UTC)", "Status", "Late", "Question", "Answer"]), rows), rows.Count);
     }
 
     /// <summary>An answer as text: the value, the values of a list, Yes/No, or "File" for an upload.</summary>

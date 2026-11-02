@@ -98,11 +98,11 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
     {
         container.Background(BrandLight).Border(1).BorderColor("#DDE9FF").CornerRadius(8).Padding(12).Row(row =>
         {
-            Metric(row, T(language, "Weight", "الوزن"), Number(plan.Totals.Weight) + " g", language);
+            Metric(row, T(language, "Weight", "الوزن"), Number(plan.Totals.Weight) + Grams(language), language);
             Metric(row, T(language, "Calories", "السعرات"), Number(plan.Totals.Calories), language);
-            Metric(row, T(language, "Protein", "البروتين"), Number(plan.Totals.Protein) + " g", language);
-            Metric(row, T(language, "Carbs", "الكربوهيدرات"), Number(plan.Totals.Carbohydrates) + " g", language);
-            Metric(row, T(language, "Fat", "الدهون"), Number(plan.Totals.Fat) + " g", language);
+            Metric(row, T(language, "Protein", "البروتين"), Number(plan.Totals.Protein) + Grams(language), language);
+            Metric(row, T(language, "Carbs", "الكربوهيدرات"), Number(plan.Totals.Carbohydrates) + Grams(language), language);
+            Metric(row, T(language, "Fat", "الدهون"), Number(plan.Totals.Fat) + Grams(language), language);
         });
     }
 
@@ -148,7 +148,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             {
                 row.RelativeItem().Text(PdfLanguageText.Name(version.NameEn, version.NameAr, language))
                     .Bold().FontSize(11).FontColor(Colors.White).DirectionAuto(language);
-                row.RelativeItem().AlignRight().Text($"{Number(version.Totals.Calories)} kcal")
+                row.RelativeItem().AlignRight().Text($"{Number(version.Totals.Calories)} {Kcal(language)}")
                     .FontColor(Colors.White).DirectionAuto(language);
             });
             if (!string.IsNullOrWhiteSpace(version.Notes))
@@ -170,7 +170,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             {
                 row.RelativeItem().Text(PdfLanguageText.Name(meal.NameEn, meal.NameAr, language))
                     .Bold().FontSize(10).DirectionAuto(language);
-                row.RelativeItem().AlignRight().Text($"{Number(meal.Totals.Calories)} kcal")
+                row.RelativeItem().AlignRight().Text($"{Number(meal.Totals.Calories)} {Kcal(language)}")
                     .FontColor(Brand).DirectionAuto(language);
             });
             if (!string.IsNullOrWhiteSpace(meal.Notes))
@@ -180,7 +180,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             // A flexible meal (§13) lists each option; the client eats one of them.
             foreach (var option in meal.Options.OrderBy(x => x.Order))
             {
-                column.Item().Text($"{PdfLanguageText.Name(option.NameEn, option.NameAr, language)} - {Number(option.Totals.Calories)} kcal")
+                column.Item().Text($"{PdfLanguageText.Name(option.NameEn, option.NameAr, language)} - {Number(option.Totals.Calories)} {Kcal(language)}")
                     .Bold().FontSize(9).FontColor(Brand).DirectionAuto(language);
                 column.Item().Table(table => DietFoodTable(table,
                     meal.FoodItems.Where(x => x.MealOptionId == option.Id).ToArray(), language));
@@ -198,7 +198,7 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
                         var amount = option.EffectiveQuantity is { } quantity
                             ? $" {Number(quantity)} {(language == PlanPdfLanguage.Arabic ? option.UnitLabelAr : option.UnitLabel)}"
                             : string.Empty;
-                        alternatives.Item().Text($"• {label}: {name}{amount} - {Number(option.Totals.Calories)} kcal")
+                        alternatives.Item().Text($"• {label}: {name}{amount} - {Number(option.Totals.Calories)} {Kcal(language)}")
                             .FontSize(8).DirectionAuto(language);
                     }
                 });
@@ -308,6 +308,10 @@ public sealed class QuestPlanPdfRenderer : IPlanPdfRenderer
             }
         }
     }
+
+    /// <summary>Unit abbreviations as the glossary writes them (P20): g / جم, kcal / سعرة.</summary>
+    private static string Grams(PlanPdfLanguage language) => T(language, " g", " جم");
+    private static string Kcal(PlanPdfLanguage language) => T(language, "kcal", "سعرة");
 
     private static void HeaderCell(TableCellDescriptor cells, string text, PlanPdfLanguage language) =>
         cells.Cell().Background("#F2F4F7").BorderBottom(1).BorderColor(Border).Padding(5)
