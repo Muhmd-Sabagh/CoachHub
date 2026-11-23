@@ -4,6 +4,7 @@ using CoachHub.Application.Auth;
 using CoachHub.Application.Billing;
 using CoachHub.Application.Chat;
 using CoachHub.Application.Clients;
+using CoachHub.Application.Media;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.Progress;
 using CoachHub.Application.ReferenceData;
@@ -172,7 +173,7 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
         var s = await SetUpAsync();
         using var admin = factory.CreateAdminClient();
         var client = await ReadAsync<ClientResponse>(await s.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput($"Member {s.Tag}", null, null, null)));
-        var portal = factory.CreateClientAreaClient(s.CoachId, client.Id);
+        var portal = (await factory.CreateSignedInAccountAsync(AuthRoles.Client, s.CoachId, client.Id)).Http;
         var weight = $"/api/v1/me/progress/weight/{Today.AddDays(-1):yyyy-MM-dd}";
         var body = $"/api/v1/me/progress/body?from={Today.AddDays(-7):yyyy-MM-dd}&to={Today:yyyy-MM-dd}";
 
@@ -181,6 +182,13 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
         Assert.Equal(SubscriptionStatus.Inactive, access.SubscriptionStatus);
         Assert.All(access.Features, x => Assert.Equal(FeatureAccess.Full, x.Access));
         (await portal.PutAsJsonAsync(weight, new WeightInput(80.5m, null))).EnsureSuccessStatusCode();
+        // A photo sent in the chat, opened by ID through /media (P22: it follows the chat's access rule).
+        var png = new ByteArrayContent(CoachHub.IntegrationTests.Me.MeEndpointTests.Png);
+        png.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        var photo = await ReadAsync<MediaMetadata>(await portal.PostAsync("/api/v1/me/chat/attachments",
+            new MultipartFormDataContent { { png, "file", "lunch.png" } }));
+        (await portal.PostAsJsonAsync("/api/v1/me/chat/messages", new ChatSendInput("Lunch", [photo.Id]))).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync($"/api/v1/media/{photo.Id}")).StatusCode);
 
         // An expired subscription: read-only by default. History stays visible; writing is refused with a reason.
         await ReadAsync<SubscriptionResponse>(await s.Coach.PostAsJsonAsync($"/api/v1/clients/{client.Id}/subscriptions",
@@ -201,6 +209,8 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
             (arabicProblem.Title, arabicProblem.Detail));
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync("/api/v1/me/chat")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await portal.PostAsJsonAsync("/api/v1/me/chat/messages", new ChatSendInput("Hello?"))).StatusCode);
+        // Read-only still opens the chat's files.
+        Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync($"/api/v1/media/{photo.Id}")).StatusCode);
         // The account and notifications are never restricted.
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync("/api/v1/inbox/unread-count")).StatusCode);
 
@@ -219,12 +229,18 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
         Assert.False(settings.Rules.Single(x => x.Status == SubscriptionStatus.Expired && x.Feature == ClientFeature.Chat).IsDefault);
 
         Assert.Equal(HttpStatusCode.Forbidden, (await portal.GetAsync("/api/v1/me/chat")).StatusCode);
+        // P22: a blocked chat's files are refused by ID too; the coach still opens them.
+        var blockedFile = await portal.GetAsync($"/api/v1/media/{photo.Id}");
+        Assert.Equal(HttpStatusCode.Forbidden, blockedFile.StatusCode);
+        Assert.Contains("chat", (await blockedFile.Content.ReadFromJsonAsync<ProblemDetails>())!.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.OK, (await s.Coach.GetAsync($"/api/v1/media/{photo.Id}")).StatusCode);
         (await portal.PutAsJsonAsync(weight, new WeightInput(81m, null))).EnsureSuccessStatusCode();
 
         // A new subscription restores everything, with all the data still there.
         await ReadAsync<SubscriptionResponse>(await s.Coach.PostAsJsonAsync($"/api/v1/clients/{client.Id}/subscriptions",
             new SubscriptionInput(s.PackageId, Today, 1, 100, s.CurrencyId, null, 0)));
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync("/api/v1/me/chat")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync($"/api/v1/media/{photo.Id}")).StatusCode);
         Assert.Equal(81m, (await portal.GetFromJsonAsync<BodyProgressResponse>(body))!.Weight.Summary.Current!.Value);
 
         // Restore the defaults for the other tests of this database.

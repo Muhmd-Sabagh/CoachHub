@@ -13,6 +13,15 @@ namespace CoachHub.Infrastructure.Media;
 
 public sealed class MediaRepository(CoachHubDbContext dbContext) : IMediaRepository
 {
+    public async Task<ClientFeature?> OwningFeatureAsync(Guid id, CancellationToken cancellationToken)
+    {
+        if (await dbContext.Set<CoachHub.Domain.Progress.ProgressPhoto>().AnyAsync(x => x.MediaId == id, cancellationToken)) return ClientFeature.Progress;
+        if (await dbContext.Set<CoachHub.Domain.Chat.ChatAttachment>().AnyAsync(x => x.MediaId == id, cancellationToken)) return ClientFeature.Chat;
+        if (await dbContext.Set<CoachHub.Domain.ClientFiles.ClientFile>().AnyAsync(x => x.MediaId == id, cancellationToken)) return ClientFeature.Files;
+        if (await dbContext.Set<FormAnswer>().AnyAsync(x => x.MediaId == id, cancellationToken)) return ClientFeature.FormsAndCheckIns;
+        return null;
+    }
+
     public async Task AddAsync(MediaAsset media, CancellationToken cancellationToken)
     {
         dbContext.Set<MediaAsset>().Add(media);

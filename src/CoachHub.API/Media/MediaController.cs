@@ -1,6 +1,9 @@
 using CoachHub.API.Auth;
 using CoachHub.API.Common.Routing;
+using System.Security.Claims;
 using CoachHub.Application.Auth;
+using CoachHub.Application.Clients;
+using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Media;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,12 +12,13 @@ namespace CoachHub.API.Media;
 
 /// <summary>
 /// Media is served only here. Who may open a file is decided by its owner (platform, coach
-/// library, or client media; see MediaAsset), enforced by the tenant filters: others get 404.
+/// library, or client media; see MediaAsset), enforced by the tenant filters: others get 404. A client opening their
+/// own file also passes the subscription access rules of the feature that holds it (P22): Blocked refuses it.
 /// </summary>
 [ApiController]
 [Authorize(Policy = AuthPolicies.AnyRole)]
 [Route(ApiRoutes.V1 + "/media")]
-public sealed class MediaController(MediaService mediaService) : ControllerBase
+public sealed class MediaController(MediaService mediaService, SubscriptionAccessService access) : ControllerBase
 {
     [HttpPost]
     [Authorize(Policy = AuthPolicies.AdminOnly)]
@@ -41,6 +45,12 @@ public sealed class MediaController(MediaService mediaService) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Open(Guid id, CancellationToken cancellationToken)
     {
+        if (Guid.TryParse(User.FindFirstValue(AuthClaims.ClientId), out var clientId) &&
+            await mediaService.OwningFeatureAsync(id, cancellationToken) is { } feature)
+        {
+            var decision = await access.CheckAsync(clientId, feature, write: false, cancellationToken);
+            if (!decision.Allowed) throw new ForbiddenException(decision.Message!);
+        }
         var media = await mediaService.OpenReadAsync(id, cancellationToken);
         // Range requests let videos (P14) seek without downloading the whole file.
         return File(media.Content, media.ContentType, media.FileName, enableRangeProcessing: true);

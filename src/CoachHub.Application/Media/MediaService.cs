@@ -118,6 +118,16 @@ public sealed class MediaService(
             media.SizeBytes);
     }
 
+    /// <summary>
+    /// The client-area feature of a visible client file (P22), for the subscription access rules; null for platform and
+    /// coach media, which the rules never restrict.
+    /// </summary>
+    public async Task<CoachHub.Domain.Settings.ClientFeature?> OwningFeatureAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var media = await repository.FindAsync(id, cancellationToken) ?? throw new NotFoundException("Media", id);
+        return media.ClientId is null ? null : await repository.OwningFeatureAsync(id, cancellationToken);
+    }
+
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var media = await repository.FindAsync(id, cancellationToken)
