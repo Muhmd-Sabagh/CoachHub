@@ -107,4 +107,10 @@ Each fix is one commit with its tests, its migration where needed, and English a
 
 ## Verification
 
-See the next section, filled in when the gate runs.
+| Check | Result |
+|---|---|
+| `./scripts/Verify-Release.ps1 -SkipRestore` | Passed: Domain 225, Application 148, Integration 183 tests; Angular build, Vitest (125), knip, translations (1,893 keys) |
+| Domain | `OneRepMaxFormulaChangeTests` (event only on a real change); schedule change and close (periods, `InForceFrom`, no empty period); row lineage defaults; resume date bounds, platform suspension and resume, ended subscriptions left alone |
+| SQL | `TransactionRunnerTests` (rollback across saves, nested run joins); saved-plans totals; e1RM rebuilt from 63.33 (Epley) to 62.07 (Brzycki) on a settings change; adherence keeps the weekly due dates after a change, a stop, a restart with a past start, and a transfer; choices and logged meals carry over to a mid-day new version (day, 409 on a repeat, choosing again, analytics); scheduled resume and the overdue rule (off by default, Administrator only, 0–90, suspends, payment resumes); `/media/{id}` opens a chat photo when full or read-only, 403 when chat is blocked, the coach still opens it |
+| Security review | A file linked from several features opens only if every one is open to the client (follow-up commit) |
+| Browser smoke test | 256 pages, all roles, phone and desktop, EN and AR. Findings: Coach B's expected 404s on Coach A's client, and the untranslated audit record types `Role` and `CheckInSchedulePeriod`, now labelled. Rerun for Administrator and Coach A in Arabic: 98 pages, 0 findings |
