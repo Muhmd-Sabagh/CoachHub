@@ -138,6 +138,26 @@ public sealed class WorkoutTrackingTests(CoachHubSqlApiFactory factory) : IClass
     }
 
     [Fact]
+    public async Task Changing_the_e1RM_formula_rebuilds_stored_records()
+    {
+        var setup = await SetUpAsync();
+        var portal = setup.Portal;
+        var session = await ReadAsync<WorkoutSessionResponse>(await portal.PostAsJsonAsync($"{Me}/sessions", new StartWorkoutInput(Today, setup.PushDayId)));
+        var bench = session.Exercises[0];
+        await ReadAsync<WorkoutSessionResponse>(await LogAsync(portal, session.Id, bench.Id, new LoggedSetInput(bench.Planned[1].Id, Reps: 8, WeightKg: 50)));
+        await ReadAsync<WorkoutSessionResponse>(await portal.PostAsync($"{Me}/sessions/{session.Id}/complete", null));
+        decimal E1rm(PersonalRecordsResponse records) =>
+            records.Current.Single(x => x.ExerciseId == setup.Bench.Id && x.Type == PersonalRecordType.EstimatedOneRepMax).Value;
+        Assert.Equal(63.33m, E1rm((await portal.GetFromJsonAsync<PersonalRecordsResponse>($"{Me}/records"))!)); // Epley: 50 × (1 + 8/30)
+
+        // P22: the coach switches to Brzycki; the stored record follows at once, without a new workout.
+        (await setup.Coach.PutAsJsonAsync("/api/v1/settings/coach", new CoachSettingsInput(
+            new ActivityFactors(1.2m, 1.375m, 1.55m, 1.725m, 1.9m), 20m, 10m, 2.0m, 0.8m, MacroMode.GramsPerKg,
+            new AdherenceWeights(35, 35, 15, 5, 5, 5), FoodReplacementRule.Calories, OneRepMaxFormula.Brzycki, 0m))).EnsureSuccessStatusCode();
+        Assert.Equal(62.07m, E1rm((await portal.GetFromJsonAsync<PersonalRecordsResponse>($"{Me}/records"))!)); // 50 × 36 / 29
+    }
+
+    [Fact]
     public async Task Analytics_report_volume_adherence_and_muscles()
     {
         var setup = await SetUpAsync();

@@ -37,6 +37,9 @@ public enum FoodReplacementRule
     DominantMacro
 }
 
+/// <summary>The coach chose another estimated one-rep max formula (P22).</summary>
+public sealed record OneRepMaxFormulaChanged(Guid CoachId, OneRepMaxFormula Formula) : IDomainEvent;
+
 /// <summary>How an estimated one-rep max is calculated (§22). Epley is the default; the formula is replaceable.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<OneRepMaxFormula>))]
 public enum OneRepMaxFormula
@@ -153,6 +156,8 @@ public sealed class CoachSettings : Entity, ITenantOwned
         Range(secondaryMuscleWeight, 0m, 1m, nameof(secondaryMuscleWeight));
         if (decimal.Round(secondaryMuscleWeight, 2) != secondaryMuscleWeight)
             throw new ArgumentException("Use at most two decimals.", nameof(secondaryMuscleWeight));
+        // Stored PRs carry e1RM values of the old formula; the change asks for them to be rebuilt (P22).
+        if (formula != OneRepMaxFormula) Raise(new OneRepMaxFormulaChanged(CoachId, formula));
         OneRepMaxFormula = formula;
         SecondaryMuscleWeight = secondaryMuscleWeight;
         UpdatedAt = now;
