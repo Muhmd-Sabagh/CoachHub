@@ -26,7 +26,9 @@ public sealed class BillingService(
         }
         var now = timeProvider.GetUtcNow();
         var sequence = await repository.NextInvoiceSequenceAsync(client.CoachId, now.Year, token);
-        var invoice = Invoice.Create(client.CoachId, input.ClientId, input.SubscriptionId, $"INV-{now.Year}-{sequence:000000}", input.CurrencyId, input.Total, now, input.DueAt);
+        // P23: invalid input answers 400, not 500.
+        var invoice = DomainValidation.Run(() => Invoice.Create(client.CoachId, input.ClientId, input.SubscriptionId,
+            $"INV-{now.Year}-{sequence:000000}", input.CurrencyId, input.Total, now, input.DueAt), "invoice");
         await repository.AddInvoiceAsync(invoice, token); return Map(invoice);
     }
     public async Task<InvoiceResponse> PayAsync(Guid invoiceId, PaymentInput input, CancellationToken token)
@@ -35,17 +37,28 @@ public sealed class BillingService(
         if (input.PaymentAccountId is { } accountId &&
             (await paymentAccounts.FindAsync(accountId, token))?.CoachId != invoice.CoachId)
             throw new ValidationException(new Dictionary<string, string[]> { ["paymentAccountId"] = ["The selected payment account does not exist for this coach."] });
-        var payment = Payment.Create(invoice.CoachId, invoiceId, input.PaymentAccountId, input.Amount, input.Reference, timeProvider.GetUtcNow());
-        invoice.ApplyPayment(input.Amount); await repository.AddPaymentAsync(payment, token); await repository.SaveAsync(token); return Map(invoice);
+        var payment = Domain(() => Payment.Create(invoice.CoachId, invoiceId, input.PaymentAccountId, input.Amount, input.Reference, timeProvider.GetUtcNow()), "amount");
+        Domain(() => invoice.ApplyPayment(input.Amount), "amount");
+        await repository.AddPaymentAsync(payment, token); await repository.SaveAsync(token); return Map(invoice);
     }
     public async Task<InvoiceResponse> RefundAsync(Guid paymentId, RefundInput input, CancellationToken token)
     {
         var payment = await repository.FindPaymentAsync(paymentId, token) ?? throw new NotFoundException("Payment", paymentId);
         var invoice = await RequiredInvoice(payment.InvoiceId, token);
-        payment.RecordRefund(input.Amount, input.Reason, timeProvider.GetUtcNow()); invoice.ApplyRefund(input.Amount);
+        Domain(() => payment.RecordRefund(input.Amount, input.Reason, timeProvider.GetUtcNow()), "amount");
+        Domain(() => invoice.ApplyRefund(input.Amount), "amount");
         await repository.SaveAsync(token); return Map(invoice);
     }
-    public async Task VoidAsync(Guid id, CancellationToken token) { var invoice = await RequiredInvoice(id, token); invoice.Void(); await repository.SaveAsync(token); }
+    public async Task VoidAsync(Guid id, CancellationToken token) { var invoice = await RequiredInvoice(id, token); Domain(invoice.Void, "invoice"); await repository.SaveAsync(token); }
+    /// <summary>Domain rules as answers (P23): a bad argument is 400 for its field, a state that forbids the change 409.</summary>
+    private static T Domain<T>(Func<T> action, string field)
+    {
+        try { return DomainValidation.Run(action, field); }
+        catch (InvalidOperationException exception) { throw new ConflictException(exception.Message); }
+    }
+
+    private static void Domain(Action action, string field) => Domain(() => { action(); return true; }, field);
+
     private async Task<Invoice> RequiredInvoice(Guid id, CancellationToken token) => await repository.FindInvoiceAsync(id, token) ?? throw new NotFoundException("Invoice", id);
     private static InvoiceResponse Map(Invoice x) => new(x.Id, x.ClientId, x.SubscriptionId, x.Number, x.CurrencyId, x.Total, x.Paid, x.Total - x.Paid, x.Status, x.IssuedAt, x.DueAt, x.Payments.Select(p => new PaymentResponse(p.Id, p.PaymentAccountId, p.Amount, p.Status, p.Reference, p.RecordedAt, p.Refunds.Select(r => new RefundResponse(r.Id, r.Amount, r.Reason, r.RecordedAt)).ToArray())).ToArray());
 }
