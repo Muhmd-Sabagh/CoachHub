@@ -20,6 +20,7 @@ using CoachHub.Application.WorkoutPlanning;
 using CoachHub.Application.Calendar;
 using CoachHub.Application.Chat;
 using CoachHub.Application.CheckIns;
+using CoachHub.Application.Common;
 using CoachHub.Application.ClientFiles;
 using CoachHub.Application.Common.Events;
 using CoachHub.Application.Dashboards;
@@ -209,6 +210,7 @@ public static class DependencyInjection
                 "Selected media provider configuration is incomplete.")
             .ValidateOnStart();
         services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
+        services.AddScoped<ITransactionRunner, TransactionRunner>();
         services.AddScoped<FileSystemMediaStorage>();
         services.AddScoped<S3MediaStorage>();
         services.AddScoped<IMediaStorage>(provider => fileSystem

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using CoachHub.Application.CheckIns;
+using CoachHub.Application.Common;
 using CoachHub.Application.Common.Exceptions;
 using CoachHub.Application.Media;
 using CoachHub.Application.Progress;
@@ -13,6 +14,7 @@ public sealed class FormSubmissionService(
     IMediaRepository mediaRepository,
     CheckInService checkIns,
     ProgressService progress,
+    ITransactionRunner transactions,
     TimeProvider timeProvider)
 {
     /// <summary>How far back a submission's day may be (as for tracking entries).</summary>
@@ -119,10 +121,14 @@ public sealed class FormSubmissionService(
             answer.Question,
             answer.ValueJson,
             answer.MediaId)).ToArray();
-        await repository.SubmitAsync(submission, answers, cancellationToken);
-        if (target is not null)
-            await checkIns.RecordAsync(client, target, graph.Definition.Id, submission.Id, submittedOn, cancellationToken);
-        await progress.RecordMetricsAsync(client.Id, submittedOn, metrics, cancellationToken);
+        // The submission, its check-in and the typed entries its measures write are stored together, or not at all.
+        await transactions.RunAsync(async token =>
+        {
+            await repository.SubmitAsync(submission, answers, token);
+            if (target is not null)
+                await checkIns.RecordAsync(client, target, graph.Definition.Id, submission.Id, submittedOn, token);
+            await progress.RecordMetricsAsync(client.Id, submittedOn, metrics, token);
+        }, cancellationToken);
         return new(submission.Id, submission.SubmittedAt);
     }
 
