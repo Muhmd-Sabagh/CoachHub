@@ -32,4 +32,16 @@ public sealed class DietPlanTests
         Assert.Equal(75, food.Quantity);
         Assert.Null(food.ReplacementMealId);
     }
+
+    [Fact]
+    public void A_row_starts_its_own_lineage_unless_it_continues_one()
+    {
+        var revisionId = Guid.NewGuid();
+        var id = Guid.NewGuid();
+        var earlier = Guid.NewGuid();
+        Assert.Equal(id, Meal.Create(id, revisionId, Guid.NewGuid(), "Breakfast", null, 1, null).LineageId);
+        Assert.Equal(earlier, Meal.Create(id, revisionId, Guid.NewGuid(), "Breakfast", null, 1, null, lineageId: earlier).LineageId);
+        Assert.Equal(earlier, MealOption.Create(id, revisionId, Guid.NewGuid(), "Option A", null, 1, earlier).LineageId);
+        Assert.Equal(id, DietPlanVariant.Create(id, revisionId, "Training day", null, 1, true, null).LineageId);
+    }
 }

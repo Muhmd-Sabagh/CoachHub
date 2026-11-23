@@ -53,12 +53,13 @@ public sealed class FoodTrackingService(
         var versions = await repository.ListDietVersionsAsync(clientId, cancellationToken);
         var days = (await repository.ListDaysAsync(clientId, from, to, cancellationToken)).ToDictionary(x => x.Date);
         var entries = (await repository.ListEntriesAsync(clientId, from, to, cancellationToken)).ToLookup(x => x.Date);
+        var lineages = await LineagesAsync(days.Values, entries.SelectMany(x => x), cancellationToken);
         var cache = new Dictionary<(Guid, int), PlannedVersion?>();
         var rows = new List<NutritionDayRow>();
         for (var date = from; date <= to && date <= today; date = date.AddDays(1))
         {
             var day = days.GetValueOrDefault(date);
-            var planned = await PlannedAsync(versions, date, day, cache, cancellationToken);
+            var planned = await PlannedAsync(versions, date, day, lineages, cache, cancellationToken);
             var summary = Summarize(planned, day, entries[date].ToArray());
             rows.Add(new NutritionDayRow(date, summary.Target, summary.Planned, summary.Consumed, summary.AdherencePercent,
                 summary.MealCompletionPercent, summary.EntryCount, summary.IsCompleted));
@@ -98,7 +99,14 @@ public sealed class FoodTrackingService(
         DomainValidation.Run(() =>
         {
             if (input.VariantId.HasValue) day.ChooseVariant(input.VariantId, now);
-            foreach (var choice in input.MealOptions ?? []) day.ChooseOption(choice.MealId, choice.OptionId, now);
+            foreach (var choice in input.MealOptions ?? [])
+            {
+                // A choice made for the same meal under an earlier version gives way to this one (P22).
+                var meal = planned.Version.Meals.Single(x => x.Id == choice.MealId);
+                foreach (var earlier in day.MealChoices.Where(x => x.MealId != meal.Id && planned.Continues(x.MealId, meal.LineageId)).ToArray())
+                    day.ChooseOption(earlier.MealId, null, now);
+                day.ChooseOption(choice.MealId, choice.OptionId, now);
+            }
         }, "choices");
         await repository.SaveChangesAsync(cancellationToken);
         return Map(await DayAsync(clientId, date, cancellationToken));
@@ -172,9 +180,9 @@ public sealed class FoodTrackingService(
         var context = await DayAsync(clientId, date, cancellationToken);
         var planned = context.Planned ?? throw new NotFoundException("Planned meal", mealId);
         var meal = planned.Meals.SingleOrDefault(x => x.Id == mealId) ?? throw new NotFoundException("Planned meal", mealId);
-        if (context.Entries.Any(x => x.PlannedMealId == meal.Id))
+        if (planned.Logged(meal, context.Entries))
             throw new ConflictException("This meal is already logged. Edit or delete its foods instead.");
-        var rows = planned.Figures.RowsOf(meal.Id, context.Day?.OptionFor(meal.Id));
+        var rows = planned.Figures.RowsOf(meal.Id, planned.ChosenOption(meal, context.Day));
         if (rows.Count == 0) throw Validation("mealId", "The meal has no foods to log.");
         var now = timeProvider.GetUtcNow();
         repository.Add(rows.Select(row => Entry(coachId, clientId, date, meal.Type, planned.Figures.Food(row.FoodItemId),
@@ -227,13 +235,25 @@ public sealed class FoodTrackingService(
         var versions = await repository.ListDietVersionsAsync(clientId, cancellationToken);
         var day = await repository.FindDayAsync(clientId, date, cancellationToken);
         var entries = await repository.ListEntriesAsync(clientId, date, date, cancellationToken);
-        var planned = await PlannedAsync(versions, date, day, [], cancellationToken);
+        var lineages = await LineagesAsync(day is null ? [] : [day], entries, cancellationToken);
+        var planned = await PlannedAsync(versions, date, day, lineages, [], cancellationToken);
         return new DayContext(date, day, planned, entries);
+    }
+
+    /// <summary>The lineage of every plan row the days' choices and the entries name (P22).</summary>
+    private async Task<IReadOnlyDictionary<Guid, Guid>> LineagesAsync(
+        IEnumerable<NutritionDay> days, IEnumerable<FoodLogEntry> entries, CancellationToken cancellationToken)
+    {
+        var ids = days.SelectMany(day => day.MealChoices.SelectMany(x => new[] { x.MealId, x.MealOptionId })
+                .Concat(day.VariantId is { } variant ? [variant] : []))
+            .Concat(entries.Where(x => x.PlannedMealId.HasValue).Select(x => x.PlannedMealId!.Value))
+            .ToHashSet();
+        return ids.Count == 0 ? new Dictionary<Guid, Guid>() : await repository.FindLineagesAsync(ids, cancellationToken);
     }
 
     /// <summary>The diet in force on the day, its figures, and the variant the client follows (by default the first).</summary>
     private async Task<PlannedDay?> PlannedAsync(
-        IReadOnlyList<DietVersion> versions, DateOnly date, NutritionDay? day,
+        IReadOnlyList<DietVersion> versions, DateOnly date, NutritionDay? day, IReadOnlyDictionary<Guid, Guid> lineages,
         Dictionary<(Guid, int), PlannedVersion?> cache, CancellationToken cancellationToken)
     {
         if (NutritionAdherence.InForce(versions, date) is not { } inForce) return null;
@@ -247,10 +267,13 @@ public sealed class FoodTrackingService(
             cache[key] = version;
         }
         if (version is null) return null;
+        // The chosen variant, or the same variant of the version the choice was made under (P22), or the first.
+        var chosen = day?.VariantId is { } variantId && lineages.TryGetValue(variantId, out var lineage) ? lineage : (Guid?)null;
         var variant = version.Aggregate.Variants.SingleOrDefault(x => x.Id == day?.VariantId)
+            ?? version.Aggregate.Variants.FirstOrDefault(x => x.LineageId == chosen)
             ?? version.Aggregate.Variants.OrderBy(x => x.Order).First();
         var meals = version.Aggregate.Meals.Where(x => x.DietPlanVariantId == variant.Id).OrderBy(x => x.Order).ToArray();
-        return new PlannedDay(version.Aggregate, version.Figures, variant, meals);
+        return new PlannedDay(version.Aggregate, version.Figures, variant, meals, lineages);
     }
 
     private static NutritionDaySummary Summarize(PlannedDay? planned, NutritionDay? day, IReadOnlyList<FoodLogEntry> entries)
@@ -258,12 +281,12 @@ public sealed class FoodTrackingService(
         var consumed = entries.Aggregate(MacroAmounts.Zero, (sum, x) => sum + MacroAmounts.From(x.Nutrients)).Rounded();
         if (planned is null) return new(null, null, consumed, null, 0, 0, null, null, entries.Count, false);
         var plannedTotals = planned.Meals.Aggregate(MacroAmounts.Zero,
-            (sum, meal) => sum + MacroAmounts.From(planned.Figures.Meal(meal.Id, day?.OptionFor(meal.Id)))).Rounded();
+            (sum, meal) => sum + MacroAmounts.From(planned.Figures.Meal(meal.Id, planned.ChosenOption(meal, day)))).Rounded();
         var targets = planned.Version.Revision.Targets;
         var target = new MacroAmounts(
             targets.Calories ?? plannedTotals.Calories, targets.Protein ?? plannedTotals.Protein,
             targets.Carbohydrates ?? plannedTotals.Carbohydrates, targets.Fat ?? plannedTotals.Fat, plannedTotals.Fiber);
-        var completed = planned.Meals.Count(meal => entries.Any(x => x.PlannedMealId == meal.Id));
+        var completed = planned.Meals.Count(meal => planned.Logged(meal, entries));
         return new(target, plannedTotals, consumed, (target - consumed).Rounded(), planned.Meals.Count, completed,
             NutritionAdherence.Share(completed, planned.Meals.Count),
             entries.Count == 0 ? null : NutritionAdherence.Percent(target, consumed),
@@ -279,7 +302,7 @@ public sealed class FoodTrackingService(
             var aggregate = planned.Version;
             var meals = planned.Meals.Select(meal =>
             {
-                var chosen = planned.Figures.OptionFor(meal.Id, context.Day?.OptionFor(meal.Id));
+                var chosen = planned.Figures.OptionFor(meal.Id, planned.ChosenOption(meal, context.Day));
                 return new PlannedMealResponse(meal.Id, meal.NameEn, meal.NameAr, meal.Type, meal.Notes,
                     planned.Figures.OptionsOf(meal.Id).Select(option => new PlannedMealOptionResponse(
                         option.Id, option.NameEn, option.NameAr, MacroAmounts.From(planned.Figures.Option(option.Id)))).ToArray(),
@@ -292,7 +315,7 @@ public sealed class FoodTrackingService(
                             label, labelAr, MacroAmounts.From(planned.Figures.Row(row.Id)), planned.AlternativesFor(row.Id).Count, row.Notes);
                     }).ToArray(),
                     MacroAmounts.From(planned.Figures.Meal(meal.Id, chosen)),
-                    context.Entries.Any(x => x.PlannedMealId == meal.Id));
+                    planned.Logged(meal, context.Entries));
             }).ToArray();
             plan = new PlannedDayResponse(aggregate.Plan.Id, aggregate.Plan.NameEn, aggregate.Plan.NameAr,
                 aggregate.Revision.VersionNumber, planned.Variant.Id,
@@ -357,9 +380,30 @@ public sealed class FoodTrackingService(
     private sealed record DayContext(DateOnly Date, NutritionDay? Day, PlannedDay? Planned, IReadOnlyList<FoodLogEntry> Entries);
     private sealed record PlannedVersion(DietPlanAggregate Aggregate, DietPlanFigures Figures);
 
-    /// <summary>The diet in force on a day: its version, figures, the variant followed and that variant's meals.</summary>
-    private sealed record PlannedDay(DietPlanAggregate Version, DietPlanFigures Figures, DietPlanVariant Variant, IReadOnlyList<Meal> Meals)
+    /// <summary>
+    /// The diet in force on a day: its version, figures, the variant followed and that variant's meals. Stored choices
+    /// and logged meals may name an earlier version's rows; <paramref name="Lineages"/> matches them to this one's (P22).
+    /// </summary>
+    private sealed record PlannedDay(
+        DietPlanAggregate Version, DietPlanFigures Figures, DietPlanVariant Variant, IReadOnlyList<Meal> Meals,
+        IReadOnlyDictionary<Guid, Guid> Lineages)
     {
+        /// <summary>Whether a stored row reference names the row of <paramref name="lineageId"/> in any version.</summary>
+        public bool Continues(Guid storedId, Guid lineageId) => Lineages.TryGetValue(storedId, out var lineage) && lineage == lineageId;
+
+        /// <summary>The option the client chose for the meal, also when chosen under an earlier version; null for the default.</summary>
+        public Guid? ChosenOption(Meal meal, NutritionDay? day)
+        {
+            if (day is null) return null;
+            if (day.OptionFor(meal.Id) is { } direct) return direct;
+            var earlier = day.MealChoices.FirstOrDefault(x => Continues(x.MealId, meal.LineageId));
+            return earlier is null ? null : Figures.OptionsOf(meal.Id).FirstOrDefault(x => Continues(earlier.MealOptionId, x.LineageId))?.Id;
+        }
+
+        /// <summary>Whether the meal is logged, also against the same meal of an earlier version.</summary>
+        public bool Logged(Meal meal, IEnumerable<FoodLogEntry> entries) =>
+            entries.Any(x => x.PlannedMealId == meal.Id || x.PlannedMealId is { } stored && Continues(stored, meal.LineageId));
+
         /// <summary>A food row of one of the day's meals (of any of its options).</summary>
         public MealFoodItem? Row(Guid rowId)
         {

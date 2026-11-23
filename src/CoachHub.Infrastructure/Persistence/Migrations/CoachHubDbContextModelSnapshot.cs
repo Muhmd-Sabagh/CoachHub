@@ -1605,6 +1605,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActiveForPdf")
                         .HasColumnType("bit");
 
+                    b.Property<Guid>("LineageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("NameAr")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -1737,6 +1740,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("DietPlanVariantId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("LineageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("NameAr")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -1823,6 +1829,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("LineageId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("MealId")

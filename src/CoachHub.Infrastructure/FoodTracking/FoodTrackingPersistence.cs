@@ -72,6 +72,14 @@ public sealed class NutritionDayMealChoiceConfiguration : IEntityTypeConfigurati
 
 public sealed class FoodTrackingRepository(CoachHubDbContext dbContext) : IFoodTrackingRepository
 {
+    public async Task<IReadOnlyDictionary<Guid, Guid>> FindLineagesAsync(IReadOnlyCollection<Guid> rowIds, CancellationToken cancellationToken)
+    {
+        var variants = await dbContext.Set<DietPlanVariant>().Where(x => rowIds.Contains(x.Id)).Select(x => new { x.Id, x.LineageId }).ToArrayAsync(cancellationToken);
+        var meals = await dbContext.Set<Meal>().Where(x => rowIds.Contains(x.Id)).Select(x => new { x.Id, x.LineageId }).ToArrayAsync(cancellationToken);
+        var options = await dbContext.Set<MealOption>().Where(x => rowIds.Contains(x.Id)).Select(x => new { x.Id, x.LineageId }).ToArrayAsync(cancellationToken);
+        return variants.Concat(meals).Concat(options).ToDictionary(x => x.Id, x => x.LineageId);
+    }
+
     public Task<Guid?> FindClientCoachIdAsync(Guid clientId, CancellationToken cancellationToken) =>
         dbContext.Set<Client>().Where(x => x.Id == clientId).Select(x => (Guid?)x.CoachId).SingleOrDefaultAsync(cancellationToken);
 
