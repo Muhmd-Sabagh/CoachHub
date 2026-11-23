@@ -40,6 +40,13 @@ try {
         throw 'Tracked production configuration must select private S3-compatible media storage.'
     }
 
+    # P23: the API needs ASP.NET Core 10.0.13 or later (CVE-2026-70159 in SignalR, P14); the tests run on it too.
+    $aspNetRuntimes = & dotnet --list-runtimes | Where-Object { $_ -match '^Microsoft\.AspNetCore\.App 10\.0\.(\d+)' } |
+        ForEach-Object { [int]([regex]::Match($_, '^Microsoft\.AspNetCore\.App 10\.0\.(\d+)').Groups[1].Value) }
+    if (-not ($aspNetRuntimes | Where-Object { $_ -ge 13 })) {
+        throw 'Install the ASP.NET Core 10.0.13 runtime or later (CVE-2026-70159).'
+    }
+
     if (-not $SkipRestore) {
         Invoke-Native 'Solution restore' { dotnet restore $solution }
     }

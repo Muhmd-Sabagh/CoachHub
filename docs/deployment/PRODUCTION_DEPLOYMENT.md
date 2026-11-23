@@ -1,10 +1,10 @@
 # Production deployment
 
-This runbook defines the minimum production configuration and release evidence for CoachHub. It does not authorize a deployment by itself. Updated in P18 for multi-coach tenancy, branding, SignalR, reverse proxies and the product phases P0–P17.
+This runbook defines the minimum production configuration and release evidence for CoachHub. It does not authorize a deployment by itself. Updated in P18 for multi-coach tenancy, branding, SignalR, reverse proxies and the product phases P0–P17, and in P23 for P19–P22 (Arabic, metric units, uploaded videos, subscription scheduling) and the runtime requirement.
 
 ## Topology (version 1)
 
-- **One API instance.** It serves the REST API, the SignalR hub (`/api/v1/realtime`) and two background workers: the notification outbox (`NotificationDispatcher`) and the hourly event scanner (`EventNotificationWorker`).
+- **One API instance.** It serves the REST API, the SignalR hub (`/api/v1/realtime`) and three background workers: the notification outbox (`NotificationDispatcher`), the hourly event scanner (`EventNotificationWorker`) and the hourly subscription pass (`SubscriptionScheduleWorker`, P22: scheduled resume dates and the optional overdue-invoice suspension).
   - Run **exactly one instance**.
   - SignalR has no backplane, so a second instance would miss live messages for users connected elsewhere.
   - The workers don't coordinate across instances, so two would send duplicate emails and notifications.
@@ -13,6 +13,13 @@ This runbook defines the minimum production configuration and release evidence f
   - The refresh cookie is `SameSite=Strict` and scoped to `/api/v1/auth`, so a different origin would need an explicit narrow CORS policy and a cookie review.
   - Never use wildcard origins with credentials.
 - **SQL Server** and a **private S3-compatible bucket**.
+
+## Runtime
+
+- **ASP.NET Core 10.0.13 or later** (P23). SignalR in 10.0.0–10.0.12 has a denial-of-service advisory (CVE-2026-70159). Install the latest 10.0 runtime on every server.
+  - The API refuses to start on an older runtime outside Development and Testing, and logs the version it found.
+  - `Verify-Release.ps1` fails when the machine running it has no 10.0.13+ runtime.
+- **Node.js** is needed only to build the Angular app; nothing runs on Node in production.
 
 ## Production media provider
 
@@ -80,6 +87,7 @@ Use the platform secret store and ASP.NET Core double-underscore configuration k
 3. Build immutable API and Angular artifacts from that commit; do not rebuild between environments.
 4. Back up the database, verify the backup, and run EF Core migrations (`dotnet ef migrations script --idempotent`, reviewed) using a controlled migration identity. Migrations are never applied at start-up.
 5. Deploy to staging with production-equivalent identity, database permissions, proxy headers, WebSockets and private media settings.
+   - **Legacy catalog (first deployment only).** Import foods and exercises as an Administrator: `./scripts/migration/Import-LegacyCatalog.ps1 -ApiBaseUrl https://<staging host> -MediaRoot <legacy media folder>` with `COACHHUB_ACCESS_TOKEN` set to an Administrator's access token. Expect 91 foods and 156 exercises with zero `Invalid` rows. Run it a second time: every row must report `AlreadyImported`. Keep the receipt (`artifacts/migration/legacy-catalog-receipt.json`) with the release record.
 6. Run the browser smoke test (`scripts/smoke`, see its README) against staging with a throwaway administrator. It must report no stuck screens, no horizontal scrolling, no console errors, no API 5xx and no accessibility findings, in English and Arabic at phone and desktop widths. The only expected findings are Coach B's 404s on Coach A's client.
 7. **Manual staging pass** (the smoke test only opens screens):
    - Administrator: create two coaches, set a brand and a subdomain, and confirm the login page shows each brand on its host.
@@ -88,6 +96,9 @@ Use the platform secret store and ASP.NET Core double-underscore configuration k
    - Coach A: review the check-in, see the live chat message arrive without reloading, and open the client's weekly report and its PDF in English and Arabic.
    - Coach B: confirm `404` on Coach A's client in the browser and through the API.
    - Billing: issue an invoice, settle it partly and then fully, refund part, and confirm the coach and admin dashboards show net revenue per currency. Suspend and resume the subscription, and confirm the client's banner and refused actions while it's suspended.
+   - Subscription scheduling (P22): suspend with a resume date of tomorrow and confirm it runs again the next day. If the business wants automatic suspension for overdue invoices, the Administrator sets the days under Subscription access rules; confirm an overdue invoice suspends the subscription within an hour and paying it resumes it.
+   - Plans (P22): while the client has logged a meal today, the coach saves the diet as a new version; the client's day keeps the chosen option and the logged meal.
+   - Arabic: repeat the client's phone pass and the coach's review in Arabic. Units read كجم، جم، سم، مل (metric only, owner decision 2026-11-02).
    - Exports: download the coach and platform CSVs and open them in a spreadsheet app, including Arabic text.
    - Transfer the client to Coach B, and confirm the archived chat and that the records moved per D7.
 8. Confirm anonymous requests receive `401` on staff, client and media routes, login throttling returns `429` per client address (through the proxy), and responses carry `Cache-Control: no-store`.

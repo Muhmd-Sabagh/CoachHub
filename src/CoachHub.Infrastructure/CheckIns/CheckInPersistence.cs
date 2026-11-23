@@ -52,6 +52,8 @@ public sealed class CheckInConfiguration : IEntityTypeConfiguration<CheckIn>
         // One check-in per client and due date; a resubmission adds a submission to it.
         builder.HasIndex(x => new { x.ClientId, x.DueOn }).IsUnique();
         builder.HasIndex(x => new { x.CoachId, x.Status, x.SubmittedAt });
+        // P23: the coach-wide list, newest first, and its count seek here (with SeekCoach) instead of scanning.
+        builder.HasIndex(x => new { x.CoachId, x.SubmittedAt }).IncludeProperties(x => new { x.ClientId, x.Status });
         builder.HasOne<Client>().WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.Cascade);
         // The form stays after a transfer (it is the previous coach's), so the key does not cascade.
         builder.HasOne<FormDefinition>().WithMany().HasForeignKey(x => x.FormDefinitionId).OnDelete(DeleteBehavior.NoAction);
@@ -118,7 +120,8 @@ public sealed class CheckInRepository(CoachHubDbContext dbContext) : ICheckInRep
 
     public async Task<PagedResult<CheckIn>> PageAsync(CheckInQuery query, CancellationToken cancellationToken)
     {
-        var checkIns = dbContext.Set<CheckIn>().AsNoTracking();
+        // Check-ins grow every week for every client: seek the coach's index past the parameterised filter (P23).
+        var checkIns = dbContext.Set<CheckIn>().AsNoTracking().SeekCoach(dbContext);
         if (query.ClientId is { } clientId) checkIns = checkIns.Where(x => x.ClientId == clientId);
         if (query.Status is { } status) checkIns = checkIns.Where(x => x.Status == status);
         if (query.FormDefinitionId is { } formId) checkIns = checkIns.Where(x => x.FormDefinitionId == formId);

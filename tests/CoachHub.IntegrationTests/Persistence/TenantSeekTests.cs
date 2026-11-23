@@ -1,6 +1,8 @@
 using CoachHub.Application.Auditing;
+using CoachHub.Application.CheckIns;
 using CoachHub.Application.Common.Tenancy;
 using CoachHub.Infrastructure.Auditing;
+using CoachHub.Infrastructure.CheckIns;
 using CoachHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,6 +33,29 @@ public sealed class TenantSeekTests(SqlServerTestDatabase database)
         var sql = await AuditSqlAsync(new SeekUser(scope, scope == TenantScope.Client ? Guid.NewGuid() : null));
 
         Assert.DoesNotMatch(@"\) AND \[a\]\.\[CoachId\] = @", sql);
+    }
+
+    [Fact]
+    public async Task A_coach_check_in_list_carries_the_coach_key_too()
+    {
+        // P23: the check-in list grows like the audit trail.
+        Assert.Matches(@"\) AND \[c\]\.\[CoachId\] = @", await CheckInSqlAsync(new SeekUser(TenantScope.Coach, Guid.NewGuid())));
+        Assert.DoesNotMatch(@"\) AND \[c\]\.\[CoachId\] = @", await CheckInSqlAsync(new SeekUser(TenantScope.Unrestricted, null)));
+    }
+
+    private async Task<string> CheckInSqlAsync(ICurrentUser user)
+    {
+        var commands = new List<string>();
+        await using var context = new CoachHubDbContext(
+            new DbContextOptionsBuilder<CoachHubDbContext>()
+                .UseSqlServer(database.ConnectionString)
+                .LogTo(message => { if (message.Contains("FROM [CheckIns]")) commands.Add(message); },
+                    [DbLoggerCategory.Database.Command.Name])
+                .Options,
+            currentUser: user);
+
+        await new CheckInRepository(context).PageAsync(new CheckInQuery(), CancellationToken.None);
+        return string.Join("\n", commands);
     }
 
     private async Task<string> AuditSqlAsync(ICurrentUser user)
