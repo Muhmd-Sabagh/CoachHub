@@ -793,6 +793,10 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.HasIndex("ClientId", "DueOn")
                         .IsUnique();
 
+                    b.HasIndex("CoachId", "SubmittedAt");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("CoachId", "SubmittedAt"), new[] { "ClientId", "Status" });
+
                     b.HasIndex("CoachId", "Status", "SubmittedAt");
 
                     b.ToTable("CheckIns", (string)null);
