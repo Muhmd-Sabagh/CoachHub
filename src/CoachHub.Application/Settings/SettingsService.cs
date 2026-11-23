@@ -62,6 +62,7 @@ public sealed class SettingsService(
         DomainValidation.Run(() => target.SetSubscriptionRules(input.DurationPresets ?? [],
             rules.Where(x => SubscriptionAccessDefaults.RestrictableStatuses.Contains(x.Status) ? x.Access != SubscriptionAccessDefaults.For(x.Status) : true).ToArray(),
             timeProvider.GetUtcNow()), "rules");
+        DomainValidation.Run(() => target.SetOverdueSuspension(input.OverdueSuspensionDays, timeProvider.GetUtcNow()), "overdueSuspensionDays");
         if (stored is null) settings.Add(target);
         await settings.SaveChangesAsync(cancellationToken);
         return MapSubscriptions(target);
@@ -72,7 +73,8 @@ public sealed class SettingsService(
         SubscriptionAccessDefaults.RestrictableStatuses
             .SelectMany(status => Enum.GetValues<ClientFeature>().Select(feature => new SubscriptionAccessRuleItem(status, feature,
                 platform.AccessFor(status, feature), !platform.AccessRules.Any(x => x.Status == status && x.Feature == feature))))
-            .ToArray());
+            .ToArray(),
+        platform.OverdueSuspensionDays);
 
     /// <summary>A coach reads their own defaults; an Administrator names the coach.</summary>
     public async Task<CoachSettingsResponse> GetCoachAsync(Guid? coachId, CancellationToken cancellationToken)

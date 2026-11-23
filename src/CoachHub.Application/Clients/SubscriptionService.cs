@@ -102,7 +102,7 @@ public sealed class SubscriptionService(
         var subscription = await FindRequiredAsync(clientId, id, cancellationToken);
         try
         {
-            DomainValidation.Run(() => subscription.Suspend(input.Reason, Today(), timeProvider.GetUtcNow()), "reason");
+            DomainValidation.Run(() => subscription.Suspend(input.Reason, Today(), timeProvider.GetUtcNow(), input.ResumesOn), "reason");
         }
         catch (InvalidOperationException exception)
         {
@@ -172,7 +172,9 @@ public sealed class SubscriptionService(
         subscription.StatusOn(today),
         payment,
         subscription.SuspendedAt,
-        subscription.SuspensionReason);
+        subscription.SuspensionReason,
+        subscription.ResumesOn,
+        subscription.SuspendedForOverdueInvoice);
 
     private async Task<Subscription> FindRequiredAsync(
         Guid clientId,

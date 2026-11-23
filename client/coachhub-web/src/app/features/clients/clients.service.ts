@@ -71,6 +71,9 @@ export interface Subscription {
   paymentStatus: 'NoInvoice' | 'Unpaid' | 'PartiallyPaid' | 'Paid' | 'Refunded';
   suspendedAt: string | null;
   suspensionReason: string | null;
+  /** P22: the day a suspension ends by itself, and whether the platform suspended it for an overdue invoice. */
+  resumesOn?: string | null;
+  suspendedForOverdueInvoice?: boolean;
 }
 export interface ClientDetail {
   client: Client;
@@ -133,9 +136,9 @@ export class ClientsService {
   deleteSubscription(clientId: string, id: string) {
     return this.http.delete<void>(`${this.url}/${clientId}/subscriptions/${id}`);
   }
-  /** Pauses a subscription (§57); the end date does not move. */
-  suspendSubscription(clientId: string, id: string, reason: string) {
-    return this.http.post<Subscription>(`${this.url}/${clientId}/subscriptions/${id}/suspend`, { reason });
+  /** Pauses a subscription (§57); the end date does not move. With `resumesOn` it runs again on that day (P22). */
+  suspendSubscription(clientId: string, id: string, reason: string, resumesOn: string | null = null) {
+    return this.http.post<Subscription>(`${this.url}/${clientId}/subscriptions/${id}/suspend`, { reason, resumesOn });
   }
   resumeSubscription(clientId: string, id: string) {
     return this.http.post<Subscription>(`${this.url}/${clientId}/subscriptions/${id}/resume`, null);

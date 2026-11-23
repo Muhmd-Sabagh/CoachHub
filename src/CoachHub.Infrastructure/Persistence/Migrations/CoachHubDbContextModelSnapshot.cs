@@ -1249,11 +1249,17 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("RenewalCount")
                         .HasColumnType("int");
 
+                    b.Property<DateOnly?>("ResumesOn")
+                        .HasColumnType("date");
+
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
                     b.Property<DateTimeOffset?>("SuspendedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("SuspendedForOverdueInvoice")
+                        .HasColumnType("bit");
 
                     b.Property<string>("SuspensionReason")
                         .HasMaxLength(500)
@@ -3561,6 +3567,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<string>("EmailSenderName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("OverdueSuspensionDays")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");

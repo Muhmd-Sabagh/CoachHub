@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<AssessmentAdminQueryService>();
         services.AddScoped<ClientService>();
         services.AddScoped<SubscriptionService>();
+        services.AddScoped<SubscriptionScheduleService>();
         services.AddScoped<DietPlanService>();
         services.AddScoped<NutritionTargetService>();
         services.AddScoped<FoodTrackingService>();

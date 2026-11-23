@@ -33,7 +33,10 @@ describe('Subscriptions and access control (§47, §57)', () => {
 
   it('suspends and resumes a subscription', () => {
     clients.suspendSubscription('c', 's', 'Payment late').subscribe();
-    expect(http.expectOne('/api/v1/clients/c/subscriptions/s/suspend').request.body).toEqual({ reason: 'Payment late' });
+    expect(http.expectOne('/api/v1/clients/c/subscriptions/s/suspend').request.body).toEqual({ reason: 'Payment late', resumesOn: null });
+    // P22: an optional resume date.
+    clients.suspendSubscription('c', 's', 'Travel', '2026-12-01').subscribe();
+    expect(http.expectOne('/api/v1/clients/c/subscriptions/s/suspend').request.body).toEqual({ reason: 'Travel', resumesOn: '2026-12-01' });
     clients.resumeSubscription('c', 's').subscribe();
     expect(http.expectOne('/api/v1/clients/c/subscriptions/s/resume').request.method).toBe('POST');
     access.get().subscribe();

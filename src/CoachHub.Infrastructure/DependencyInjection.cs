@@ -135,6 +135,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationSender>(provider => provider.GetRequiredService<WhatsAppNotificationSender>());
         services.AddHostedService<NotificationDispatcher>();
         services.AddHostedService<EventNotificationWorker>();
+        services.AddHostedService<SubscriptionScheduleWorker>();
         services.AddSingleton<ITokenIssuer, JwtTokenIssuer>();
         services.AddScoped<AdminBootstrapper>();
 
@@ -146,6 +147,7 @@ public static class DependencyInjection
         services.AddScoped<IExerciseRepository, ExerciseRepository>();
         services.AddScoped<IWorkoutPlanRepository, WorkoutPlanRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
+        services.AddScoped<ISubscriptionScheduleRepository, SubscriptionScheduleRepository>();
         services.AddScoped<IClientAccounts, ClientAccounts>();
         services.AddScoped<IDietPlanRepository, DietPlanRepository>();
         services.AddScoped<IFoodTrackingRepository, FoodTrackingRepository>();
