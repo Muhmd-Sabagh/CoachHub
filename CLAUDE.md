@@ -109,7 +109,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
   - Catalog entries (`ICatalogEntry`, P7: foods; P9: exercises): platform rows (no coach) are visible to every signed-in user; a coach's rows to that coach and their clients. A plan may keep the previous coach's entries after a transfer (`FindReferenced*Async`).
   - Commercial records keep the selling coach forever; coaching records follow the client on transfer (D7).
   - Tenant-isolation tests run on SQL Server (`CoachHubSqlApiFactory`); see `tests/CoachHub.IntegrationTests/Tenancy`.
-  - Query plans (P18): the parameterised filter (`@unrestricted = 1 OR CoachId = @coach …`) makes SQL Server scan coach-wide lists. For lists that grow with the tenant (audit trail, dashboard counts), add `SeekCoach`/`SeekOptionalCoach` (`Persistence/TenantSeek.cs`), which repeats the coach's key as a plain predicate; it only narrows. Queries that already name a client seek on their own.
+  - Query plans (P18): the parameterised filter (`@unrestricted = 1 OR CoachId = @coach …`) makes SQL Server scan coach-wide lists. For lists that grow with the tenant (audit trail, dashboard counts, the check-in list since P23), add `SeekCoach`/`SeekOptionalCoach` (`Persistence/TenantSeek.cs`), which repeats the coach's key as a plain predicate; it only narrows. Give such a list an index on `(CoachId, <sort column>)` that includes `ClientId`, which the tenant filter reads. Queries that already name a client seek on their own.
 - **Ownership (§62):** every endpoint verifies the caller may access the specific client's data, files and photos, not only that they hold a permission.
 - **Structured data (D3):** use typed numeric or enum fields for prescriptions (sets, rep min/max, load, RIR, RPE, tempo, rest, duration, set grouping, block type), profile data, and all tracking time-series. Free-text notes go alongside, never instead.
 - **Versioning (D4)** — implemented in P6; see `docs/product/phases/P06_PLAN_VERSIONS.md`.
@@ -195,7 +195,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P18. Known gaps against REQUIREMENTS.md:
 
-- product phases P0–P18, P10A, P18A (cleanup), P19 (localisation; the client area in Arabic) P20 (photo privacy, check-in search, uploaded videos, tests in the dashboard and reports, metric units), P21 (every staff screen, server message, PDF label and CSV header in Arabic) and P22 (tracking correctness and subscription operations) are delivered. The last completion phase, P23, is the release with the owner's production sign-off on staging (`docs/deployment/PRODUCTION_SIGNOFF.md`).
+- product phases P0–P18, P10A, P18A (cleanup), P19 (localisation; the client area in Arabic) P20 (photo privacy, check-in search, uploaded videos, tests in the dashboard and reports, metric units), P21 (every staff screen, server message, PDF label and CSV header in Arabic) and P22 (tracking correctness and subscription operations) are delivered. P23's repository work is done (dependencies, runtime requirement, re-review, query plans, runbook; `docs/product/phases/P23_RELEASE_READINESS.md`). What remains is staging and the owner's production sign-off (`docs/deployment/PRODUCTION_SIGNOFF.md`).
 - Scale-out (more than one API instance) is backlog: SignalR has no backplane and the workers are not coordinated.
 
 Treat these as planned rework, not conventions to preserve.
@@ -215,6 +215,7 @@ Treat these as planned rework, not conventions to preserve.
 - Media is served only through authorized endpoints; there is no static file middleware.
 - Hosting (P18): every API response is `Cache-Control: no-store` unless the endpoint sets its own (only public brand images). Forwarded headers are trusted only from `ReverseProxy` known proxies/networks (`Common/Hosting/ReverseProxy.cs`); per-address rate limits depend on it. Version 1 runs as one API instance (SignalR has no backplane; the notification workers are not coordinated).
 - Never commit secrets or connection strings.
+- Runtime (P23): ASP.NET Core 10.0.13 or later (CVE-2026-70159). `RuntimeRequirement` stops the API outside Development and Testing on an older runtime, and `Verify-Release.ps1` checks the machine. The Angular packages are pinned to one exact version; update them together, to releases at least two weeks old.
 
 ## Testing
 

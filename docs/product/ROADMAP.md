@@ -1,6 +1,6 @@
 # CoachHub Product Roadmap: Phases to Implement docs/product/REQUIREMENTS.md
 
-**Status:** Approved by the owner on 2026-10-12. P0–P18, P10A, P18A and P19–P22 are delivered. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
+**Status:** Approved by the owner on 2026-10-12. P0–P18, P10A, P18A and P19–P22 are delivered, and P23's repository work is done; staging and the owner's sign-off remain. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
 
 ## Context
 
@@ -494,12 +494,14 @@ These close the known limitations recorded in earlier phase docs.
 
 ### P23: Release readiness and production sign-off (M), covering §52, §53, §60
 
+**Repository work done 2026-11-23** (see `docs/product/phases/P23_RELEASE_READINESS.md`); staging and the owner's sign-off remain (`docs/deployment/PRODUCTION_SIGNOFF.md`).
+
 - **Dependencies.** Fix or accept the `npm audit` findings (P14). Require the ASP.NET Core 10.0.13+ runtime in the deployment docs and the gate.
 - **Re-verify.** Run P18's security review and volume query plans again on the code as changed by P19–P22.
 - **Staging.**
   - Deploy to staging.
   - Run the legacy catalog import (foods and exercises).
-  - Run the full EN/AR smoke test and the manual staging pass for every role, including Arabic and imperial units.
+  - Run the full EN/AR smoke test and the manual staging pass for every role, including Arabic and metric units (imperial units were dropped on 2026-11-02).
   - Complete `PRODUCTION_SIGNOFF.md` with the owner.
 - **Docs.** Update CLAUDE.md "Current state vs target" and the deployment runbook.
 
@@ -554,4 +556,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 and P21 were delivered on 2026-11-02, and P22 on 2026-11-23. The next phase is **P23** (release readiness and production sign-off).
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 and P21 were delivered on 2026-11-02, and P22 on 2026-11-23. P23's repository work was done on 2026-11-23; the release now waits on staging and the owner's sign-off.
