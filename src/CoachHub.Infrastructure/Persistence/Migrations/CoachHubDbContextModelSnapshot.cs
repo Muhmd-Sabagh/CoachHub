@@ -844,6 +844,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("FormDefinitionId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateOnly?>("InForceFrom")
+                        .HasColumnType("date");
+
                     b.Property<int>("IntervalWeeks")
                         .HasColumnType("int");
 
@@ -865,6 +868,57 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.ToTable("CheckInSchedules", null, t =>
                         {
                             t.HasCheckConstraint("CK_CheckInSchedules_Interval", "[IntervalWeeks] IN (1, 2, 4)");
+                        });
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInSchedulePeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CoachId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DueWeekday")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<Guid>("FormDefinitionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("InForceFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("InForceTo")
+                        .HasColumnType("date");
+
+                    b.Property<int>("IntervalWeeks")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("StartsOn")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
+
+                    b.HasIndex("FormDefinitionId");
+
+                    b.HasIndex("ClientId", "InForceFrom");
+
+                    b.ToTable("CheckInSchedulePeriods", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CheckInSchedulePeriods_Interval", "[IntervalWeeks] IN (1, 2, 4)");
+
+                            t.HasCheckConstraint("CK_CheckInSchedulePeriods_Range", "[InForceTo] >= [InForceFrom]");
                         });
                 });
 
@@ -1195,11 +1249,17 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<int>("RenewalCount")
                         .HasColumnType("int");
 
+                    b.Property<DateOnly?>("ResumesOn")
+                        .HasColumnType("date");
+
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
                     b.Property<DateTimeOffset?>("SuspendedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("SuspendedForOverdueInvoice")
+                        .HasColumnType("bit");
 
                     b.Property<string>("SuspensionReason")
                         .HasMaxLength(500)
@@ -1551,6 +1611,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActiveForPdf")
                         .HasColumnType("bit");
 
+                    b.Property<Guid>("LineageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("NameAr")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -1683,6 +1746,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("DietPlanVariantId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("LineageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("NameAr")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -1769,6 +1835,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("LineageId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("MealId")
@@ -3499,6 +3568,9 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("OverdueSuspensionDays")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -4758,6 +4830,27 @@ namespace CoachHub.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInSchedule", b =>
+                {
+                    b.HasOne("CoachHub.Domain.Clients.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Coaches.Coach", null)
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachHub.Domain.Assessments.FormDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("FormDefinitionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CoachHub.Domain.CheckIns.CheckInSchedulePeriod", b =>
                 {
                     b.HasOne("CoachHub.Domain.Clients.Client", null)
                         .WithMany()

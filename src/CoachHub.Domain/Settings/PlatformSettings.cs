@@ -34,6 +34,14 @@ public sealed class PlatformSettings : Entity
     /// <summary>The subscription lengths offered as quick choices (§47), as "1,3,6,12".</summary>
     public string DurationPresetList { get; private set; } = string.Join(',', SubscriptionAccessDefaults.DurationPresets);
 
+    /// <summary>
+    /// Days after an invoice's due date when its unpaid subscription is suspended automatically (P22); null (the
+    /// default) never suspends. Paying or voiding the invoice resumes it.
+    /// </summary>
+    public int? OverdueSuspensionDays { get; private set; }
+
+    public const int MaximumOverdueSuspensionDays = 90;
+
     /// <summary>The Administrator's access rules (§57); cells without a rule use <see cref="SubscriptionAccessDefaults"/>.</summary>
     public IReadOnlyCollection<SubscriptionAccessRule> AccessRules => _accessRules;
 
@@ -77,6 +85,15 @@ public sealed class PlatformSettings : Entity
                 _accessRules.Add(SubscriptionAccessRule.Create(Id, rule.Status, rule.Feature, rule.Access));
             }
         }
+        UpdatedAt = now;
+    }
+
+    /// <summary>Turns automatic suspension for overdue invoices on (days after the due date, 0–90) or off (null).</summary>
+    public void SetOverdueSuspension(int? days, DateTimeOffset now)
+    {
+        if (days is < 0 or > MaximumOverdueSuspensionDays)
+            throw new ArgumentException($"Use 0 to {MaximumOverdueSuspensionDays} days, or leave it empty to turn it off.", nameof(days));
+        OverdueSuspensionDays = days;
         UpdatedAt = now;
     }
 

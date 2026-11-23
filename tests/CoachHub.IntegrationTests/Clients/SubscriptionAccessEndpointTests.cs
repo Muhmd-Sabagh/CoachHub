@@ -4,15 +4,20 @@ using CoachHub.Application.Auth;
 using CoachHub.Application.Billing;
 using CoachHub.Application.Chat;
 using CoachHub.Application.Clients;
+using CoachHub.Application.Media;
 using CoachHub.Application.Common.Models;
 using CoachHub.Application.Progress;
 using CoachHub.Application.ReferenceData;
 using CoachHub.Application.Settings;
+using CoachHub.Domain.Billing;
 using CoachHub.Domain.Clients;
 using CoachHub.Domain.Settings;
 using CoachHub.IntegrationTests.Auth;
+using CoachHub.Infrastructure.Persistence;
 using CoachHub.IntegrationTests.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CoachHub.IntegrationTests.Clients;
 
@@ -82,12 +87,93 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
     }
 
     [Fact]
+    public async Task Scheduled_resume_and_automatic_suspension_for_overdue_invoices()
+    {
+        var s = await SetUpAsync();
+        async Task<(Guid ClientId, SubscriptionResponse Subscription)> SubscribedAsync(string name)
+        {
+            var client = await ReadAsync<ClientResponse>(await s.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput($"{name} {s.Tag}", null, null, null)));
+            return (client.Id, await ReadAsync<SubscriptionResponse>(await s.Coach.PostAsJsonAsync($"/api/v1/clients/{client.Id}/subscriptions",
+                new SubscriptionInput(s.PackageId, Today.AddDays(-10), 3, 100, s.CurrencyId, null, 0))));
+        }
+        async Task<SubscriptionResponse> CurrentAsync(Guid clientId) =>
+            (await s.Coach.GetFromJsonAsync<ClientDetailResponse>($"/api/v1/clients/{clientId}"))!.Subscriptions.Single();
+        async Task RunPassAsync()
+        {
+            using var scope = factory.Services.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<SubscriptionScheduleService>().RunAsync(CancellationToken.None);
+        }
+
+        // P22: a suspension with a resume date; the date must lie after today.
+        var (travellerId, travel) = await SubscribedAsync("Traveller");
+        var path = $"/api/v1/clients/{travellerId}/subscriptions/{travel.Id}";
+        Assert.Equal(HttpStatusCode.BadRequest, (await s.Coach.PostAsJsonAsync($"{path}/suspend", new SubscriptionSuspendInput("Travel", Today))).StatusCode);
+        var paused = await ReadAsync<SubscriptionResponse>(await s.Coach.PostAsJsonAsync($"{path}/suspend", new SubscriptionSuspendInput("Travel", Today.AddDays(1))));
+        Assert.Equal((SubscriptionStatus.Suspended, Today.AddDays(1)), (paused.Status, paused.ResumesOn!.Value));
+        await RunPassAsync();
+        Assert.Equal(SubscriptionStatus.Suspended, (await CurrentAsync(travellerId)).Status);
+        // The day comes.
+        using (var scope = factory.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<CoachHubDbContext>().Set<Subscription>().IgnoreQueryFilters()
+                .Where(x => x.Id == travel.Id).ExecuteUpdateAsync(x => x.SetProperty(subscription => subscription.ResumesOn, Today));
+        }
+        await RunPassAsync();
+        var back = await CurrentAsync(travellerId);
+        Assert.Equal((SubscriptionStatus.Active, (DateOnly?)null, (string?)null), (back.Status, back.ResumesOn, back.SuspensionReason));
+
+        // Automatic suspension is off by default: an overdue invoice changes nothing.
+        var (debtorId, debt) = await SubscribedAsync("Debtor");
+        var invoice = await ReadAsync<InvoiceResponse>(await s.Coach.PostAsJsonAsync("/api/v1/billing/invoices",
+            new InvoiceInput(debtorId, debt.Id, s.CurrencyId, 100, DateTimeOffset.UtcNow.AddDays(1))));
+        // Time passes: the invoice fell due five days ago.
+        using (var scope = factory.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<CoachHubDbContext>().Set<Invoice>().IgnoreQueryFilters().Where(x => x.Id == invoice.Id)
+                .ExecuteUpdateAsync(x => x.SetProperty(row => row.IssuedAt, DateTimeOffset.UtcNow.AddDays(-35)).SetProperty(row => row.DueAt, DateTimeOffset.UtcNow.AddDays(-5)));
+        }
+        await RunPassAsync();
+        Assert.Equal(SubscriptionStatus.Active, (await CurrentAsync(debtorId)).Status);
+
+        // Only the Administrator sets the rule (0–90 days).
+        using var admin = factory.CreateAdminClient();
+        var settings = (await admin.GetFromJsonAsync<SubscriptionSettingsResponse>("/api/v1/settings/subscriptions"))!;
+        Assert.Null(settings.OverdueSuspensionDays);
+        var rules = settings.Rules.Where(x => !x.IsDefault).ToArray();
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PutAsJsonAsync("/api/v1/settings/subscriptions",
+            new SubscriptionSettingsInput(settings.DurationPresets, rules, 91))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await s.Coach.PutAsJsonAsync("/api/v1/settings/subscriptions",
+            new SubscriptionSettingsInput(settings.DurationPresets, rules, 3))).StatusCode);
+        Assert.Equal(3, (await ReadAsync<SubscriptionSettingsResponse>(await admin.PutAsJsonAsync("/api/v1/settings/subscriptions",
+            new SubscriptionSettingsInput(settings.DurationPresets, rules, 3)))).OverdueSuspensionDays);
+        try
+        {
+            // Five days overdue against a three-day rule: suspended by the platform, not by the coach.
+            await RunPassAsync();
+            var suspended = await CurrentAsync(debtorId);
+            Assert.Equal((SubscriptionStatus.Suspended, true), (suspended.Status, suspended.SuspendedForOverdueInvoice));
+            Assert.Equal(SubscriptionStatus.Active, (await CurrentAsync(travellerId)).Status);
+
+            // Paying the invoice ends the suspension at the next pass.
+            await ReadAsync<InvoiceResponse>(await s.Coach.PostAsJsonAsync($"/api/v1/billing/invoices/{invoice.Id}/payments", new PaymentInput(null, 100, null)));
+            await RunPassAsync();
+            var paid = await CurrentAsync(debtorId);
+            Assert.Equal((SubscriptionStatus.Active, false), (paid.Status, paid.SuspendedForOverdueInvoice));
+        }
+        finally
+        {
+            await ReadAsync<SubscriptionSettingsResponse>(await admin.PutAsJsonAsync("/api/v1/settings/subscriptions",
+                new SubscriptionSettingsInput(settings.DurationPresets, rules)));
+        }
+    }
+
+    [Fact]
     public async Task Access_rules_restrict_the_client_area_without_deleting_data()
     {
         var s = await SetUpAsync();
         using var admin = factory.CreateAdminClient();
         var client = await ReadAsync<ClientResponse>(await s.Coach.PostAsJsonAsync("/api/v1/clients", new ClientCreateInput($"Member {s.Tag}", null, null, null)));
-        var portal = factory.CreateClientAreaClient(s.CoachId, client.Id);
+        var portal = (await factory.CreateSignedInAccountAsync(AuthRoles.Client, s.CoachId, client.Id)).Http;
         var weight = $"/api/v1/me/progress/weight/{Today.AddDays(-1):yyyy-MM-dd}";
         var body = $"/api/v1/me/progress/body?from={Today.AddDays(-7):yyyy-MM-dd}&to={Today:yyyy-MM-dd}";
 
@@ -96,6 +182,13 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
         Assert.Equal(SubscriptionStatus.Inactive, access.SubscriptionStatus);
         Assert.All(access.Features, x => Assert.Equal(FeatureAccess.Full, x.Access));
         (await portal.PutAsJsonAsync(weight, new WeightInput(80.5m, null))).EnsureSuccessStatusCode();
+        // A photo sent in the chat, opened by ID through /media (P22: it follows the chat's access rule).
+        var png = new ByteArrayContent(CoachHub.IntegrationTests.Me.MeEndpointTests.Png);
+        png.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        var photo = await ReadAsync<MediaMetadata>(await portal.PostAsync("/api/v1/me/chat/attachments",
+            new MultipartFormDataContent { { png, "file", "lunch.png" } }));
+        (await portal.PostAsJsonAsync("/api/v1/me/chat/messages", new ChatSendInput("Lunch", [photo.Id]))).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync($"/api/v1/media/{photo.Id}")).StatusCode);
 
         // An expired subscription: read-only by default. History stays visible; writing is refused with a reason.
         await ReadAsync<SubscriptionResponse>(await s.Coach.PostAsJsonAsync($"/api/v1/clients/{client.Id}/subscriptions",
@@ -116,6 +209,8 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
             (arabicProblem.Title, arabicProblem.Detail));
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync("/api/v1/me/chat")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await portal.PostAsJsonAsync("/api/v1/me/chat/messages", new ChatSendInput("Hello?"))).StatusCode);
+        // Read-only still opens the chat's files.
+        Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync($"/api/v1/media/{photo.Id}")).StatusCode);
         // The account and notifications are never restricted.
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync("/api/v1/inbox/unread-count")).StatusCode);
 
@@ -134,12 +229,18 @@ public sealed class SubscriptionAccessEndpointTests(CoachHubSqlApiFactory factor
         Assert.False(settings.Rules.Single(x => x.Status == SubscriptionStatus.Expired && x.Feature == ClientFeature.Chat).IsDefault);
 
         Assert.Equal(HttpStatusCode.Forbidden, (await portal.GetAsync("/api/v1/me/chat")).StatusCode);
+        // P22: a blocked chat's files are refused by ID too; the coach still opens them.
+        var blockedFile = await portal.GetAsync($"/api/v1/media/{photo.Id}");
+        Assert.Equal(HttpStatusCode.Forbidden, blockedFile.StatusCode);
+        Assert.Contains("chat", (await blockedFile.Content.ReadFromJsonAsync<ProblemDetails>())!.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.OK, (await s.Coach.GetAsync($"/api/v1/media/{photo.Id}")).StatusCode);
         (await portal.PutAsJsonAsync(weight, new WeightInput(81m, null))).EnsureSuccessStatusCode();
 
         // A new subscription restores everything, with all the data still there.
         await ReadAsync<SubscriptionResponse>(await s.Coach.PostAsJsonAsync($"/api/v1/clients/{client.Id}/subscriptions",
             new SubscriptionInput(s.PackageId, Today, 1, 100, s.CurrencyId, null, 0)));
         Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync("/api/v1/me/chat")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await portal.GetAsync($"/api/v1/media/{photo.Id}")).StatusCode);
         Assert.Equal(81m, (await portal.GetFromJsonAsync<BodyProgressResponse>(body))!.Weight.Summary.Current!.Value);
 
         // Restore the defaults for the other tests of this database.

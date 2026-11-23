@@ -134,7 +134,9 @@ public sealed record SubscriptionResponse(
     SubscriptionStatus Status = SubscriptionStatus.Active,
     SubscriptionPaymentStatus PaymentStatus = SubscriptionPaymentStatus.NoInvoice,
     DateTimeOffset? SuspendedAt = null,
-    string? SuspensionReason = null);
+    string? SuspensionReason = null,
+    DateOnly? ResumesOn = null,
+    bool SuspendedForOverdueInvoice = false);
 
-/// <summary>Why the coach pauses the subscription (§57 Suspended).</summary>
-public sealed record SubscriptionSuspendInput(string Reason);
+/// <summary>Why the coach pauses the subscription (§57 Suspended), and optionally the day it runs again (P22).</summary>
+public sealed record SubscriptionSuspendInput(string Reason, DateOnly? ResumesOn = null);

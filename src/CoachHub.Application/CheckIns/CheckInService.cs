@@ -38,14 +38,18 @@ public sealed class CheckInService(
         var now = timeProvider.GetUtcNow();
         var today = Today();
         var schedule = await repository.FindScheduleAsync(clientId, cancellationToken);
+        // Earlier terms keep counting for the days they were in force (P22); a new schedule follows the last period.
+        var lastPeriod = schedule is null ? (await repository.ListSchedulePeriodsAsync(clientId, cancellationToken)).LastOrDefault() : null;
         DomainValidation.Run(() =>
         {
             if (schedule is null)
             {
-                schedule = CheckInSchedule.Create(client.CoachId, client.Id, form.Id, input.IntervalWeeks, input.DueWeekday, input.StartsOn ?? today, now);
+                schedule = CheckInSchedule.Create(client.CoachId, client.Id, form.Id, input.IntervalWeeks, input.DueWeekday, input.StartsOn ?? today, now,
+                    lastPeriod?.InForceTo.AddDays(1));
                 repository.Add(schedule);
             }
-            else schedule.Change(form.Id, input.IntervalWeeks, input.DueWeekday, input.StartsOn ?? schedule.StartsOn, now);
+            else if (schedule.Change(form.Id, input.IntervalWeeks, input.DueWeekday, input.StartsOn ?? schedule.StartsOn, today, now) is { } closed)
+                repository.Add(closed);
         }, "schedule");
         var history = await repository.ListForClientAsync(clientId, cancellationToken);
         var next = schedule!.DueOnOrAfter(today > schedule.StartsOn ? today : schedule.StartsOn);
@@ -60,6 +64,7 @@ public sealed class CheckInService(
     {
         var client = await RequiredClientAsync(clientId, cancellationToken);
         var schedule = await repository.FindScheduleAsync(clientId, cancellationToken) ?? throw new NotFoundException("Check-in schedule", clientId);
+        if (schedule.Close(Today().AddDays(-1), timeProvider.GetUtcNow()) is { } closed) repository.Add(closed);
         repository.Remove(schedule);
         client.SetCheckInState(null, client.CheckInAwaitingReview);
         await repository.SaveChangesAsync(cancellationToken);
@@ -191,16 +196,19 @@ public sealed class CheckInService(
     }
 
     /// <summary>
-    /// Check-in adherence (§30) from <paramref name="from"/> to <paramref name="to"/>: the schedule's due dates up to
-    /// today, and how many have a check-in (late ones count). Null without a schedule or due dates.
+    /// Check-in adherence (§30) from <paramref name="from"/> to <paramref name="to"/>: the due dates up to today, each
+    /// day under the schedule in force on it (P22), and how many have a check-in (late ones count). Null without due dates.
     /// </summary>
     public async Task<CheckInAdherence> AdherenceAsync(Guid clientId, DateOnly from, DateOnly to, CancellationToken cancellationToken)
     {
         var schedule = await repository.FindScheduleAsync(clientId, cancellationToken);
+        var periods = await repository.ListSchedulePeriodsAsync(clientId, cancellationToken);
         var history = await repository.ListForClientAsync(clientId, cancellationToken);
         var last = to < Today() ? to : Today();
-        if (schedule is null || last < from) return new CheckInAdherence(0, 0, 0, null);
-        var due = schedule.DueDatesBetween(from, last).ToArray();
+        if (last < from) return new CheckInAdherence(0, 0, 0, null);
+        var due = periods.SelectMany(x => x.DueDatesInForce(from, last))
+            .Concat(schedule?.DueDatesInForce(from, last) ?? [])
+            .Distinct().ToArray();
         var done = history.Where(x => due.Contains(x.DueOn)).ToArray();
         return new CheckInAdherence(due.Length, done.Length, done.Count(x => x.IsLate),
             due.Length == 0 ? null : FoodTracking.NutritionAdherence.Share(done.Length, due.Length));

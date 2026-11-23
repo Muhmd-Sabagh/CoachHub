@@ -129,6 +129,8 @@
 
 **Status after P18A (2026-10-22).** Closed: subscription access rules (P16), browser smoke test (P10A, P18). Open: choices and logged meals after a mid-day new version (P22).
 
+**Status after P22 (2026-11-23).** Closed: choices and logged meals after a mid-day new version (diet rows carry a lineage key across versions).
+
 ## Verification
 
 | Check | Result |

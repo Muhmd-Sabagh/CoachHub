@@ -123,8 +123,9 @@ public sealed class FormRepository(CoachHubDbContext dbContext) : IFormRepositor
 
     public async Task SubmitAsync(FormSubmission submission, IReadOnlyList<FormAnswer> answers, CancellationToken token)
     {
+        // Inside a wider transaction (P22: the submission with its check-in and measures) the outer one decides.
         IDbContextTransaction? transaction = null;
-        if (dbContext.Database.IsRelational())
+        if (dbContext.Database.IsRelational() && dbContext.Database.CurrentTransaction is null)
             transaction = await dbContext.Database.BeginTransactionAsync(token);
         try
         {

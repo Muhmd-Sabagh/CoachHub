@@ -13,10 +13,17 @@ public sealed class Meal : Entity, IPlanRevisionContent
     public int Order { get; private set; }
     public string? Notes { get; private set; }
 
+    /// <summary>
+    /// The same row across plan versions (P22): a new version's row keeps the lineage of the row it came from, so a
+    /// client's day choices and logged meals still match after a mid-day new version. A new row starts its own.
+    /// </summary>
+    public Guid LineageId { get; private set; }
+
     public static Meal Create(
         Guid id, Guid revisionId, Guid variantId, string nameEn, string? nameAr, int order, string? notes,
-        MealType? type = null) => new()
+        MealType? type = null, Guid? lineageId = null) => new()
     {
+        LineageId = lineageId ?? id,
         Type = type is { } chosen
             ? Enum.IsDefined(chosen) ? chosen : throw new ArgumentException("Unknown meal type.", nameof(type))
             : MealTypes.FromName(nameEn, nameAr),

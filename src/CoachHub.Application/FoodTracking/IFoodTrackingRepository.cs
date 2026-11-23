@@ -4,6 +4,12 @@ namespace CoachHub.Application.FoodTracking;
 
 public interface IFoodTrackingRepository
 {
+    /// <summary>
+    /// The lineage of the given diet variants, meals and meal options, of any version (P22): stored day choices and
+    /// logged meals match the same row of a later version through it.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, Guid>> FindLineagesAsync(IReadOnlyCollection<Guid> rowIds, CancellationToken cancellationToken);
+
     /// <summary>The client's current coach, or null when the client is not visible to the caller.</summary>
     Task<Guid?> FindClientCoachIdAsync(Guid clientId, CancellationToken cancellationToken);
 

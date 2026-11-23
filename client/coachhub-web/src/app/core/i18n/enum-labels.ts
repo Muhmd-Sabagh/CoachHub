@@ -55,7 +55,7 @@ export const enumValues = {
     'Payment', 'PersonalRecord', 'PlatformSettings', 'PrescribedSet', 'ProgressPhoto', 'Refund', 'SleepEntry', 'StepsEntry', 'Subscription',
     'SubscriptionRenewal', 'TestAssignment', 'TestDefinition', 'TestResult', 'TrainingDays', 'User', 'WaterEntry', 'WeightEntry', 'WorkoutDay',
     'WorkoutExercise', 'WorkoutPlan', 'WorkoutPlanNote', 'WorkoutPlanRevision', 'WorkoutSession', 'WorkoutSetGroup', 'ClientTransfer', 'Package',
-    'UserSession', 'UserRole',
+    'UserSession', 'UserRole', 'Role', 'CheckInSchedulePeriod',
   ],
   assessmentFormType: ['InitialAssessment', 'UpdateAssessment', 'CheckIn'],
   formVersionStatus: ['Draft', 'Published'],

@@ -168,6 +168,9 @@ public sealed record SubscriptionAccessRuleItem(
 /// The subscription settings (§47, §57): duration presets in months, and access per status and feature. The
 /// response lists every cell, marking those that use the default.
 /// </summary>
-public sealed record SubscriptionSettingsResponse(IReadOnlyList<int> DurationPresets, IReadOnlyList<SubscriptionAccessRuleItem> Rules);
+public sealed record SubscriptionSettingsResponse(
+    IReadOnlyList<int> DurationPresets, IReadOnlyList<SubscriptionAccessRuleItem> Rules, int? OverdueSuspensionDays = null);
 
-public sealed record SubscriptionSettingsInput(IReadOnlyList<int> DurationPresets, IReadOnlyList<SubscriptionAccessRuleItem> Rules);
+/// <param name="OverdueSuspensionDays">Automatic suspension for overdue invoices (P22); null turns it off.</param>
+public sealed record SubscriptionSettingsInput(
+    IReadOnlyList<int> DurationPresets, IReadOnlyList<SubscriptionAccessRuleItem> Rules, int? OverdueSuspensionDays = null);

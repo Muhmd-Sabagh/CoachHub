@@ -129,18 +129,20 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 - **Food tracking (§7–§11)** — implemented in P8; see `docs/product/phases/P08_FOOD_TRACKING.md`.
   - The diary (`FoodLogEntry`) is written by the client only, under `/api/v1/me/nutrition`; coaches read it under `/clients/{id}/nutrition`. Entries keep their own name, unit label and nutrients (actual nutrition stays apart from the plan, §9); plan rows are referenced by ID only, without foreign keys.
   - The plan for a day is the version in force that day (`NutritionAdherence.InForce`), the variant and meal options the client chose (`NutritionDay`), and `DietPlanFigures` for planned totals. Use `DietPlanFigures` for any planned value so the editor, diary and analytics agree.
+  - Variants, meals and meal options carry a `LineageId` kept across versions (P22). Stored choices and diary entries keep row IDs; match them to the day's version through the lineage (`PlannedDay.ChosenOption`, `Logged`), never by ID alone.
 - **Workout tracking (§18–§23)** — implemented in P10; see `docs/product/phases/P10_WORKOUT_TRACKING.md`.
   - Workouts (`WorkoutSession` → `LoggedExercise` → `LoggedSet`) are written by the client only, under `/api/v1/me/training`; coaches read them under `/clients/{id}/training`. Plan rows are referenced by ID only, without foreign keys; the catalog exercise is a real key.
   - The schedule is a **weekly rotation**: each ISO week expects every day of the version in force once (`WorkoutSchedule`). The version in force uses the shared `PlanRevisions.InForce`.
   - Warm-up sets count for nothing; drop sets count toward volume but not set records. Use `TrainingSets`, `TrainingAnalytics` and `PersonalRecordDetector` for any training figure.
-  - `PersonalRecord` rows are derived: rebuild them (`WorkoutTrackingService`) after any change to a completed workout, never patch them. e1RM goes through `IOneRepMaxFormula` with the coach's `OneRepMaxFormula`.
+  - `PersonalRecord` rows are derived: rebuild them (`WorkoutTrackingService`) after any change to a completed workout, never patch them. e1RM goes through `IOneRepMaxFormula` with the coach's `OneRepMaxFormula`; changing it raises `OneRepMaxFormulaChanged`, which rebuilds the coach's records (P22).
 - **Body and lifestyle tracking (§24–§27, §31–§33, §37)** — implemented in P11; see `docs/product/phases/P11_PROGRESS_TRACKING.md`.
   - Entries derive from `ProgressEntry` (client row, `Source` + `ExternalId` for future `IHealthDataProvider` imports) and are written by the client only, under `/api/v1/me/progress`; coaches read under `/clients/{id}/progress` and set `LifestyleTargets` (falling back to `CoachSettings` defaults).
   - Progress photos are the client's own media (P2), opened through `/media/{id}`. Delete a `ProgressPhoto` before its media.
   - Use `ProgressStatistics` for start/current/change/weekly figures and goal completion. The dashboard reuses the nutrition and training services; never recompute their figures.
   - The nutrition engine uses the latest weigh-in, else the profile's starting weight.
 - **Check-ins and adherence (§28–§30, §39)** — implemented in P12; see `docs/product/phases/P12_CHECK_INS.md`.
-  - Check-ins are `CheckIn`-type forms scheduled per client (`CheckInSchedule`). Clients submit through `/me/forms`; `CheckInService` places each submission on a due date. Questions with a `QuestionMetric` also write the client's typed entries via `ProgressService`.
+  - Check-ins are `CheckIn`-type forms scheduled per client (`CheckInSchedule`). Clients submit through `/me/forms`; `CheckInService` places each submission on a due date. Questions with a `QuestionMetric` also write the client's typed entries via `ProgressService`, in the same transaction (`ITransactionRunner`, P22).
+  - Schedules are effective-dated (P22): a change, stop or transfer closes the old terms into a `CheckInSchedulePeriod`, and the current schedule counts from `InForceFrom`. Adherence counts each day under the terms then in force; never compute due dates from the current schedule alone for past days.
   - `Client.CheckInDueOn` and `Client.CheckInAwaitingReview` feed `GetStatus` and the SQL status filter. Only the check-in workflow and transfer change them; keep both status paths identical.
   - `CheckIn.PrivateNotes` is coach-only: never map it into `/me` responses.
   - Adherence goes through `AdherenceService`/`AdherenceScore` with the coach's `AdherenceWeights`; the dashboard is `ProgressDashboardService`.
@@ -161,7 +163,8 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 - **Subscriptions and access control (§47, §57)** — implemented in P16; see `docs/product/phases/P16_SUBSCRIPTION_ACCESS.md`.
   - `Subscription.StatusOn` and `Client.GetSubscriptionStatus` (Active, Suspended, Pending, Expired, else Inactive) have an SQL twin, `ClientRepository.WithSubscriptionStatus`; keep them identical. Payment status comes from the linked invoices (`SubscriptionPayments`).
   - Every client controller declares its `[ClientFeature]`. The `ClientOnly` policy carries `SubscriptionAccessRequirement`: reads need Full or Read-only access, writes need Full, from `PlatformSettings.AccessFor` (defaults in `SubscriptionAccessDefaults`). New client endpoints must declare a feature unless they must never be restricted (account, notifications, access summary).
-  - Access rules restrict; they never delete or hide data permanently.
+  - Access rules restrict; they never delete or hide data permanently. `/media/{id}` applies the rule of the feature that holds a client's file (P22).
+  - Suspensions may carry a `ResumesOn` date; the Administrator's `OverdueSuspensionDays` rule (off by default) suspends subscriptions with overdue invoices. Both are applied by the hourly `SubscriptionScheduleWorker` (P22).
 - **Reports and data export (§44, §51)** — implemented in P17; see `docs/product/phases/P17_REPORTS_EXPORT.md`.
   - Reports are the progress dashboard (`ProgressDashboardService`) for a Monday–Sunday week or a calendar month (`ReportPeriods`) plus the period's check-ins, never private notes; PDF through `IReportPdfRenderer` (QuestPDF, `PdfFonts`) with the coach's brand.
   - CSV goes through `Csv` (UTF-8 BOM, RFC 4180 quoting, formula-injection guard). Exports run under the tenant filters and are recorded in the audit trail (`DataExport`). Platform exports are AdminOnly.
@@ -192,7 +195,7 @@ Modules are **folders repeated in each layer** (Clients, DietPlanning, WorkoutPl
 
 The codebase implements phases 0–21 of the legacy migration, reworked by product phases P0–P18. Known gaps against REQUIREMENTS.md:
 
-- product phases P0–P18, P10A, P18A (cleanup), P19 (localisation; the client area in Arabic) P20 (photo privacy, check-in search, uploaded videos, tests in the dashboard and reports, metric units) and P21 (every staff screen, server message, PDF label and CSV header in Arabic) are delivered. The completion phases P22–P23 in the roadmap close the rest: tracking fixes (P22), and the release with the owner's production sign-off on staging (P23, `docs/deployment/PRODUCTION_SIGNOFF.md`).
+- product phases P0–P18, P10A, P18A (cleanup), P19 (localisation; the client area in Arabic) P20 (photo privacy, check-in search, uploaded videos, tests in the dashboard and reports, metric units), P21 (every staff screen, server message, PDF label and CSV header in Arabic) and P22 (tracking correctness and subscription operations) are delivered. The last completion phase, P23, is the release with the owner's production sign-off on staging (`docs/deployment/PRODUCTION_SIGNOFF.md`).
 - Scale-out (more than one API instance) is backlog: SignalR has no backplane and the workers are not coordinated.
 
 Treat these as planned rework, not conventions to preserve.

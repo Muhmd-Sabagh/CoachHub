@@ -153,6 +153,40 @@ public sealed class FoodTrackingTests(CoachHubSqlApiFactory factory) : IClassFix
     }
 
     [Fact]
+    public async Task Choices_and_logged_meals_carry_over_to_a_mid_day_new_version()
+    {
+        var setup = await SetUpAsync();
+        var portal = setup.Portal;
+        var day = $"/api/v1/me/nutrition/days/{Today:yyyy-MM-dd}";
+        var breakfast = setup.Plan.Variants[0].Meals[0];
+        await ReadAsync<NutritionDayResponse>(await portal.PutAsJsonAsync(day + "/choices",
+            new NutritionDayChoicesInput(null, [new MealOptionChoiceInput(breakfast.Id, breakfast.Options[1].Id)])));
+        await ReadAsync<NutritionDayResponse>(await portal.PostAsync($"{day}/meals/{breakfast.Id}/log", null));
+
+        // P22: the coach saves a new version mid-day; its rows have new identifiers but the same lineage.
+        var next = await ReadAsync<DietPlanResponse>(await setup.Coach.PostAsJsonAsync($"/api/v1/diet-plans/{setup.Plan.Id}/revisions", Edit(setup.Plan)));
+        var nextBreakfast = next.Variants[0].Meals[0];
+        Assert.NotEqual(breakfast.Id, nextBreakfast.Id);
+
+        var after = (await portal.GetFromJsonAsync<NutritionDayResponse>(day))!;
+        Assert.Equal(nextBreakfast.Id, after.Plan!.Meals[0].Id);
+        Assert.Equal(nextBreakfast.Options[1].Id, after.Plan.Meals[0].ChosenOptionId);
+        Assert.True(after.Plan.Meals[0].IsLogged);
+        Assert.Equal((1, 367.5m), (after.Summary.CompletedMeals, after.Summary.Planned!.Calories));
+        Assert.Equal(HttpStatusCode.Conflict, (await portal.PostAsync($"{day}/meals/{nextBreakfast.Id}/log", null)).StatusCode);
+
+        // Going back to the first option under the new version replaces the earlier choice.
+        var reset = await ReadAsync<NutritionDayResponse>(await portal.PutAsJsonAsync(day + "/choices",
+            new NutritionDayChoicesInput(null, [new MealOptionChoiceInput(nextBreakfast.Id, null)])));
+        Assert.Equal(nextBreakfast.Options[0].Id, reset.Plan!.Meals[0].ChosenOptionId);
+
+        // The coach's analytics agree with the client's day.
+        var analytics = (await setup.Coach.GetFromJsonAsync<NutritionAnalyticsResponse>(
+            $"/api/v1/clients/{setup.ClientId}/nutrition/analytics?from={Today:yyyy-MM-dd}&to={Today:yyyy-MM-dd}"))!;
+        Assert.Equal(reset.Summary.MealCompletionPercent, Assert.Single(analytics.Days).MealCompletionPercent);
+    }
+
+    [Fact]
     public async Task Diaries_are_private_to_the_client_and_their_coach()
     {
         var setup = await SetUpAsync();

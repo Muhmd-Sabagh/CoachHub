@@ -18,8 +18,16 @@ public sealed class MealOption : Entity, IPlanRevisionContent
     public string? NameAr { get; private set; }
     public int Order { get; private set; }
 
-    public static MealOption Create(Guid id, Guid revisionId, Guid mealId, string nameEn, string? nameAr, int order) => new()
+    /// <summary>
+    /// The same row across plan versions (P22): a new version's row keeps the lineage of the row it came from, so a
+    /// client's day choices and logged meals still match after a mid-day new version. A new row starts its own.
+    /// </summary>
+    public Guid LineageId { get; private set; }
+
+    public static MealOption Create(
+        Guid id, Guid revisionId, Guid mealId, string nameEn, string? nameAr, int order, Guid? lineageId = null) => new()
     {
+        LineageId = lineageId ?? id,
         Id = DietPlanText.RequiredId(id, nameof(id)),
         RevisionId = DietPlanText.RequiredId(revisionId, nameof(revisionId)),
         MealId = DietPlanText.RequiredId(mealId, nameof(mealId)),

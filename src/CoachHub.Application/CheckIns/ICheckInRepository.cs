@@ -11,6 +11,9 @@ public interface ICheckInRepository
     Task<Client?> FindClientAsync(Guid clientId, CancellationToken cancellationToken);
     Task<CheckInSchedule?> FindScheduleAsync(Guid clientId, CancellationToken cancellationToken);
 
+    /// <summary>The client's closed schedule periods, oldest first (P22).</summary>
+    Task<IReadOnlyList<CheckInSchedulePeriod>> ListSchedulePeriodsAsync(Guid clientId, CancellationToken cancellationToken);
+
     /// <summary>A visible form definition.</summary>
     Task<FormDefinition?> FindFormAsync(Guid definitionId, CancellationToken cancellationToken);
     Task<bool> HasPublishedVersionAsync(Guid definitionId, CancellationToken cancellationToken);
@@ -33,6 +36,7 @@ public interface ICheckInRepository
 
     void Add(CheckIn checkIn);
     void Add(CheckInSchedule schedule);
+    void Add(CheckInSchedulePeriod period);
     void Remove(CheckInSchedule schedule);
     Task SaveChangesAsync(CancellationToken cancellationToken);
 }

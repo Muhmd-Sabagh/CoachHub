@@ -171,7 +171,9 @@
                 <td translate="no">{{ nameOf(packages(), s.packageId) }}</td>
                 <td>{{ 'common.range' | translate: { from: (s.startDate | localDate: 'd MMM y'), to: (s.endDate | localDate: 'd MMM y') } }}</td>
                 <td><app-status-badge [value]="s.status" enumName="subscriptionStatus" /><small class="block">{{ s.paymentStatus | enumLabel: 'paymentStatus' }}</small>
-                  @if (s.suspensionReason) { <small class="block muted" translate="no">{{ s.suspensionReason }}</small> }</td>
+                  @if (s.suspensionReason) { <small class="block muted" translate="no">{{ s.suspensionReason }}</small> }
+                  @if (s.suspendedForOverdueInvoice) { <small class="block muted">{{ 'clients.suspendedForOverdue' | translate }}</small> }
+                  @if (s.resumesOn) { <small class="block muted">{{ 'clients.resumesOn' | translate: { date: (s.resumesOn | localDate: 'd MMM y') } }}</small> }</td>
                 <td>{{ s.price | localNumber: '1.0-2' }} <span translate="no">{{ nameOf(currencies(), s.currencyId) }}</span></td>
                 <td>{{ s.renewalCount }}</td>
                 <td class="actions">

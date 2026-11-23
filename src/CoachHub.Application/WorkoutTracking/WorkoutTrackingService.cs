@@ -333,6 +333,16 @@ public sealed class WorkoutTrackingService(
     }
 
     /// <summary>
+    /// Rebuilds the PRs of every client of the coach after an e1RM formula change (P22). Each changed record row is
+    /// audited like any other change.
+    /// </summary>
+    public async Task RebuildCoachRecordsAsync(Guid coachId, CancellationToken cancellationToken)
+    {
+        foreach (var (clientId, exerciseIds) in await repository.ListCompletedExercisesAsync(coachId, cancellationToken))
+            await RebuildRecordsAsync(coachId, clientId, exerciseIds, cancellationToken);
+    }
+
+    /// <summary>
     /// Rebuilds the PRs of the exercises from all completed workouts (§21). Rows that stay the same are kept, so the
     /// audit trail shows only real changes.
     /// </summary>

@@ -246,7 +246,13 @@ export class ClientsComponent implements OnInit {
     if (!detail) return;
     const reason = prompt(this.i18n.translate('clients.suspendReason'));
     if (!reason?.trim()) return;
-    this.data.suspendSubscription(detail.client.id, s.id, reason.trim())
+    // P22: an optional day on which the subscription runs again by itself.
+    const resume = prompt(this.i18n.translate('clients.suspendResumeOn'))?.trim() || null;
+    if (resume && !/^\d{4}-\d{2}-\d{2}$/.test(resume)) {
+      this.error.set(this.i18n.translate('clients.suspendResumeOnInvalid'));
+      return;
+    }
+    this.data.suspendSubscription(detail.client.id, s.id, reason.trim(), resume)
       .subscribe({ next: () => this.refreshDetail(), error: (e) => (this.error.set(apiErrorMessage(e))) });
   }
   resumeSubscription(s: Subscription): void {

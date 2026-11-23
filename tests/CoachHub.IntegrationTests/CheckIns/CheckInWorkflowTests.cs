@@ -177,6 +177,40 @@ public sealed class CheckInWorkflowTests(CoachHubSqlApiFactory factory) : IClass
     }
 
     [Fact]
+    public async Task Adherence_counts_each_past_day_under_the_schedule_then_in_force()
+    {
+        var setup = await SetUpAsync();
+        // Weekly, due yesterday's weekday, from two weeks ago: due 8 days ago and yesterday, both missed.
+        await ReadAsync<CheckInScheduleResponse>(await setup.Coach.PutAsJsonAsync(SchedulePath(setup),
+            new CheckInScheduleInput(setup.Form.DefinitionId, 1, Today.AddDays(-1).DayOfWeek, Today.AddDays(-14))));
+        var range = $"from={Today.AddDays(-13):yyyy-MM-dd}&to={Today:yyyy-MM-dd}";
+        async Task<(int Completed, int Due)> CheckInAdherenceAsync()
+        {
+            var dashboard = (await setup.Coach.GetFromJsonAsync<ProgressDashboardResponse>($"/api/v1/clients/{setup.ClientId}/progress/dashboard?{range}"))!;
+            return (dashboard.CheckIn.Adherence.Completed, dashboard.CheckIn.Adherence.Due);
+        }
+        Assert.Equal((0, 2), await CheckInAdherenceAsync());
+
+        // P22: the coach moves to every 4 weeks with no due date in the range. The past two weeks keep the weekly terms.
+        await ReadAsync<CheckInScheduleResponse>(await setup.Coach.PutAsJsonAsync(SchedulePath(setup),
+            new CheckInScheduleInput(setup.Form.DefinitionId, 4, Today.AddDays(-3).DayOfWeek, Today.AddDays(-28))));
+        Assert.Equal((0, 2), await CheckInAdherenceAsync());
+
+        // Stopping and setting it again with a past start does not count those days twice.
+        Assert.Equal(HttpStatusCode.NoContent, (await setup.Coach.DeleteAsync(SchedulePath(setup))).StatusCode);
+        Assert.Equal((0, 2), await CheckInAdherenceAsync());
+        await ReadAsync<CheckInScheduleResponse>(await setup.Coach.PutAsJsonAsync(SchedulePath(setup),
+            new CheckInScheduleInput(setup.Form.DefinitionId, 1, Today.AddDays(-1).DayOfWeek, Today.AddDays(-14))));
+        Assert.Equal((0, 2), await CheckInAdherenceAsync());
+
+        // The history follows the client to the new coach.
+        using var admin = factory.CreateAdminClient();
+        (await admin.PostAsJsonAsync($"/api/v1/clients/{setup.ClientId}/transfer", new ClientTransferInput(setup.OtherCoachId))).EnsureSuccessStatusCode();
+        var moved = (await setup.OtherCoach.GetFromJsonAsync<ProgressDashboardResponse>($"/api/v1/clients/{setup.ClientId}/progress/dashboard?{range}"))!;
+        Assert.Equal((0, 2), (moved.CheckIn.Adherence.Completed, moved.CheckIn.Adherence.Due));
+    }
+
+    [Fact]
     public async Task Coaches_search_check_ins_by_client_form_and_dates()
     {
         var setup = await SetUpAsync();

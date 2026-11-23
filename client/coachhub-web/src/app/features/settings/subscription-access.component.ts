@@ -11,7 +11,7 @@ export type ClientFeature = 'Nutrition' | 'Training' | 'Progress' | 'FormsAndChe
 export type FeatureAccess = 'Full' | 'ReadOnly' | 'Blocked';
 
 export interface AccessRule { status: RestrictableStatus; feature: ClientFeature; access: FeatureAccess; isDefault?: boolean; }
-export interface SubscriptionSettings { durationPresets: number[]; rules: AccessRule[]; }
+export interface SubscriptionSettings { durationPresets: number[]; rules: AccessRule[]; overdueSuspensionDays?: number | null; }
 
 
 /** Subscription presets and access rules (§47, §57). */
@@ -39,6 +39,9 @@ export class SubscriptionSettingsService {
       @if (saved()) { <p class="success-message" role="status">{{ 'access.saved' | translate }}</p> }
       <label><span>{{ 'access.presets' | translate }}</span>
         <input [(ngModel)]="presets" name="presets" placeholder="1, 3, 6, 12" dir="ltr" /></label>
+      <label><span>{{ 'access.overdueDays' | translate }}</span>
+        <input type="number" min="0" max="90" [(ngModel)]="overdueDays" name="overdueDays" dir="ltr" />
+        <small class="muted">{{ 'access.overdueDaysHint' | translate }}</small></label>
       <div class="table-scroll"><table class="access-grid">
         <thead><tr><th>{{ 'access.feature' | translate }}</th>@for (s of statuses; track s) { <th>{{ statusKey(s) | translate }}</th> }</tr></thead>
         <tbody>
@@ -84,6 +87,8 @@ export class SubscriptionAccessComponent implements OnInit {
   readonly saved = signal(false);
   readonly error = signal('');
   presets = '';
+  /** P22: days after an invoice's due date before its subscription is suspended; empty is off. */
+  overdueDays: number | null = null;
 
   constructor(private readonly api: SubscriptionSettingsService) {}
 
@@ -100,7 +105,13 @@ export class SubscriptionAccessComponent implements OnInit {
     this.saved.set(false);
   }
 
-  save(): void { this.send({ durationPresets: parsePresets(this.presets), rules: this.rules().map(({ status, feature, access }) => ({ status, feature, access })) }); }
+  save(): void {
+    this.send({
+      durationPresets: parsePresets(this.presets),
+      rules: this.rules().map(({ status, feature, access }) => ({ status, feature, access })),
+      overdueSuspensionDays: this.overdueDays === null || `${this.overdueDays}` === '' ? null : Number(this.overdueDays),
+    });
+  }
 
   reset(): void { this.send({ durationPresets: [1, 3, 6, 12], rules: [] }); }
 
@@ -115,6 +126,7 @@ export class SubscriptionAccessComponent implements OnInit {
   private show(settings: SubscriptionSettings): void {
     this.rules.set(settings.rules);
     this.presets = settings.durationPresets.join(', ');
+    this.overdueDays = settings.overdueSuspensionDays ?? null;
   }
 }
 

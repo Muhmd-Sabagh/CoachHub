@@ -117,4 +117,32 @@ public sealed class SubscriptionAccessTests
         Assert.Throws<ArgumentException>(() => settings.SetSubscriptionRules([1], [(SubscriptionStatus.Expired, ClientFeature.Chat, FeatureAccess.Blocked),
             (SubscriptionStatus.Expired, ClientFeature.Chat, FeatureAccess.Full)], Now));
     }
+
+    [Fact]
+    public void A_suspension_may_end_on_a_set_day_and_the_platform_suspends_for_overdue_invoices()
+    {
+        var today = new DateOnly(2026, 11, 23);
+        var now = new DateTimeOffset(2026, 11, 23, 9, 0, 0, TimeSpan.Zero);
+        var subscription = Subscription.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), today.AddDays(-10), 3, 100m, Guid.NewGuid(), null, 0);
+
+        // P22: the resume date lies after today and before the end.
+        Assert.Throws<ArgumentException>(() => subscription.Suspend("Travel", today, now, today));
+        Assert.Throws<ArgumentException>(() => subscription.Suspend("Travel", today, now, subscription.EndDate));
+        subscription.Suspend("Travel", today, now, today.AddDays(7));
+        Assert.Equal(today.AddDays(7), subscription.ResumesOn);
+        Assert.False(subscription.ResumeIsDue(today.AddDays(6)));
+        Assert.True(subscription.ResumeIsDue(today.AddDays(7)));
+        Assert.False(subscription.SuspendForOverdueInvoice(today, now));
+
+        subscription.Resume();
+        Assert.Null(subscription.ResumesOn);
+        Assert.True(subscription.SuspendForOverdueInvoice(today, now));
+        Assert.Equal((SubscriptionStatus.Suspended, true, (string?)null), (subscription.StatusOn(today), subscription.SuspendedForOverdueInvoice, subscription.SuspensionReason));
+        subscription.Resume();
+        Assert.False(subscription.SuspendedForOverdueInvoice);
+
+        // An ended subscription is left alone.
+        var ended = Subscription.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), today.AddMonths(-2), 1, 100m, Guid.NewGuid(), null, 0);
+        Assert.False(ended.SuspendForOverdueInvoice(today, now));
+    }
 }

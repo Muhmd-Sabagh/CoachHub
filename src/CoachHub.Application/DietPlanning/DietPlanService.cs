@@ -62,7 +62,8 @@ public sealed class DietPlanService(
             existing.Revision.Update(input.Status, input.StartDate, input.EndDate, timeProvider.GetUtcNow());
             existing.Revision.SetTargets(input.Targets ?? DietTargets.None);
         });
-        var aggregate = Build(existing.Plan, existing.Revision, input);
+        // Rows saved in place keep their lineage (P22).
+        var aggregate = Build(existing.Plan, existing.Revision, input, Lineages(existing));
         await ValidateReferencesAsync(aggregate, FoodIds(existing), cancellationToken);
         await repository.ReplaceContentAsync(aggregate, cancellationToken);
         return await MapAsync(aggregate, cancellationToken);
@@ -88,7 +89,11 @@ public sealed class DietPlanService(
                 input.Status, input.StartDate, input.EndDate, currentUser.UserId, now);
             next.SetTargets(input.Targets ?? DietTargets.None);
         });
-        var aggregate = Build(existing.Plan, next!, WithNewIdentifiers(input));
+        // The new version's rows keep the lineage of the rows they came from (P22).
+        var fresh = WithNewIdentifiers(input, out var origins);
+        var lineages = Lineages(existing);
+        var aggregate = Build(existing.Plan, next!, fresh, origins
+            .Where(x => lineages.ContainsKey(x.Value)).ToDictionary(x => x.Key, x => lineages[x.Value]));
         await ValidateReferencesAsync(aggregate, FoodIds(existing), cancellationToken);
         existing.Revision.Archive(now);
         await repository.AddRevisionAsync(aggregate, cancellationToken);
@@ -102,7 +107,7 @@ public sealed class DietPlanService(
         var source = await RequiredAsync(id, null, false, cancellationToken);
         await ValidateClientAsync(source.Plan.CoachId, input.ClientId, cancellationToken);
         var content = ToInput(source) with { NameEn = input.NameEn, NameAr = input.NameAr, ClientId = input.ClientId };
-        return await CreateForCoachAsync(source.Plan.CoachId, WithNewIdentifiers(content), cancellationToken);
+        return await CreateForCoachAsync(source.Plan.CoachId, WithNewIdentifiers(content, out _), cancellationToken);
     }
 
     public async Task<DietPlanResponse> AssignAsync(
@@ -134,19 +139,22 @@ public sealed class DietPlanService(
         await repository.DeleteAsync(id, cancellationToken);
     }
 
-    private static DietPlanAggregate Build(DietPlan plan, DietPlanRevision revision, DietPlanInput input)
+    /// <param name="lineages">The lineage of rows that continue an earlier row (P22); other rows start their own.</param>
+    private static DietPlanAggregate Build(
+        DietPlan plan, DietPlanRevision revision, DietPlanInput input, IReadOnlyDictionary<Guid, Guid>? lineages = null)
     {
         ThrowIfInvalid(input);
         var revisionId = revision.Id;
+        Guid? Lineage(Guid id) => lineages is not null && lineages.TryGetValue(id, out var lineage) ? lineage : null;
         try
         {
             var notes = input.Notes.Select(x => DietPlanNote.Create(x.Id, revisionId, x.Text, x.Order, x.IsActive)).ToArray();
             var variants = input.Variants.Select(x => DietPlanVariant.Create(
-                x.Id, revisionId, x.NameEn, x.NameAr, x.Order, x.IsActiveForPdf, x.Notes)).ToArray();
+                x.Id, revisionId, x.NameEn, x.NameAr, x.Order, x.IsActiveForPdf, x.Notes, Lineage(x.Id))).ToArray();
             var meals = input.Variants.SelectMany(variant => variant.Meals.Select(x => Meal.Create(
-                x.Id, revisionId, variant.Id, x.NameEn, x.NameAr, x.Order, x.Notes, x.Type))).ToArray();
+                x.Id, revisionId, variant.Id, x.NameEn, x.NameAr, x.Order, x.Notes, x.Type, Lineage(x.Id)))).ToArray();
             var mealOptions = input.Variants.SelectMany(v => v.Meals.SelectMany(meal => (meal.Options ?? []).Select(x =>
-                MealOption.Create(x.Id, revisionId, meal.Id, x.NameEn, x.NameAr, x.Order)))).ToArray();
+                MealOption.Create(x.Id, revisionId, meal.Id, x.NameEn, x.NameAr, x.Order, Lineage(x.Id))))).ToArray();
             var foods = input.Variants.SelectMany(v => v.Meals.SelectMany(meal => meal.FoodItems.Select(x =>
                 MealFoodItem.Create(x.Id, revisionId, meal.Id, x.FoodItemId, x.Quantity, x.Order, x.Notes, x.FoodUnitId, x.MealOptionId)))).ToArray();
             var groups = input.Variants.SelectMany(variant => variant.ReplacementGroups.Select(x =>
@@ -161,6 +169,13 @@ public sealed class DietPlanService(
             throw Validation("dietPlan", exception.Message);
         }
     }
+
+    /// <summary>The lineage of the version's variants, meals and meal options, by row (P22).</summary>
+    private static Dictionary<Guid, Guid> Lineages(DietPlanAggregate source) =>
+        source.Variants.Select(x => (x.Id, x.LineageId))
+            .Concat(source.Meals.Select(x => (x.Id, x.LineageId)))
+            .Concat(source.MealOptions.Select(x => (x.Id, x.LineageId)))
+            .ToDictionary(x => x.Id, x => x.LineageId);
 
     /// <summary>The version's content as editor input, keeping its identifiers.</summary>
     private static DietPlanInput ToInput(DietPlanAggregate source) => new(
@@ -187,19 +202,22 @@ public sealed class DietPlanService(
     /// <summary>
     /// The same content under fresh identifiers, with internal references (alternative targets,
     /// whole-meal alternatives) remapped. Used for copies and new versions, whose rows never share keys
-    /// with the rows they came from.
+    /// with the rows they came from. <paramref name="origins"/> maps each new variant, meal and meal option to the
+    /// identifier it replaced (P22).
     /// </summary>
-    private static DietPlanInput WithNewIdentifiers(DietPlanInput input)
+    private static DietPlanInput WithNewIdentifiers(DietPlanInput input, out Dictionary<Guid, Guid> origins)
     {
+        var variants = input.Variants.ToDictionary(x => x.Id, _ => Guid.NewGuid());
         var meals = input.Variants.SelectMany(x => x.Meals).ToDictionary(x => x.Id, _ => Guid.NewGuid());
         var items = input.Variants.SelectMany(x => x.Meals).SelectMany(x => x.FoodItems).ToDictionary(x => x.Id, _ => Guid.NewGuid());
         var mealOptions = input.Variants.SelectMany(x => x.Meals).SelectMany(x => x.Options ?? []).ToDictionary(x => x.Id, _ => Guid.NewGuid());
+        origins = variants.Concat(meals).Concat(mealOptions).ToDictionary(x => x.Value, x => x.Key);
         return input with
         {
             Notes = input.Notes.Select(x => x with { Id = Guid.NewGuid() }).ToArray(),
             Variants = input.Variants.Select(variant => variant with
             {
-                Id = Guid.NewGuid(),
+                Id = variants[variant.Id],
                 Meals = variant.Meals.Select(meal => meal with
                 {
                     Id = meals[meal.Id],

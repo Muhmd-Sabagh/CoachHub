@@ -145,6 +145,8 @@ All of the following are pure and unit-tested:
 
 **Status after P18A (2026-10-22).** Closed: calendar placement (P15), subscription rules (P16), zoneless change detection (P10A, P18A), browser smoke test (P10A, P18). Open: e1RM rebuild on a formula change (P22), Arabic exercise names (P19), coach notifications of PRs (backlog).
 
+**Status after P22 (2026-11-23).** Closed: e1RM rebuild on a formula change. Arabic exercise names were closed in P19/P21. Open: coach notifications of PRs (backlog).
+
 ## Verification
 
 | Check | Result |

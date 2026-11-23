@@ -24,6 +24,9 @@ public interface IWorkoutTrackingRepository
     Task<IReadOnlyList<WorkoutSession>> ListCompletedSessionsWithAsync(
         Guid clientId, IReadOnlyCollection<Guid> exerciseIds, CancellationToken cancellationToken);
 
+    /// <summary>Per client of the coach, the exercises of their completed workouts (for a PR rebuild, P22).</summary>
+    Task<IReadOnlyDictionary<Guid, Guid[]>> ListCompletedExercisesAsync(Guid coachId, CancellationToken cancellationToken);
+
     /// <summary>The client's PRs, of the given exercises only when <paramref name="exerciseIds"/> is set.</summary>
     Task<IReadOnlyList<PersonalRecord>> ListRecordsAsync(
         Guid clientId, IReadOnlyCollection<Guid>? exerciseIds, bool tracking, CancellationToken cancellationToken);

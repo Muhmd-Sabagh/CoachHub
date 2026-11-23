@@ -178,3 +178,24 @@ public sealed class PlatformSettingsTests
         Assert.Equal("CoachHub Team", settings.EmailSenderName);
     }
 }
+
+public sealed class OneRepMaxFormulaChangeTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 11, 23, 8, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public void Only_a_new_formula_asks_for_a_record_rebuild()
+    {
+        var coachId = Guid.NewGuid();
+        var settings = CoachSettings.CreateDefault(coachId, Now);
+        settings.TakeDomainEvents();
+
+        settings.UpdateTraining(OneRepMaxFormula.Epley, 0.5m, Now);
+        Assert.Empty(settings.TakeDomainEvents());
+
+        settings.UpdateTraining(OneRepMaxFormula.Brzycki, 0.5m, Now);
+        var changed = Assert.IsType<OneRepMaxFormulaChanged>(Assert.Single(settings.TakeDomainEvents()));
+        Assert.Equal(coachId, changed.CoachId);
+        Assert.Equal(OneRepMaxFormula.Brzycki, changed.Formula);
+    }
+}

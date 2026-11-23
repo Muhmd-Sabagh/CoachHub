@@ -135,6 +135,8 @@
 
 **Status after P18A (2026-10-22).** Closed: notifications (P14), calendar entries (P15), browser smoke test (P10A, P18); imported submissions no longer exist (the importer was removed in P18A). Open: schedule history and measures in one transaction (P22).
 
+**Status after P22 (2026-11-23).** Closed: schedule history (`CheckInSchedulePeriod`; adherence uses the schedule in force on each day) and measures in one transaction.
+
 ## Verification
 
 | Check | Result |

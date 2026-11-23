@@ -159,6 +159,16 @@ public sealed class WorkoutTrackingRepository(CoachHubDbContext dbContext) : IWo
                 x.Exercises.Any(exercise => exerciseIds.Contains(exercise.ExerciseId)))
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, Guid[]>> ListCompletedExercisesAsync(Guid coachId, CancellationToken cancellationToken)
+    {
+        var pairs = await dbContext.Set<WorkoutSession>().AsNoTracking()
+            .Where(x => x.CoachId == coachId && x.Status == WorkoutSessionStatus.Completed)
+            .SelectMany(x => x.Exercises.Select(exercise => new { x.ClientId, exercise.ExerciseId }))
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        return pairs.GroupBy(x => x.ClientId).ToDictionary(x => x.Key, x => x.Select(pair => pair.ExerciseId).ToArray());
+    }
+
     public async Task<IReadOnlyList<PersonalRecord>> ListRecordsAsync(
         Guid clientId, IReadOnlyCollection<Guid>? exerciseIds, bool tracking, CancellationToken cancellationToken)
     {

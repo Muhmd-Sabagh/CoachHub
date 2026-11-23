@@ -144,7 +144,7 @@ public sealed class CalendarService(ICalendarRepository repository, ICurrentUser
         }
         foreach (var scheduled in await repository.SchedulesAsync(clientId, cancellationToken))
         {
-            foreach (var due in scheduled.Schedule.DueDatesBetween(from, to))
+            foreach (var due in scheduled.Schedule.DueDatesInForce(from, to))
             {
                 if (sent.Contains((scheduled.ClientId, due))) continue;
                 entries.Add(new CalendarEntry(due, CalendarEntryKind.CheckInDue, Messages.Text("calendar.checkInDue", UiCulture.Current), scheduled.ClientId, scheduled.ClientName,

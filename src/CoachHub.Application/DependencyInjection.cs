@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<AssessmentAdminQueryService>();
         services.AddScoped<ClientService>();
         services.AddScoped<SubscriptionService>();
+        services.AddScoped<SubscriptionScheduleService>();
         services.AddScoped<DietPlanService>();
         services.AddScoped<NutritionTargetService>();
         services.AddScoped<FoodTrackingService>();
@@ -99,6 +100,7 @@ public static class DependencyInjection
         services.AddScoped<IDomainEventHandler<PlanAssigned>>(sp => sp.GetRequiredService<PlanNotificationHandler>());
         services.AddScoped<IDomainEventHandler<CheckInReviewed>, CheckInNotificationHandler>();
         services.AddScoped<IDomainEventHandler<ChatMessageSent>, ChatMessageSentHandler>();
+        services.AddScoped<IDomainEventHandler<CoachHub.Domain.Settings.OneRepMaxFormulaChanged>, OneRepMaxRebuildHandler>();
         services.AddScoped<TestDefinitionService>();
         services.AddScoped<FitnessTestService>();
         services.AddScoped<AdherenceService>();

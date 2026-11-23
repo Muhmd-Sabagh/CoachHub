@@ -20,6 +20,7 @@ using CoachHub.Application.WorkoutPlanning;
 using CoachHub.Application.Calendar;
 using CoachHub.Application.Chat;
 using CoachHub.Application.CheckIns;
+using CoachHub.Application.Common;
 using CoachHub.Application.ClientFiles;
 using CoachHub.Application.Common.Events;
 using CoachHub.Application.Dashboards;
@@ -134,6 +135,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationSender>(provider => provider.GetRequiredService<WhatsAppNotificationSender>());
         services.AddHostedService<NotificationDispatcher>();
         services.AddHostedService<EventNotificationWorker>();
+        services.AddHostedService<SubscriptionScheduleWorker>();
         services.AddSingleton<ITokenIssuer, JwtTokenIssuer>();
         services.AddScoped<AdminBootstrapper>();
 
@@ -145,6 +147,7 @@ public static class DependencyInjection
         services.AddScoped<IExerciseRepository, ExerciseRepository>();
         services.AddScoped<IWorkoutPlanRepository, WorkoutPlanRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
+        services.AddScoped<ISubscriptionScheduleRepository, SubscriptionScheduleRepository>();
         services.AddScoped<IClientAccounts, ClientAccounts>();
         services.AddScoped<IDietPlanRepository, DietPlanRepository>();
         services.AddScoped<IFoodTrackingRepository, FoodTrackingRepository>();
@@ -209,6 +212,7 @@ public static class DependencyInjection
                 "Selected media provider configuration is incomplete.")
             .ValidateOnStart();
         services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
+        services.AddScoped<ITransactionRunner, TransactionRunner>();
         services.AddScoped<FileSystemMediaStorage>();
         services.AddScoped<S3MediaStorage>();
         services.AddScoped<IMediaStorage>(provider => fileSystem

@@ -19,9 +19,9 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
         // The projections below avoid "x == null ? a : b" over left-joined rows: SQL Server cannot
         // run the Concat once EF evaluates such a projection on the client. Missing rows yield NULL.
         var currentDiets = dbContext.Set<DietPlanRevision>().Where(x => x.Status != PlanRevisionStatus.Archived);
-        // Rows convert their unit to base units (P7). Foods stay tenant-filtered: IgnoreQueryFilters would
-        // lift the filters of the whole query, plans included. A transferred client's plan that still uses the
-        // previous coach's custom food therefore lists without that food (its detail view includes it).
+        // Rows convert their unit to base units (P7). Foods stay tenant-filtered here: IgnoreQueryFilters would
+        // lift the filters of the whole query, plans included. This query filters and sorts; the page's totals are
+        // then recomputed from a standalone read that includes a previous coach's foods (P22, PageDietTotalsAsync).
         // A meal with options (P8) counts its first option, like the plan's own totals.
         var dietTotals =
             from revision in currentDiets
@@ -97,9 +97,67 @@ public sealed class SavedPlanQueryRepository(CoachHubDbContext dbContext) : ISav
         var page = await rows.Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize)
             .AsNoTracking().ToArrayAsync(cancellationToken);
         var versions = await CurrentVersionsAsync(page, cancellationToken);
-        return new(page.Select(row => Map(row, versions.GetValueOrDefault(row.Id))).ToArray(),
+        var pageTotals = await PageDietTotalsAsync(page, cancellationToken);
+        return new(page.Select(row => Map(Totals(row, pageTotals), versions.GetValueOrDefault(row.Id))).ToArray(),
             query.PageNumber, query.PageSize, totalCount);
     }
+
+    /// <summary>
+    /// The listed diet plans' totals from every food their current version uses (P22). A plan of a transferred client
+    /// may still use the previous coach's custom foods, which the tenant filter hides; their nutrients come from a
+    /// deliberate standalone read of exactly the foods and units these visible rows reference.
+    /// </summary>
+    private async Task<Dictionary<Guid, PlanTotals>> PageDietTotalsAsync(
+        IReadOnlyCollection<SavedPlanRow> page, CancellationToken cancellationToken)
+    {
+        var dietIds = page.Where(x => x.PlanType == SavedPlanType.Diet).Select(x => x.Id).ToArray();
+        if (dietIds.Length == 0) return [];
+        var rows = await (
+            from revision in dbContext.Set<DietPlanRevision>()
+            where dietIds.Contains(revision.PlanId) && revision.Status != PlanRevisionStatus.Archived
+            join row in dbContext.Set<MealFoodItem>() on revision.Id equals row.RevisionId
+            where row.MealOptionId == null || row.MealOptionId == dbContext.Set<MealOption>()
+                .Where(option => option.MealId == row.MealId).OrderBy(option => option.Order)
+                .Select(option => (Guid?)option.Id).FirstOrDefault()
+            select new { revision.PlanId, row.FoodItemId, row.FoodUnitId, row.Quantity })
+            .AsNoTracking().ToArrayAsync(cancellationToken);
+        var foodIds = rows.Select(x => x.FoodItemId).Distinct().ToArray();
+        var unitIds = rows.Where(x => x.FoodUnitId.HasValue).Select(x => x.FoodUnitId!.Value).Distinct().ToArray();
+        // Standalone and limited to what the visible plan rows name: lifting the filters here exposes nothing else.
+        var foods = await dbContext.Set<FoodItem>().IgnoreQueryFilters().AsNoTracking()
+            .Where(x => foodIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
+        var units = await dbContext.Set<FoodUnit>().IgnoreQueryFilters().AsNoTracking()
+            .Where(x => unitIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.BaseQuantity, cancellationToken);
+        return rows.Where(x => foods.ContainsKey(x.FoodItemId)).GroupBy(x => x.PlanId).ToDictionary(group => group.Key, group =>
+        {
+            var parts = group.Select(x =>
+            {
+                var amount = x.Quantity * (x.FoodUnitId is { } unit && units.TryGetValue(unit, out var size) ? size : 1m);
+                return (Amount: amount, Food: foods[x.FoodItemId]);
+            }).ToArray();
+            return new PlanTotals(
+                parts.Sum(x => x.Amount),
+                parts.Sum(x => x.Food.CaloriesPer100 * x.Amount / 100m),
+                parts.Sum(x => x.Food.ProteinPer100 * x.Amount / 100m),
+                parts.Sum(x => x.Food.CarbohydratesPer100 * x.Amount / 100m),
+                parts.Sum(x => x.Food.FatPer100 * x.Amount / 100m));
+        });
+    }
+
+    private static SavedPlanRow Totals(SavedPlanRow row, IReadOnlyDictionary<Guid, PlanTotals> totals)
+    {
+        if (row.PlanType != SavedPlanType.Diet) return row;
+        var value = totals.GetValueOrDefault(row.Id) ?? new PlanTotals(0, 0, 0, 0, 0);
+        return new SavedPlanRow
+        {
+            Id = row.Id, PlanType = row.PlanType, NameEn = row.NameEn, NameAr = row.NameAr, ClientId = row.ClientId,
+            ClientName = row.ClientName, CreatedAt = row.CreatedAt, TotalWeight = value.Weight, TotalCalories = value.Calories,
+            TotalProtein = value.Protein, TotalCarbohydrates = value.Carbohydrates, TotalFat = value.Fat,
+            WorkoutDayCount = row.WorkoutDayCount
+        };
+    }
+
+    private sealed record PlanTotals(decimal Weight, decimal Calories, decimal Protein, decimal Carbohydrates, decimal Fat);
 
     /// <summary>The current version (number, status, program dates) of each listed plan.</summary>
     private async Task<Dictionary<Guid, CurrentVersion>> CurrentVersionsAsync(
