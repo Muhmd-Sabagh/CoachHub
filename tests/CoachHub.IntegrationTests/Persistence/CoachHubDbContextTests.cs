@@ -70,6 +70,7 @@ public sealed class CoachHubDbContextTests
         Assert.Contains(typeof(CoachHub.Domain.Progress.ProgressPhoto), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.Progress.LifestyleTargets), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckInSchedule), entityTypes);
+        Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckInSchedulePeriod), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckIn), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckInSubmission), entityTypes);
         Assert.Contains(typeof(CoachHub.Domain.CheckIns.CheckInReply), entityTypes);
@@ -137,9 +138,9 @@ public sealed class CoachHubDbContextTests
         // 14 coach-owned business types (P1; P18A removed the form import profile), MediaAsset (P2), AuditEntry (P3), Brand and
         // CoachSettings (P4), FoodItem (P7, a catalog entry), FoodLogEntry and NutritionDay (P8), Exercise
         // (P9, a catalog entry), WorkoutSession and PersonalRecord (P10), and six tracking entries, ProgressPhoto and
-        // LifestyleTargets (P11), and CheckInSchedule and CheckIn (P12). MediaAsset, AuditEntry, Brand, FoodItem and
+        // LifestyleTargets (P11), CheckInSchedule and CheckIn (P12), and CheckInSchedulePeriod (P22). MediaAsset, AuditEntry, Brand, FoodItem and
         // Exercise also admit platform rows.
-        Assert.Equal(42, owned.Length);
+        Assert.Equal(43, owned.Length);
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.CheckIns.CheckIn));
         Assert.DoesNotContain(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressEntry));
         Assert.Contains(owned, type => type.ClrType == typeof(CoachHub.Domain.Progress.ProgressPhoto));

@@ -34,6 +34,32 @@ public sealed class CheckInTests
     }
 
     [Fact]
+    public void A_changed_schedule_leaves_the_old_terms_for_the_days_before()
+    {
+        // Weekly on Sundays from 2026-10-01; changed on 2026-11-02 to every 2 weeks on Mondays.
+        var form = Guid.NewGuid();
+        var schedule = CheckInSchedule.Create(Coach, Client, form, 1, DayOfWeek.Sunday, new DateOnly(2026, 10, 1), Now);
+        var closed = schedule.Change(form, 2, DayOfWeek.Monday, new DateOnly(2026, 10, 1), new DateOnly(2026, 11, 2), Now);
+
+        Assert.NotNull(closed);
+        Assert.Equal((new DateOnly(2026, 10, 1), new DateOnly(2026, 11, 1), 1, DayOfWeek.Sunday),
+            (closed.InForceFrom, closed.InForceTo, closed.IntervalWeeks, closed.DueWeekday));
+        Assert.Equal(new DateOnly(2026, 11, 2), schedule.InForceFrom);
+        var from = new DateOnly(2026, 10, 1);
+        var to = new DateOnly(2026, 11, 30);
+        // The old terms count up to the change; the new ones from it.
+        Assert.Equal([new DateOnly(2026, 10, 4), new DateOnly(2026, 10, 11), new DateOnly(2026, 10, 18), new DateOnly(2026, 10, 25), new DateOnly(2026, 11, 1)],
+            closed.DueDatesInForce(from, to));
+        Assert.Equal([new DateOnly(2026, 11, 2), new DateOnly(2026, 11, 16), new DateOnly(2026, 11, 30)], schedule.DueDatesInForce(from, to));
+
+        // A second change the same day leaves no empty period behind.
+        Assert.Null(schedule.Change(form, 1, DayOfWeek.Monday, new DateOnly(2026, 10, 1), new DateOnly(2026, 11, 2), Now));
+        // A schedule that has not started yet closes to nothing.
+        Assert.Null(CheckInSchedule.Create(Coach, Client, form, 1, DayOfWeek.Sunday, new DateOnly(2026, 12, 1), Now)
+            .Close(new DateOnly(2026, 11, 30), Now));
+    }
+
+    [Fact]
     public void A_check_in_is_reviewed_and_resubmitted_after_requested_changes()
     {
         var first = Guid.NewGuid();

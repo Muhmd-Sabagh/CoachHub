@@ -5,7 +5,8 @@ namespace CoachHub.Domain.CheckIns;
 
 /// <summary>
 /// A client's check-in schedule (§28, P12): which check-in form, every 1, 2 or 4 weeks, due on a weekday, starting on a
-/// date. Written by the coach; one per client.
+/// date. Written by the coach; one per client. Since P22 it is in force from <see cref="InForceFrom"/>: the days before
+/// belong to the closed <see cref="CheckInSchedulePeriod"/>s that the earlier schedules left.
 /// </summary>
 public sealed class CheckInSchedule : Entity, ITenantOwned
 {
@@ -19,18 +20,49 @@ public sealed class CheckInSchedule : Entity, ITenantOwned
     public int IntervalWeeks { get; private set; }
     public DayOfWeek DueWeekday { get; private set; }
     public DateOnly StartsOn { get; private set; }
+
+    /// <summary>
+    /// The first day this schedule counts for (P22); null when no earlier schedule covers any day before it. Days
+    /// before it belong to the client's closed periods.
+    /// </summary>
+    public DateOnly? InForceFrom { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    /// <param name="inForceFrom">The day after the client's last closed period, if any (P22).</param>
     public static CheckInSchedule Create(
-        Guid coachId, Guid clientId, Guid formDefinitionId, int intervalWeeks, DayOfWeek dueWeekday, DateOnly startsOn, DateTimeOffset now)
+        Guid coachId, Guid clientId, Guid formDefinitionId, int intervalWeeks, DayOfWeek dueWeekday, DateOnly startsOn,
+        DateTimeOffset now, DateOnly? inForceFrom = null)
     {
         if (clientId == Guid.Empty) throw new ArgumentException("A client is required.", nameof(clientId));
-        var schedule = new CheckInSchedule { CoachId = TenantKey.Required(coachId), ClientId = clientId };
-        schedule.Change(formDefinitionId, intervalWeeks, dueWeekday, startsOn, now);
+        var schedule = new CheckInSchedule { CoachId = TenantKey.Required(coachId), ClientId = clientId, InForceFrom = inForceFrom };
+        schedule.Set(formDefinitionId, intervalWeeks, dueWeekday, startsOn, now);
         return schedule;
     }
 
-    public void Change(Guid formDefinitionId, int intervalWeeks, DayOfWeek dueWeekday, DateOnly startsOn, DateTimeOffset now)
+    /// <summary>
+    /// Changes the schedule from <paramref name="today"/> on (P22). The days before keep the terms they had: the
+    /// returned period records them, or null when the old terms had no day in force yet.
+    /// </summary>
+    public CheckInSchedulePeriod? Change(
+        Guid formDefinitionId, int intervalWeeks, DayOfWeek dueWeekday, DateOnly startsOn, DateOnly today, DateTimeOffset now)
+    {
+        var closed = Close(today.AddDays(-1), now);
+        Set(formDefinitionId, intervalWeeks, dueWeekday, startsOn, now);
+        if (closed is not null) InForceFrom = today;
+        return closed;
+    }
+
+    /// <summary>
+    /// The schedule's terms up to <paramref name="lastDay"/>, for when it changes or ends (P22); null when no day up to
+    /// then was in force.
+    /// </summary>
+    public CheckInSchedulePeriod? Close(DateOnly lastDay, DateTimeOffset now)
+    {
+        var first = InForceFrom ?? StartsOn;
+        return lastDay < first ? null : CheckInSchedulePeriod.Record(this, first, lastDay, now);
+    }
+
+    private void Set(Guid formDefinitionId, int intervalWeeks, DayOfWeek dueWeekday, DateOnly startsOn, DateTimeOffset now)
     {
         if (formDefinitionId == Guid.Empty) throw new ArgumentException("A check-in form is required.", nameof(formDefinitionId));
         if (!Intervals.Contains(intervalWeeks)) throw new ArgumentException("Check in every 1, 2 or 4 weeks.", nameof(intervalWeeks));
@@ -42,10 +74,30 @@ public sealed class CheckInSchedule : Entity, ITenantOwned
         UpdatedAt = now;
     }
 
+    private CheckInCadence Cadence => new(IntervalWeeks, DueWeekday, StartsOn);
+
     /// <summary>The first due date: the first due weekday on or after the start.</summary>
-    public DateOnly FirstDueOn => StartsOn.AddDays(((int)DueWeekday - (int)StartsOn.DayOfWeek + 7) % 7);
+    public DateOnly FirstDueOn => Cadence.FirstDueOn;
 
     /// <summary>The first due date on or after <paramref name="day"/>.</summary>
+    public DateOnly DueOnOrAfter(DateOnly day) => Cadence.DueOnOrAfter(day);
+
+    /// <summary>The latest due date on or before <paramref name="day"/>; null before the first.</summary>
+    public DateOnly? DueOnOrBefore(DateOnly day) => Cadence.DueOnOrBefore(day);
+
+    /// <summary>Every due date from <paramref name="from"/> to <paramref name="to"/>.</summary>
+    public IEnumerable<DateOnly> DueDatesBetween(DateOnly from, DateOnly to) => Cadence.DueDatesBetween(from, to);
+
+    /// <summary>The due dates from <paramref name="from"/> to <paramref name="to"/> while this schedule is in force (P22).</summary>
+    public IEnumerable<DateOnly> DueDatesInForce(DateOnly from, DateOnly to) =>
+        Cadence.DueDatesBetween(InForceFrom is { } start && start > from ? start : from, to);
+}
+
+/// <summary>Check-in date arithmetic for a cadence: every <see cref="IntervalWeeks"/> weeks on a weekday from a start.</summary>
+public readonly record struct CheckInCadence(int IntervalWeeks, DayOfWeek DueWeekday, DateOnly StartsOn)
+{
+    public DateOnly FirstDueOn => StartsOn.AddDays(((int)DueWeekday - (int)StartsOn.DayOfWeek + 7) % 7);
+
     public DateOnly DueOnOrAfter(DateOnly day)
     {
         var first = FirstDueOn;
@@ -55,7 +107,6 @@ public sealed class CheckInSchedule : Entity, ITenantOwned
         return first.AddDays(periods * step);
     }
 
-    /// <summary>The latest due date on or before <paramref name="day"/>; null before the first.</summary>
     public DateOnly? DueOnOrBefore(DateOnly day)
     {
         var first = FirstDueOn;
@@ -64,11 +115,44 @@ public sealed class CheckInSchedule : Entity, ITenantOwned
         return first.AddDays((day.DayNumber - first.DayNumber) / step * step);
     }
 
-    /// <summary>Every due date from <paramref name="from"/> to <paramref name="to"/>.</summary>
     public IEnumerable<DateOnly> DueDatesBetween(DateOnly from, DateOnly to)
     {
         for (var due = DueOnOrAfter(from); due <= to; due = due.AddDays(IntervalWeeks * 7)) yield return due;
     }
+}
+
+/// <summary>
+/// A client's earlier check-in schedule terms and the days they were in force (P22), left when the coach changes or
+/// stops the schedule, or the client moves to another coach. Check-in adherence counts each past day under the terms
+/// in force on it. Coaching data: it follows the client on transfer.
+/// </summary>
+public sealed class CheckInSchedulePeriod : Entity, ITenantOwned
+{
+    private CheckInSchedulePeriod() { }
+
+    public Guid CoachId { get; private set; }
+    public Guid ClientId { get; private set; }
+    public Guid FormDefinitionId { get; private set; }
+    public int IntervalWeeks { get; private set; }
+    public DayOfWeek DueWeekday { get; private set; }
+    public DateOnly StartsOn { get; private set; }
+
+    /// <summary>The first and last day these terms were in force.</summary>
+    public DateOnly InForceFrom { get; private set; }
+    public DateOnly InForceTo { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    internal static CheckInSchedulePeriod Record(CheckInSchedule schedule, DateOnly from, DateOnly to, DateTimeOffset now) => new()
+    {
+        CoachId = schedule.CoachId, ClientId = schedule.ClientId, FormDefinitionId = schedule.FormDefinitionId,
+        IntervalWeeks = schedule.IntervalWeeks, DueWeekday = schedule.DueWeekday, StartsOn = schedule.StartsOn,
+        InForceFrom = from, InForceTo = to, CreatedAt = now
+    };
+
+    /// <summary>The due dates from <paramref name="from"/> to <paramref name="to"/> while these terms were in force.</summary>
+    public IEnumerable<DateOnly> DueDatesInForce(DateOnly from, DateOnly to) =>
+        new CheckInCadence(IntervalWeeks, DueWeekday, StartsOn)
+            .DueDatesBetween(from > InForceFrom ? from : InForceFrom, to < InForceTo ? to : InForceTo);
 }
 
 /// <summary>Where a submitted check-in stands with the coach (§29).</summary>

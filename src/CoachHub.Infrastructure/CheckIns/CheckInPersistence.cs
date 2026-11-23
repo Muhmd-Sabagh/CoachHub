@@ -23,6 +23,24 @@ public sealed class CheckInScheduleConfiguration : IEntityTypeConfiguration<Chec
     }
 }
 
+public sealed class CheckInSchedulePeriodConfiguration : IEntityTypeConfiguration<CheckInSchedulePeriod>
+{
+    public void Configure(EntityTypeBuilder<CheckInSchedulePeriod> builder)
+    {
+        builder.ToTable("CheckInSchedulePeriods", table =>
+        {
+            table.HasCheckConstraint("CK_CheckInSchedulePeriods_Interval", "[IntervalWeeks] IN (1, 2, 4)");
+            table.HasCheckConstraint("CK_CheckInSchedulePeriods_Range", "[InForceTo] >= [InForceFrom]");
+        });
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.DueWeekday).HasConversion<string>().HasMaxLength(10).IsRequired();
+        builder.HasIndex(x => new { x.ClientId, x.InForceFrom });
+        builder.HasOne<Client>().WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.Cascade);
+        // The form stays after a transfer (it is the previous coach's), so the key does not cascade.
+        builder.HasOne<FormDefinition>().WithMany().HasForeignKey(x => x.FormDefinitionId).OnDelete(DeleteBehavior.NoAction);
+    }
+}
+
 public sealed class CheckInConfiguration : IEntityTypeConfiguration<CheckIn>
 {
     public void Configure(EntityTypeBuilder<CheckIn> builder)
@@ -76,6 +94,10 @@ public sealed class CheckInRepository(CoachHubDbContext dbContext) : ICheckInRep
 
     public Task<CheckInSchedule?> FindScheduleAsync(Guid clientId, CancellationToken cancellationToken) =>
         dbContext.Set<CheckInSchedule>().SingleOrDefaultAsync(x => x.ClientId == clientId, cancellationToken);
+
+    public async Task<IReadOnlyList<CheckInSchedulePeriod>> ListSchedulePeriodsAsync(Guid clientId, CancellationToken cancellationToken) =>
+        await dbContext.Set<CheckInSchedulePeriod>().AsNoTracking()
+            .Where(x => x.ClientId == clientId).OrderBy(x => x.InForceFrom).ToArrayAsync(cancellationToken);
 
     public Task<FormDefinition?> FindFormAsync(Guid definitionId, CancellationToken cancellationToken) =>
         dbContext.Set<FormDefinition>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == definitionId, cancellationToken);
@@ -148,6 +170,7 @@ public sealed class CheckInRepository(CoachHubDbContext dbContext) : ICheckInRep
 
     public void Add(CheckIn checkIn) => dbContext.Add(checkIn);
     public void Add(CheckInSchedule schedule) => dbContext.Add(schedule);
+    public void Add(CheckInSchedulePeriod period) => dbContext.Add(period);
     public void Remove(CheckInSchedule schedule) => dbContext.Remove(schedule);
     public Task SaveChangesAsync(CancellationToken cancellationToken) => dbContext.SaveChangesAsync(cancellationToken);
 }

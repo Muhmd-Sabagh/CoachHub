@@ -263,8 +263,14 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         var fromCoachId = client.CoachId;
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         // The check-in schedule names the previous coach's form, so it ends; the new coach sets their own (P12).
+        // Its terms up to yesterday stay as a closed period, which moves with the client (P22).
         var schedule = await dbContext.Set<CheckInSchedule>().SingleOrDefaultAsync(x => x.ClientId == client.Id, cancellationToken);
-        if (schedule is not null) dbContext.Set<CheckInSchedule>().Remove(schedule);
+        if (schedule is not null)
+        {
+            var now = DateTimeOffset.UtcNow;
+            if (schedule.Close(DateOnly.FromDateTime(now.UtcDateTime).AddDays(-1), now) is { } closed) dbContext.Add(closed);
+            dbContext.Set<CheckInSchedule>().Remove(schedule);
+        }
         client.SetCheckInState(null, client.CheckInAwaitingReview);
         // The open chat is archived: readable by the client only; the new coach starts a new one (P14, owner decision).
         var openChat = await dbContext.Set<Conversation>().IgnoreQueryFilters()
@@ -322,6 +328,9 @@ public sealed class ClientRepository(CoachHubDbContext dbContext) : IClientRepos
         var checkInsMoved = await dbContext.Set<CheckIn>().IgnoreQueryFilters()
             .Where(checkIn => checkIn.ClientId == client.Id && checkIn.CoachId == fromCoachId)
             .ExecuteUpdateAsync(update => update.SetProperty(checkIn => checkIn.CoachId, toCoachId), cancellationToken);
+        await dbContext.Set<CheckInSchedulePeriod>().IgnoreQueryFilters()
+            .Where(period => period.ClientId == client.Id && period.CoachId == fromCoachId)
+            .ExecuteUpdateAsync(update => update.SetProperty(period => period.CoachId, toCoachId), cancellationToken);
         // Test results follow the client and keep their test, even a previous coach's custom one (P13). Assignments
         // of such tests end, because the new coach cannot see them; platform-test assignments move.
         var testResults = await dbContext.Set<TestResult>().IgnoreQueryFilters()
