@@ -71,6 +71,9 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
+// P23: refuse a runtime with the SignalR advisory outside Development and Testing.
+RuntimeRequirement.Enforce(app.Environment, app.Logger);
+
 // First, so rate limits, HTTPS redirection and secure cookies see the real client behind a trusted proxy.
 app.UseForwardedHeaders();
 // Before the exception handler, so error responses are written in the request's language (P19).
