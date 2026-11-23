@@ -197,6 +197,11 @@ public sealed class NutritionEngineTests(CoachHubSqlApiFactory factory) : IClass
         Assert.Equal(HttpStatusCode.OK, (await coachB.PutAsJsonAsync($"/api/v1/diet-plans/{plan.Id}/revisions/current", edit)).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await coachB.PutAsJsonAsync($"/api/v1/diet-plans/{plan.Id}/revisions/current",
             Diet(another.Id, 80) with { ClientId = client.Id })).StatusCode);
+
+        // P22: the saved-plans list counts the previous coach's food too (80 g × 400 kcal / 100 g).
+        var listed = (await coachB.GetFromJsonAsync<PagedResult<CoachHub.Application.SavedPlans.SavedPlanSummary>>($"/api/v1/saved-plans?clientId={client.Id}"))!;
+        var row = Assert.Single(listed.Items);
+        Assert.Equal((320m, 80m), (row.TotalCalories, row.TotalWeight));
     }
 
     private static async Task<Guid> CategoryAsync(HttpClient admin) =>
