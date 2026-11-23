@@ -104,6 +104,8 @@
 
 **Status after P18A (2026-10-22).** Closed: replacement quantities and client screens (P8). Open: saved-plans totals after a transfer (P22).
 
+**Status after P22 (2026-11-23).** Closed: saved-plans totals after a transfer (a page's totals include the previous coach's foods). Sorting and filtering by totals still use visible foods; see P22.
+
 ## Verification
 
 | Check | Result |

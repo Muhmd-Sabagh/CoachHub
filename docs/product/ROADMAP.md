@@ -1,6 +1,6 @@
 # CoachHub Product Roadmap: Phases to Implement docs/product/REQUIREMENTS.md
 
-**Status:** Approved by the owner on 2026-10-12. P0–P18, P10A, P18A and P19–P21 are delivered. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
+**Status:** Approved by the owner on 2026-10-12. P0–P18, P10A, P18A and P19–P22 are delivered. Extended on 2026-10-22 with **P18A and P19–P23** ([Completion](#completion-p18a-p19p23)), which close the gaps found when the delivered product was compared with the requirements. [REQUIREMENTS.md](REQUIREMENTS.md) remains the source of truth. This roadmap fixes phase scope and order. Each phase is refined against the code when it starts, and its outcome is recorded in `docs/product/phases/`.
 
 ## Context
 
@@ -477,6 +477,8 @@ The client area comes first because clients mostly use their phones (§53).
 
 ### P22: Tracking correctness and operational fixes (M), covering §9, §21, §29, §30, §47, §57
 
+**Delivered 2026-11-23** (see `docs/product/phases/P22_TRACKING_FIXES.md`).
+
 These close the known limitations recorded in earlier phase docs.
 
 - **Mid-day new plan version (P8).** Diet rows keep a stable lineage key across versions. A client's day choices and logged meals then map to the new version's rows, so they stay counted.
@@ -552,4 +554,4 @@ These are recorded but not planned. Each needs an owner decision before it becom
 
 ## Next step
 
-P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 and P21 were delivered on 2026-11-02. The next phase is **P22** (tracking correctness and operational fixes), then P23.
+P0 started on branch `phase/p00-groundwork` after the 2026-10-12 approval. P18A was delivered on 2026-10-22 and P19 on 2026-10-23. P20 and P21 were delivered on 2026-11-02, and P22 on 2026-11-23. The next phase is **P23** (release readiness and production sign-off).

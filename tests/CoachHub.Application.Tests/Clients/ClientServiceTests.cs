@@ -96,8 +96,8 @@ public sealed class ClientServiceTests
     private sealed class NoMediaRepository : IMediaRepository
     {
         public Task AddAsync(MediaAsset media, CancellationToken cancellationToken) => Task.CompletedTask;
-        public Task<CoachHub.Domain.Settings.ClientFeature?> OwningFeatureAsync(Guid id, CancellationToken cancellationToken) =>
-            Task.FromResult<CoachHub.Domain.Settings.ClientFeature?>(null);
+        public Task<IReadOnlyList<CoachHub.Domain.Settings.ClientFeature>> OwningFeaturesAsync(Guid id, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<CoachHub.Domain.Settings.ClientFeature>>([]);
         public Task<MediaAsset?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<MediaAsset?>(null);
         public Task DeleteAsync(MediaAsset media, CancellationToken cancellationToken) => Task.CompletedTask;
     }

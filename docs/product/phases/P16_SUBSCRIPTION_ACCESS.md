@@ -108,6 +108,8 @@
 
 **Status after P18A (2026-10-22).** Closed: browser smoke test (P10A, P18). Open: scheduled resume, optional automatic suspension, and `/media/{id}` under the access rules (P22).
 
+**Status after P22 (2026-11-23).** Closed: scheduled resume date, automatic suspension for overdue invoices (Administrator rule, off by default), and `/media/{id}` under the access rules of the owning feature.
+
 ## Verification
 
 | Check | Result |

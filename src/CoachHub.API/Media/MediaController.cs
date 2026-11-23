@@ -45,11 +45,14 @@ public sealed class MediaController(MediaService mediaService, SubscriptionAcces
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Open(Guid id, CancellationToken cancellationToken)
     {
-        if (Guid.TryParse(User.FindFirstValue(AuthClaims.ClientId), out var clientId) &&
-            await mediaService.OwningFeatureAsync(id, cancellationToken) is { } feature)
+        if (Guid.TryParse(User.FindFirstValue(AuthClaims.ClientId), out var clientId))
         {
-            var decision = await access.CheckAsync(clientId, feature, write: false, cancellationToken);
-            if (!decision.Allowed) throw new ForbiddenException(decision.Message!);
+            // A file linked from several features opens only if every one of them is open to the client.
+            foreach (var feature in await mediaService.OwningFeaturesAsync(id, cancellationToken))
+            {
+                var decision = await access.CheckAsync(clientId, feature, write: false, cancellationToken);
+                if (!decision.Allowed) throw new ForbiddenException(decision.Message!);
+            }
         }
         var media = await mediaService.OpenReadAsync(id, cancellationToken);
         // Range requests let videos (P14) seek without downloading the whole file.
